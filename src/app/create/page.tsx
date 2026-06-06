@@ -30,8 +30,6 @@ function CreatePageInner() {
   const [prompt, setPrompt] = useState(TEMPLATE_PROMPTS[templateName] || "");
   const [fps, setFps] = useState([24]);
   const [quality, setQuality] = useState([80]);
-  const [videoFile, setVideoFile] = useState<File | null>(null);
-  const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isExtracting, setIsExtracting] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -88,8 +86,6 @@ function CreatePageInner() {
   };
 
   const handleUpload = async (file: File) => {
-    setVideoFile(file);
-    setVideoUrl(URL.createObjectURL(file));
     setStep(2);
     setIsExtracting(true);
     setProgress(20);
@@ -137,7 +133,10 @@ function CreatePageInner() {
           </div>
           <span className="font-semibold">ScrollCraft</span>
         </div>
-        <div className="w-16" />
+        <div className="flex items-center gap-4">
+          <Link href="/presets" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Presets</Link>
+          <Link href="/pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Pricing</Link>
+        </div>
       </div>
 
       {/* Steps */}
