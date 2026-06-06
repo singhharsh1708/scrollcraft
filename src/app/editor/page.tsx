@@ -1,0 +1,467 @@
+"use client";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { Slider } from "@/components/ui/slider";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  ArrowLeft, Download, Plus, Trash2, Eye, EyeOff, ChevronUp, ChevronDown,
+  Sparkles, Layers, Settings, Type, Loader2, AlignLeft, AlignCenter, AlignRight
+} from "lucide-react";
+import Link from "next/link";
+import { toast } from "sonner";
+import dynamic from "next/dynamic";
+
+const ScrollEngine = dynamic(() => import("@/components/ScrollEngine"), { ssr: false });
+
+interface Section {
+  id: string;
+  eyebrow: string;
+  heading: string;
+  body: string;
+  ctaLabel: string;
+  ctaHref: string;
+  accentColor: string;
+  headingColor: string;
+  bodyColor: string;
+  textAlign: "left" | "center" | "right";
+  align: string;
+  justify: string;
+  scrollHeight: number;
+  visible: boolean;
+}
+
+const defaultSection = (i: number): Section => ({
+  id: `section-${Date.now()}-${i}`,
+  eyebrow: "",
+  heading: `Section ${i + 1}`,
+  body: "",
+  ctaLabel: "",
+  ctaHref: "#",
+  accentColor: "#a78bfa",
+  headingColor: "#ffffff",
+  bodyColor: "rgba(255,255,255,0.7)",
+  textAlign: "center",
+  align: "center",
+  justify: "center",
+  scrollHeight: 1000,
+  visible: true,
+});
+
+function EditorInner() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  const [frames, setFrames] = useState<string[]>([]);
+  const [frameCount, setFrameCount] = useState(0);
+  const [fps, setFps] = useState(24);
+  const [sections, setSections] = useState<Section[]>([defaultSection(0)]);
+  const [selectedSection, setSelectedSection] = useState<string>(sections[0].id);
+  const [siteName, setSiteName] = useState("My ScrollCraft Site");
+  const [currentFrame, setCurrentFrame] = useState(0);
+  const [showPreview, setShowPreview] = useState(true);
+  const [isExporting, setIsExporting] = useState(false);
+  const [isDemo, setIsDemo] = useState(false);
+
+  useEffect(() => {
+    const framesParam = searchParams.get("frames");
+    const countParam = searchParams.get("frameCount");
+    const fpsParam = searchParams.get("fps");
+
+    if (framesParam) {
+      try {
+        const parsed = JSON.parse(framesParam);
+        setFrames(parsed);
+        setFrameCount(parseInt(countParam || String(parsed.length)));
+        setFps(parseInt(fpsParam || "24"));
+      } catch {
+        // demo mode
+        setIsDemo(true);
+        loadDemoFrames();
+      }
+    } else {
+      setIsDemo(true);
+      loadDemoFrames();
+    }
+  }, [searchParams]);
+
+  const loadDemoFrames = async () => {
+    const count = 120;
+    const demoFrames = Array.from({ length: count }, (_, i) =>
+      `/api/demo-frame?i=${i}&total=${count}`
+    );
+    setFrames(demoFrames);
+    setFrameCount(count);
+    toast.info("Running in demo mode — add your API key for real AI video generation");
+  };
+
+  const selectedSectionData = sections.find(s => s.id === selectedSection);
+
+  const updateSection = (id: string, updates: Partial<Section>) => {
+    setSections(prev => prev.map(s => s.id === id ? { ...s, ...updates } : s));
+  };
+
+  const addSection = () => {
+    const newSection = defaultSection(sections.length);
+    setSections(prev => [...prev, newSection]);
+    setSelectedSection(newSection.id);
+  };
+
+  const removeSection = (id: string) => {
+    if (sections.length === 1) { toast.error("Need at least one section"); return; }
+    setSections(prev => prev.filter(s => s.id !== id));
+    if (selectedSection === id) setSelectedSection(sections.find(s => s.id !== id)!.id);
+  };
+
+  const moveSection = (id: string, dir: "up" | "down") => {
+    const idx = sections.findIndex(s => s.id === id);
+    if (dir === "up" && idx === 0) return;
+    if (dir === "down" && idx === sections.length - 1) return;
+    const newSections = [...sections];
+    const swap = dir === "up" ? idx - 1 : idx + 1;
+    [newSections[idx], newSections[swap]] = [newSections[swap], newSections[idx]];
+    setSections(newSections);
+  };
+
+  const handleExport = async () => {
+    if (isDemo) {
+      toast.error("Can't export demo frames — generate real frames first");
+      return;
+    }
+    setIsExporting(true);
+    try {
+      const res = await fetch("/api/export-site", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ frames, sections, siteName, fps }),
+      });
+      if (!res.ok) throw new Error(await res.text());
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${siteName.replace(/\s+/g, "-").toLowerCase()}.zip`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("Site exported! Extract and serve with `npx serve .`");
+    } catch (err) {
+      toast.error(String(err));
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const totalScrollHeight = sections.filter(s => s.visible).reduce((a, s) => a + s.scrollHeight, 0) + 1000;
+
+  return (
+    <div className="h-screen flex flex-col bg-background text-foreground overflow-hidden">
+      {/* Top bar */}
+      <div className="flex items-center justify-between px-4 py-2 border-b border-white/5 bg-card/50 flex-shrink-0">
+        <div className="flex items-center gap-3">
+          <Link href="/create" className="flex items-center gap-1 text-muted-foreground hover:text-foreground text-sm transition-colors">
+            <ArrowLeft className="w-3.5 h-3.5" /> Back
+          </Link>
+          <div className="w-px h-4 bg-white/10" />
+          <Input
+            value={siteName}
+            onChange={(e) => setSiteName(e.target.value)}
+            className="h-7 bg-transparent border-transparent hover:border-white/10 focus:border-primary/50 text-sm font-medium w-48"
+          />
+          {isDemo && <Badge variant="outline" className="border-amber-500/40 text-amber-400 text-xs">Demo mode</Badge>}
+        </div>
+
+        <div className="flex items-center gap-2">
+          <div className="text-xs text-muted-foreground bg-white/5 px-2 py-1 rounded">
+            Frame {currentFrame + 1}/{frameCount}
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowPreview(p => !p)}
+            className="border-white/10 h-7 px-2 text-xs"
+          >
+            {showPreview ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+          </Button>
+          <Button
+            size="sm"
+            onClick={handleExport}
+            disabled={isExporting}
+            className="bg-primary hover:bg-primary/90 text-white h-7 px-3 text-xs font-semibold"
+          >
+            {isExporting ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : <Download className="w-3.5 h-3.5 mr-1" />}
+            Export
+          </Button>
+        </div>
+      </div>
+
+      <div className="flex flex-1 overflow-hidden">
+        {/* Left panel: sections list */}
+        <div className="w-56 border-r border-white/5 flex flex-col bg-card/30 flex-shrink-0">
+          <div className="p-3 border-b border-white/5 flex items-center justify-between">
+            <div className="flex items-center gap-2 text-sm font-medium">
+              <Layers className="w-3.5 h-3.5 text-primary" /> Sections
+            </div>
+            <Button onClick={addSection} size="sm" variant="ghost" className="h-6 w-6 p-0 hover:bg-primary/20">
+              <Plus className="w-3.5 h-3.5" />
+            </Button>
+          </div>
+          <div className="flex-1 overflow-y-auto p-2 space-y-1">
+            {sections.map((s, i) => (
+              <div
+                key={s.id}
+                onClick={() => setSelectedSection(s.id)}
+                className={`group flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-colors ${
+                  selectedSection === s.id ? "bg-primary/15 border border-primary/30" : "hover:bg-white/5"
+                }`}
+              >
+                <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${s.visible ? "bg-primary" : "bg-white/20"}`} />
+                <span className="text-xs flex-1 truncate">{s.heading || `Section ${i + 1}`}</span>
+                <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button onClick={(e) => { e.stopPropagation(); moveSection(s.id, "up"); }} className="p-0.5 hover:text-primary">
+                    <ChevronUp className="w-3 h-3" />
+                  </button>
+                  <button onClick={(e) => { e.stopPropagation(); moveSection(s.id, "down"); }} className="p-0.5 hover:text-primary">
+                    <ChevronDown className="w-3 h-3" />
+                  </button>
+                  <button onClick={(e) => { e.stopPropagation(); removeSection(s.id); }} className="p-0.5 hover:text-destructive">
+                    <Trash2 className="w-3 h-3" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Center: preview canvas */}
+        {showPreview && (
+          <div className="flex-1 relative overflow-hidden">
+            {frames.length > 0 && (
+              <div className="absolute inset-0" style={{ height: totalScrollHeight, overflowY: "scroll" }}>
+                <ScrollEngine
+                  frames={frames}
+                  totalScrollHeight={totalScrollHeight}
+                  onFrameChange={setCurrentFrame}
+                />
+                {/* Section overlays */}
+                <div className="relative z-10" style={{ height: totalScrollHeight }}>
+                  <div style={{ height: "100vh" }} />
+                  {sections.filter(s => s.visible).map((s) => (
+                    <div
+                      key={s.id}
+                      onClick={() => setSelectedSection(s.id)}
+                      style={{
+                        height: s.scrollHeight,
+                        display: "flex",
+                        alignItems: s.align || "center",
+                        justifyContent: s.justify || "center",
+                        cursor: "pointer",
+                        outline: selectedSection === s.id ? "1px solid rgba(124,58,237,0.5)" : "none",
+                      }}
+                    >
+                      <div style={{ textAlign: s.textAlign, padding: "2rem", maxWidth: "700px" }}>
+                        {s.eyebrow && (
+                          <p style={{ fontSize: "0.75rem", fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: s.accentColor, marginBottom: "0.5rem" }}>
+                            {s.eyebrow}
+                          </p>
+                        )}
+                        {s.heading && (
+                          <h2 style={{ fontSize: "clamp(1.5rem,4vw,3.5rem)", fontWeight: 900, lineHeight: 1, letterSpacing: "-0.03em", color: s.headingColor, marginBottom: "0.75rem" }}>
+                            {s.heading}
+                          </h2>
+                        )}
+                        {s.body && (
+                          <p style={{ fontSize: "1rem", lineHeight: 1.7, color: s.bodyColor, marginBottom: "1rem" }}>
+                            {s.body}
+                          </p>
+                        )}
+                        {s.ctaLabel && (
+                          <span style={{ display: "inline-block", background: s.accentColor, color: "white", padding: "0.625rem 1.5rem", borderRadius: "0.375rem", fontWeight: 600, fontSize: "0.875rem" }}>
+                            {s.ctaLabel}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {frames.length === 0 && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Loader2 className="w-8 h-8 text-primary animate-spin" />
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Right panel: section editor */}
+        {selectedSectionData && (
+          <div className="w-72 border-l border-white/5 flex flex-col bg-card/30 flex-shrink-0 overflow-y-auto">
+            <Tabs defaultValue="content">
+              <div className="p-3 border-b border-white/5">
+                <TabsList className="w-full h-8 bg-white/5">
+                  <TabsTrigger value="content" className="flex-1 text-xs h-6">
+                    <Type className="w-3 h-3 mr-1" /> Content
+                  </TabsTrigger>
+                  <TabsTrigger value="style" className="flex-1 text-xs h-6">
+                    <Sparkles className="w-3 h-3 mr-1" /> Style
+                  </TabsTrigger>
+                  <TabsTrigger value="layout" className="flex-1 text-xs h-6">
+                    <Settings className="w-3 h-3 mr-1" /> Layout
+                  </TabsTrigger>
+                </TabsList>
+              </div>
+
+              <TabsContent value="content" className="p-3 space-y-3 mt-0">
+                <div className="space-y-1.5">
+                  <label className="text-xs text-muted-foreground">Eyebrow text</label>
+                  <Input
+                    value={selectedSectionData.eyebrow}
+                    onChange={(e) => updateSection(selectedSectionData.id, { eyebrow: e.target.value })}
+                    placeholder="NEW FEATURE"
+                    className="h-7 bg-white/5 border-white/10 text-xs"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs text-muted-foreground">Heading</label>
+                  <Textarea
+                    value={selectedSectionData.heading}
+                    onChange={(e) => updateSection(selectedSectionData.id, { heading: e.target.value })}
+                    placeholder="Your powerful headline"
+                    className="bg-white/5 border-white/10 text-sm resize-none min-h-[60px]"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs text-muted-foreground">Body text</label>
+                  <Textarea
+                    value={selectedSectionData.body}
+                    onChange={(e) => updateSection(selectedSectionData.id, { body: e.target.value })}
+                    placeholder="Supporting description..."
+                    className="bg-white/5 border-white/10 text-xs resize-none min-h-[60px]"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1.5">
+                    <label className="text-xs text-muted-foreground">CTA label</label>
+                    <Input
+                      value={selectedSectionData.ctaLabel}
+                      onChange={(e) => updateSection(selectedSectionData.id, { ctaLabel: e.target.value })}
+                      placeholder="Get started"
+                      className="h-7 bg-white/5 border-white/10 text-xs"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs text-muted-foreground">CTA link</label>
+                    <Input
+                      value={selectedSectionData.ctaHref}
+                      onChange={(e) => updateSection(selectedSectionData.id, { ctaHref: e.target.value })}
+                      placeholder="#"
+                      className="h-7 bg-white/5 border-white/10 text-xs"
+                    />
+                  </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="style" className="p-3 space-y-3 mt-0">
+                <div className="space-y-1.5">
+                  <label className="text-xs text-muted-foreground">Accent color</label>
+                  <div className="flex items-center gap-2">
+                    <input type="color" value={selectedSectionData.accentColor} onChange={(e) => updateSection(selectedSectionData.id, { accentColor: e.target.value })} className="w-8 h-8 rounded cursor-pointer border-0 bg-transparent" />
+                    <Input value={selectedSectionData.accentColor} onChange={(e) => updateSection(selectedSectionData.id, { accentColor: e.target.value })} className="flex-1 h-7 bg-white/5 border-white/10 text-xs font-mono" />
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs text-muted-foreground">Heading color</label>
+                  <div className="flex items-center gap-2">
+                    <input type="color" value={selectedSectionData.headingColor} onChange={(e) => updateSection(selectedSectionData.id, { headingColor: e.target.value })} className="w-8 h-8 rounded cursor-pointer border-0 bg-transparent" />
+                    <Input value={selectedSectionData.headingColor} onChange={(e) => updateSection(selectedSectionData.id, { headingColor: e.target.value })} className="flex-1 h-7 bg-white/5 border-white/10 text-xs font-mono" />
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs text-muted-foreground">Body color</label>
+                  <div className="flex items-center gap-2">
+                    <input type="color" value={selectedSectionData.bodyColor.startsWith("rgba") ? "#b3b3b3" : selectedSectionData.bodyColor} onChange={(e) => updateSection(selectedSectionData.id, { bodyColor: e.target.value })} className="w-8 h-8 rounded cursor-pointer border-0 bg-transparent" />
+                    <Input value={selectedSectionData.bodyColor} onChange={(e) => updateSection(selectedSectionData.id, { bodyColor: e.target.value })} className="flex-1 h-7 bg-white/5 border-white/10 text-xs font-mono" />
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs text-muted-foreground">Text alignment</label>
+                  <div className="flex gap-1">
+                    {(["left", "center", "right"] as const).map(a => (
+                      <button key={a} onClick={() => updateSection(selectedSectionData.id, { textAlign: a })}
+                        className={`flex-1 h-7 rounded border text-xs flex items-center justify-center transition-colors ${selectedSectionData.textAlign === a ? "border-primary bg-primary/15 text-primary" : "border-white/10 hover:border-white/20"}`}
+                      >
+                        {a === "left" ? <AlignLeft className="w-3.5 h-3.5" /> : a === "center" ? <AlignCenter className="w-3.5 h-3.5" /> : <AlignRight className="w-3.5 h-3.5" />}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <label className="text-xs text-muted-foreground">Visible</label>
+                  <button
+                    onClick={() => updateSection(selectedSectionData.id, { visible: !selectedSectionData.visible })}
+                    className={`w-8 h-4 rounded-full transition-colors ${selectedSectionData.visible ? "bg-primary" : "bg-white/20"}`}
+                  >
+                    <div className={`w-3 h-3 rounded-full bg-white mx-0.5 transition-transform ${selectedSectionData.visible ? "translate-x-4" : "translate-x-0"}`} />
+                  </button>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="layout" className="p-3 space-y-3 mt-0">
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs text-muted-foreground">Section height (scroll px)</label>
+                    <Badge variant="outline" className="text-xs border-primary/30 text-primary">{selectedSectionData.scrollHeight}px</Badge>
+                  </div>
+                  <Slider
+                    value={[selectedSectionData.scrollHeight]}
+                    onValueChange={(v) => updateSection(selectedSectionData.id, { scrollHeight: Array.isArray(v) ? (v as number[])[0] : v as number })}
+                    min={300} max={3000} step={100}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs text-muted-foreground">Vertical position</label>
+                  <div className="flex gap-1">
+                    {["flex-start", "center", "flex-end"].map((a) => (
+                      <button key={a} onClick={() => updateSection(selectedSectionData.id, { align: a })}
+                        className={`flex-1 h-7 rounded border text-xs transition-colors ${selectedSectionData.align === a ? "border-primary bg-primary/15 text-primary" : "border-white/10 hover:border-white/20"}`}
+                      >
+                        {a === "flex-start" ? "Top" : a === "center" ? "Middle" : "Bottom"}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs text-muted-foreground">Horizontal position</label>
+                  <div className="flex gap-1">
+                    {["flex-start", "center", "flex-end"].map((a) => (
+                      <button key={a} onClick={() => updateSection(selectedSectionData.id, { justify: a })}
+                        className={`flex-1 h-7 rounded border text-xs transition-colors ${selectedSectionData.justify === a ? "border-primary bg-primary/15 text-primary" : "border-white/10 hover:border-white/20"}`}
+                      >
+                        {a === "flex-start" ? "Left" : a === "center" ? "Center" : "Right"}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </TabsContent>
+            </Tabs>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default function EditorPage() {
+  return (
+    <Suspense fallback={
+      <div className="h-screen flex items-center justify-center bg-background">
+        <Loader2 className="w-8 h-8 text-primary animate-spin" />
+      </div>
+    }>
+      <EditorInner />
+    </Suspense>
+  );
+}
