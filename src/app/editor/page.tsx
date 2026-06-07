@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   ArrowLeft, Download, Plus, Trash2, Eye, EyeOff, ChevronUp, ChevronDown,
   Sparkles, Layers, Settings, Type, Loader2, AlignLeft, AlignCenter, AlignRight,
-  MessageSquare, Send, X, Bot, Monitor, Tablet, Smartphone, Music, Volume2, VolumeX
+  MessageSquare, Send, X, Bot, Monitor, Tablet, Smartphone, Music, Volume2, VolumeX, Save
 } from "lucide-react";
 import { useScrollAudio } from "@/lib/useScrollAudio";
 import Link from "next/link";
@@ -94,6 +94,8 @@ function EditorInner() {
   const [mobileFrames, setMobileFrames] = useState<string[]>([]);
   const [viewportMode, setViewportMode] = useState<"desktop" | "tablet" | "mobile">("desktop");
   const [audioSrc, setAudioSrc] = useState<string | null>(null);
+  const [siteId, setSiteId] = useState<string | null>(searchParams.get("siteId"));
+  const [isSaving, setIsSaving] = useState(false);
   const [audioMuted, setAudioMuted] = useState(false);
   const audioFileRef = useRef<HTMLInputElement>(null);
 
@@ -173,6 +175,37 @@ function EditorInner() {
       toast.error(String(err));
     } finally {
       setIsExporting(false);
+    }
+  };
+
+  const handleSave = async () => {
+    if (isDemo) { toast.error("Can't save demo — generate real frames first"); return; }
+    setIsSaving(true);
+    try {
+      const res = await fetch("/api/sites", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: siteId ?? undefined,
+          name: siteName,
+          fps,
+          frameCount,
+          framesJson: JSON.stringify(frames),
+          sectionsJson: JSON.stringify(sections),
+          customHead,
+          customCss,
+          audioUrl: audioSrc ?? undefined,
+        }),
+      });
+      if (res.status === 401) { toast.error("Sign in to save your site"); return; }
+      if (!res.ok) throw new Error(await res.text());
+      const data = await res.json();
+      setSiteId(data.site.id);
+      toast.success("Site saved!");
+    } catch {
+      toast.error("Failed to save site");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -265,6 +298,16 @@ function EditorInner() {
             className="border-white/10 h-7 px-2 text-xs"
           >
             {showPreview ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleSave}
+            disabled={isSaving}
+            className="border-white/10 h-7 px-3 text-xs gap-1"
+          >
+            {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+            Save
           </Button>
           <Button
             size="sm"

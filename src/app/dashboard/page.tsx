@@ -6,16 +6,20 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { toast } from "sonner";
 import {
-  Sparkles, Plus, ExternalLink, Trash2, MoreHorizontal,
-  Zap, Globe, Download, LogOut, User, ChevronDown, Settings
+  Sparkles, Plus, ExternalLink, Trash2,
+  Zap, Globe, Download, LogOut, User, ChevronDown, Settings, Loader2
 } from "lucide-react";
 
-const MOCK_SITES = [
-  { id: "1", name: "OrbitCRM Landing", preset: "OrbitCRM", frames: 192, createdAt: "2026-06-01", status: "live", url: "https://scrollcraft-gilt.vercel.app" },
-  { id: "2", name: "My Agency Site", preset: "Meridian", frames: 240, createdAt: "2026-06-03", status: "draft", url: null },
-  { id: "3", name: "Product Launch", preset: "Custom", frames: 144, createdAt: "2026-06-05", status: "live", url: null },
-];
+interface Site {
+  id: string;
+  name: string;
+  frameCount: number;
+  fps: number;
+  createdAt: string;
+  updatedAt: string;
+}
 
 const PLANS: Record<string, { label: string; credits: number; color: string }> = {
   free: { label: "Free Trial", credits: 100, color: "text-muted-foreground" },
@@ -28,6 +32,9 @@ export default function DashboardPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [sites, setSites] = useState<Site[]>([]);
+  const [sitesLoading, setSitesLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const plan = PLANS.free;
   const usedCredits = 34;
   const totalCredits = plan.credits;
@@ -35,6 +42,30 @@ export default function DashboardPage() {
   useEffect(() => {
     if (status === "unauthenticated") router.push("/auth/signin");
   }, [status, router]);
+
+  useEffect(() => {
+    if (status !== "authenticated") return;
+    fetch("/api/sites")
+      .then(r => r.json())
+      .then(data => { if (data.sites) setSites(data.sites); })
+      .catch(() => toast.error("Failed to load sites"))
+      .finally(() => setSitesLoading(false));
+  }, [status]);
+
+  const deleteSite = async (id: string) => {
+    if (deletingId) return;
+    setDeletingId(id);
+    try {
+      const res = await fetch(`/api/sites/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error();
+      setSites(prev => prev.filter(s => s.id !== id));
+      toast.success("Site deleted");
+    } catch {
+      toast.error("Failed to delete site");
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   if (status === "loading") {
     return (
@@ -151,9 +182,9 @@ export default function DashboardPage() {
         {/* Stats row */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
-            { label: "Sites created", value: MOCK_SITES.length, icon: Globe },
-            { label: "Live sites", value: MOCK_SITES.filter(s => s.status === "live").length, icon: ExternalLink },
-            { label: "Total frames", value: MOCK_SITES.reduce((a, s) => a + s.frames, 0), icon: Sparkles },
+            { label: "Sites created", value: sites.length, icon: Globe },
+            { label: "Total frames", value: sites.reduce((a, s) => a + s.frameCount, 0), icon: ExternalLink },
+            { label: "Exports", value: 0, icon: Download },
             { label: "Credits used", value: usedCredits, icon: Zap },
           ].map(stat => (
             <div key={stat.label} className="p-5 rounded-2xl border border-white/8 bg-card">
@@ -177,7 +208,11 @@ export default function DashboardPage() {
             </Link>
           </div>
 
-          {MOCK_SITES.length === 0 ? (
+          {sitesLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-6 h-6 text-primary animate-spin" />
+            </div>
+          ) : sites.length === 0 ? (
             <div className="text-center py-20 rounded-2xl border border-dashed border-white/10">
               <Sparkles className="w-8 h-8 text-primary mx-auto mb-3" />
               <p className="font-medium mb-1">No sites yet</p>
@@ -188,41 +223,33 @@ export default function DashboardPage() {
             </div>
           ) : (
             <div className="space-y-3">
-              {MOCK_SITES.map(site => (
+              {sites.map(site => (
                 <div key={site.id} className="flex items-center gap-4 p-4 rounded-2xl border border-white/8 bg-card hover:border-white/15 transition-colors group">
-                  {/* Thumbnail */}
                   <div className="w-14 h-10 rounded-lg bg-primary/15 flex items-center justify-center flex-shrink-0">
                     <Sparkles className="w-4 h-4 text-primary" />
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-0.5">
-                      <p className="font-medium text-sm truncate">{site.name}</p>
-                      <Badge
-                        variant="outline"
-                        className={`text-xs border-0 px-2 py-0 ${site.status === "live" ? "bg-emerald-500/15 text-emerald-400" : "bg-white/8 text-muted-foreground"}`}
-                      >
-                        {site.status}
-                      </Badge>
-                    </div>
-                    <p className="text-xs text-muted-foreground">{site.preset} · {site.frames} frames · {site.createdAt}</p>
+                    <p className="font-medium text-sm truncate">{site.name}</p>
+                    <p className="text-xs text-muted-foreground">{site.frameCount} frames · {site.fps} fps · {new Date(site.updatedAt).toLocaleDateString("en-IN")}</p>
                   </div>
 
                   <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Link href="/editor">
+                    <Link href={`/editor?siteId=${site.id}`}>
                       <Button size="sm" variant="outline" className="border-white/10 h-7 px-2 text-xs">
                         Edit
                       </Button>
                     </Link>
-                    {site.url && (
-                      <a href={site.url} target="_blank" rel="noreferrer">
-                        <Button size="sm" variant="outline" className="border-white/10 h-7 w-7 p-0">
-                          <ExternalLink className="w-3 h-3" />
-                        </Button>
-                      </a>
-                    )}
-                    <Button size="sm" variant="outline" className="border-white/10 h-7 w-7 p-0 hover:border-destructive hover:text-destructive">
-                      <Trash2 className="w-3 h-3" />
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => deleteSite(site.id)}
+                      disabled={deletingId === site.id}
+                      className="border-white/10 h-7 w-7 p-0 hover:border-destructive hover:text-destructive"
+                    >
+                      {deletingId === site.id
+                        ? <Loader2 className="w-3 h-3 animate-spin" />
+                        : <Trash2 className="w-3 h-3" />}
                     </Button>
                   </div>
                 </div>
