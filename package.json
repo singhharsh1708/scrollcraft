@@ -13,6 +13,7 @@
     "@sentry/nextjs": "^10.56.0",
     "@studio-freight/lenis": "^1.0.42",
     "@types/fluent-ffmpeg": "^2.1.28",
+    "@vercel/blob": "^2.4.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "fluent-ffmpeg": "^2.1.3",
