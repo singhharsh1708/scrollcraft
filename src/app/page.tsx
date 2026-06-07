@@ -15,8 +15,8 @@ const PIPELINE = [
 ];
 
 const FEATURES = [
-  { icon: Sparkles, title: "AI Video Generation", desc: "Describe your vision — get a cinematic 8-second video from Luma AI or Runway ML." },
-  { icon: Zap, title: "400+ Frame Extraction", desc: "FFmpeg extracts frames automatically. Native browser scroll — no WebGL, no Three.js." },
+  { icon: Sparkles, title: "2D Canvas Generation", desc: "Pick a style — gradient, geometric, particles, or wave. Frames generate in seconds, in-browser." },
+  { icon: Zap, title: "Smooth Frame Playback", desc: "Canvas-based engine plays frames as you scroll. No WebGL, no external dependencies." },
   { icon: Play, title: "Scroll Engine", desc: "Canvas-based engine maps scroll to frames at 10–40 FPS. Works on every device." },
   { icon: Download, title: "One-Click Export", desc: "Production-ready HTML/CSS/JS ZIP. Deploy anywhere in under a minute." },
 ];
@@ -31,7 +31,7 @@ const PRESETS = [
 ];
 
 const TESTIMONIALS = [
-  { name: "Isabella R.", location: "Italy", role: "E-commerce founder", quote: "Sales converted from day one. The 3D scroll made our product page feel like a luxury brand site overnight." },
+  { name: "Isabella R.", location: "Italy", role: "E-commerce founder", quote: "Sales converted from day one. The animated scroll background made our product page feel like a luxury brand site overnight." },
   { name: "Arjun M.", location: "India", role: "Startup founder", quote: "Replaced a $4,000 agency quote with a 15-minute session. The output was honestly better than what they proposed." },
   { name: "Priya S.", location: "India", role: "Restaurant owner", quote: "Built my restaurant's full site in under 10 minutes. Customers keep asking who designed it." },
   { name: "Lukas B.", location: "Germany", role: "Indie developer", quote: "Launched my SaaS landing page before the weekend was over. The scroll animation is unlike anything I could have hand-coded." },
@@ -40,7 +40,7 @@ const TESTIMONIALS = [
 
 const FAQ = [
   { q: "Do I need to know how to code?", a: "Not at all. You describe your vision in plain English, the AI handles everything else. The export is pure HTML/CSS/JS you can deploy anywhere." },
-  { q: "How does the scroll animation work?", a: "We extract 400+ frames from a short AI-generated video, then use a canvas-based engine to display the correct frame based on your scroll position. No WebGL or Three.js required." },
+  { q: "How does the scroll animation work?", a: "ScrollCraft generates 2D canvas frames in your browser, then a scroll engine displays the correct frame as you scroll. No WebGL, no external dependencies." },
   { q: "Can I use my own video?", a: "Yes. On the /create page you can upload your own MP4, MOV, or WebM and we'll extract frames from it just like AI-generated videos." },
   { q: "Where can I host the exported site?", a: "Anywhere that serves static files — Vercel, Netlify, Cloudflare Pages, GitHub Pages, or your own server. Just unzip and upload." },
   { q: "What AI models do you use?", a: "We support Luma AI (Dream Machine) and Runway ML for video generation. On Pro plans you can bring your own API key. Fal.ai and Gemini support coming soon." },
@@ -75,7 +75,7 @@ export default function Home() {
         <div className="absolute top-2/3 left-1/4 w-[300px] h-[300px] rounded-full bg-blue-500/6 blur-[100px] pointer-events-none" />
 
         <Badge variant="outline" className="mb-6 border-primary/40 text-primary bg-primary/10 px-4 py-1.5">
-          <Sparkles className="w-3 h-3 mr-1.5" /> AI-Powered · No Code · 3D Scroll
+          <Sparkles className="w-3 h-3 mr-1.5" /> AI-Powered · No Code · Animated Scroll
         </Badge>
 
         <h1 className="text-6xl md:text-8xl font-black tracking-tighter mb-6 leading-none">
@@ -87,8 +87,8 @@ export default function Home() {
         </h1>
 
         <p className="text-xl text-muted-foreground max-w-2xl mb-10 leading-relaxed">
-          Describe a visual atmosphere. AI generates a cinematic video, extracts 400+ frames,
-          and wires it up as a silky 3D parallax scroll — exported as pure HTML. No code.
+          Pick a style. ScrollCraft generates smooth animated canvas frames,
+          and wires them up as a silky scroll experience — exported as pure HTML. No code.
         </p>
 
         <div className="flex flex-col sm:flex-row items-center gap-4">
@@ -119,7 +119,7 @@ export default function Home() {
               <div className="w-16 h-16 rounded-full border-2 border-primary/50 flex items-center justify-center animate-pulse">
                 <Play className="w-6 h-6 text-primary ml-1" />
               </div>
-              <p className="text-muted-foreground text-sm">Scroll to experience 3D parallax</p>
+              <p className="text-muted-foreground text-sm">Scroll to experience the animation</p>
             </div>
           </div>
           <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent pointer-events-none" />
@@ -368,12 +368,12 @@ export default function Home() {
                 </div>
                 <span className="font-semibold">ScrollCraft</span>
               </div>
-              <p className="text-xs text-muted-foreground leading-relaxed">AI-powered 3D scroll website builder. Build cinematic sites in minutes.</p>
+              <p className="text-xs text-muted-foreground leading-relaxed">AI-powered scroll website builder with animated canvas backgrounds. Build cinematic sites in minutes.</p>
             </div>
             <div>
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-4">Product</p>
               <div className="space-y-2.5">
-                {[["Features", "/#features"], ["Presets", "/presets"], ["Pricing", "/pricing"], ["3D Builder", "/create"]].map(([label, href]) => (
+                {[["Features", "/#features"], ["Presets", "/presets"], ["Pricing", "/pricing"], ["Builder", "/create"]].map(([label, href]) => (
                   <Link key={label} href={href} className="block text-sm text-muted-foreground hover:text-foreground transition-colors">{label}</Link>
                 ))}
               </div>
