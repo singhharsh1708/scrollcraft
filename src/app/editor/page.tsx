@@ -10,8 +10,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   ArrowLeft, Download, Plus, Trash2, Eye, EyeOff, ChevronUp, ChevronDown,
   Sparkles, Layers, Settings, Type, Loader2, AlignLeft, AlignCenter, AlignRight,
-  MessageSquare, Send, X, Bot, Monitor, Tablet, Smartphone
+  MessageSquare, Send, X, Bot, Monitor, Tablet, Smartphone, Music, Volume2, VolumeX
 } from "lucide-react";
+import { useScrollAudio } from "@/lib/useScrollAudio";
 import Link from "next/link";
 import { toast } from "sonner";
 import dynamic from "next/dynamic";
@@ -92,6 +93,11 @@ function EditorInner() {
   const [customCss, setCustomCss] = useState("");
   const [mobileFrames, setMobileFrames] = useState<string[]>([]);
   const [viewportMode, setViewportMode] = useState<"desktop" | "tablet" | "mobile">("desktop");
+  const [audioSrc, setAudioSrc] = useState<string | null>(null);
+  const [audioMuted, setAudioMuted] = useState(false);
+  const audioFileRef = useRef<HTMLInputElement>(null);
+
+  useScrollAudio({ audioSrc, scrollEl: previewScrollRef, muted: audioMuted });
 
   // Load mobile frames from sessionStorage if the create page generated them
   useEffect(() => {
@@ -152,7 +158,7 @@ function EditorInner() {
       const res = await fetch("/api/export-site", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ frames, mobileFrames: mobileFrames.length ? mobileFrames : undefined, sections, siteName, fps, customHead, customCss }),
+        body: JSON.stringify({ frames, mobileFrames: mobileFrames.length ? mobileFrames : undefined, audioSrc: audioSrc ?? undefined, sections, siteName, fps, customHead, customCss }),
       });
       if (!res.ok) throw new Error(await res.text());
       const blob = await res.blob();
@@ -218,6 +224,16 @@ function EditorInner() {
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Audio mute toggle — only show when audio is loaded */}
+          {audioSrc && (
+            <button
+              onClick={() => setAudioMuted(m => !m)}
+              title={audioMuted ? "Unmute audio" : "Mute audio"}
+              className="p-1 rounded text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {audioMuted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5 text-primary" />}
+            </button>
+          )}
           {/* Viewport toggle */}
           <div className="flex items-center bg-white/5 rounded-md p-0.5 gap-0.5">
             {([["desktop", Monitor], ["tablet", Tablet], ["mobile", Smartphone]] as const).map(([mode, Icon]) => (
@@ -451,6 +467,9 @@ function EditorInner() {
                   <TabsTrigger value="layout" className="flex-1 text-xs h-6">
                     <Settings className="w-3 h-3 mr-1" /> Layout
                   </TabsTrigger>
+                  <TabsTrigger value="audio" className="flex-1 text-xs h-6">
+                    <Music className="w-3 h-3 mr-1" /> Audio
+                  </TabsTrigger>
                   <TabsTrigger value="code" className="flex-1 text-xs h-6">
                     &lt;/&gt; Code
                   </TabsTrigger>
@@ -587,6 +606,46 @@ function EditorInner() {
                       </button>
                     ))}
                   </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="audio" className="p-3 space-y-4 mt-0">
+                <div className="space-y-2">
+                  <label className="text-xs text-muted-foreground font-medium">Background audio</label>
+                  <p className="text-xs text-muted-foreground/70">Volume fades in on scroll, fades out when idle</p>
+                  <button
+                    onClick={() => audioFileRef.current?.click()}
+                    className={`w-full p-3 rounded-xl border-2 border-dashed transition-colors flex flex-col items-center gap-1.5 text-xs ${audioSrc ? "border-primary/40 bg-primary/5 text-primary" : "border-white/15 hover:border-primary/30 text-muted-foreground"}`}
+                  >
+                    <Music className="w-5 h-5" />
+                    {audioSrc ? "Audio loaded — scroll to play" : "Upload MP3 / WAV"}
+                  </button>
+                  <input
+                    ref={audioFileRef}
+                    type="file"
+                    accept="audio/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      const reader = new FileReader();
+                      reader.onload = (ev) => setAudioSrc(ev.target?.result as string);
+                      reader.readAsDataURL(file);
+                    }}
+                  />
+                  {audioSrc && (
+                    <button
+                      onClick={() => { setAudioSrc(null); if (audioFileRef.current) audioFileRef.current.value = ""; }}
+                      className="w-full h-7 rounded border border-white/10 text-xs text-muted-foreground hover:text-destructive hover:border-destructive/40 transition-colors"
+                    >
+                      Remove audio
+                    </button>
+                  )}
+                </div>
+                <div className="text-xs text-muted-foreground/60 space-y-1">
+                  <p>• Audio plays when you scroll in the preview</p>
+                  <p>• Exported site includes the audio file</p>
+                  <p>• Use ambient loops for best results</p>
                 </div>
               </TabsContent>
 
