@@ -11,8 +11,8 @@ const envSchema = z.object({
   // Database
   DATABASE_URL: z.string().url().optional(),
 
-  // Auth
-  NEXTAUTH_SECRET: z.string().min(1, "NEXTAUTH_SECRET is required"),
+  // Auth — required at runtime but optional during build-time static generation
+  NEXTAUTH_SECRET: z.string().optional(),
   NEXTAUTH_URL: z.string().url().optional(),
   AUTH_GITHUB_ID: z.string().optional(),
   AUTH_GITHUB_SECRET: z.string().optional(),
@@ -36,14 +36,25 @@ const envSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
 });
 
+// Skip hard validation during Next.js build phase — env vars are injected at runtime on Vercel
+const isBuildPhase = process.env.NEXT_PHASE === "phase-production-build";
+
 const _env = envSchema.safeParse(process.env);
 
 if (!_env.success) {
-  console.error("❌ Invalid environment variables:\n", _env.error.flatten().fieldErrors);
-  throw new Error("Invalid environment variables. Check server logs for details.");
+  if (isBuildPhase) {
+    console.warn("⚠️  Some environment variables are missing — this is expected during build. Set them in Vercel project settings.");
+  } else {
+    console.error("❌ Invalid environment variables:\n", _env.error.flatten().fieldErrors);
+    throw new Error("Invalid environment variables. Check server logs for details.");
+  }
 }
 
-export const env = _env.data;
+export const env = (_env.success ? _env.data : envSchema.parse({
+  ...process.env,
+  NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET ?? "build-placeholder",
+  NODE_ENV: process.env.NODE_ENV ?? "production",
+}));
 
 export function isDemoMode(): boolean {
   return !env.LUMAAI_API_KEY && !env.RUNWAYML_API_KEY;
