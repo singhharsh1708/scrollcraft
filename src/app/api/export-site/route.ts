@@ -1,6 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import JSZip from "jszip";
 
+function esc(s: string): string {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;").replace(/'/g, "&#x27;");
+}
+
+function safeCss(s: string): string {
+  // Strip anything that could break out of a style attribute
+  return s.replace(/[<>"'\\]/g, "");
+}
+
+function safeHref(s: string): string {
+  return /^https?:\/\//i.test(s) ? s : "#";
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { frames, sections, siteName } = await req.json();
@@ -24,12 +38,12 @@ export async function POST(req: NextRequest) {
 
     // Generate sections HTML
     const sectionsHtml = (sections as Section[]).map((s: Section) => `
-    <section class="scroll-section" style="height:${s.scrollHeight}px; position:relative; z-index:10; display:flex; align-items:${s.align || "center"}; justify-content:${s.justify || "center"};">
-      <div class="section-content" style="text-align:${s.textAlign || "center"}; padding:2rem; max-width:800px;">
-        ${s.eyebrow ? `<p class="eyebrow" style="font-size:0.875rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:${s.accentColor || "#a78bfa"}; margin-bottom:0.75rem;">${s.eyebrow}</p>` : ""}
-        ${s.heading ? `<h2 style="font-size:clamp(2rem,5vw,4rem); font-weight:900; line-height:1; letter-spacing:-0.03em; color:${s.headingColor || "#ffffff"}; margin-bottom:1rem;">${s.heading}</h2>` : ""}
-        ${s.body ? `<p style="font-size:1.125rem; line-height:1.7; color:${s.bodyColor || "rgba(255,255,255,0.7)"}; max-width:600px; margin:0 auto 1.5rem;">${s.body}</p>` : ""}
-        ${s.ctaLabel ? `<a href="${s.ctaHref || "#"}" style="display:inline-block; background:${s.accentColor || "#7c3aed"}; color:white; padding:0.875rem 2rem; border-radius:0.5rem; font-weight:600; text-decoration:none; font-size:1rem;">${s.ctaLabel}</a>` : ""}
+    <section class="scroll-section" style="height:${Number(s.scrollHeight) || 1000}px; position:relative; z-index:10; display:flex; align-items:${safeCss(s.align || "center")}; justify-content:${safeCss(s.justify || "center")};">
+      <div class="section-content" style="text-align:${safeCss(s.textAlign || "center")}; padding:2rem; max-width:800px;">
+        ${s.eyebrow ? `<p class="eyebrow" style="font-size:0.875rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:${safeCss(s.accentColor || "#a78bfa")}; margin-bottom:0.75rem;">${esc(s.eyebrow)}</p>` : ""}
+        ${s.heading ? `<h2 style="font-size:clamp(2rem,5vw,4rem); font-weight:900; line-height:1; letter-spacing:-0.03em; color:${safeCss(s.headingColor || "#ffffff")}; margin-bottom:1rem;">${esc(s.heading)}</h2>` : ""}
+        ${s.body ? `<p style="font-size:1.125rem; line-height:1.7; color:${safeCss(s.bodyColor || "rgba(255,255,255,0.7)")}; max-width:600px; margin:0 auto 1.5rem;">${esc(s.body)}</p>` : ""}
+        ${s.ctaLabel ? `<a href="${safeHref(s.ctaHref || "#")}" style="display:inline-block; background:${safeCss(s.accentColor || "#7c3aed")}; color:white; padding:0.875rem 2rem; border-radius:0.5rem; font-weight:600; text-decoration:none; font-size:1rem;">${esc(s.ctaLabel)}</a>` : ""}
       </div>
     </section>`).join("\n");
 
@@ -41,7 +55,7 @@ export async function POST(req: NextRequest) {
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>${siteName || "My ScrollCraft Site"}</title>
+  <title>${esc(siteName || "My ScrollCraft Site")}</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html { scroll-behavior: auto; }
