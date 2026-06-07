@@ -49,8 +49,18 @@ export async function POST(req: NextRequest) {
       quality = clampQuality(q);
       if (!videoUrl) return NextResponse.json({ error: "No videoUrl" }, { status: 400 });
 
+      let parsedUrl: URL;
+      try {
+        parsedUrl = new URL(videoUrl);
+      } catch {
+        return NextResponse.json({ error: "Invalid videoUrl" }, { status: 400 });
+      }
+      if (parsedUrl.protocol !== "https:" && parsedUrl.protocol !== "http:") {
+        return NextResponse.json({ error: "videoUrl must use http or https" }, { status: 400 });
+      }
+
       // Download the video
-      const response = await fetch(videoUrl);
+      const response = await fetch(parsedUrl.toString());
       if (!response.ok) throw new Error("Failed to download video");
       const buffer = Buffer.from(await response.arrayBuffer());
       videoPath = path.join(tmpDir, "input.mp4");
