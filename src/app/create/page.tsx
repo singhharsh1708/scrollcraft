@@ -26,6 +26,7 @@ function CreatePageInner() {
   const searchParams = useSearchParams();
   const templateName = searchParams.get("template") || "";
   const promptParam = searchParams.get("prompt") || "";
+  const planName = searchParams.get("plan") || "";
 
   const [step, setStep] = useState(0);
   // Prefer explicit prompt param (from presets page) over the static template map
@@ -165,11 +166,18 @@ function CreatePageInner() {
               <h1 className="text-3xl font-black tracking-tighter mb-2">Describe your vision</h1>
               <p className="text-muted-foreground">Tell the AI what atmosphere, style, or scene you want for your scroll background</p>
             </div>
-            {templateName && (
-              <Badge className="bg-primary/20 text-primary border-primary/30">
-                Template: {templateName}
-              </Badge>
-            )}
+            <div className="flex flex-wrap gap-2">
+              {templateName && (
+                <Badge className="bg-primary/20 text-primary border-primary/30">
+                  Template: {templateName}
+                </Badge>
+              )}
+              {planName && (
+                <Badge className="bg-emerald-500/15 text-emerald-400 border-emerald-500/30">
+                  Plan: {planName}
+                </Badge>
+              )}
+            </div>
             <Textarea
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}

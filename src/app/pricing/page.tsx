@@ -277,7 +277,7 @@ export default function PricingPage() {
                 {plan.credits}
               </Badge>
 
-              <Link href="/create" className="mt-auto">
+              <Link href={`/create?plan=${encodeURIComponent(plan.name)}`} className="mt-auto">
                 <Button
                   className={`w-full font-semibold text-sm ${
                     plan.highlight
