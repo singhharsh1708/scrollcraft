@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
+import { auth } from "@/auth";
 
 export const maxDuration = 300;
 
 export async function POST(req: NextRequest) {
+  const session = await auth();
+  if (!session?.user?.email) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const rl = rateLimit(getClientIp(req), { limit: 5, windowMs: 60_000 });
   if (!rl.allowed) {
     return NextResponse.json({ error: "Too many requests. Try again in a minute." }, {
@@ -31,8 +37,8 @@ export async function POST(req: NextRequest) {
         }),
       });
       if (!genRes.ok) {
-        const err = await genRes.text();
-        return NextResponse.json({ error: `Luma error: ${err}` }, { status: 500 });
+        console.error("Luma API error:", await genRes.text());
+        return NextResponse.json({ error: "Video generation failed. Try again later." }, { status: 500 });
       }
       const gen = await genRes.json();
       const generationId = gen.id;
@@ -75,8 +81,8 @@ export async function POST(req: NextRequest) {
         }),
       });
       if (!genRes.ok) {
-        const err = await genRes.text();
-        return NextResponse.json({ error: `Runway error: ${err}` }, { status: 500 });
+        console.error("Runway API error:", await genRes.text());
+        return NextResponse.json({ error: "Video generation failed. Try again later." }, { status: 500 });
       }
       const task = await genRes.json();
       const taskId = task.id;

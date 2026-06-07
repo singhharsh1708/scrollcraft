@@ -2,19 +2,19 @@ import { NextRequest, NextResponse } from "next/server";
 import { writeFile, mkdir, rm } from "fs/promises";
 import { existsSync } from "fs";
 import path from "path";
-import { exec } from "child_process";
+import { execFile as _execFile } from "child_process";
 import { promisify } from "util";
 import { readdir, readFile } from "fs/promises";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { put } from "@vercel/blob";
 
-const execAsync = promisify(exec);
+const execFile = promisify(_execFile);
 
 export const maxDuration = 300;
 
 async function ffmpegAvailable(): Promise<boolean> {
   try {
-    await execAsync("ffmpeg -version");
+    await execFile("ffmpeg", ["-version"]);
     return true;
   } catch {
     return false;
@@ -68,11 +68,24 @@ export async function POST(req: NextRequest) {
       if (parsedUrl.protocol !== "https:" && parsedUrl.protocol !== "http:") {
         return NextResponse.json({ error: "videoUrl must use http or https" }, { status: 400 });
       }
+      // Block SSRF — reject requests to localhost, link-local, and private RFC-1918 ranges
+      const hostname = parsedUrl.hostname.toLowerCase();
+      const privatePattern = /^(localhost|127\.|0\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.|192\.168\.|169\.254\.|::1$|\[::1\])/;
+      if (privatePattern.test(hostname)) {
+        return NextResponse.json({ error: "videoUrl must be a public URL" }, { status: 400 });
+      }
 
-      // Download the video
+      // Download the video — cap at 500 MB to prevent DoS
       const response = await fetch(parsedUrl.toString());
       if (!response.ok) throw new Error("Failed to download video");
+      const contentLength = parseInt(response.headers.get("content-length") ?? "0", 10);
+      if (contentLength > 500 * 1024 * 1024) {
+        return NextResponse.json({ error: "Video file too large (max 500 MB)" }, { status: 413 });
+      }
       const buffer = Buffer.from(await response.arrayBuffer());
+      if (buffer.byteLength > 500 * 1024 * 1024) {
+        return NextResponse.json({ error: "Video file too large (max 500 MB)" }, { status: 413 });
+      }
       videoPath = path.join(tmpDir, "input.mp4");
       await writeFile(videoPath, buffer);
     }
@@ -91,12 +104,16 @@ export async function POST(req: NextRequest) {
     const framesDir = path.join(tmpDir, "frames");
     await mkdir(framesDir, { recursive: true });
 
-    // Extract frames with ffmpeg
+    // Extract frames with ffmpeg — use execFile (no shell interpolation) to prevent injection
     const jpegQuality = Math.round((quality / 100) * 31); // ffmpeg qscale: 1(best)–31(worst)
     const ffmpegQuality = Math.max(1, 31 - jpegQuality);
-    await execAsync(
-      `ffmpeg -i "${videoPath}" -vf "fps=${fps}" -q:v ${ffmpegQuality} "${path.join(framesDir, "frame_%04d.jpg")}" -y`
-    );
+    await execFile("ffmpeg", [
+      "-i", videoPath,
+      "-vf", `fps=${fps}`,
+      "-q:v", String(ffmpegQuality),
+      path.join(framesDir, "frame_%04d.jpg"),
+      "-y",
+    ]);
 
     // Read frames and convert to base64 data URLs
     // Cap at MAX_FRAMES to stay within Vercel's 4.5 MB response limit

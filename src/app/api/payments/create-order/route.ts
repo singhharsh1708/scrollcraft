@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Razorpay from "razorpay";
+import { auth } from "@/auth";
+import { rateLimit, getClientIp } from "@/lib/rateLimit";
 
 const PLAN_PRICES: Record<string, { monthly: number; annual: number }> = {
   Basic:      { monthly: 25,  annual: 20  },
@@ -9,6 +11,16 @@ const PLAN_PRICES: Record<string, { monthly: number; annual: number }> = {
 };
 
 export async function POST(req: NextRequest) {
+  const session = await auth();
+  if (!session?.user?.email) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const rl = rateLimit(getClientIp(req), { limit: 5, windowMs: 3_600_000 }); // 5 per hour
+  if (!rl.allowed) {
+    return NextResponse.json({ error: "Too many payment requests. Try again later." }, { status: 429 });
+  }
+
   const keyId = process.env.RAZORPAY_KEY_ID;
   const keySecret = process.env.RAZORPAY_KEY_SECRET;
 
