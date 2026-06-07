@@ -36,8 +36,10 @@ function CreatePageInner() {
   const [selectedStyle, setSelectedStyle] = useState<Style2D>("gradient");
   const [colors, setColors] = useState<[string, string, string]>(["#7c3aed", "#2563eb", "#0f172a"]);
   const [frameCount, setFrameCount] = useState(120);
+  const [generateMobile, setGenerateMobile] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [progressLabel, setProgressLabel] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
 
   const handleGenerate = async () => {
@@ -45,15 +47,35 @@ function CreatePageInner() {
     setIsGenerating(true);
     setProgress(0);
     try {
+      const opts = { style: selectedStyle, color1: colors[0], color2: colors[1], color3: colors[2], frameCount };
+
+      setProgressLabel(generateMobile ? "Generating desktop frames…" : "Generating frames…");
       const frames = await generate2DFrames(
-        { style: selectedStyle, color1: colors[0], color2: colors[1], color3: colors[2], frameCount },
-        setProgress
+        { ...opts, width: 1280, height: 720 },
+        (p) => setProgress(generateMobile ? Math.round(p * 0.5) : p)
       );
+
+      if (generateMobile) {
+        setProgressLabel("Generating mobile portrait frames…");
+        const mobileFrames = await generate2DFrames(
+          { ...opts, width: 720, height: 1280 },
+          (p) => setProgress(50 + Math.round(p * 0.5))
+        );
+        try {
+          sessionStorage.setItem("scrollcraft_mobile_frames", JSON.stringify(mobileFrames));
+        } catch {
+          // sessionStorage full — skip mobile frames silently
+        }
+      } else {
+        sessionStorage.removeItem("scrollcraft_mobile_frames");
+      }
+
       const params = new URLSearchParams({
         frames: JSON.stringify(frames),
         frameCount: String(frames.length),
         fps: "24",
         prompt: STYLES.find(s => s.id === selectedStyle)?.label ?? selectedStyle,
+        ...(generateMobile ? { hasMobileFrames: "1" } : {}),
       });
       router.push(`/editor?${params.toString()}`);
     } catch (err) {
@@ -214,6 +236,21 @@ function CreatePageInner() {
                 />
                 <p className="text-xs text-muted-foreground">More frames = smoother scroll. 120 is the sweet spot.</p>
               </div>
+
+              <div className="flex items-center justify-between pt-1">
+                <div>
+                  <p className="font-medium text-sm">Generate mobile variant</p>
+                  <p className="text-xs text-muted-foreground">Also create portrait 9:16 frames for phones</p>
+                </div>
+                <button
+                  onClick={() => setGenerateMobile(m => !m)}
+                  className={`relative w-10 h-6 rounded-full transition-colors ${generateMobile ? "bg-primary" : "bg-white/10"}`}
+                  role="switch"
+                  aria-checked={generateMobile}
+                >
+                  <span className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform ${generateMobile ? "translate-x-5" : "translate-x-1"}`} />
+                </button>
+              </div>
             </div>
 
             {/* Upload your own video */}
@@ -249,7 +286,7 @@ function CreatePageInner() {
             </div>
             <div>
               <h2 className="text-2xl font-bold mb-2">Generating frames…</h2>
-              <p className="text-muted-foreground">{isGenerating ? "Drawing your scroll animation" : "Processing…"}</p>
+              <p className="text-muted-foreground">{isGenerating ? (progressLabel || "Drawing your scroll animation") : "Processing…"}</p>
             </div>
             <div className="space-y-2">
               <Progress value={progress} className="h-2" />
