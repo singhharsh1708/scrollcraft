@@ -19,6 +19,11 @@ const envSchema = z.object({
   // Storage
   BLOB_READ_WRITE_TOKEN: z.string().optional(),
 
+  // Payments
+  RAZORPAY_KEY_ID: z.string().optional(),
+  RAZORPAY_KEY_SECRET: z.string().optional(),
+  RAZORPAY_WEBHOOK_SECRET: z.string().optional(),
+
   // Observability
   NEXT_PUBLIC_SENTRY_DSN: z.string().url().optional(),
   SENTRY_ORG: z.string().optional(),

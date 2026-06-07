@@ -3,7 +3,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Check, Minus, Sparkles, Zap } from "lucide-react";
+import { Check, Minus, Sparkles, Zap, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 const PLANS = [
   {
@@ -172,9 +173,75 @@ const FAQ = [
   },
 ];
 
+declare global {
+  interface Window {
+    Razorpay: new (options: Record<string, unknown>) => { open(): void };
+  }
+}
+
+function loadRazorpayScript(): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (window.Razorpay) { resolve(); return; }
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error("Failed to load Razorpay"));
+    document.head.appendChild(script);
+  });
+}
+
 export default function PricingPage() {
   const [annual, setAnnual] = useState(true);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [checkingOut, setCheckingOut] = useState<string | null>(null);
+
+  const handleCheckout = async (planName: string) => {
+    setCheckingOut(planName);
+    try {
+      const res = await fetch("/api/payments/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan: planName, billing: annual ? "annual" : "monthly" }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to create order");
+
+      await loadRazorpayScript();
+
+      const rzp = new window.Razorpay({
+        key: data.keyId,
+        amount: data.amount,
+        currency: data.currency,
+        order_id: data.orderId,
+        name: "ScrollCraft",
+        description: `${planName} plan — ${annual ? "Annual" : "Monthly"}`,
+        theme: { color: "#7c3aed" },
+        handler: async (response: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string }) => {
+          const verifyRes = await fetch("/api/payments/verify", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              orderId: response.razorpay_order_id,
+              paymentId: response.razorpay_payment_id,
+              signature: response.razorpay_signature,
+            }),
+          });
+          const verifyData = await verifyRes.json();
+          if (verifyData.success) {
+            toast.success(`${planName} activated! Welcome aboard.`);
+            window.location.href = `/create?plan=${encodeURIComponent(planName)}`;
+          } else {
+            toast.error("Payment verification failed. Contact support.");
+          }
+        },
+      });
+      rzp.open();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Checkout failed");
+    } finally {
+      setCheckingOut(null);
+    }
+  };
 
   return (
     <main className="min-h-screen bg-background text-foreground">
@@ -277,17 +344,31 @@ export default function PricingPage() {
                 {plan.credits}
               </Badge>
 
-              <Link href={`/create?plan=${encodeURIComponent(plan.name)}`} className="mt-auto">
-                <Button
-                  className={`w-full font-semibold text-sm ${
-                    plan.highlight
-                      ? "bg-primary hover:bg-primary/90 text-white shadow-md shadow-primary/25"
-                      : "bg-white/8 hover:bg-white/12 text-foreground border border-white/10"
-                  }`}
-                >
-                  {plan.cta}
-                </Button>
-              </Link>
+              <div className="mt-auto">
+                {plan.monthly === 0 ? (
+                  <Link href={`/create?plan=${encodeURIComponent(plan.name)}`}>
+                    <Button
+                      className={`w-full font-semibold text-sm bg-white/8 hover:bg-white/12 text-foreground border border-white/10`}
+                    >
+                      {plan.cta}
+                    </Button>
+                  </Link>
+                ) : (
+                  <Button
+                    onClick={() => handleCheckout(plan.name)}
+                    disabled={checkingOut === plan.name}
+                    className={`w-full font-semibold text-sm ${
+                      plan.highlight
+                        ? "bg-primary hover:bg-primary/90 text-white shadow-md shadow-primary/25"
+                        : "bg-white/8 hover:bg-white/12 text-foreground border border-white/10"
+                    }`}
+                  >
+                    {checkingOut === plan.name
+                      ? <><Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> Processing…</>
+                      : plan.cta}
+                  </Button>
+                )}
+              </div>
 
               <div className="border-t border-white/8 pt-4 space-y-2">
                 {plan.features.map((f) => (
