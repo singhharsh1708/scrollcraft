@@ -18,7 +18,7 @@ function safeHref(s: string): string {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { frames, mobileFrames, sections, siteName, customHead = "", customCss = "" } = body;
+    const { frames, mobileFrames, audioSrc, sections, siteName, customHead = "", customCss = "" } = body;
 
     if (!Array.isArray(frames) || frames.length === 0) {
       return NextResponse.json({ error: "frames must be a non-empty array" }, { status: 400 });
@@ -37,6 +37,15 @@ export async function POST(req: NextRequest) {
 
     const hasMobileFrames = Array.isArray(mobileFrames) && mobileFrames.length > 0 && mobileFrames[0].startsWith("data:image/");
 
+    // Validate and extract audio
+    const audioDataUriMatch = typeof audioSrc === "string"
+      ? audioSrc.match(/^data:(audio\/[a-zA-Z0-9+.-]+);base64,(.+)$/)
+      : null;
+    const hasAudio = !!audioDataUriMatch;
+    const audioMime = audioDataUriMatch?.[1] ?? "";
+    const audioExt = audioMime.split("/")[1]?.split(";")[0] ?? "mp3";
+    const audioBase64 = audioDataUriMatch?.[2] ?? "";
+
     const zip = new JSZip();
     const framesFolder = zip.folder("frames")!;
 
@@ -53,6 +62,11 @@ export async function POST(req: NextRequest) {
         const base64 = mobileFrames[i].replace(/^data:image\/[a-zA-Z+.-]+;base64,/, "");
         mobileFolder.file(`frame_${String(i).padStart(4, "0")}.jpg`, base64, { base64: true });
       }
+    }
+
+    // Add audio file if present
+    if (hasAudio) {
+      zip.file(`audio/track.${audioExt}`, audioBase64, { base64: true });
     }
 
     // Generate sections HTML
@@ -91,6 +105,14 @@ export async function POST(req: NextRequest) {
       text-transform: uppercase; z-index: 20; transition: opacity 0.5s;
     }
     #scroll-hint .arrow { width: 1px; height: 40px; background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.4)); }
+    #audio-mute {
+      position: fixed; top: 1rem; right: 1rem; z-index: 30;
+      background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.15);
+      color: white; border-radius: 50%; width: 2rem; height: 2rem;
+      cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center;
+      transition: background 0.2s;
+    }
+    #audio-mute:hover { background: rgba(255,255,255,0.1); }
   </style>
   ${customCss ? `<style>\n${customCss}\n  </style>` : ""}
   ${customHead || ""}
@@ -105,6 +127,7 @@ export async function POST(req: NextRequest) {
     <span>Scroll</span>
     <div class="arrow"></div>
   </div>
+  ${hasAudio ? `<button id="audio-mute" title="Toggle audio">🔊</button>` : ""}
 
   <script>
     (function() {
@@ -189,6 +212,46 @@ export async function POST(req: NextRequest) {
       preload();
     })();
 
+    ${hasAudio ? `
+    // Scroll-linked audio
+    (function() {
+      var audio = new Audio('audio/track.${audioExt}');
+      audio.loop = true;
+      audio.volume = 0;
+      var lastScrollY = 0, lastScrollTime = 0, idleTimer = null, fadeRaf = null;
+
+      function fadeVolume(target, duration) {
+        var start = audio.volume, startTime = performance.now();
+        cancelAnimationFrame(fadeRaf);
+        function tick(now) {
+          var t = Math.min((now - startTime) / duration, 1);
+          audio.volume = start + (target - start) * t;
+          if (t < 1) { fadeRaf = requestAnimationFrame(tick); }
+          else if (target === 0) { audio.pause(); }
+        }
+        fadeRaf = requestAnimationFrame(tick);
+      }
+
+      var muteBtn = document.getElementById('audio-mute');
+      if (muteBtn) muteBtn.addEventListener('click', function() {
+        audio.muted = !audio.muted;
+        muteBtn.textContent = audio.muted ? '🔇' : '🔊';
+      });
+
+      window.addEventListener('scroll', function() {
+        var now = performance.now();
+        var scrollY = window.scrollY;
+        var dt = now - lastScrollTime;
+        var velocity = dt > 0 ? Math.abs(scrollY - lastScrollY) / dt : 0;
+        lastScrollY = scrollY; lastScrollTime = now;
+        var targetVol = Math.min(Math.max(velocity / 0.5, 0.08), 1);
+        if (audio.paused) { audio.volume = targetVol; audio.play().catch(function(){}); }
+        else { cancelAnimationFrame(fadeRaf); audio.volume = targetVol; }
+        clearTimeout(idleTimer);
+        idleTimer = setTimeout(function() { fadeVolume(0, 600); }, 2000);
+      }, { passive: true });
+    })();
+    ` : ""}
     // Scroll-linked section entrance animations
     (function() {
       const sections = document.querySelectorAll('.scroll-section');
