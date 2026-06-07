@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
 
   const selectedSection = sections.find((s: Section) => s.id === selectedSectionId);
 
-  const systemPrompt = `You are an AI assistant helping a user edit their 3D scroll website sections.
+  const systemPrompt = `You are an AI assistant helping a user edit their scroll website sections.
 Current selected section: ${JSON.stringify(selectedSection, null, 2)}
 All sections: ${JSON.stringify(sections, null, 2)}
 

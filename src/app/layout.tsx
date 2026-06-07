@@ -7,8 +7,8 @@ import SessionProvider from "@/components/SessionProvider";
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata: Metadata = {
-  title: "ScrollCraft — AI 3D Scroll Sites",
-  description: "Build immersive 3D scroll websites powered by AI-generated video",
+  title: "ScrollCraft — AI Scroll Sites",
+  description: "Build immersive 2D scroll websites with animated canvas backgrounds. No code needed.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

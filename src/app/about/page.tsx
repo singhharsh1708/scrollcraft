@@ -42,7 +42,7 @@ export default function AboutPage() {
         </h1>
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
           We started ScrollCraft because we were tired of flat, boring websites. 
-          3D scroll experiences existed — but only for teams with six-figure budgets and Three.js engineers. 
+          Immersive animated scroll experiences existed — but only for teams with six-figure budgets and specialist engineers.
           We fixed that.
         </p>
       </section>
@@ -128,7 +128,7 @@ export default function AboutPage() {
       {/* CTA */}
       <section className="py-24 px-6 text-center border-t border-white/5">
         <h2 className="text-4xl font-black tracking-tighter mb-4">Come build with us</h2>
-        <p className="text-muted-foreground mb-8 max-w-md mx-auto">Start free. No credit card. Your first 3D site in under 15 minutes.</p>
+        <p className="text-muted-foreground mb-8 max-w-md mx-auto">Start free. No credit card. Your first scroll site in under 5 minutes.</p>
         <Link href="/create">
           <Button size="lg" className="bg-primary hover:bg-primary/90 text-white px-10 py-6 font-semibold">
             Start for free <ArrowRight className="ml-2 w-4 h-4" />

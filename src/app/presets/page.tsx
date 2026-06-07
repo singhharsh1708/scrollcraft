@@ -22,7 +22,7 @@ const PRESETS = [
     name: "TripVault",
     category: "Mobile App",
     description: "Travel app showcase with destination flythrough",
-    tags: ["Colorful", "Immersive", "3D"],
+    tags: ["Colorful", "Immersive", "Animated"],
     gradient: "from-sky-900 via-blue-900 to-indigo-950",
     accent: "#38bdf8",
     prompt: "Aerial cinematic flyover of turquoise tropical coastline at golden hour. Drone shot, warm colors, crystal water, lush green islands.",
@@ -111,8 +111,8 @@ const PRESETS = [
   {
     name: "AutoMachines",
     category: "Developer Tool",
-    description: "Automation hero with Spline 3D aesthetic",
-    tags: ["3D", "Dark", "Automation"],
+    description: "Automation hero with geometric canvas aesthetic",
+    tags: ["Geometric", "Dark", "Automation"],
     gradient: "from-stone-900 via-neutral-900 to-black",
     accent: "#d4d4d4",
     prompt: "Cinematic shot of robotic assembly arms in dark factory. Sparks flying, precision motion. Industrial but premium. Slow motion.",
@@ -208,7 +208,7 @@ export default function PresetsPage() {
               >
                 {/* Visual preview */}
                 <div className={`aspect-video bg-gradient-to-br ${preset.gradient} relative flex items-end p-5`}>
-                  {/* Fake scroll lines to suggest 3D scroll */}
+                  {/* Animated scroll preview lines */}
                   <div className="absolute inset-0 opacity-10">
                     {[...Array(5)].map((_, i) => (
                       <div

@@ -181,7 +181,7 @@ export default function DashboardPage() {
             <div className="text-center py-20 rounded-2xl border border-dashed border-white/10">
               <Sparkles className="w-8 h-8 text-primary mx-auto mb-3" />
               <p className="font-medium mb-1">No sites yet</p>
-              <p className="text-sm text-muted-foreground mb-4">Create your first 3D scroll site in minutes</p>
+              <p className="text-sm text-muted-foreground mb-4">Create your first scroll site in minutes</p>
               <Link href="/create">
                 <Button className="bg-primary text-white">Create your first site</Button>
               </Link>

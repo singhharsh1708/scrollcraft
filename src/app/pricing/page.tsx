@@ -43,7 +43,7 @@ const PLANS = [
     credits: "1,500 credits / mo",
     features: [
       "1,500 AI credits / month",
-      "2 full 3D websites",
+      "2 full scroll websites",
       "Free subdomain",
       "30 images / 15 videos",
       "20 design-change chats",
@@ -71,7 +71,7 @@ const PLANS = [
     credits: "2,500 credits / mo",
     features: [
       "2,500 AI credits / month",
-      "4 full 3D websites",
+      "4 full scroll websites",
       "Free subdomain",
       "50 images / 25 videos",
       "35 design-change chats",
@@ -99,7 +99,7 @@ const PLANS = [
     credits: "6,000 credits / mo",
     features: [
       "6,000 AI credits / month",
-      "7 full 3D websites",
+      "7 full scroll websites",
       "Free subdomain",
       "Custom domain support",
       "120 images / 60 videos",
@@ -128,7 +128,7 @@ const PLANS = [
     credits: "25,000 credits / mo",
     features: [
       "25,000 AI credits / month",
-      "30 full 3D websites",
+      "30 full scroll websites",
       "Free subdomain",
       "Custom domain support",
       "500 images / 250 videos",
@@ -168,7 +168,7 @@ const FAQ = [
   },
   {
     q: "Is there an enterprise plan?",
-    a: "Yes. We build custom 3D websites for your brand and offer white-label solutions. Contact us for pricing.",
+    a: "Yes. We build custom scroll websites for your brand and offer white-label solutions. Contact us for pricing.",
   },
 ];
 
@@ -208,7 +208,7 @@ export default function PricingPage() {
           </span>
         </h1>
         <p className="text-muted-foreground text-lg max-w-xl mx-auto mb-10">
-          Every plan includes our full 3D scroll engine, ZIP export, and AI video generation.
+          Every plan includes our full animated scroll engine, ZIP export, and canvas generation.
         </p>
 
         {/* Billing toggle */}
@@ -312,7 +312,7 @@ export default function PricingPage() {
           <div>
             <p className="font-semibold text-lg mb-1">Enterprise</p>
             <p className="text-muted-foreground text-sm max-w-md">
-              Custom 3D websites built for your brand by our team. White-label, dedicated infrastructure, SLA, and custom AI model training.
+              Custom scroll websites built for your brand by our team. White-label, dedicated infrastructure, SLA, and custom AI model training.
             </p>
           </div>
           <Link href="mailto:hello@scrollcraft.app">
