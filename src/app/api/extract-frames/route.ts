@@ -89,9 +89,18 @@ export async function POST(req: NextRequest) {
     );
 
     // Read frames and convert to base64 data URLs
-    const frameFiles = (await readdir(framesDir))
+    // Cap at MAX_FRAMES to stay within Vercel's 4.5 MB response limit
+    const MAX_FRAMES = 120;
+    const allFrameFiles = (await readdir(framesDir))
       .filter(f => f.endsWith(".jpg"))
       .sort();
+
+    const step = allFrameFiles.length > MAX_FRAMES
+      ? allFrameFiles.length / MAX_FRAMES
+      : 1;
+    const frameFiles = allFrameFiles.length > MAX_FRAMES
+      ? Array.from({ length: MAX_FRAMES }, (_, i) => allFrameFiles[Math.min(Math.floor(i * step), allFrameFiles.length - 1)])
+      : allFrameFiles;
 
     const frames: string[] = [];
     for (const file of frameFiles) {
