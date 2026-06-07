@@ -7,8 +7,6 @@ export async function POST(req: NextRequest) {
     const { prompt } = await req.json();
     if (!prompt) return NextResponse.json({ error: "Prompt required" }, { status: 400 });
 
-    const apiKey = process.env.LUMAAI_API_KEY || process.env.RUNWAYML_API_KEY;
-
     // Luma AI (Dream Machine) path
     if (process.env.LUMAAI_API_KEY) {
       const genRes = await fetch("https://api.lumalabs.ai/dream-machine/v1/generations", {
@@ -37,6 +35,7 @@ export async function POST(req: NextRequest) {
         const pollRes = await fetch(`https://api.lumalabs.ai/dream-machine/v1/generations/${generationId}`, {
           headers: { "Authorization": `Bearer ${process.env.LUMAAI_API_KEY}` },
         });
+        if (!pollRes.ok) continue;
         const pollData = await pollRes.json();
         if (pollData.state === "completed") {
           videoUrl = pollData.assets?.video;
@@ -81,6 +80,7 @@ export async function POST(req: NextRequest) {
             "X-Runway-Version": "2024-11-06",
           },
         });
+        if (!pollRes.ok) continue;
         const pollData = await pollRes.json();
         if (pollData.status === "SUCCEEDED") {
           return NextResponse.json({ videoUrl: pollData.output?.[0] });
