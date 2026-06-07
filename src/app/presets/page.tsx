@@ -241,9 +241,11 @@ export default function PresetsPage() {
                         Use preset <ArrowRight className="ml-1 w-3 h-3" />
                       </Button>
                     </Link>
-                    <Button size="sm" variant="outline" className="border-white/20 bg-white/10 backdrop-blur-sm hover:bg-white/20">
-                      <Eye className="w-3 h-3 mr-1" /> Preview
-                    </Button>
+                    <Link href={`/editor?prompt=${encodeURIComponent(preset.prompt)}`}>
+                      <Button size="sm" variant="outline" className="border-white/20 bg-white/10 backdrop-blur-sm hover:bg-white/20">
+                        <Eye className="w-3 h-3 mr-1" /> Preview
+                      </Button>
+                    </Link>
                   </div>
                 </div>
 
