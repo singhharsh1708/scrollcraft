@@ -31,18 +31,39 @@ export default function ScrollEngine({ frames, totalScrollHeight = 5000, classNa
   }, []);
 
   const preloadImages = useCallback(() => {
-    const images: HTMLImageElement[] = [];
-    let loaded = 0;
+    const images: HTMLImageElement[] = new Array(frames.length);
+    let keyframesLoaded = 0;
+    const KEYFRAME_STEP = 5; // load every 5th frame first
 
-    frames.forEach((src) => {
+    const loadImage = (index: number) => {
       const img = new Image();
-      img.src = src;
+      img.src = frames[index];
       img.onload = () => {
-        loaded++;
-        if (loaded === 1) drawFrame(0); // draw first frame immediately
-        if (loaded === frames.length) loadedRef.current = true;
+        images[index] = img;
+        if (index === 0) drawFrame(0); // draw immediately on first frame
       };
-      images.push(img);
+      return img;
+    };
+
+    // Phase 1: load keyframes (every KEYFRAME_STEP)
+    const keyframeIndices = frames
+      .map((_, i) => i)
+      .filter(i => i % KEYFRAME_STEP === 0);
+
+    keyframeIndices.forEach(i => {
+      const img = loadImage(i);
+      img.onload = () => {
+        images[i] = img;
+        keyframesLoaded++;
+        if (i === 0) drawFrame(0);
+        // Phase 2: once all keyframes done, load the rest
+        if (keyframesLoaded === keyframeIndices.length) {
+          frames.forEach((_, j) => {
+            if (j % KEYFRAME_STEP !== 0) loadImage(j);
+          });
+          loadedRef.current = true;
+        }
+      };
     });
 
     imagesRef.current = images;
