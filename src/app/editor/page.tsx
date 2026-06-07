@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -54,6 +54,7 @@ const defaultSection = (i: number): Section => ({
 
 function EditorInner() {
   const searchParams = useSearchParams();
+  const previewScrollRef = useRef<HTMLDivElement>(null);
 
   // Derive initial frame state from URL params at render time (no setState-in-effect)
   const framesParam = searchParams.get("frames");
@@ -279,11 +280,12 @@ function EditorInner() {
         {showPreview && (
           <div className="flex-1 relative overflow-hidden">
             {frames.length > 0 && (
-              <div className="absolute inset-0" style={{ height: totalScrollHeight, overflowY: "scroll" }}>
+              <div ref={previewScrollRef} className="absolute inset-0" style={{ height: totalScrollHeight, overflowY: "scroll" }}>
                 <ScrollEngine
                   frames={frames}
                   totalScrollHeight={totalScrollHeight}
                   onFrameChange={setCurrentFrame}
+                  scrollContainer={previewScrollRef}
                 />
                 {/* Section overlays */}
                 <div className="relative z-10" style={{ height: totalScrollHeight }}>

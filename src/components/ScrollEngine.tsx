@@ -6,9 +6,10 @@ interface ScrollEngineProps {
   totalScrollHeight?: number;
   className?: string;
   onFrameChange?: (index: number) => void;
+  scrollContainer?: React.RefObject<HTMLElement | null>;
 }
 
-export default function ScrollEngine({ frames, totalScrollHeight = 5000, className = "", onFrameChange }: ScrollEngineProps) {
+export default function ScrollEngine({ frames, totalScrollHeight = 5000, className = "", onFrameChange, scrollContainer }: ScrollEngineProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const imagesRef = useRef<HTMLImageElement[]>([]);
@@ -51,10 +52,15 @@ export default function ScrollEngine({ frames, totalScrollHeight = 5000, classNa
   }, [preloadImages]);
 
   useEffect(() => {
+    const el = scrollContainer?.current ?? window;
     const handleScroll = () => {
-      if (!containerRef.current) return;
-      const scrollTop = window.scrollY;
-      const maxScroll = totalScrollHeight - window.innerHeight;
+      const scrollTop = scrollContainer?.current
+        ? scrollContainer.current.scrollTop
+        : window.scrollY;
+      const viewHeight = scrollContainer?.current
+        ? scrollContainer.current.clientHeight
+        : window.innerHeight;
+      const maxScroll = totalScrollHeight - viewHeight;
       const progress = Math.min(Math.max(scrollTop / maxScroll, 0), 1);
       const frameIndex = Math.floor(progress * (frames.length - 1));
 
@@ -66,9 +72,9 @@ export default function ScrollEngine({ frames, totalScrollHeight = 5000, classNa
       }
     };
 
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [frames.length, totalScrollHeight, drawFrame, onFrameChange]);
+    el.addEventListener("scroll", handleScroll, { passive: true });
+    return () => el.removeEventListener("scroll", handleScroll);
+  }, [frames.length, totalScrollHeight, drawFrame, onFrameChange, scrollContainer]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
