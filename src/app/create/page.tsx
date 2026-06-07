@@ -25,9 +25,11 @@ function CreatePageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const templateName = searchParams.get("template") || "";
+  const promptParam = searchParams.get("prompt") || "";
 
   const [step, setStep] = useState(0);
-  const [prompt, setPrompt] = useState(TEMPLATE_PROMPTS[templateName] || "");
+  // Prefer explicit prompt param (from presets page) over the static template map
+  const [prompt, setPrompt] = useState(promptParam || TEMPLATE_PROMPTS[templateName] || "");
   const [fps, setFps] = useState([24]);
   const [quality, setQuality] = useState([80]);
   const [isGenerating, setIsGenerating] = useState(false);
