@@ -18,7 +18,7 @@ function safeHref(s: string): string {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { frames, sections, siteName } = body;
+    const { frames, sections, siteName, customHead = "", customCss = "" } = body;
 
     if (!Array.isArray(frames) || frames.length === 0) {
       return NextResponse.json({ error: "frames must be a non-empty array" }, { status: 400 });
@@ -80,6 +80,8 @@ export async function POST(req: NextRequest) {
     }
     #scroll-hint .arrow { width: 1px; height: 40px; background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.4)); }
   </style>
+  ${customCss ? `<style>\n${customCss}\n  </style>` : ""}
+  ${customHead || ""}
 </head>
 <body>
   <canvas id="scroll-canvas"></canvas>
