@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, Suspense } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -54,7 +54,6 @@ const defaultSection = (i: number): Section => ({
 
 function EditorInner() {
   const searchParams = useSearchParams();
-  const router = useRouter();
 
   // Derive initial frame state from URL params at render time (no setState-in-effect)
   const framesParam = searchParams.get("frames");
