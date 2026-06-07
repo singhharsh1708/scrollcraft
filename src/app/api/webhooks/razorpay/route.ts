@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
+import { db } from "@/lib/db";
+
+const PLAN_MAP: Record<string, "BASIC" | "BASIC_PLUS" | "PRO" | "PREMIUM"> = {
+  Basic: "BASIC", "Basic Plus": "BASIC_PLUS", Pro: "PRO", Premium: "PREMIUM",
+};
 
 export async function POST(req: NextRequest) {
   const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
-
   if (!webhookSecret) {
     return NextResponse.json({ error: "Webhook secret not configured" }, { status: 503 });
   }
@@ -16,11 +20,11 @@ export async function POST(req: NextRequest) {
     .update(rawBody)
     .digest("hex");
 
-  if (expectedSignature !== signature) {
+  if (!crypto.timingSafeEqual(Buffer.from(expectedSignature), Buffer.from(signature))) {
     return NextResponse.json({ error: "Invalid webhook signature" }, { status: 400 });
   }
 
-  let event: { event: string; payload?: { payment?: { entity?: { id?: string; notes?: Record<string, string> } } } };
+  let event: { event: string; payload?: { payment?: { entity?: { id?: string; order_id?: string; notes?: Record<string, string> } } } };
   try {
     event = JSON.parse(rawBody);
   } catch {
@@ -29,19 +33,37 @@ export async function POST(req: NextRequest) {
 
   switch (event.event) {
     case "payment.captured": {
-      const payment = event.payload?.payment?.entity;
-      if (payment) {
-        const { plan, billing } = payment.notes ?? {};
-        // TODO: update user subscription in database using payment.id, plan, billing
-        console.log("Payment captured:", { paymentId: payment.id, plan, billing });
+      const entity = event.payload?.payment?.entity;
+      if (entity?.order_id) {
+        try {
+          const payment = await db.payment.findUnique({ where: { razorpayOrderId: entity.order_id } });
+          if (payment && payment.status !== "CAPTURED") {
+            await db.payment.update({
+              where: { id: payment.id },
+              data: { razorpayPaymentId: entity.id, status: "CAPTURED" },
+            });
+            const newPlan = PLAN_MAP[payment.plan];
+            if (newPlan) {
+              await db.user.update({ where: { id: payment.userId }, data: { plan: newPlan } });
+            }
+          }
+        } catch (err) {
+          console.error("Webhook DB update failed:", err);
+        }
       }
       break;
     }
-    case "payment.failed":
-      console.log("Payment failed:", event.payload?.payment?.entity?.id);
+    case "payment.failed": {
+      const entity = event.payload?.payment?.entity;
+      if (entity?.order_id) {
+        await db.payment.updateMany({
+          where: { razorpayOrderId: entity.order_id, status: "PENDING" },
+          data: { status: "FAILED" },
+        }).catch(() => {});
+      }
       break;
+    }
     default:
-      // Unhandled event type — acknowledge receipt
       break;
   }
 

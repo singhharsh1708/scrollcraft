@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import JSZip from "jszip";
+import { auth } from "@/auth";
+import { rateLimit, getClientIp } from "@/lib/rateLimit";
 
 function esc(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
@@ -16,6 +18,16 @@ function safeHref(s: string): string {
 }
 
 export async function POST(req: NextRequest) {
+  const session = await auth();
+  if (!session?.user?.email) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const rl = rateLimit(getClientIp(req), { limit: 10, windowMs: 60_000 });
+  if (!rl.allowed) {
+    return NextResponse.json({ error: "Too many requests. Try again in a minute." }, { status: 429 });
+  }
+
   try {
     const body = await req.json();
     const { frames, mobileFrames, audioSrc, sections, siteName, customHead = "", customCss = "" } = body;

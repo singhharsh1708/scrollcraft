@@ -1,11 +1,19 @@
 const store = new Map<string, { count: number; resetAt: number }>();
 
+function pruneExpired() {
+  const now = Date.now();
+  for (const [key, entry] of store) {
+    if (entry.resetAt <= now) store.delete(key);
+  }
+}
+
 interface RateLimitOptions {
   limit: number;
   windowMs: number;
 }
 
 export function rateLimit(ip: string, { limit, windowMs }: RateLimitOptions): { allowed: boolean; remaining: number; resetAt: number } {
+  if (store.size > 10_000) pruneExpired();
   const now = Date.now();
   const entry = store.get(ip);
 
