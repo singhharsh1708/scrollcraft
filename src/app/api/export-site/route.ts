@@ -89,7 +89,10 @@ export async function POST(req: NextRequest) {
       function drawFrame(index) {
         const img = images[index];
         if (!img || !img.complete) return;
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        const scale = Math.max(canvas.width / img.naturalWidth, canvas.height / img.naturalHeight);
+        const w = img.naturalWidth * scale;
+        const h = img.naturalHeight * scale;
+        ctx.drawImage(img, (canvas.width - w) / 2, (canvas.height - h) / 2, w, h);
       }
 
       function preload() {

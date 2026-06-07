@@ -22,14 +22,17 @@ export default function ScrollEngine({ frames, totalScrollHeight = 5000, classNa
     if (!canvas || !img || !img.complete) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    const scale = Math.max(canvas.width / img.naturalWidth, canvas.height / img.naturalHeight);
+    const w = img.naturalWidth * scale;
+    const h = img.naturalHeight * scale;
+    ctx.drawImage(img, (canvas.width - w) / 2, (canvas.height - h) / 2, w, h);
   }, []);
 
   const preloadImages = useCallback(() => {
     const images: HTMLImageElement[] = [];
     let loaded = 0;
 
-    frames.forEach((src, i) => {
+    frames.forEach((src) => {
       const img = new Image();
       img.src = src;
       img.onload = () => {
