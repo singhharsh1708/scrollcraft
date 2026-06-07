@@ -81,11 +81,17 @@ function EditorInner() {
     if (framesParam) {
       try {
         const parsed = JSON.parse(framesParam);
-        setFrames(parsed);
-        setFrameCount(parseInt(countParam || String(parsed.length)));
-        setFps(parseInt(fpsParam || "24"));
+        // Frames that don't start with data:image/ are SVG demo URLs — treat as demo
+        const hasRealFrames = parsed.length > 0 && parsed[0].startsWith("data:image/");
+        if (!hasRealFrames) {
+          setIsDemo(true);
+          loadDemoFrames();
+        } else {
+          setFrames(parsed);
+          setFrameCount(parseInt(countParam || String(parsed.length)));
+          setFps(parseInt(fpsParam || "24"));
+        }
       } catch {
-        // demo mode
         setIsDemo(true);
         loadDemoFrames();
       }

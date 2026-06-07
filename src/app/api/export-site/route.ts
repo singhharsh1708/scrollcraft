@@ -3,7 +3,15 @@ import JSZip from "jszip";
 
 export async function POST(req: NextRequest) {
   try {
-    const { frames, sections, siteName, fps } = await req.json();
+    const { frames, sections, siteName } = await req.json();
+
+    // Reject SVG demo-frame URLs — only real base64 data URIs are exportable
+    if (!frames?.length || !frames[0].startsWith("data:image/")) {
+      return NextResponse.json(
+        { error: "Cannot export demo frames. Generate real frames first using the AI or by uploading a video." },
+        { status: 400 }
+      );
+    }
 
     const zip = new JSZip();
     const framesFolder = zip.folder("frames")!;
