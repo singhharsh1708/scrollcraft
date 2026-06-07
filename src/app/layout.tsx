@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import SessionProvider from "@/components/SessionProvider";
+import SmoothScroll from "@/components/SmoothScroll";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -40,7 +41,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={`dark ${inter.variable}`}>
       <body className="min-h-full antialiased">
         <SessionProvider>
-          {children}
+          <SmoothScroll>
+            {children}
+          </SmoothScroll>
         </SessionProvider>
         <Toaster richColors position="bottom-right" />
       </body>
