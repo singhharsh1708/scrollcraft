@@ -30,11 +30,14 @@ export async function POST(req: NextRequest) {
     let fps = 24;
     let quality = 80;
 
+    const clampFps = (v: unknown) => Math.min(60, Math.max(1, Math.floor(Number(v) || 24)));
+    const clampQuality = (v: unknown) => Math.min(100, Math.max(1, Math.floor(Number(v) || 80)));
+
     if (contentType.includes("multipart/form-data")) {
       const formData = await req.formData();
       const file = formData.get("video") as File;
-      fps = Number(formData.get("fps") || 24);
-      quality = Number(formData.get("quality") || 80);
+      fps = clampFps(formData.get("fps"));
+      quality = clampQuality(formData.get("quality"));
       if (!file) return NextResponse.json({ error: "No video file" }, { status: 400 });
 
       const buffer = Buffer.from(await file.arrayBuffer());
@@ -42,8 +45,8 @@ export async function POST(req: NextRequest) {
       await writeFile(videoPath, buffer);
     } else {
       const { videoUrl, fps: f, quality: q } = await req.json();
-      fps = f || 24;
-      quality = q || 80;
+      fps = clampFps(f);
+      quality = clampQuality(q);
       if (!videoUrl) return NextResponse.json({ error: "No videoUrl" }, { status: 400 });
 
       // Download the video
