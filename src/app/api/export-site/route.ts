@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
 
     // Add each frame
     for (let i = 0; i < frames.length; i++) {
-      const base64 = frames[i].replace(/^data:image\/jpeg;base64,/, "");
+      const base64 = frames[i].replace(/^data:image\/[a-zA-Z+.-]+;base64,/, "");
       framesFolder.file(`frame_${String(i).padStart(4, "0")}.jpg`, base64, { base64: true });
     }
 
