@@ -42,3 +42,5 @@ next-env.d.ts
 
 # temporary frame extraction files
 /tmp
+
+/src/generated/prisma

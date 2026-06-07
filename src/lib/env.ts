@@ -8,6 +8,9 @@ const envSchema = z.object({
   // AI chat editing
   ANTHROPIC_API_KEY: z.string().optional(),
 
+  // Database
+  DATABASE_URL: z.string().url().optional(),
+
   // Auth
   NEXTAUTH_SECRET: z.string().min(1, "NEXTAUTH_SECRET is required"),
   NEXTAUTH_URL: z.string().url().optional(),
