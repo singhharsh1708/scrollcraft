@@ -85,6 +85,7 @@ function EditorInner() {
   ]);
   const [chatInput, setChatInput] = useState("");
   const [chatLoading, setChatLoading] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   // Show demo toast once on mount — side-effect only, no state mutation
   useEffect(() => {
@@ -108,6 +109,8 @@ function EditorInner() {
 
   const removeSection = (id: string) => {
     if (sections.length === 1) { toast.error("Need at least one section"); return; }
+    if (pendingDeleteId !== id) { setPendingDeleteId(id); return; }
+    setPendingDeleteId(null);
     setSections(prev => prev.filter(s => s.id !== id));
     if (selectedSection === id) setSelectedSection(sections.find(s => s.id !== id)!.id);
   };
@@ -258,7 +261,12 @@ function EditorInner() {
                   <button onClick={(e) => { e.stopPropagation(); moveSection(s.id, "down"); }} className="p-0.5 hover:text-primary">
                     <ChevronDown className="w-3 h-3" />
                   </button>
-                  <button onClick={(e) => { e.stopPropagation(); removeSection(s.id); }} className="p-0.5 hover:text-destructive">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); removeSection(s.id); }}
+                    onBlur={() => setPendingDeleteId(null)}
+                    className={`p-0.5 transition-colors ${pendingDeleteId === s.id ? "text-destructive font-bold" : "hover:text-destructive"}`}
+                    title={pendingDeleteId === s.id ? "Click again to confirm delete" : "Delete section"}
+                  >
                     <Trash2 className="w-3 h-3" />
                   </button>
                 </div>
