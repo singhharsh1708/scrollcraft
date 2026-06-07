@@ -5,6 +5,7 @@ import path from "path";
 import { exec } from "child_process";
 import { promisify } from "util";
 import { readdir, readFile } from "fs/promises";
+import { rateLimit, getClientIp } from "@/lib/rateLimit";
 
 const execAsync = promisify(exec);
 
@@ -20,6 +21,14 @@ async function ffmpegAvailable(): Promise<boolean> {
 }
 
 export async function POST(req: NextRequest) {
+  const rl = rateLimit(getClientIp(req), { limit: 10, windowMs: 60_000 });
+  if (!rl.allowed) {
+    return NextResponse.json({ error: "Too many requests. Try again in a minute." }, {
+      status: 429,
+      headers: { "Retry-After": String(Math.ceil((rl.resetAt - Date.now()) / 1000)) },
+    });
+  }
+
   const contentType = req.headers.get("content-type") || "";
   const tmpDir = path.join(process.cwd(), "tmp", `frames-${Date.now()}`);
 
