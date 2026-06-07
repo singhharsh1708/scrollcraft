@@ -17,10 +17,18 @@ function safeHref(s: string): string {
 
 export async function POST(req: NextRequest) {
   try {
-    const { frames, sections, siteName } = await req.json();
+    const body = await req.json();
+    const { frames, sections, siteName } = body;
+
+    if (!Array.isArray(frames) || frames.length === 0) {
+      return NextResponse.json({ error: "frames must be a non-empty array" }, { status: 400 });
+    }
+    if (!Array.isArray(sections) || sections.length === 0) {
+      return NextResponse.json({ error: "sections must be a non-empty array" }, { status: 400 });
+    }
 
     // Reject SVG demo-frame URLs — only real base64 data URIs are exportable
-    if (!frames?.length || !frames[0].startsWith("data:image/")) {
+    if (!frames[0].startsWith("data:image/")) {
       return NextResponse.json(
         { error: "Cannot export demo frames. Generate real frames first using the AI or by uploading a video." },
         { status: 400 }
