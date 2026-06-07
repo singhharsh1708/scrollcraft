@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   ArrowLeft, Download, Plus, Trash2, Eye, EyeOff, ChevronUp, ChevronDown,
   Sparkles, Layers, Settings, Type, Loader2, AlignLeft, AlignCenter, AlignRight,
-  MessageSquare, Send, X, Bot
+  MessageSquare, Send, X, Bot, Monitor, Tablet, Smartphone
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -90,6 +90,19 @@ function EditorInner() {
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [customHead, setCustomHead] = useState("");
   const [customCss, setCustomCss] = useState("");
+  const [mobileFrames, setMobileFrames] = useState<string[]>([]);
+  const [viewportMode, setViewportMode] = useState<"desktop" | "tablet" | "mobile">("desktop");
+
+  // Load mobile frames from sessionStorage if the create page generated them
+  useEffect(() => {
+    const hasMobile = searchParams.get("hasMobileFrames") === "1";
+    if (!hasMobile) return;
+    try {
+      const stored = sessionStorage.getItem("scrollcraft_mobile_frames");
+      if (stored) setMobileFrames(JSON.parse(stored));
+    } catch { /* sessionStorage unavailable */ }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Show demo toast once on mount — side-effect only, no state mutation
   useEffect(() => {
@@ -139,7 +152,7 @@ function EditorInner() {
       const res = await fetch("/api/export-site", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ frames, sections, siteName, fps, customHead, customCss }),
+        body: JSON.stringify({ frames, mobileFrames: mobileFrames.length ? mobileFrames : undefined, sections, siteName, fps, customHead, customCss }),
       });
       if (!res.ok) throw new Error(await res.text());
       const blob = await res.blob();
@@ -205,6 +218,19 @@ function EditorInner() {
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Viewport toggle */}
+          <div className="flex items-center bg-white/5 rounded-md p-0.5 gap-0.5">
+            {([["desktop", Monitor], ["tablet", Tablet], ["mobile", Smartphone]] as const).map(([mode, Icon]) => (
+              <button
+                key={mode}
+                onClick={() => setViewportMode(mode)}
+                title={mode.charAt(0).toUpperCase() + mode.slice(1)}
+                className={`p-1 rounded transition-colors ${viewportMode === mode ? "bg-primary/30 text-primary" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                <Icon className="w-3.5 h-3.5" />
+              </button>
+            ))}
+          </div>
           <div className="text-xs text-muted-foreground bg-white/5 px-2 py-1 rounded">
             Frame {currentFrame + 1}/{frameCount}
           </div>
@@ -281,11 +307,23 @@ function EditorInner() {
 
         {/* Center: preview canvas */}
         {showPreview && (
-          <div className="flex-1 relative overflow-hidden">
+          <div className="flex-1 relative overflow-hidden bg-black/20 flex items-center justify-center">
             {frames.length > 0 && (
-              <div ref={previewScrollRef} className="absolute inset-0" style={{ height: totalScrollHeight, overflowY: "scroll" }}>
+              <div
+                ref={previewScrollRef}
+                style={{
+                  height: totalScrollHeight,
+                  overflowY: "scroll",
+                  ...(viewportMode === "mobile"
+                    ? { width: 390, maxHeight: "85vh", position: "relative", borderRadius: 24, border: "2px solid rgba(255,255,255,0.1)", overflow: "hidden" }
+                    : viewportMode === "tablet"
+                    ? { width: 768, maxHeight: "85vh", position: "relative", borderRadius: 16, border: "2px solid rgba(255,255,255,0.1)", overflow: "hidden" }
+                    : { position: "absolute", inset: 0 }),
+                }}
+              >
                 <ScrollEngine
                   frames={frames}
+                  mobileFrames={mobileFrames.length ? mobileFrames : undefined}
                   totalScrollHeight={totalScrollHeight}
                   onFrameChange={setCurrentFrame}
                   scrollContainer={previewScrollRef}

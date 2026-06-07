@@ -18,7 +18,7 @@ function safeHref(s: string): string {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { frames, sections, siteName, customHead = "", customCss = "" } = body;
+    const { frames, mobileFrames, sections, siteName, customHead = "", customCss = "" } = body;
 
     if (!Array.isArray(frames) || frames.length === 0) {
       return NextResponse.json({ error: "frames must be a non-empty array" }, { status: 400 });
@@ -35,13 +35,24 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const hasMobileFrames = Array.isArray(mobileFrames) && mobileFrames.length > 0 && mobileFrames[0].startsWith("data:image/");
+
     const zip = new JSZip();
     const framesFolder = zip.folder("frames")!;
 
-    // Add each frame
+    // Add desktop frames
     for (let i = 0; i < frames.length; i++) {
       const base64 = frames[i].replace(/^data:image\/[a-zA-Z+.-]+;base64,/, "");
       framesFolder.file(`frame_${String(i).padStart(4, "0")}.jpg`, base64, { base64: true });
+    }
+
+    // Add mobile frames if present
+    if (hasMobileFrames) {
+      const mobileFolder = zip.folder("frames-mobile")!;
+      for (let i = 0; i < mobileFrames.length; i++) {
+        const base64 = mobileFrames[i].replace(/^data:image\/[a-zA-Z+.-]+;base64,/, "");
+        mobileFolder.file(`frame_${String(i).padStart(4, "0")}.jpg`, base64, { base64: true });
+      }
     }
 
     // Generate sections HTML
@@ -99,11 +110,18 @@ export async function POST(req: NextRequest) {
     (function() {
       const canvas = document.getElementById('scroll-canvas');
       const ctx = canvas.getContext('2d');
-      const frameCount = ${frames.length};
-      const images = new Array(frameCount);
-      let loaded = 0;
-      let currentFrame = 0;
+      const desktopCount = ${frames.length};
+      const mobileCount = ${hasMobileFrames ? (mobileFrames as string[]).length : 0};
+      const hasMobile = ${hasMobileFrames ? "true" : "false"};
       const totalScrollHeight = ${totalScrollHeight};
+
+      let isMobile = hasMobile && window.matchMedia('(max-width: 767px)').matches;
+      let frameCount = isMobile ? mobileCount : desktopCount;
+      const desktopImages = new Array(desktopCount);
+      const mobileImages = hasMobile ? new Array(mobileCount) : null;
+      let currentFrame = 0;
+
+      function getImages() { return (isMobile && mobileImages) ? mobileImages : desktopImages; }
 
       function resize() {
         canvas.width = window.innerWidth;
@@ -112,6 +130,7 @@ export async function POST(req: NextRequest) {
       }
 
       function drawFrame(index) {
+        const images = getImages();
         const img = images[index];
         if (!img || !img.complete) return;
         const scale = Math.max(canvas.width / img.naturalWidth, canvas.height / img.naturalHeight);
@@ -120,30 +139,47 @@ export async function POST(req: NextRequest) {
         ctx.drawImage(img, (canvas.width - w) / 2, (canvas.height - h) / 2, w, h);
       }
 
-      function preload() {
-        for (let i = 0; i < frameCount; i++) {
-          const img = new Image();
-          img.src = 'frames/frame_' + String(i).padStart(4, '0') + '.jpg';
-          img.onload = function() {
-            loaded++;
-            if (loaded === 1) drawFrame(0);
-          };
-          images[i] = img;
+      function preloadSet(count, folder, target) {
+        for (var i = 0; i < count; i++) {
+          (function(idx) {
+            var img = new Image();
+            img.src = folder + '/frame_' + String(idx).padStart(4, '0') + '.jpg';
+            img.onload = function() {
+              target[idx] = img;
+              if (idx === 0 && (!isMobile || target === mobileImages)) drawFrame(0);
+            };
+            target[idx] = img;
+          })(i);
         }
       }
 
-      let rafId;
+      function preload() {
+        preloadSet(desktopCount, 'frames', desktopImages);
+        if (hasMobile) preloadSet(mobileCount, 'frames-mobile', mobileImages);
+      }
+
+      if (hasMobile) {
+        var mq = window.matchMedia('(max-width: 767px)');
+        mq.addEventListener('change', function(e) {
+          isMobile = e.matches;
+          frameCount = isMobile ? mobileCount : desktopCount;
+          currentFrame = 0;
+          drawFrame(0);
+        });
+      }
+
+      var rafId;
       function onScroll() {
-        const scrollTop = window.scrollY;
-        const maxScroll = totalScrollHeight - window.innerHeight;
-        const progress = Math.min(Math.max(scrollTop / maxScroll, 0), 1);
-        const frameIndex = Math.min(Math.floor(progress * (frameCount - 1)), frameCount - 1);
+        var scrollTop = window.scrollY;
+        var maxScroll = totalScrollHeight - window.innerHeight;
+        var progress = Math.min(Math.max(scrollTop / maxScroll, 0), 1);
+        var frameIndex = Math.min(Math.floor(progress * (frameCount - 1)), frameCount - 1);
         if (frameIndex !== currentFrame) {
           currentFrame = frameIndex;
           cancelAnimationFrame(rafId);
           rafId = requestAnimationFrame(function() { drawFrame(frameIndex); });
         }
-        const hint = document.getElementById('scroll-hint');
+        var hint = document.getElementById('scroll-hint');
         if (hint) hint.style.opacity = scrollTop > 100 ? '0' : '1';
       }
 

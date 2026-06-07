@@ -1,8 +1,9 @@
 "use client";
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, useState } from "react";
 
 interface ScrollEngineProps {
   frames: string[];
+  mobileFrames?: string[];
   totalScrollHeight?: number;
   className?: string;
   onFrameChange?: (index: number) => void;
@@ -10,13 +11,16 @@ interface ScrollEngineProps {
   altText?: string;
 }
 
-export default function ScrollEngine({ frames, totalScrollHeight = 5000, className = "", onFrameChange, scrollContainer, altText = "Animated scroll background" }: ScrollEngineProps) {
+export default function ScrollEngine({ frames, mobileFrames, totalScrollHeight = 5000, className = "", onFrameChange, scrollContainer, altText = "Animated scroll background" }: ScrollEngineProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const imagesRef = useRef<HTMLImageElement[]>([]);
   const currentFrameRef = useRef(0);
   const rafRef = useRef<number>(0);
   const loadedRef = useRef(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  const activeFrames = isMobile && mobileFrames?.length ? mobileFrames : frames;
 
   const drawFrame = useCallback((index: number) => {
     const canvas = canvasRef.current;
@@ -30,35 +34,34 @@ export default function ScrollEngine({ frames, totalScrollHeight = 5000, classNa
     ctx.drawImage(img, (canvas.width - w) / 2, (canvas.height - h) / 2, w, h);
   }, []);
 
-  const preloadImages = useCallback(() => {
-    const images: HTMLImageElement[] = new Array(frames.length);
+  const preloadImages = useCallback((frameSrcs: string[]) => {
+    const images: HTMLImageElement[] = new Array(frameSrcs.length);
     let keyframesLoaded = 0;
-    const KEYFRAME_STEP = 5; // load every 5th frame first
+    const KEYFRAME_STEP = 5;
 
     const loadImage = (index: number) => {
       const img = new Image();
-      img.src = frames[index];
+      img.src = frameSrcs[index];
       img.onload = () => {
         images[index] = img;
-        if (index === 0) drawFrame(0); // draw immediately on first frame
+        if (index === 0) {
+          imagesRef.current = images;
+          drawFrame(0);
+        }
       };
       return img;
     };
 
-    // Phase 1: load keyframes (every KEYFRAME_STEP)
-    const keyframeIndices = frames
-      .map((_, i) => i)
-      .filter(i => i % KEYFRAME_STEP === 0);
+    const keyframeIndices = frameSrcs.map((_, i) => i).filter(i => i % KEYFRAME_STEP === 0);
 
     keyframeIndices.forEach(i => {
       const img = loadImage(i);
       img.onload = () => {
         images[i] = img;
         keyframesLoaded++;
-        if (i === 0) drawFrame(0);
-        // Phase 2: once all keyframes done, load the rest
+        if (i === 0) { imagesRef.current = images; drawFrame(0); }
         if (keyframesLoaded === keyframeIndices.length) {
-          frames.forEach((_, j) => {
+          frameSrcs.forEach((_, j) => {
             if (j % KEYFRAME_STEP !== 0) loadImage(j);
           });
           loadedRef.current = true;
@@ -67,11 +70,23 @@ export default function ScrollEngine({ frames, totalScrollHeight = 5000, classNa
     });
 
     imagesRef.current = images;
-  }, [frames, drawFrame]);
+  }, [drawFrame]);
+
+  // Detect mobile viewport
+  useEffect(() => {
+    if (!mobileFrames?.length) return;
+    const mq = window.matchMedia("(max-width: 767px)");
+    const onChange = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    setIsMobile(mq.matches);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, [mobileFrames]);
 
   useEffect(() => {
-    preloadImages();
-  }, [preloadImages]);
+    loadedRef.current = false;
+    currentFrameRef.current = 0;
+    preloadImages(activeFrames);
+  }, [activeFrames, preloadImages]);
 
   useEffect(() => {
     const el = scrollContainer?.current ?? window;
@@ -84,7 +99,7 @@ export default function ScrollEngine({ frames, totalScrollHeight = 5000, classNa
         : window.innerHeight;
       const maxScroll = totalScrollHeight - viewHeight;
       const progress = Math.min(Math.max(scrollTop / maxScroll, 0), 1);
-      const frameIndex = Math.floor(progress * (frames.length - 1));
+      const frameIndex = Math.floor(progress * (activeFrames.length - 1));
 
       if (frameIndex !== currentFrameRef.current) {
         currentFrameRef.current = frameIndex;
@@ -96,15 +111,15 @@ export default function ScrollEngine({ frames, totalScrollHeight = 5000, classNa
 
     el.addEventListener("scroll", handleScroll, { passive: true });
     return () => el.removeEventListener("scroll", handleScroll);
-  }, [frames.length, totalScrollHeight, drawFrame, onFrameChange, scrollContainer]);
+  }, [activeFrames.length, totalScrollHeight, drawFrame, onFrameChange, scrollContainer]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
     const resize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      canvas.width = canvas.offsetWidth || window.innerWidth;
+      canvas.height = canvas.offsetHeight || window.innerHeight;
       drawFrame(currentFrameRef.current);
     };
 
@@ -122,7 +137,6 @@ export default function ScrollEngine({ frames, totalScrollHeight = 5000, classNa
         role="img"
         aria-label={altText}
       />
-      {/* Visually hidden fallback for screen readers and search crawlers */}
       <span className="sr-only">{altText}</span>
     </div>
   );
