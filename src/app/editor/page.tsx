@@ -87,6 +87,8 @@ function EditorInner() {
   const [chatInput, setChatInput] = useState("");
   const [chatLoading, setChatLoading] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [customHead, setCustomHead] = useState("");
+  const [customCss, setCustomCss] = useState("");
 
   // Show demo toast once on mount — side-effect only, no state mutation
   useEffect(() => {
@@ -136,7 +138,7 @@ function EditorInner() {
       const res = await fetch("/api/export-site", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ frames, sections, siteName, fps }),
+        body: JSON.stringify({ frames, sections, siteName, fps, customHead, customCss }),
       });
       if (!res.ok) throw new Error(await res.text());
       const blob = await res.blob();
@@ -410,6 +412,9 @@ function EditorInner() {
                   <TabsTrigger value="layout" className="flex-1 text-xs h-6">
                     <Settings className="w-3 h-3 mr-1" /> Layout
                   </TabsTrigger>
+                  <TabsTrigger value="code" className="flex-1 text-xs h-6">
+                    &lt;/&gt; Code
+                  </TabsTrigger>
                 </TabsList>
               </div>
 
@@ -543,6 +548,29 @@ function EditorInner() {
                       </button>
                     ))}
                   </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="code" className="p-3 space-y-4 mt-0">
+                <div className="space-y-1.5">
+                  <label className="text-xs text-muted-foreground font-medium">Custom &lt;head&gt; HTML</label>
+                  <p className="text-xs text-muted-foreground/70">Inject analytics, fonts, or meta tags into &lt;head&gt;</p>
+                  <Textarea
+                    value={customHead}
+                    onChange={(e) => setCustomHead(e.target.value)}
+                    placeholder={'<!-- e.g. Google Analytics, custom meta -->\n<script async src="..."></script>'}
+                    className="min-h-[100px] font-mono text-xs bg-black/30 border-white/10 resize-none"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs text-muted-foreground font-medium">Custom CSS</label>
+                  <p className="text-xs text-muted-foreground/70">Extra styles injected after the default stylesheet</p>
+                  <Textarea
+                    value={customCss}
+                    onChange={(e) => setCustomCss(e.target.value)}
+                    placeholder={".scroll-section { ... }\n.section-content { ... }"}
+                    className="min-h-[100px] font-mono text-xs bg-black/30 border-white/10 resize-none"
+                  />
                 </div>
               </TabsContent>
             </Tabs>
