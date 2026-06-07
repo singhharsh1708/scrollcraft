@@ -27,15 +27,28 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "sections must be a non-empty array" }, { status: 400 });
     }
 
-    // Reject SVG demo-frame URLs — only real base64 data URIs are exportable
-    if (!frames[0].startsWith("data:image/")) {
+    const isBlobUrl = frames[0].startsWith("https://") || frames[0].startsWith("http://");
+    const isBase64 = frames[0].startsWith("data:image/");
+
+    if (!isBlobUrl && !isBase64) {
       return NextResponse.json(
         { error: "Cannot export demo frames. Generate real frames first using the AI or by uploading a video." },
         { status: 400 }
       );
     }
 
-    const hasMobileFrames = Array.isArray(mobileFrames) && mobileFrames.length > 0 && mobileFrames[0].startsWith("data:image/");
+    // Helper: get raw JPEG buffer from either base64 data URI or CDN URL
+    async function frameToBuffer(src: string): Promise<Buffer> {
+      if (src.startsWith("data:image/")) {
+        return Buffer.from(src.replace(/^data:image\/[a-zA-Z+.-]+;base64,/, ""), "base64");
+      }
+      const res = await fetch(src);
+      if (!res.ok) throw new Error(`Failed to fetch frame: ${res.status}`);
+      return Buffer.from(await res.arrayBuffer());
+    }
+
+    const hasMobileFrames = Array.isArray(mobileFrames) && mobileFrames.length > 0
+      && (mobileFrames[0].startsWith("data:image/") || mobileFrames[0].startsWith("http"));
 
     // Validate and extract audio
     const audioDataUriMatch = typeof audioSrc === "string"
@@ -49,18 +62,25 @@ export async function POST(req: NextRequest) {
     const zip = new JSZip();
     const framesFolder = zip.folder("frames")!;
 
-    // Add desktop frames
-    for (let i = 0; i < frames.length; i++) {
-      const base64 = frames[i].replace(/^data:image\/[a-zA-Z+.-]+;base64,/, "");
-      framesFolder.file(`frame_${String(i).padStart(4, "0")}.jpg`, base64, { base64: true });
+    // Add desktop frames in parallel batches
+    const BATCH = 10;
+    for (let i = 0; i < frames.length; i += BATCH) {
+      const batch = frames.slice(i, i + BATCH);
+      const buffers = await Promise.all(batch.map(frameToBuffer));
+      buffers.forEach((buf, j) => {
+        framesFolder.file(`frame_${String(i + j).padStart(4, "0")}.jpg`, buf);
+      });
     }
 
     // Add mobile frames if present
     if (hasMobileFrames) {
       const mobileFolder = zip.folder("frames-mobile")!;
-      for (let i = 0; i < mobileFrames.length; i++) {
-        const base64 = mobileFrames[i].replace(/^data:image\/[a-zA-Z+.-]+;base64,/, "");
-        mobileFolder.file(`frame_${String(i).padStart(4, "0")}.jpg`, base64, { base64: true });
+      for (let i = 0; i < mobileFrames.length; i += BATCH) {
+        const batch = mobileFrames.slice(i, i + BATCH);
+        const buffers = await Promise.all(batch.map(frameToBuffer));
+        buffers.forEach((buf, j) => {
+          mobileFolder.file(`frame_${String(i + j).padStart(4, "0")}.jpg`, buf);
+        });
       }
     }
 

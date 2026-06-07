@@ -6,6 +6,7 @@ import { exec } from "child_process";
 import { promisify } from "util";
 import { readdir, readFile } from "fs/promises";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
+import { put } from "@vercel/blob";
 
 const execAsync = promisify(exec);
 
@@ -111,15 +112,26 @@ export async function POST(req: NextRequest) {
       ? Array.from({ length: MAX_FRAMES }, (_, i) => allFrameFiles[Math.min(Math.floor(i * step), allFrameFiles.length - 1)])
       : allFrameFiles;
 
+    const useBlobStorage = !!process.env.BLOB_READ_WRITE_TOKEN;
     const frames: string[] = [];
+    const sessionId = `scrollcraft/${Date.now()}`;
+
     for (const file of frameFiles) {
       const buf = await readFile(path.join(framesDir, file));
-      frames.push(`data:image/jpeg;base64,${buf.toString("base64")}`);
+      if (useBlobStorage) {
+        const { url } = await put(`${sessionId}/${file}`, buf, {
+          access: "public",
+          contentType: "image/jpeg",
+        });
+        frames.push(url);
+      } else {
+        frames.push(`data:image/jpeg;base64,${buf.toString("base64")}`);
+      }
     }
 
     await rm(tmpDir, { recursive: true, force: true });
 
-    return NextResponse.json({ frames, frameCount: frames.length });
+    return NextResponse.json({ frames, frameCount: frames.length, stored: useBlobStorage });
   } catch (err) {
     console.error("extract-frames error:", err);
     if (existsSync(tmpDir)) await rm(tmpDir, { recursive: true, force: true }).catch(() => {});

@@ -16,6 +16,9 @@ const envSchema = z.object({
   AUTH_GOOGLE_ID: z.string().optional(),
   AUTH_GOOGLE_SECRET: z.string().optional(),
 
+  // Storage
+  BLOB_READ_WRITE_TOKEN: z.string().optional(),
+
   // Observability
   NEXT_PUBLIC_SENTRY_DSN: z.string().url().optional(),
   SENTRY_ORG: z.string().optional(),
