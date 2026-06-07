@@ -56,16 +56,30 @@ function EditorInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const [frames, setFrames] = useState<string[]>([]);
-  const [frameCount, setFrameCount] = useState(0);
-  const [fps, setFps] = useState(24);
+  // Derive initial frame state from URL params at render time (no setState-in-effect)
+  const framesParam = searchParams.get("frames");
+  const countParam = searchParams.get("frameCount");
+  const fpsParam = searchParams.get("fps");
+
+  const parsedFrames: string[] | null = (() => {
+    if (!framesParam) return null;
+    try { return JSON.parse(framesParam); } catch { return null; }
+  })();
+
+  const DEMO_COUNT = 120;
+  const demoFrameUrls = Array.from({ length: DEMO_COUNT }, (_, i) => `/api/demo-frame?i=${i}&total=${DEMO_COUNT}`);
+  const initialIsDemo = !parsedFrames;
+
+  const [frames] = useState<string[]>(parsedFrames ?? demoFrameUrls);
+  const [frameCount] = useState(parsedFrames ? parseInt(countParam || String(parsedFrames.length)) : DEMO_COUNT);
+  const [fps] = useState(parsedFrames ? parseInt(fpsParam || "24") : 24);
   const [sections, setSections] = useState<Section[]>([defaultSection(0)]);
   const [selectedSection, setSelectedSection] = useState<string>(sections[0].id);
   const [siteName, setSiteName] = useState("My ScrollCraft Site");
   const [currentFrame, setCurrentFrame] = useState(0);
   const [showPreview, setShowPreview] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
-  const [isDemo, setIsDemo] = useState(false);
+  const isDemo = initialIsDemo;
   const [chatOpen, setChatOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState<{ role: "user" | "ai"; text: string }[]>([
     { role: "ai", text: "Hi! I can edit your site for you. Try: \"Make it purple\", \"Center the text\", \"Change the heading to...\"" },
@@ -73,37 +87,13 @@ function EditorInner() {
   const [chatInput, setChatInput] = useState("");
   const [chatLoading, setChatLoading] = useState(false);
 
+  // Show demo toast once on mount — side-effect only, no state mutation
   useEffect(() => {
-    const framesParam = searchParams.get("frames");
-    const countParam = searchParams.get("frameCount");
-    const fpsParam = searchParams.get("fps");
-
-    if (framesParam) {
-      try {
-        const parsed = JSON.parse(framesParam);
-        setFrames(parsed);
-        setFrameCount(parseInt(countParam || String(parsed.length)));
-        setFps(parseInt(fpsParam || "24"));
-      } catch {
-        // demo mode
-        setIsDemo(true);
-        loadDemoFrames();
-      }
-    } else {
-      setIsDemo(true);
-      loadDemoFrames();
+    if (initialIsDemo) {
+      toast.info("Running in demo mode — add your API key for real AI video generation");
     }
-  }, [searchParams]);
-
-  const loadDemoFrames = async () => {
-    const count = 120;
-    const demoFrames = Array.from({ length: count }, (_, i) =>
-      `/api/demo-frame?i=${i}&total=${count}`
-    );
-    setFrames(demoFrames);
-    setFrameCount(count);
-    toast.info("Running in demo mode — add your API key for real AI video generation");
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const selectedSectionData = sections.find(s => s.id === selectedSection);
 
