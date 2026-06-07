@@ -2,124 +2,91 @@
 import { useState, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Slider } from "@/components/ui/slider";
-import { ArrowLeft, ArrowRight, Sparkles, Upload, Film, Settings, CheckCircle2, Loader2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Sparkles, Upload, CheckCircle2, Loader2, Layers, Zap, Waves, Circle } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
+import { generate2DFrames, type Style2D } from "@/lib/generate2DFrames";
 
-const TEMPLATE_PROMPTS: Record<string, string> = {
-  "SaaS Hero": "A cinematic flythrough of a dark futuristic digital dashboard. Glowing UI panels float in dark space. Purple and blue neon accents. Depth of field blur. Ultra-premium tech aesthetic.",
-  "Product Launch": "Cinematic slow-motion reveal of a sleek product materializing from darkness. Dramatic lighting, luxury product photography feel. Black background with golden highlights.",
-  "Agency Portfolio": "Abstract flowing geometric shapes in deep space. Bold colors transitioning from black to vibrant gradients. Minimal, modern, editorial feel.",
-  "App Showcase": "A smartphone floating in space slowly rotating. App interfaces visible on screen. Soft dramatic lighting. Cinematic 3D render look.",
-  "E-commerce": "360 degree spin of a luxury product on a dark background. Studio lighting with rim light effects. Premium commercial photography style.",
-  "Restaurant": "Slow cinematic pan across beautifully plated food. Soft warm lighting, shallow depth of field. Fine dining atmosphere.",
-};
+const STYLES: { id: Style2D; label: string; description: string; icon: React.ReactNode; colors: [string, string, string] }[] = [
+  { id: "gradient",  label: "Gradient Flow",  description: "Smooth color morphing with floating light orbs", icon: <Circle className="w-5 h-5" />,  colors: ["#7c3aed", "#2563eb", "#0f172a"] },
+  { id: "geometric", label: "Geometric",      description: "Rotating polygons and shapes in deep space",   icon: <Layers className="w-5 h-5" />,   colors: ["#7c3aed", "#06b6d4", "#6d28d9"] },
+  { id: "particles", label: "Particles",      description: "Drifting star-field with nebula glow",         icon: <Sparkles className="w-5 h-5" />, colors: ["#f59e0b", "#ef4444", "#7c3aed"] },
+  { id: "wave",      label: "Wave",           description: "Layered flowing waves with depth",             icon: <Waves className="w-5 h-5" />,    colors: ["#0ea5e9", "#6366f1", "#0f172a"] },
+];
 
-const STEPS = ["Describe", "Configure", "Generate", "Done"];
+const COLOR_PALETTES: { label: string; colors: [string, string, string] }[] = [
+  { label: "Cosmic Purple", colors: ["#7c3aed", "#2563eb", "#0f172a"] },
+  { label: "Ember",         colors: ["#ef4444", "#f97316", "#1c0a00"] },
+  { label: "Ocean",         colors: ["#0ea5e9", "#6366f1", "#020c14"] },
+  { label: "Forest",        colors: ["#10b981", "#06b6d4", "#021a10"] },
+  { label: "Gold",          colors: ["#f59e0b", "#ef4444", "#1a0d00"] },
+  { label: "Monochrome",    colors: ["#e2e8f0", "#94a3b8", "#0f172a"] },
+];
+
+const STEPS = ["Style", "Configure", "Generate"];
 
 function CreatePageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const templateName = searchParams.get("template") || "";
-  const promptParam = searchParams.get("prompt") || "";
   const planName = searchParams.get("plan") || "";
 
   const [step, setStep] = useState(0);
-  // Prefer explicit prompt param (from presets page) over the static template map
-  const [prompt, setPrompt] = useState(promptParam || TEMPLATE_PROMPTS[templateName] || "");
-  const [fps, setFps] = useState([24]);
-  const [quality, setQuality] = useState([80]);
+  const [selectedStyle, setSelectedStyle] = useState<Style2D>("gradient");
+  const [colors, setColors] = useState<[string, string, string]>(["#7c3aed", "#2563eb", "#0f172a"]);
+  const [frameCount, setFrameCount] = useState(120);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [isExtracting, setIsExtracting] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [progressMsg, setProgressMsg] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
 
   const handleGenerate = async () => {
-    if (!prompt.trim()) { toast.error("Please enter a prompt"); return; }
     setStep(2);
     setIsGenerating(true);
-    setProgress(10);
-    setProgressMsg("Sending to AI video model...");
-
+    setProgress(0);
     try {
-      const res = await fetch("/api/generate-video", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Generation failed");
-
-      setProgress(60);
-      setProgressMsg("Video generated! Extracting frames...");
-      setIsGenerating(false);
-      setIsExtracting(true);
-
-      const extractRes = await fetch("/api/extract-frames", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ videoUrl: data.videoUrl, fps: fps[0], quality: quality[0] }),
-      });
-      const extractData = await extractRes.json();
-      if (!extractRes.ok) throw new Error(extractData.error || "Extraction failed");
-
-      setProgress(100);
-      setProgressMsg("Done! Redirecting to editor...");
-      setIsExtracting(false);
-
+      const frames = await generate2DFrames(
+        { style: selectedStyle, color1: colors[0], color2: colors[1], color3: colors[2], frameCount },
+        setProgress
+      );
       const params = new URLSearchParams({
-        frames: JSON.stringify(extractData.frames),
-        frameCount: String(extractData.frameCount),
-        fps: String(fps[0]),
-        prompt,
+        frames: JSON.stringify(frames),
+        frameCount: String(frames.length),
+        fps: "24",
+        prompt: STYLES.find(s => s.id === selectedStyle)?.label ?? selectedStyle,
       });
       router.push(`/editor?${params.toString()}`);
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Something went wrong";
-      toast.error(msg);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Generation failed");
       setStep(1);
       setIsGenerating(false);
-      setIsExtracting(false);
     }
   };
 
   const handleUpload = async (file: File) => {
     setStep(2);
-    setIsExtracting(true);
+    setIsGenerating(true);
     setProgress(20);
-    setProgressMsg("Uploading and extracting frames...");
-
     try {
       const formData = new FormData();
       formData.append("video", file);
-      formData.append("fps", String(fps[0]));
-      formData.append("quality", String(quality[0]));
-
+      formData.append("fps", "24");
+      formData.append("quality", "80");
       const res = await fetch("/api/extract-frames", { method: "POST", body: formData });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Extraction failed");
-
       setProgress(100);
-      setProgressMsg("Frames ready! Opening editor...");
-      setIsExtracting(false);
-
       const params = new URLSearchParams({
         frames: JSON.stringify(data.frames),
         frameCount: String(data.frameCount),
-        fps: String(fps[0]),
-        prompt: prompt || "Custom video upload",
+        fps: "24",
+        prompt: "Video upload",
       });
       router.push(`/editor?${params.toString()}`);
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Upload failed";
-      toast.error(msg);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Upload failed");
       setStep(1);
-      setIsExtracting(false);
+      setIsGenerating(false);
     }
   };
 
@@ -132,7 +99,7 @@ function CreatePageInner() {
         </Link>
         <div className="flex items-center gap-2">
           <div className="w-6 h-6 rounded bg-primary/20 flex items-center justify-center">
-            <Sparkles className="w-3.5 h-3.5 text-primary" />
+            <Zap className="w-3.5 h-3.5 text-primary" />
           </div>
           <span className="font-semibold">ScrollCraft</span>
         </div>
@@ -159,93 +126,106 @@ function CreatePageInner() {
         ))}
       </div>
 
+      {planName && (
+        <div className="flex justify-center pb-2">
+          <Badge className="bg-emerald-500/15 text-emerald-400 border-emerald-500/30">Plan: {planName}</Badge>
+        </div>
+      )}
+
       <div className="flex-1 flex items-center justify-center px-6 pb-12">
+
+        {/* Step 0 — Pick style */}
         {step === 0 && (
           <div className="w-full max-w-2xl space-y-6">
             <div className="text-center">
-              <h1 className="text-3xl font-black tracking-tighter mb-2">Describe your vision</h1>
-              <p className="text-muted-foreground">Tell the AI what atmosphere, style, or scene you want for your scroll background</p>
+              <h1 className="text-3xl font-black tracking-tighter mb-2">Choose your style</h1>
+              <p className="text-muted-foreground">Pick an animation style for your scroll background</p>
             </div>
-            <div className="flex flex-wrap gap-2">
-              {templateName && (
-                <Badge className="bg-primary/20 text-primary border-primary/30">
-                  Template: {templateName}
-                </Badge>
-              )}
-              {planName && (
-                <Badge className="bg-emerald-500/15 text-emerald-400 border-emerald-500/30">
-                  Plan: {planName}
-                </Badge>
-              )}
-            </div>
-            <Textarea
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              placeholder="A cinematic flythrough of a dark futuristic city at night. Neon lights reflecting on wet streets. Blade Runner aesthetic. Slow, dreamy camera movement..."
-              className="min-h-[160px] bg-card border-white/10 text-base resize-none focus:border-primary/50"
-            />
             <div className="grid grid-cols-2 gap-3">
-              {Object.entries(TEMPLATE_PROMPTS).map(([name, p]) => (
+              {STYLES.map((s) => (
                 <button
-                  key={name}
-                  onClick={() => setPrompt(p)}
-                  className="text-left p-3 rounded-xl border border-white/8 hover:border-primary/30 bg-card text-sm transition-colors"
+                  key={s.id}
+                  onClick={() => { setSelectedStyle(s.id); setColors(s.colors); }}
+                  className={`text-left p-4 rounded-2xl border transition-all ${
+                    selectedStyle === s.id
+                      ? "border-primary/60 bg-primary/10 shadow-lg shadow-primary/10"
+                      : "border-white/8 bg-card hover:border-white/20"
+                  }`}
                 >
-                  <div className="font-medium mb-0.5">{name}</div>
-                  <div className="text-muted-foreground text-xs line-clamp-1">{p.slice(0, 60)}...</div>
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center mb-3 ${selectedStyle === s.id ? "bg-primary/20 text-primary" : "bg-white/5 text-muted-foreground"}`}>
+                    {s.icon}
+                  </div>
+                  <div className="font-semibold mb-0.5">{s.label}</div>
+                  <div className="text-xs text-muted-foreground">{s.description}</div>
                 </button>
               ))}
             </div>
-            <div className="flex gap-3">
-              <Button
-                onClick={() => setStep(1)}
-                disabled={!prompt.trim()}
-                className="flex-1 bg-primary hover:bg-primary/90 text-white py-5 font-semibold"
-              >
-                Next: Configure <ArrowRight className="ml-2 w-4 h-4" />
-              </Button>
-            </div>
+            <Button
+              onClick={() => setStep(1)}
+              className="w-full bg-primary hover:bg-primary/90 text-white py-5 font-semibold"
+            >
+              Next: Configure <ArrowRight className="ml-2 w-4 h-4" />
+            </Button>
           </div>
         )}
 
+        {/* Step 1 — Configure */}
         {step === 1 && (
           <div className="w-full max-w-2xl space-y-8">
             <div className="text-center">
-              <h1 className="text-3xl font-black tracking-tighter mb-2">Configure output</h1>
-              <p className="text-muted-foreground">Tune frame rate and quality for your needs</p>
+              <h1 className="text-3xl font-black tracking-tighter mb-2">Configure</h1>
+              <p className="text-muted-foreground">Pick a color palette and frame count</p>
             </div>
 
             <div className="space-y-6 p-6 rounded-2xl border border-white/8 bg-card">
               <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <label className="font-medium flex items-center gap-2"><Film className="w-4 h-4 text-primary" /> Frame Rate</label>
-                  <Badge variant="outline" className="border-primary/30 text-primary">{fps[0]} FPS</Badge>
+                <label className="font-medium text-sm">Color Palette</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {COLOR_PALETTES.map((p) => (
+                    <button
+                      key={p.label}
+                      onClick={() => setColors(p.colors)}
+                      className={`flex items-center gap-2 p-2.5 rounded-xl border text-xs font-medium transition-all ${
+                        colors[0] === p.colors[0] ? "border-primary/60 bg-primary/10" : "border-white/8 hover:border-white/20"
+                      }`}
+                    >
+                      <div className="flex gap-0.5 flex-shrink-0">
+                        {p.colors.map((c, i) => (
+                          <div key={i} className="w-3 h-3 rounded-full" style={{ background: c }} />
+                        ))}
+                      </div>
+                      {p.label}
+                    </button>
+                  ))}
                 </div>
-                <Slider value={fps} onValueChange={(v) => setFps(Array.isArray(v) ? [...(v as number[])] : [v as number])} min={10} max={40} step={2} className="w-full" />
-                <p className="text-xs text-muted-foreground">Higher FPS = smoother scroll, larger file size. 24fps is ideal.</p>
               </div>
 
               <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <label className="font-medium flex items-center gap-2"><Settings className="w-4 h-4 text-primary" /> Image Quality</label>
-                  <Badge variant="outline" className="border-primary/30 text-primary">{quality[0]}%</Badge>
+                <div className="flex justify-between">
+                  <label className="font-medium text-sm">Frame Count</label>
+                  <Badge variant="outline" className="border-primary/30 text-primary">{frameCount} frames</Badge>
                 </div>
-                <Slider value={quality} onValueChange={(v) => setQuality(Array.isArray(v) ? [...(v as number[])] : [v as number])} min={40} max={95} step={5} className="w-full" />
-                <p className="text-xs text-muted-foreground">Higher quality = sharper frames, larger bundle. 80% is the sweet spot.</p>
+                <input
+                  type="range"
+                  min={60} max={200} step={20}
+                  value={frameCount}
+                  onChange={(e) => setFrameCount(Number(e.target.value))}
+                  className="w-full accent-primary"
+                />
+                <p className="text-xs text-muted-foreground">More frames = smoother scroll. 120 is the sweet spot.</p>
               </div>
             </div>
 
+            {/* Upload your own video */}
             <div className="space-y-3">
               <p className="text-center text-sm text-muted-foreground">— or upload your own video —</p>
               <button
                 onClick={() => fileRef.current?.click()}
-                className="w-full p-6 rounded-2xl border-2 border-dashed border-white/15 hover:border-primary/40 transition-colors flex flex-col items-center gap-3 text-muted-foreground hover:text-foreground"
+                className="w-full p-5 rounded-2xl border-2 border-dashed border-white/15 hover:border-primary/40 transition-colors flex flex-col items-center gap-2 text-muted-foreground hover:text-foreground"
               >
-                <Upload className="w-8 h-8" />
-                <div>
-                  <p className="font-medium">Drop a video or click to upload</p>
-                  <p className="text-sm">MP4, MOV, WebM — max 500MB</p>
-                </div>
+                <Upload className="w-6 h-6" />
+                <p className="font-medium text-sm">Drop a video or click to upload</p>
+                <p className="text-xs">MP4, MOV, WebM — max 500MB</p>
               </button>
               <input ref={fileRef} type="file" accept="video/*" className="hidden" onChange={(e) => e.target.files?.[0] && handleUpload(e.target.files[0])} />
             </div>
@@ -255,28 +235,27 @@ function CreatePageInner() {
                 <ArrowLeft className="mr-2 w-4 h-4" /> Back
               </Button>
               <Button onClick={handleGenerate} className="flex-1 bg-primary hover:bg-primary/90 text-white py-5 font-semibold">
-                <Sparkles className="mr-2 w-4 h-4" /> Generate with AI
+                <Sparkles className="mr-2 w-4 h-4" /> Generate
               </Button>
             </div>
           </div>
         )}
 
+        {/* Step 2 — Generating */}
         {step === 2 && (
           <div className="w-full max-w-lg text-center space-y-8">
             <div className="w-20 h-20 rounded-full bg-primary/15 flex items-center justify-center mx-auto">
               <Loader2 className="w-10 h-10 text-primary animate-spin" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold mb-2">
-                {isGenerating ? "Generating video..." : "Extracting frames..."}
-              </h2>
-              <p className="text-muted-foreground">{progressMsg}</p>
+              <h2 className="text-2xl font-bold mb-2">Generating frames…</h2>
+              <p className="text-muted-foreground">{isGenerating ? "Drawing your scroll animation" : "Processing…"}</p>
             </div>
             <div className="space-y-2">
               <Progress value={progress} className="h-2" />
               <p className="text-sm text-muted-foreground">{progress}% complete</p>
             </div>
-            <p className="text-xs text-muted-foreground">This usually takes 30–90 seconds</p>
+            <p className="text-xs text-muted-foreground">Usually takes 2–5 seconds</p>
           </div>
         )}
       </div>
