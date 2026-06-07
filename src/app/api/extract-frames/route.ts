@@ -92,6 +92,6 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     console.error("extract-frames error:", err);
     if (existsSync(tmpDir)) await rm(tmpDir, { recursive: true, force: true }).catch(() => {});
-    return NextResponse.json({ error: String(err) }, { status: 500 });
+    return NextResponse.json({ error: "Frame extraction failed" }, { status: 500 });
   }
 }

@@ -158,7 +158,7 @@ Do NOT open index.html directly from your filesystem — use a local server.
     });
   } catch (err) {
     console.error("export-site error:", err);
-    return NextResponse.json({ error: String(err) }, { status: 500 });
+    return NextResponse.json({ error: "Export failed" }, { status: 500 });
   }
 }
 
