@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import dynamic from "next/dynamic";
 
 const ScrollEngine = dynamic(() => import("@/components/ScrollEngine"), { ssr: false });
+const ScrollSection = dynamic(() => import("@/components/ScrollSection"), { ssr: false });
 
 interface Section {
   id: string;
@@ -293,7 +294,7 @@ function EditorInner() {
                 <div className="relative z-10" style={{ height: totalScrollHeight }}>
                   <div style={{ height: "100vh" }} />
                   {sections.filter(s => s.visible).map((s) => (
-                    <div
+                    <ScrollSection
                       key={s.id}
                       onClick={() => setSelectedSection(s.id)}
                       style={{
@@ -327,7 +328,7 @@ function EditorInner() {
                           </span>
                         )}
                       </div>
-                    </div>
+                    </ScrollSection>
                   ))}
                 </div>
               </div>

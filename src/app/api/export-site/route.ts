@@ -70,7 +70,8 @@ export async function POST(req: NextRequest) {
     body { background: #000; color: #fff; font-family: system-ui, sans-serif; overflow-x: hidden; }
     #scroll-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
     #scroll-container { position: relative; height: ${totalScrollHeight}px; z-index: 1; pointer-events: none; }
-    .scroll-section { pointer-events: auto; }
+    .scroll-section { pointer-events: auto; opacity: 0; transform: translateY(32px); transition: opacity 0.6s cubic-bezier(0.25,0.46,0.45,0.94), transform 0.6s cubic-bezier(0.25,0.46,0.45,0.94); }
+    .scroll-section.visible { opacity: 1; transform: translateY(0); }
     .section-content { pointer-events: auto; }
     #scroll-hint {
       position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%);
@@ -150,6 +151,18 @@ export async function POST(req: NextRequest) {
       window.addEventListener('resize', resize);
       resize();
       preload();
+    })();
+
+    // Scroll-linked section entrance animations
+    (function() {
+      const sections = document.querySelectorAll('.scroll-section');
+      const observer = new IntersectionObserver(function(entries) {
+        entries.forEach(function(entry) {
+          if (entry.isIntersecting) entry.target.classList.add('visible');
+          else entry.target.classList.remove('visible');
+        });
+      }, { threshold: 0.15 });
+      sections.forEach(function(s) { observer.observe(s); });
     })();
   </script>
 </body>
