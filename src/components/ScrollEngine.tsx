@@ -7,9 +7,10 @@ interface ScrollEngineProps {
   className?: string;
   onFrameChange?: (index: number) => void;
   scrollContainer?: React.RefObject<HTMLElement | null>;
+  altText?: string;
 }
 
-export default function ScrollEngine({ frames, totalScrollHeight = 5000, className = "", onFrameChange, scrollContainer }: ScrollEngineProps) {
+export default function ScrollEngine({ frames, totalScrollHeight = 5000, className = "", onFrameChange, scrollContainer, altText = "Animated scroll background" }: ScrollEngineProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const imagesRef = useRef<HTMLImageElement[]>([]);
@@ -97,7 +98,11 @@ export default function ScrollEngine({ frames, totalScrollHeight = 5000, classNa
         ref={canvasRef}
         className="fixed inset-0 w-full h-full object-cover"
         style={{ zIndex: 0 }}
+        role="img"
+        aria-label={altText}
       />
+      {/* Visually hidden fallback for screen readers and search crawlers */}
+      <span className="sr-only">{altText}</span>
     </div>
   );
 }
