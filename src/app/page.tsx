@@ -74,6 +74,22 @@ export default function Home() {
         <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] rounded-full bg-primary/8 blur-[140px] pointer-events-none" />
         <div className="absolute top-2/3 left-1/4 w-[300px] h-[300px] rounded-full bg-blue-500/6 blur-[100px] pointer-events-none" />
 
+        {/* Product Hunt badge */}
+        <a
+          href="https://www.producthunt.com/posts/scrollcraft"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-block mb-4"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=scrollcraft&theme=dark"
+            alt="ScrollCraft on Product Hunt"
+            width={220}
+            height={48}
+          />
+        </a>
+
         <Badge variant="outline" className="mb-6 border-primary/40 text-primary bg-primary/10 px-4 py-1.5">
           <Sparkles className="w-3 h-3 mr-1.5" /> AI-Powered · No Code · Animated Scroll
         </Badge>

@@ -3,7 +3,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Check, Minus, Sparkles, Zap, Loader2 } from "lucide-react";
+import { Check, Minus, Sparkles, Zap, Loader2, Tag, X } from "lucide-react";
 import { toast } from "sonner";
 
 const PLANS = [
@@ -194,6 +194,29 @@ export default function PricingPage() {
   const [annual, setAnnual] = useState(true);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [checkingOut, setCheckingOut] = useState<string | null>(null);
+  const [promoInput, setPromoInput] = useState("");
+  const [promoApplied, setPromoApplied] = useState<{ code: string; discountPct: number } | null>(null);
+  const [validatingPromo, setValidatingPromo] = useState(false);
+
+  const handleApplyPromo = async () => {
+    if (!promoInput.trim()) return;
+    setValidatingPromo(true);
+    try {
+      const res = await fetch("/api/promo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: promoInput.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Invalid code");
+      setPromoApplied({ code: data.code, discountPct: data.discountPct });
+      toast.success(`${data.discountPct}% discount applied!`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Invalid promo code");
+    } finally {
+      setValidatingPromo(false);
+    }
+  };
 
   const handleCheckout = async (planName: string) => {
     setCheckingOut(planName);
@@ -201,7 +224,11 @@ export default function PricingPage() {
       const res = await fetch("/api/payments/create-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan: planName, billing: annual ? "annual" : "monthly" }),
+        body: JSON.stringify({
+          plan: planName,
+          billing: annual ? "annual" : "monthly",
+          ...(promoApplied ? { promoCode: promoApplied.code } : {}),
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to create order");
@@ -295,6 +322,40 @@ export default function PricingPage() {
               –20%
             </span>
           </button>
+        </div>
+
+        {/* Promo code */}
+        <div className="mt-6 flex flex-col items-center gap-3">
+          {promoApplied ? (
+            <div className="flex items-center gap-3 px-4 py-2 rounded-full border border-green-500/30 bg-green-500/10 text-green-400 text-sm font-medium">
+              <Check className="w-4 h-4" />
+              <span>Code <strong>{promoApplied.code}</strong> — {promoApplied.discountPct}% off applied</span>
+              <button onClick={() => { setPromoApplied(null); setPromoInput(""); }} className="hover:text-white">
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <div className="relative">
+                <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                <input
+                  value={promoInput}
+                  onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
+                  onKeyDown={(e) => e.key === "Enter" && handleApplyPromo()}
+                  placeholder="Promo code"
+                  className="pl-8 pr-3 py-2 text-sm rounded-lg border border-white/10 bg-white/5 focus:outline-none focus:border-violet-500/50 w-36 placeholder:text-muted-foreground"
+                />
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleApplyPromo}
+                disabled={validatingPromo || !promoInput.trim()}
+              >
+                {validatingPromo ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Apply"}
+              </Button>
+            </div>
+          )}
         </div>
       </section>
 

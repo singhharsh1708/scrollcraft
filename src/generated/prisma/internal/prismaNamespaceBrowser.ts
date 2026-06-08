@@ -54,6 +54,7 @@ export const ModelName = {
   User: 'User',
   Site: 'Site',
   Payment: 'Payment',
+  PromoCode: 'PromoCode',
   Account: 'Account',
   Session: 'Session',
   VerificationToken: 'VerificationToken'
@@ -117,10 +118,26 @@ export const PaymentScalarFieldEnum = {
   amount: 'amount',
   currency: 'currency',
   status: 'status',
+  promoCode: 'promoCode',
+  discountPct: 'discountPct',
   createdAt: 'createdAt'
 } as const
 
 export type PaymentScalarFieldEnum = (typeof PaymentScalarFieldEnum)[keyof typeof PaymentScalarFieldEnum]
+
+
+export const PromoCodeScalarFieldEnum = {
+  id: 'id',
+  code: 'code',
+  discountPct: 'discountPct',
+  maxUses: 'maxUses',
+  uses: 'uses',
+  expiresAt: 'expiresAt',
+  active: 'active',
+  createdAt: 'createdAt'
+} as const
+
+export type PromoCodeScalarFieldEnum = (typeof PromoCodeScalarFieldEnum)[keyof typeof PromoCodeScalarFieldEnum]
 
 
 export const AccountScalarFieldEnum = {

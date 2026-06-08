@@ -52,12 +52,25 @@ model Payment {
   amount            Int
   currency          String        @default("INR")
   status            PaymentStatus @default(PENDING)
+  promoCode         String?
+  discountPct       Int?
   createdAt         DateTime      @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([status])
+}
+
+model PromoCode {
+  id          String    @id @default(cuid())
+  code        String    @unique
+  discountPct Int
+  maxUses     Int?
+  uses        Int       @default(0)
+  expiresAt   DateTime?
+  active      Boolean   @default(true)
+  createdAt   DateTime  @default(now())
 }
 
 model Account {
