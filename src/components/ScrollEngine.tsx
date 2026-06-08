@@ -118,8 +118,15 @@ export default function ScrollEngine({ frames, mobileFrames, totalScrollHeight =
     if (!canvas) return;
 
     const resize = () => {
-      canvas.width = canvas.offsetWidth || window.innerWidth;
-      canvas.height = canvas.offsetHeight || window.innerHeight;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2); // cap at 2× — 3× gains nothing visible
+      const cssW = canvas.offsetWidth || window.innerWidth;
+      const cssH = canvas.offsetHeight || window.innerHeight;
+      canvas.width = cssW * dpr;
+      canvas.height = cssH * dpr;
+      canvas.style.width = cssW + "px";
+      canvas.style.height = cssH + "px";
+      const ctx = canvas.getContext("2d");
+      if (ctx) ctx.scale(dpr, dpr);
       drawFrame(currentFrameRef.current);
     };
 

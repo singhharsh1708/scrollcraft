@@ -189,6 +189,7 @@ export async function POST(req: NextRequest) {
   </style>
   ${safeCustomCss ? `<style>\n${safeCustomCss}\n  </style>` : ""}
   ${safeCustomHead || ""}
+  <script src="https://cdn.jsdelivr.net/npm/@studio-freight/lenis@1.0.42/dist/lenis.min.js"></script>
 </head>
 <body>
   <canvas id="scroll-canvas"></canvas>
@@ -219,39 +220,58 @@ export async function POST(req: NextRequest) {
 
       function getImages() { return (isMobile && mobileImages) ? mobileImages : desktopImages; }
 
+      var dpr = Math.min(window.devicePixelRatio || 1, 2);
+
       function resize() {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+        var cssW = window.innerWidth, cssH = window.innerHeight;
+        canvas.width = cssW * dpr;
+        canvas.height = cssH * dpr;
+        canvas.style.width = cssW + 'px';
+        canvas.style.height = cssH + 'px';
+        ctx.scale(dpr, dpr);
         drawFrame(currentFrame);
       }
 
       function drawFrame(index) {
-        const images = getImages();
-        const img = images[index];
+        var images = getImages();
+        var img = images[index];
         if (!img || !img.complete) return;
-        const scale = Math.max(canvas.width / img.naturalWidth, canvas.height / img.naturalHeight);
-        const w = img.naturalWidth * scale;
-        const h = img.naturalHeight * scale;
-        ctx.drawImage(img, (canvas.width - w) / 2, (canvas.height - h) / 2, w, h);
+        var cssW = window.innerWidth, cssH = window.innerHeight;
+        var scale = Math.max(cssW / img.naturalWidth, cssH / img.naturalHeight);
+        var w = img.naturalWidth * scale, h = img.naturalHeight * scale;
+        ctx.clearRect(0, 0, cssW, cssH);
+        ctx.drawImage(img, (cssW - w) / 2, (cssH - h) / 2, w, h);
       }
 
-      function preloadSet(count, folder, target) {
-        for (var i = 0; i < count; i++) {
-          (function(idx) {
-            var img = new Image();
-            img.src = folder + '/frame_' + String(idx).padStart(4, '0') + '.jpg';
-            img.onload = function() {
-              target[idx] = img;
-              if (idx === 0 && (!isMobile || target === mobileImages)) drawFrame(0);
-            };
+      // Progressive preload: load keyframes first, then fill in the rest.
+      // This shows the first frame immediately and avoids 120 concurrent requests.
+      function preloadSet(count, folder, target, isPrimary) {
+        var STEP = 5;
+        var keyframes = [];
+        for (var i = 0; i < count; i += STEP) keyframes.push(i);
+        var loaded = 0;
+
+        function loadFrame(idx) {
+          var img = new Image();
+          img.src = folder + '/frame_' + String(idx).padStart(4, '0') + '.jpg';
+          img.onload = function() {
             target[idx] = img;
-          })(i);
+            if (idx === 0 && isPrimary) drawFrame(0);
+            loaded++;
+            if (loaded === keyframes.length) {
+              // All keyframes done — load remaining frames
+              for (var j = 0; j < count; j++) {
+                if (j % STEP !== 0) loadFrame(j);
+              }
+            }
+          };
         }
+        keyframes.forEach(loadFrame);
       }
 
       function preload() {
-        preloadSet(desktopCount, 'frames', desktopImages);
-        if (hasMobile) preloadSet(mobileCount, 'frames-mobile', mobileImages);
+        preloadSet(desktopCount, 'frames', desktopImages, !isMobile);
+        if (hasMobile) preloadSet(mobileCount, 'frames-mobile', mobileImages, isMobile);
       }
 
       if (hasMobile) {
@@ -279,7 +299,15 @@ export async function POST(req: NextRequest) {
         if (hint) hint.style.opacity = scrollTop > 100 ? '0' : '1';
       }
 
-      window.addEventListener('scroll', onScroll, { passive: true });
+      // Lenis smooth scroll — falls back to native scroll if the CDN fails to load
+      if (typeof window.Lenis !== 'undefined') {
+        var lenis = new window.Lenis({ lerp: 0.08, smoothWheel: true });
+        lenis.on('scroll', onScroll);
+        function raf(time) { lenis.raf(time); requestAnimationFrame(raf); }
+        requestAnimationFrame(raf);
+      } else {
+        window.addEventListener('scroll', onScroll, { passive: true });
+      }
       window.addEventListener('resize', resize);
       resize();
       preload();
