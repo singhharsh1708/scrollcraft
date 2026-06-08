@@ -58,14 +58,26 @@ function EditorInner() {
   const searchParams = useSearchParams();
   const previewScrollRef = useRef<HTMLDivElement>(null);
 
-  // Derive initial frame state from URL params at render time (no setState-in-effect)
-  const framesParam = searchParams.get("frames");
+  // Derive initial frame state — frames are now stored in sessionStorage (never in the URL).
+  // Legacy ?frames= param is still accepted for backward compatibility with any bookmarked URLs.
+  const framesKey = searchParams.get("framesKey");
+  const framesParam = searchParams.get("frames"); // legacy
   const countParam = searchParams.get("frameCount");
   const fpsParam = searchParams.get("fps");
 
   const parsedFrames: string[] | null = (() => {
-    if (!framesParam) return null;
-    try { return JSON.parse(framesParam); } catch { return null; }
+    // New path: read from sessionStorage via key
+    if (framesKey) {
+      try {
+        const stored = sessionStorage.getItem(framesKey);
+        if (stored) return JSON.parse(stored) as string[];
+      } catch { /* sessionStorage unavailable or corrupt — fall through to demo */ }
+    }
+    // Legacy path: frames were small enough to be in the URL (or direct navigation in tests)
+    if (framesParam) {
+      try { return JSON.parse(framesParam) as string[]; } catch { return null; }
+    }
+    return null;
   })();
 
   const DEMO_COUNT = 120;
