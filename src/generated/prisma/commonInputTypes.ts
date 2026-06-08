@@ -198,6 +198,23 @@ export type IntNullableWithAggregatesFilter<$PrismaModel = never> = {
   _max?: Prisma.NestedIntNullableFilter<$PrismaModel>
 }
 
+export type EnumExportPurchaseStatusFilter<$PrismaModel = never> = {
+  equals?: $Enums.ExportPurchaseStatus | Prisma.EnumExportPurchaseStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.ExportPurchaseStatus[] | Prisma.ListEnumExportPurchaseStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.ExportPurchaseStatus[] | Prisma.ListEnumExportPurchaseStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumExportPurchaseStatusFilter<$PrismaModel> | $Enums.ExportPurchaseStatus
+}
+
+export type EnumExportPurchaseStatusWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.ExportPurchaseStatus | Prisma.EnumExportPurchaseStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.ExportPurchaseStatus[] | Prisma.ListEnumExportPurchaseStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.ExportPurchaseStatus[] | Prisma.ListEnumExportPurchaseStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumExportPurchaseStatusWithAggregatesFilter<$PrismaModel> | $Enums.ExportPurchaseStatus
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumExportPurchaseStatusFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumExportPurchaseStatusFilter<$PrismaModel>
+}
+
 export type DateTimeNullableFilter<$PrismaModel = never> = {
   equals?: Date | string | Prisma.DateTimeFieldRefInput<$PrismaModel> | null
   in?: Date[] | string[] | Prisma.ListDateTimeFieldRefInput<$PrismaModel> | null
@@ -431,6 +448,23 @@ export type NestedFloatNullableFilter<$PrismaModel = never> = {
   gt?: number | Prisma.FloatFieldRefInput<$PrismaModel>
   gte?: number | Prisma.FloatFieldRefInput<$PrismaModel>
   not?: Prisma.NestedFloatNullableFilter<$PrismaModel> | number | null
+}
+
+export type NestedEnumExportPurchaseStatusFilter<$PrismaModel = never> = {
+  equals?: $Enums.ExportPurchaseStatus | Prisma.EnumExportPurchaseStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.ExportPurchaseStatus[] | Prisma.ListEnumExportPurchaseStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.ExportPurchaseStatus[] | Prisma.ListEnumExportPurchaseStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumExportPurchaseStatusFilter<$PrismaModel> | $Enums.ExportPurchaseStatus
+}
+
+export type NestedEnumExportPurchaseStatusWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.ExportPurchaseStatus | Prisma.EnumExportPurchaseStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.ExportPurchaseStatus[] | Prisma.ListEnumExportPurchaseStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.ExportPurchaseStatus[] | Prisma.ListEnumExportPurchaseStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumExportPurchaseStatusWithAggregatesFilter<$PrismaModel> | $Enums.ExportPurchaseStatus
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumExportPurchaseStatusFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumExportPurchaseStatusFilter<$PrismaModel>
 }
 
 export type NestedDateTimeNullableFilter<$PrismaModel = never> = {

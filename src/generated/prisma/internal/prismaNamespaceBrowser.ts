@@ -54,6 +54,7 @@ export const ModelName = {
   User: 'User',
   Site: 'Site',
   Payment: 'Payment',
+  ExportPurchase: 'ExportPurchase',
   PromoCode: 'PromoCode',
   Account: 'Account',
   Session: 'Session',
@@ -124,6 +125,21 @@ export const PaymentScalarFieldEnum = {
 } as const
 
 export type PaymentScalarFieldEnum = (typeof PaymentScalarFieldEnum)[keyof typeof PaymentScalarFieldEnum]
+
+
+export const ExportPurchaseScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  siteId: 'siteId',
+  lsOrderId: 'lsOrderId',
+  lsCheckoutId: 'lsCheckoutId',
+  amount: 'amount',
+  currency: 'currency',
+  status: 'status',
+  createdAt: 'createdAt'
+} as const
+
+export type ExportPurchaseScalarFieldEnum = (typeof ExportPurchaseScalarFieldEnum)[keyof typeof ExportPurchaseScalarFieldEnum]
 
 
 export const PromoCodeScalarFieldEnum = {

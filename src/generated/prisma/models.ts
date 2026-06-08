@@ -11,6 +11,7 @@
 export type * from './models/User'
 export type * from './models/Site'
 export type * from './models/Payment'
+export type * from './models/ExportPurchase'
 export type * from './models/PromoCode'
 export type * from './models/Account'
 export type * from './models/Session'

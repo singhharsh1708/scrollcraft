@@ -387,6 +387,7 @@ export const ModelName = {
   User: 'User',
   Site: 'Site',
   Payment: 'Payment',
+  ExportPurchase: 'ExportPurchase',
   PromoCode: 'PromoCode',
   Account: 'Account',
   Session: 'Session',
@@ -406,7 +407,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "site" | "payment" | "promoCode" | "account" | "session" | "verificationToken"
+    modelProps: "user" | "site" | "payment" | "exportPurchase" | "promoCode" | "account" | "session" | "verificationToken"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -629,6 +630,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.PaymentCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.PaymentCountAggregateOutputType> | number
+        }
+      }
+    }
+    ExportPurchase: {
+      payload: Prisma.$ExportPurchasePayload<ExtArgs>
+      fields: Prisma.ExportPurchaseFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ExportPurchaseFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExportPurchasePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ExportPurchaseFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExportPurchasePayload>
+        }
+        findFirst: {
+          args: Prisma.ExportPurchaseFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExportPurchasePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ExportPurchaseFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExportPurchasePayload>
+        }
+        findMany: {
+          args: Prisma.ExportPurchaseFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExportPurchasePayload>[]
+        }
+        create: {
+          args: Prisma.ExportPurchaseCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExportPurchasePayload>
+        }
+        createMany: {
+          args: Prisma.ExportPurchaseCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ExportPurchaseCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExportPurchasePayload>[]
+        }
+        delete: {
+          args: Prisma.ExportPurchaseDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExportPurchasePayload>
+        }
+        update: {
+          args: Prisma.ExportPurchaseUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExportPurchasePayload>
+        }
+        deleteMany: {
+          args: Prisma.ExportPurchaseDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ExportPurchaseUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ExportPurchaseUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExportPurchasePayload>[]
+        }
+        upsert: {
+          args: Prisma.ExportPurchaseUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExportPurchasePayload>
+        }
+        aggregate: {
+          args: Prisma.ExportPurchaseAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateExportPurchase>
+        }
+        groupBy: {
+          args: Prisma.ExportPurchaseGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ExportPurchaseGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ExportPurchaseCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ExportPurchaseCountAggregateOutputType> | number
         }
       }
     }
@@ -1017,6 +1092,21 @@ export const PaymentScalarFieldEnum = {
 export type PaymentScalarFieldEnum = (typeof PaymentScalarFieldEnum)[keyof typeof PaymentScalarFieldEnum]
 
 
+export const ExportPurchaseScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  siteId: 'siteId',
+  lsOrderId: 'lsOrderId',
+  lsCheckoutId: 'lsCheckoutId',
+  amount: 'amount',
+  currency: 'currency',
+  status: 'status',
+  createdAt: 'createdAt'
+} as const
+
+export type ExportPurchaseScalarFieldEnum = (typeof ExportPurchaseScalarFieldEnum)[keyof typeof ExportPurchaseScalarFieldEnum]
+
+
 export const PromoCodeScalarFieldEnum = {
   id: 'id',
   code: 'code',
@@ -1169,6 +1259,20 @@ export type ListEnumPaymentStatusFieldRefInput<$PrismaModel> = FieldRefInputType
 
 
 /**
+ * Reference to a field of type 'ExportPurchaseStatus'
+ */
+export type EnumExportPurchaseStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ExportPurchaseStatus'>
+    
+
+
+/**
+ * Reference to a field of type 'ExportPurchaseStatus[]'
+ */
+export type ListEnumExportPurchaseStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ExportPurchaseStatus[]'>
+    
+
+
+/**
  * Reference to a field of type 'Boolean'
  */
 export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
@@ -1301,6 +1405,7 @@ export type GlobalOmitConfig = {
   user?: Prisma.UserOmit
   site?: Prisma.SiteOmit
   payment?: Prisma.PaymentOmit
+  exportPurchase?: Prisma.ExportPurchaseOmit
   promoCode?: Prisma.PromoCodeOmit
   account?: Prisma.AccountOmit
   session?: Prisma.SessionOmit

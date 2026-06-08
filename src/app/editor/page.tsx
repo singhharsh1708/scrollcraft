@@ -72,16 +72,16 @@ function EditorInner() {
   const demoFrameUrls = Array.from({ length: DEMO_COUNT }, (_, i) => `/api/demo-frame?i=${i}&total=${DEMO_COUNT}`);
   const initialIsDemo = !parsedFrames;
 
-  const [frames] = useState<string[]>(parsedFrames ?? demoFrameUrls);
-  const [frameCount] = useState(parsedFrames ? parseInt(countParam || String(parsedFrames.length)) : DEMO_COUNT);
-  const [fps] = useState(parsedFrames ? parseInt(fpsParam || "24") : 24);
+  const [frames, setFrames] = useState<string[]>(parsedFrames ?? demoFrameUrls);
+  const [frameCount, setFrameCount] = useState(parsedFrames ? parseInt(countParam || String(parsedFrames.length)) : DEMO_COUNT);
+  const [fps, setFps] = useState(parsedFrames ? parseInt(fpsParam || "24") : 24);
   const [sections, setSections] = useState<Section[]>([defaultSection(0)]);
   const [selectedSection, setSelectedSection] = useState<string>(sections[0].id);
   const [siteName, setSiteName] = useState("My ScrollCraft Site");
   const [currentFrame, setCurrentFrame] = useState(0);
   const [showPreview, setShowPreview] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
-  const isDemo = initialIsDemo;
+  const [isDemo, setIsDemo] = useState(initialIsDemo);
   const [chatOpen, setChatOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState<{ role: "user" | "ai"; text: string }[]>([
     { role: "ai", text: "Hi! I can edit your site for you. Try: \"Make it purple\", \"Center the text\", \"Change the heading to...\"" },
@@ -112,9 +112,53 @@ function EditorInner() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Show demo toast once on mount — side-effect only, no state mutation
+  // Hydrate a saved site from the DB when opened with ?siteId= and no frames in the URL.
+  // This makes saved sites re-editable and lets users return after a Lemon Squeezy
+  // export purchase (they land back here via the checkout redirect).
   useEffect(() => {
-    if (initialIsDemo) {
+    const sid = searchParams.get("siteId");
+    if (!sid || parsedFrames) return; // fresh-from-generation flow already has frames
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`/api/sites/${sid}`);
+        if (!res.ok) return;
+        const { site } = await res.json();
+        if (cancelled || !site) return;
+        if (site.framesJson) {
+          const f = JSON.parse(site.framesJson);
+          if (Array.isArray(f) && f.length) {
+            setFrames(f);
+            setFrameCount(f.length);
+            setIsDemo(false);
+          }
+        }
+        if (site.sectionsJson) {
+          const s = JSON.parse(site.sectionsJson);
+          if (Array.isArray(s) && s.length) {
+            setSections(s);
+            setSelectedSection(s[0].id);
+          }
+        }
+        if (typeof site.fps === "number") setFps(site.fps);
+        if (site.name) setSiteName(site.name);
+        if (site.customHead) setCustomHead(site.customHead);
+        if (site.customCss) setCustomCss(site.customCss);
+        if (site.audioUrl) setAudioSrc(site.audioUrl);
+        if (searchParams.get("purchased") === "1") {
+          toast.success("Export unlocked! Click Export to download your ZIP.");
+        }
+      } catch {
+        /* leave editor in its default state on load failure */
+      }
+    })();
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Show demo toast once on mount — but not when reopening a saved site (it hydrates async)
+  useEffect(() => {
+    if (initialIsDemo && !searchParams.get("siteId")) {
       toast.info("Running in demo mode — add your API key for real AI video generation");
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -157,11 +201,49 @@ function EditorInner() {
     }
     setIsExporting(true);
     try {
+      // A purchase must be tied to a saved site — auto-save first if needed.
+      let effectiveSiteId = siteId;
+      if (!effectiveSiteId) {
+        effectiveSiteId = await handleSave({ silent: true });
+        if (!effectiveSiteId) {
+          toast.error("Couldn't save your site — sign in and try again.");
+          return;
+        }
+      }
+
       const res = await fetch("/api/export-site", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ frames, mobileFrames: mobileFrames.length ? mobileFrames : undefined, audioSrc: audioSrc ?? undefined, sections, siteName, fps, customHead, customCss }),
+        body: JSON.stringify({ frames, mobileFrames: mobileFrames.length ? mobileFrames : undefined, audioSrc: audioSrc ?? undefined, sections, siteName, fps, customHead, customCss, siteId: effectiveSiteId }),
       });
+
+      if (res.status === 402) {
+        // FREE user without a paid export — send them to Lemon Squeezy checkout.
+        const checkoutRes = await fetch("/api/payments/ls-checkout", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ siteId: effectiveSiteId }),
+        });
+        const checkoutData = await checkoutRes.json().catch(() => ({}));
+        if (checkoutData.alreadyPurchased) {
+          // Webhook just landed between calls — retry the export.
+          toast.info("Purchase confirmed — preparing your download…");
+          setIsExporting(false);
+          return handleExport();
+        }
+        if (checkoutRes.status === 503) {
+          toast.error("Paid exports aren't available right now. Try again later.");
+          return;
+        }
+        if (!checkoutRes.ok || !checkoutData.checkoutUrl) {
+          toast.error("Could not start checkout. Please try again.");
+          return;
+        }
+        toast.info("Redirecting to secure checkout…");
+        window.location.assign(checkoutData.checkoutUrl);
+        return;
+      }
+
       if (!res.ok) throw new Error(await res.text());
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
@@ -178,8 +260,11 @@ function EditorInner() {
     }
   };
 
-  const handleSave = async () => {
-    if (isDemo) { toast.error("Can't save demo — generate real frames first"); return; }
+  const handleSave = async (opts?: { silent?: boolean }): Promise<string | null> => {
+    if (isDemo) {
+      if (!opts?.silent) toast.error("Can't save demo — generate real frames first");
+      return null;
+    }
     setIsSaving(true);
     try {
       const res = await fetch("/api/sites", {
@@ -197,13 +282,15 @@ function EditorInner() {
           audioUrl: audioSrc ?? undefined,
         }),
       });
-      if (res.status === 401) { toast.error("Sign in to save your site"); return; }
+      if (res.status === 401) { toast.error("Sign in to save your site"); return null; }
       if (!res.ok) throw new Error(await res.text());
       const data = await res.json();
       setSiteId(data.site.id);
-      toast.success("Site saved!");
+      if (!opts?.silent) toast.success("Site saved!");
+      return data.site.id as string;
     } catch {
       toast.error("Failed to save site");
+      return null;
     } finally {
       setIsSaving(false);
     }
@@ -302,7 +389,7 @@ function EditorInner() {
           <Button
             variant="outline"
             size="sm"
-            onClick={handleSave}
+            onClick={() => handleSave()}
             disabled={isSaving}
             className="border-white/10 h-7 px-3 text-xs gap-1"
           >
