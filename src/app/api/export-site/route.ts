@@ -39,6 +39,25 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "sections must be a non-empty array" }, { status: 400 });
     }
 
+    // Enforce length limits to prevent oversized payloads
+    const MAX_CSS = 50_000;
+    const MAX_HEAD = 50_000;
+    if (typeof customCss === "string" && customCss.length > MAX_CSS) {
+      return NextResponse.json({ error: "customCss exceeds 50 KB limit" }, { status: 400 });
+    }
+    if (typeof customHead === "string" && customHead.length > MAX_HEAD) {
+      return NextResponse.json({ error: "customHead exceeds 50 KB limit" }, { status: 400 });
+    }
+
+    // Strip <script> tags from customHead to prevent XSS in the generated export
+    const safeCustomHead = typeof customHead === "string"
+      ? customHead.replace(/<script[\s\S]*?<\/script>/gi, "")
+      : "";
+    // Strip url(javascript:...) and expression() from customCss
+    const safeCustomCss = typeof customCss === "string"
+      ? customCss.replace(/url\s*\(\s*["']?\s*javascript:/gi, "url(#").replace(/expression\s*\(/gi, "(")
+      : "";
+
     const isBlobUrl = frames[0].startsWith("https://") || frames[0].startsWith("http://");
     const isBase64 = frames[0].startsWith("data:image/");
 
@@ -146,8 +165,8 @@ export async function POST(req: NextRequest) {
     }
     #audio-mute:hover { background: rgba(255,255,255,0.1); }
   </style>
-  ${customCss ? `<style>\n${customCss}\n  </style>` : ""}
-  ${customHead || ""}
+  ${safeCustomCss ? `<style>\n${safeCustomCss}\n  </style>` : ""}
+  ${safeCustomHead || ""}
 </head>
 <body>
   <canvas id="scroll-canvas"></canvas>

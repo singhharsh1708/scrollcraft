@@ -8,7 +8,10 @@
     "deploy": "prisma migrate deploy",
     "postinstall": "prisma generate",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.2",
@@ -19,6 +22,8 @@
     "@studio-freight/lenis": "^1.0.42",
     "@types/fluent-ffmpeg": "^2.1.28",
     "@types/pg": "^8.20.0",
+    "@upstash/ratelimit": "^2.0.8",
+    "@upstash/redis": "^1.38.0",
     "@vercel/blob": "^2.4.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -27,7 +32,7 @@
     "jszip": "^3.10.1",
     "lucide-react": "^1.17.0",
     "next": "16.2.7",
-    "next-auth": "^5.0.0-beta.31",
+    "next-auth": "5.0.0-beta.31",
     "next-themes": "^0.4.6",
     "pg": "^8.21.0",
     "prisma": "^7.8.0",
@@ -45,9 +50,11 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitest/coverage-v8": "^4.1.8",
     "eslint": "^9",
     "eslint-config-next": "16.2.7",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.8"
   }
 }

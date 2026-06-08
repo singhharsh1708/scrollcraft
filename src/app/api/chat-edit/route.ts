@@ -1,6 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { auth } from "@/auth";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
+
+const chatEditSchema = z.object({
+  message: z.string().min(1).max(2000),
+  selectedSectionId: z.string().max(100),
+  sections: z.array(z.object({
+    id: z.string(),
+    heading: z.string().max(500).optional(),
+    body: z.string().max(5000).optional(),
+    eyebrow: z.string().max(200).optional(),
+    ctaLabel: z.string().max(200).optional(),
+    ctaHref: z.string().max(2000).optional(),
+    accentColor: z.string().max(50).optional(),
+    headingColor: z.string().max(50).optional(),
+    bodyColor: z.string().max(50).optional(),
+    scrollHeight: z.number().optional(),
+    textAlign: z.string().max(20).optional(),
+  })).max(50),
+});
 
 interface Section {
   id: string;
@@ -27,7 +46,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Too many requests. Try again in a minute." }, { status: 429 });
   }
 
-  const { message, sections, selectedSectionId } = await req.json();
+  const raw = await req.json();
+  const parsed = chatEditSchema.safeParse(raw);
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Invalid request", details: parsed.error.flatten().fieldErrors }, { status: 400 });
+  }
+  const { message, sections, selectedSectionId } = parsed.data;
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {

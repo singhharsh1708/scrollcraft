@@ -1,6 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
+
+const siteSchema = z.object({
+  id: z.string().optional(),
+  name: z.string().max(255).optional(),
+  fps: z.number().int().min(1).max(120).optional(),
+  frameCount: z.number().int().min(0).optional(),
+  framesJson: z.string().max(10_000_000).optional(),
+  sectionsJson: z.string().max(1_000_000).optional(),
+  customHead: z.string().max(50_000).optional(),
+  customCss: z.string().max(50_000).optional(),
+  audioUrl: z.string().url().max(2000).optional().or(z.literal("")),
+});
 
 // GET /api/sites — list the current user's sites
 export async function GET() {
@@ -37,8 +50,12 @@ export async function POST(req: NextRequest) {
   });
   if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
 
-  const body = await req.json();
-  const { id, name, fps, frameCount, framesJson, sectionsJson, customHead, customCss, audioUrl } = body;
+  const raw = await req.json();
+  const parsed = siteSchema.safeParse(raw);
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Invalid request", details: parsed.error.flatten().fieldErrors }, { status: 400 });
+  }
+  const { id, name, fps, frameCount, framesJson, sectionsJson, customHead, customCss, audioUrl } = parsed.data;
 
   if (id) {
     // Update existing site — verify ownership

@@ -1,3 +1,5 @@
+export const revalidate = 86400; // revalidate once per day
+
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
