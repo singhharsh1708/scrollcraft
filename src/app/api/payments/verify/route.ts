@@ -33,7 +33,9 @@ export async function POST(req: NextRequest) {
       .update(`${orderId}|${paymentId}`)
       .digest("hex");
 
-    if (!crypto.timingSafeEqual(Buffer.from(expectedSignature), Buffer.from(signature))) {
+    const expectedBuf = Buffer.from(expectedSignature, "hex");
+    const actualBuf = Buffer.from(typeof signature === "string" ? signature : "", "hex");
+    if (expectedBuf.length !== actualBuf.length || !crypto.timingSafeEqual(expectedBuf, actualBuf)) {
       return NextResponse.json({ error: "Invalid payment signature" }, { status: 400 });
     }
 
