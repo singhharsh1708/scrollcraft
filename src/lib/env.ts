@@ -11,8 +11,8 @@ const envSchema = z.object({
   // Database
   DATABASE_URL: z.string().url().optional(),
 
-  // Auth — required at runtime but optional during build-time static generation
-  NEXTAUTH_SECRET: z.string().optional(),
+  // Auth — required at runtime, optional only during build phase
+  NEXTAUTH_SECRET: z.string().min(1).optional(),
   NEXTAUTH_URL: z.string().url().optional(),
   AUTH_GITHUB_ID: z.string().optional(),
   AUTH_GITHUB_SECRET: z.string().optional(),
@@ -55,6 +55,11 @@ export const env = (_env.success ? _env.data : envSchema.parse({
   NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET ?? "build-placeholder",
   NODE_ENV: process.env.NODE_ENV ?? "production",
 }));
+
+// At runtime (not build time), NEXTAUTH_SECRET is required for session security
+if (!isBuildPhase && !env.NEXTAUTH_SECRET) {
+  throw new Error("NEXTAUTH_SECRET is required in production. Set it in your environment variables.");
+}
 
 export function isDemoMode(): boolean {
   return !env.LUMAAI_API_KEY && !env.RUNWAYML_API_KEY;
