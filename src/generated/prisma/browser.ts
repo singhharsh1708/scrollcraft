@@ -33,6 +33,11 @@ export type Site = Prisma.SiteModel
  */
 export type Payment = Prisma.PaymentModel
 /**
+ * Model ExportPurchase
+ * 
+ */
+export type ExportPurchase = Prisma.ExportPurchaseModel
+/**
  * Model PromoCode
  * 
  */

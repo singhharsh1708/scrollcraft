@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import JSZip from "jszip";
 import { auth } from "@/auth";
+import { db } from "@/lib/db";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
 
 function esc(s: string): string {
@@ -30,7 +31,28 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { frames, mobileFrames, audioSrc, sections, siteName, customHead = "", customCss = "" } = body;
+    const { frames, mobileFrames, audioSrc, sections, siteName, customHead = "", customCss = "", siteId } = body;
+
+    // FREE users must purchase an export; paid subscribers export freely
+    const userPlan = session.user.plan ?? "FREE";
+    if (userPlan === "FREE") {
+      if (!siteId) {
+        // No site id means an unsaved site — can't tie a purchase to it.
+        return NextResponse.json(
+          { error: "Save your site before exporting.", code: "SAVE_REQUIRED" },
+          { status: 402 }
+        );
+      }
+      const purchase = await db.exportPurchase.findFirst({
+        where: { siteId, userId: session.user.id, status: "PAID" },
+      });
+      if (!purchase) {
+        return NextResponse.json(
+          { error: "Export purchase required", code: "PURCHASE_REQUIRED" },
+          { status: 402 }
+        );
+      }
+    }
 
     if (!Array.isArray(frames) || frames.length === 0) {
       return NextResponse.json({ error: "frames must be a non-empty array" }, { status: 400 });

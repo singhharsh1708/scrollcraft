@@ -277,6 +277,7 @@ export type SiteWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"Site"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Site"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
+  exportPurchases?: Prisma.ExportPurchaseListRelationFilter
 }
 
 export type SiteOrderByWithRelationInput = {
@@ -293,6 +294,7 @@ export type SiteOrderByWithRelationInput = {
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   user?: Prisma.UserOrderByWithRelationInput
+  exportPurchases?: Prisma.ExportPurchaseOrderByRelationAggregateInput
 }
 
 export type SiteWhereUniqueInput = Prisma.AtLeast<{
@@ -312,6 +314,7 @@ export type SiteWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"Site"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Site"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
+  exportPurchases?: Prisma.ExportPurchaseListRelationFilter
 }, "id">
 
 export type SiteOrderByWithAggregationInput = {
@@ -365,6 +368,7 @@ export type SiteCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutSitesInput
+  exportPurchases?: Prisma.ExportPurchaseCreateNestedManyWithoutSiteInput
 }
 
 export type SiteUncheckedCreateInput = {
@@ -380,6 +384,7 @@ export type SiteUncheckedCreateInput = {
   audioUrl?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  exportPurchases?: Prisma.ExportPurchaseUncheckedCreateNestedManyWithoutSiteInput
 }
 
 export type SiteUpdateInput = {
@@ -395,6 +400,7 @@ export type SiteUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutSitesNestedInput
+  exportPurchases?: Prisma.ExportPurchaseUpdateManyWithoutSiteNestedInput
 }
 
 export type SiteUncheckedUpdateInput = {
@@ -410,6 +416,7 @@ export type SiteUncheckedUpdateInput = {
   audioUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  exportPurchases?: Prisma.ExportPurchaseUncheckedUpdateManyWithoutSiteNestedInput
 }
 
 export type SiteCreateManyInput = {
@@ -521,6 +528,11 @@ export type SiteSumOrderByAggregateInput = {
   frameCount?: Prisma.SortOrder
 }
 
+export type SiteScalarRelationFilter = {
+  is?: Prisma.SiteWhereInput
+  isNot?: Prisma.SiteWhereInput
+}
+
 export type SiteCreateNestedManyWithoutUserInput = {
   create?: Prisma.XOR<Prisma.SiteCreateWithoutUserInput, Prisma.SiteUncheckedCreateWithoutUserInput> | Prisma.SiteCreateWithoutUserInput[] | Prisma.SiteUncheckedCreateWithoutUserInput[]
   connectOrCreate?: Prisma.SiteCreateOrConnectWithoutUserInput | Prisma.SiteCreateOrConnectWithoutUserInput[]
@@ -563,6 +575,20 @@ export type SiteUncheckedUpdateManyWithoutUserNestedInput = {
   deleteMany?: Prisma.SiteScalarWhereInput | Prisma.SiteScalarWhereInput[]
 }
 
+export type SiteCreateNestedOneWithoutExportPurchasesInput = {
+  create?: Prisma.XOR<Prisma.SiteCreateWithoutExportPurchasesInput, Prisma.SiteUncheckedCreateWithoutExportPurchasesInput>
+  connectOrCreate?: Prisma.SiteCreateOrConnectWithoutExportPurchasesInput
+  connect?: Prisma.SiteWhereUniqueInput
+}
+
+export type SiteUpdateOneRequiredWithoutExportPurchasesNestedInput = {
+  create?: Prisma.XOR<Prisma.SiteCreateWithoutExportPurchasesInput, Prisma.SiteUncheckedCreateWithoutExportPurchasesInput>
+  connectOrCreate?: Prisma.SiteCreateOrConnectWithoutExportPurchasesInput
+  upsert?: Prisma.SiteUpsertWithoutExportPurchasesInput
+  connect?: Prisma.SiteWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.SiteUpdateToOneWithWhereWithoutExportPurchasesInput, Prisma.SiteUpdateWithoutExportPurchasesInput>, Prisma.SiteUncheckedUpdateWithoutExportPurchasesInput>
+}
+
 export type SiteCreateWithoutUserInput = {
   id?: string
   name?: string
@@ -575,6 +601,7 @@ export type SiteCreateWithoutUserInput = {
   audioUrl?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  exportPurchases?: Prisma.ExportPurchaseCreateNestedManyWithoutSiteInput
 }
 
 export type SiteUncheckedCreateWithoutUserInput = {
@@ -589,6 +616,7 @@ export type SiteUncheckedCreateWithoutUserInput = {
   audioUrl?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  exportPurchases?: Prisma.ExportPurchaseUncheckedCreateNestedManyWithoutSiteInput
 }
 
 export type SiteCreateOrConnectWithoutUserInput = {
@@ -635,6 +663,82 @@ export type SiteScalarWhereInput = {
   updatedAt?: Prisma.DateTimeFilter<"Site"> | Date | string
 }
 
+export type SiteCreateWithoutExportPurchasesInput = {
+  id?: string
+  name?: string
+  fps?: number
+  frameCount?: number
+  framesJson?: string | null
+  sectionsJson?: string | null
+  customHead?: string | null
+  customCss?: string | null
+  audioUrl?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  user: Prisma.UserCreateNestedOneWithoutSitesInput
+}
+
+export type SiteUncheckedCreateWithoutExportPurchasesInput = {
+  id?: string
+  userId: string
+  name?: string
+  fps?: number
+  frameCount?: number
+  framesJson?: string | null
+  sectionsJson?: string | null
+  customHead?: string | null
+  customCss?: string | null
+  audioUrl?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type SiteCreateOrConnectWithoutExportPurchasesInput = {
+  where: Prisma.SiteWhereUniqueInput
+  create: Prisma.XOR<Prisma.SiteCreateWithoutExportPurchasesInput, Prisma.SiteUncheckedCreateWithoutExportPurchasesInput>
+}
+
+export type SiteUpsertWithoutExportPurchasesInput = {
+  update: Prisma.XOR<Prisma.SiteUpdateWithoutExportPurchasesInput, Prisma.SiteUncheckedUpdateWithoutExportPurchasesInput>
+  create: Prisma.XOR<Prisma.SiteCreateWithoutExportPurchasesInput, Prisma.SiteUncheckedCreateWithoutExportPurchasesInput>
+  where?: Prisma.SiteWhereInput
+}
+
+export type SiteUpdateToOneWithWhereWithoutExportPurchasesInput = {
+  where?: Prisma.SiteWhereInput
+  data: Prisma.XOR<Prisma.SiteUpdateWithoutExportPurchasesInput, Prisma.SiteUncheckedUpdateWithoutExportPurchasesInput>
+}
+
+export type SiteUpdateWithoutExportPurchasesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  fps?: Prisma.IntFieldUpdateOperationsInput | number
+  frameCount?: Prisma.IntFieldUpdateOperationsInput | number
+  framesJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sectionsJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customHead?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customCss?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  audioUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  user?: Prisma.UserUpdateOneRequiredWithoutSitesNestedInput
+}
+
+export type SiteUncheckedUpdateWithoutExportPurchasesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  fps?: Prisma.IntFieldUpdateOperationsInput | number
+  frameCount?: Prisma.IntFieldUpdateOperationsInput | number
+  framesJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sectionsJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customHead?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customCss?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  audioUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
 export type SiteCreateManyUserInput = {
   id?: string
   name?: string
@@ -661,6 +765,7 @@ export type SiteUpdateWithoutUserInput = {
   audioUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  exportPurchases?: Prisma.ExportPurchaseUpdateManyWithoutSiteNestedInput
 }
 
 export type SiteUncheckedUpdateWithoutUserInput = {
@@ -675,6 +780,7 @@ export type SiteUncheckedUpdateWithoutUserInput = {
   audioUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  exportPurchases?: Prisma.ExportPurchaseUncheckedUpdateManyWithoutSiteNestedInput
 }
 
 export type SiteUncheckedUpdateManyWithoutUserInput = {
@@ -692,6 +798,35 @@ export type SiteUncheckedUpdateManyWithoutUserInput = {
 }
 
 
+/**
+ * Count Type SiteCountOutputType
+ */
+
+export type SiteCountOutputType = {
+  exportPurchases: number
+}
+
+export type SiteCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  exportPurchases?: boolean | SiteCountOutputTypeCountExportPurchasesArgs
+}
+
+/**
+ * SiteCountOutputType without action
+ */
+export type SiteCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the SiteCountOutputType
+   */
+  select?: Prisma.SiteCountOutputTypeSelect<ExtArgs> | null
+}
+
+/**
+ * SiteCountOutputType without action
+ */
+export type SiteCountOutputTypeCountExportPurchasesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ExportPurchaseWhereInput
+}
+
 
 export type SiteSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -707,6 +842,8 @@ export type SiteSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   createdAt?: boolean
   updatedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  exportPurchases?: boolean | Prisma.Site$exportPurchasesArgs<ExtArgs>
+  _count?: boolean | Prisma.SiteCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["site"]>
 
 export type SiteSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -759,6 +896,8 @@ export type SiteSelectScalar = {
 export type SiteOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "name" | "fps" | "frameCount" | "framesJson" | "sectionsJson" | "customHead" | "customCss" | "audioUrl" | "createdAt" | "updatedAt", ExtArgs["result"]["site"]>
 export type SiteInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  exportPurchases?: boolean | Prisma.Site$exportPurchasesArgs<ExtArgs>
+  _count?: boolean | Prisma.SiteCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type SiteIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -771,6 +910,7 @@ export type $SitePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   name: "Site"
   objects: {
     user: Prisma.$UserPayload<ExtArgs>
+    exportPurchases: Prisma.$ExportPurchasePayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1180,6 +1320,7 @@ readonly fields: SiteFieldRefs;
 export interface Prisma__SiteClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   user<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  exportPurchases<T extends Prisma.Site$exportPurchasesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Site$exportPurchasesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ExportPurchasePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1619,6 +1760,30 @@ export type SiteDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Internal
    * Limit how many Sites to delete.
    */
   limit?: number
+}
+
+/**
+ * Site.exportPurchases
+ */
+export type Site$exportPurchasesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ExportPurchase
+   */
+  select?: Prisma.ExportPurchaseSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ExportPurchase
+   */
+  omit?: Prisma.ExportPurchaseOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ExportPurchaseInclude<ExtArgs> | null
+  where?: Prisma.ExportPurchaseWhereInput
+  orderBy?: Prisma.ExportPurchaseOrderByWithRelationInput | Prisma.ExportPurchaseOrderByWithRelationInput[]
+  cursor?: Prisma.ExportPurchaseWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ExportPurchaseScalarFieldEnum | Prisma.ExportPurchaseScalarFieldEnum[]
 }
 
 /**
