@@ -1,3 +1,4 @@
+import "server-only"; // hard build error if accidentally imported in a client component
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 

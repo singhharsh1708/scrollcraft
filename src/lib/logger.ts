@@ -1,3 +1,5 @@
+import "server-only";
+
 type LogLevel = "info" | "warn" | "error";
 
 interface LogPayload {
