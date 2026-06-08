@@ -564,7 +564,7 @@ function EditorInner() {
                   totalScrollHeight={totalScrollHeight}
                   onFrameChange={handleFrameChange}
                   scrollContainer={previewScrollRef}
-                  position={viewportMode !== "desktop" ? "absolute" : "fixed"}
+                  position="absolute"
                 />
                 {/* Section overlays */}
                 <div className="relative z-10" style={{ height: totalScrollHeight }}>
