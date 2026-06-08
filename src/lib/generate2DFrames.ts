@@ -81,8 +81,8 @@ function drawGeometric(ctx: CanvasRenderingContext2D, w: number, h: number, p: n
     ctx.beginPath();
     for (let s = 0; s <= sides; s++) {
       const a = (s / sides) * Math.PI * 2 - Math.PI / 2;
-      s === 0 ? ctx.moveTo(Math.cos(a) * size, Math.sin(a) * size)
-              : ctx.lineTo(Math.cos(a) * size, Math.sin(a) * size);
+      if (s === 0) ctx.moveTo(Math.cos(a) * size, Math.sin(a) * size);
+      else ctx.lineTo(Math.cos(a) * size, Math.sin(a) * size);
     }
     ctx.closePath();
     ctx.fill();

@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useState } from "react";
+import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight, Sparkles, Zap, Download, Play, Check } from "lucide-react";
@@ -48,6 +49,7 @@ const FAQ = [
 
 export default function Home() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const { data: session } = useSession();
 
   return (
     <main className="min-h-screen bg-background text-foreground overflow-x-hidden">
@@ -63,9 +65,23 @@ export default function Home() {
           <Link href="/presets" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Presets</Link>
           <Link href="/#features" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Features</Link>
           <Link href="/pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Pricing</Link>
-          <Link href="/create">
-            <Button size="sm" className="bg-primary hover:bg-primary/90 text-white">Start Building</Button>
-          </Link>
+          {session ? (
+            <>
+              <Link href="/dashboard" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Dashboard</Link>
+              <Link href="/create">
+                <Button size="sm" className="bg-primary hover:bg-primary/90 text-white">Start Building</Button>
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link href="/auth/signin">
+                <Button size="sm" variant="ghost" className="text-muted-foreground hover:text-foreground">Sign In</Button>
+              </Link>
+              <Link href="/create">
+                <Button size="sm" className="bg-primary hover:bg-primary/90 text-white">Start Building</Button>
+              </Link>
+            </>
+          )}
         </div>
       </nav>
 
@@ -397,7 +413,7 @@ export default function Home() {
             <div>
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-4">Company</p>
               <div className="space-y-2.5">
-                {[["About", "/about"], ["Blog", "/blog"], ["Changelog", "/changelog"], ["Contact", "/contact"]].map(([label, href]) => (
+                {[["About", "/about"], ["Blog", "/changelog"], ["Changelog", "/changelog"], ["Contact", "/contact"]].map(([label, href]) => (
                   <Link key={label} href={href} className="block text-sm text-muted-foreground hover:text-foreground transition-colors">{label}</Link>
                 ))}
               </div>

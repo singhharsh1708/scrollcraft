@@ -87,7 +87,7 @@ Only include updates that actually change something. Keep edits focused and rele
         "content-type": "application/json",
       },
       body: JSON.stringify({
-        model: "claude-haiku-4-5-20251001",
+        model: "claude-sonnet-4-6",
         max_tokens: 1024,
         system: systemPrompt,
         messages: [{ role: "user", content: message }],
