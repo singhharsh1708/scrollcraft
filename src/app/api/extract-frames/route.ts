@@ -22,7 +22,7 @@ async function ffmpegAvailable(): Promise<boolean> {
 }
 
 export async function POST(req: NextRequest) {
-  const rl = rateLimit(getClientIp(req), { limit: 10, windowMs: 60_000 });
+  const rl = await rateLimit(getClientIp(req), { limit: 10, windowMs: 60_000 });
   if (!rl.allowed) {
     return NextResponse.json({ error: "Too many requests. Try again in a minute." }, {
       status: 429,

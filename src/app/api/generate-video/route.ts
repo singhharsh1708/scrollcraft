@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const rl = rateLimit(getClientIp(req), { limit: 5, windowMs: 60_000 });
+  const rl = await rateLimit(getClientIp(req), { limit: 5, windowMs: 60_000 });
   if (!rl.allowed) {
     return NextResponse.json({ error: "Too many requests. Try again in a minute." }, {
       status: 429,
