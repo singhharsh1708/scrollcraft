@@ -70,8 +70,12 @@ function CreatePageInner() {
         sessionStorage.removeItem("scrollcraft_mobile_frames");
       }
 
+      // Store frames in sessionStorage — never in the URL (base64 payloads are 12-16 MB,
+      // far beyond the ~2 MB browser URL limit, causing silent truncation / 414 errors).
+      sessionStorage.setItem("scrollcraft_desktop_frames", JSON.stringify(frames));
+
       const params = new URLSearchParams({
-        frames: JSON.stringify(frames),
+        framesKey: "scrollcraft_desktop_frames",
         frameCount: String(frames.length),
         fps: "24",
         prompt: STYLES.find(s => s.id === selectedStyle)?.label ?? selectedStyle,
@@ -98,8 +102,10 @@ function CreatePageInner() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Extraction failed");
       setProgress(100);
+      sessionStorage.setItem("scrollcraft_desktop_frames", JSON.stringify(data.frames));
+
       const params = new URLSearchParams({
-        frames: JSON.stringify(data.frames),
+        framesKey: "scrollcraft_desktop_frames",
         frameCount: String(data.frameCount),
         fps: "24",
         prompt: "Video upload",
