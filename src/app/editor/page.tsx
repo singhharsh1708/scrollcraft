@@ -470,13 +470,13 @@ function EditorInner() {
               <div
                 ref={previewScrollRef}
                 style={{
-                  height: totalScrollHeight,
-                  overflowY: "scroll",
+                  // Desktop: fill parent absolutely and scroll the *content* inside, not the container itself.
+                  // Mobile/tablet: fixed viewport size with overflow-y:scroll so the inner content scrolls.
                   ...(viewportMode === "mobile"
-                    ? { width: 390, maxHeight: "85vh", position: "relative", borderRadius: 24, border: "2px solid rgba(255,255,255,0.1)", overflow: "hidden" }
+                    ? { width: 390, height: "85vh", position: "relative", borderRadius: 24, border: "2px solid rgba(255,255,255,0.1)", overflowY: "scroll" }
                     : viewportMode === "tablet"
-                    ? { width: 768, maxHeight: "85vh", position: "relative", borderRadius: 16, border: "2px solid rgba(255,255,255,0.1)", overflow: "hidden" }
-                    : { position: "absolute", inset: 0 }),
+                    ? { width: 768, height: "85vh", position: "relative", borderRadius: 16, border: "2px solid rgba(255,255,255,0.1)", overflowY: "scroll" }
+                    : { position: "absolute", inset: 0, overflowY: "scroll" }),
                 }}
               >
                 <ScrollEngine
