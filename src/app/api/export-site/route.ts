@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import JSZip from "jszip";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
@@ -10,7 +9,6 @@ function esc(s: string): string {
 }
 
 function safeCss(s: string): string {
-  // Strip anything that could break out of a style attribute
   return s.replace(/[<>"'\\]/g, "");
 }
 
@@ -30,14 +28,25 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    // Frames are assembled client-side — only metadata is sent to the server.
     const body = await req.json();
-    const { frames, mobileFrames, audioSrc, sections, siteName, customHead = "", customCss = "", siteId } = body;
+    const {
+      sections,
+      siteName,
+      customHead = "",
+      customCss = "",
+      siteId,
+      fps = 24,
+      frameCount,
+      mobileFrameCount = 0,
+      hasAudio = false,
+      audioMime = "audio/mpeg",
+    } = body;
 
     // FREE users must purchase an export; paid subscribers export freely
     const userPlan = session.user.plan ?? "FREE";
     if (userPlan === "FREE") {
       if (!siteId) {
-        // No site id means an unsaved site — can't tie a purchase to it.
         return NextResponse.json(
           { error: "Save your site before exporting.", code: "SAVE_REQUIRED" },
           { status: 402 }
@@ -54,14 +63,13 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    if (!Array.isArray(frames) || frames.length === 0) {
-      return NextResponse.json({ error: "frames must be a non-empty array" }, { status: 400 });
-    }
     if (!Array.isArray(sections) || sections.length === 0) {
       return NextResponse.json({ error: "sections must be a non-empty array" }, { status: 400 });
     }
+    if (typeof frameCount !== "number" || frameCount < 1) {
+      return NextResponse.json({ error: "frameCount must be a positive number" }, { status: 400 });
+    }
 
-    // Enforce length limits to prevent oversized payloads
     const MAX_CSS = 50_000;
     const MAX_HEAD = 50_000;
     if (typeof customCss === "string" && customCss.length > MAX_CSS) {
@@ -71,78 +79,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "customHead exceeds 50 KB limit" }, { status: 400 });
     }
 
-    // Strip <script> tags from customHead to prevent XSS in the generated export
     const safeCustomHead = typeof customHead === "string"
       ? customHead.replace(/<script[\s\S]*?<\/script>/gi, "")
       : "";
-    // Strip url(javascript:...) and expression() from customCss
     const safeCustomCss = typeof customCss === "string"
       ? customCss.replace(/url\s*\(\s*["']?\s*javascript:/gi, "url(#").replace(/expression\s*\(/gi, "(")
       : "";
 
-    const isBlobUrl = frames[0].startsWith("https://") || frames[0].startsWith("http://");
-    const isBase64 = frames[0].startsWith("data:image/");
-
-    if (!isBlobUrl && !isBase64) {
-      return NextResponse.json(
-        { error: "Cannot export demo frames. Generate real frames first using the AI or by uploading a video." },
-        { status: 400 }
-      );
-    }
-
-    // Helper: get raw JPEG buffer from either base64 data URI or CDN URL
-    async function frameToBuffer(src: string): Promise<Buffer> {
-      if (src.startsWith("data:image/")) {
-        return Buffer.from(src.replace(/^data:image\/[a-zA-Z+.-]+;base64,/, ""), "base64");
-      }
-      const res = await fetch(src);
-      if (!res.ok) throw new Error(`Failed to fetch frame: ${res.status}`);
-      return Buffer.from(await res.arrayBuffer());
-    }
-
-    const hasMobileFrames = Array.isArray(mobileFrames) && mobileFrames.length > 0
-      && (mobileFrames[0].startsWith("data:image/") || mobileFrames[0].startsWith("http"));
-
-    // Validate and extract audio
-    const audioDataUriMatch = typeof audioSrc === "string"
-      ? audioSrc.match(/^data:(audio\/[a-zA-Z0-9+.-]+);base64,(.+)$/)
-      : null;
-    const hasAudio = !!audioDataUriMatch;
-    const audioMime = audioDataUriMatch?.[1] ?? "";
+    const hasMobileFrames = mobileFrameCount > 0;
     const audioExt = audioMime.split("/")[1]?.split(";")[0] ?? "mp3";
-    const audioBase64 = audioDataUriMatch?.[2] ?? "";
+    const validatedFps = Math.min(Math.max(Number(fps) || 24, 1), 60);
 
-    const zip = new JSZip();
-    const framesFolder = zip.folder("frames")!;
-
-    // Add desktop frames in parallel batches
-    const BATCH = 10;
-    for (let i = 0; i < frames.length; i += BATCH) {
-      const batch = frames.slice(i, i + BATCH);
-      const buffers = await Promise.all(batch.map(frameToBuffer));
-      buffers.forEach((buf, j) => {
-        framesFolder.file(`frame_${String(i + j).padStart(4, "0")}.jpg`, buf);
-      });
-    }
-
-    // Add mobile frames if present
-    if (hasMobileFrames) {
-      const mobileFolder = zip.folder("frames-mobile")!;
-      for (let i = 0; i < mobileFrames.length; i += BATCH) {
-        const batch = mobileFrames.slice(i, i + BATCH);
-        const buffers = await Promise.all(batch.map(frameToBuffer));
-        buffers.forEach((buf, j) => {
-          mobileFolder.file(`frame_${String(i + j).padStart(4, "0")}.jpg`, buf);
-        });
-      }
-    }
-
-    // Add audio file if present
-    if (hasAudio) {
-      zip.file(`audio/track.${audioExt}`, audioBase64, { base64: true });
-    }
-
-    // Generate sections HTML
+    // Generate sections HTML (server-side for XSS safety)
     const sectionsHtml = (sections as Section[]).map((s: Section) => `
     <section class="scroll-section" style="height:${Number(s.scrollHeight) || 1000}px; position:relative; z-index:10; display:flex; align-items:${safeCss(s.align || "center")}; justify-content:${safeCss(s.justify || "center")};">
       <div class="section-content" style="text-align:${safeCss(s.textAlign || "center")}; padding:2rem; max-width:800px;">
@@ -155,7 +103,6 @@ export async function POST(req: NextRequest) {
 
     const totalScrollHeight = (sections as Section[]).reduce((acc: number, s: Section) => acc + (s.scrollHeight || 1000), 0) + 1000;
 
-    // Build standalone HTML
     const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -207,8 +154,8 @@ export async function POST(req: NextRequest) {
     (function() {
       const canvas = document.getElementById('scroll-canvas');
       const ctx = canvas.getContext('2d');
-      const desktopCount = ${frames.length};
-      const mobileCount = ${hasMobileFrames ? (mobileFrames as string[]).length : 0};
+      const desktopCount = ${frameCount};
+      const mobileCount = ${mobileFrameCount};
       const hasMobile = ${hasMobileFrames ? "true" : "false"};
       const totalScrollHeight = ${totalScrollHeight};
 
@@ -243,8 +190,6 @@ export async function POST(req: NextRequest) {
         ctx.drawImage(img, (cssW - w) / 2, (cssH - h) / 2, w, h);
       }
 
-      // Progressive preload: load keyframes first, then fill in the rest.
-      // This shows the first frame immediately and avoids 120 concurrent requests.
       function preloadSet(count, folder, target, isPrimary) {
         var STEP = 5;
         var keyframes = [];
@@ -256,17 +201,25 @@ export async function POST(req: NextRequest) {
           img.src = folder + '/frame_' + String(idx).padStart(4, '0') + '.jpg';
           img.onload = function() {
             target[idx] = img;
-            if (idx === 0 && isPrimary) drawFrame(0);
+            if ((idx === 0 && isPrimary) || idx === currentFrame) drawFrame(idx);
+          };
+        }
+
+        keyframes.forEach(function(i) {
+          var img = new Image();
+          img.src = folder + '/frame_' + String(i).padStart(4, '0') + '.jpg';
+          img.onload = function() {
+            target[i] = img;
             loaded++;
+            if (i === 0 && isPrimary) drawFrame(0);
+            if (i === currentFrame) drawFrame(i);
             if (loaded === keyframes.length) {
-              // All keyframes done — load remaining frames
               for (var j = 0; j < count; j++) {
                 if (j % STEP !== 0) loadFrame(j);
               }
             }
           };
-        }
-        keyframes.forEach(loadFrame);
+        });
       }
 
       function preload() {
@@ -299,7 +252,6 @@ export async function POST(req: NextRequest) {
         if (hint) hint.style.opacity = scrollTop > 100 ? '0' : '1';
       }
 
-      // Lenis smooth scroll — falls back to native scroll if the CDN fails to load
       if (typeof window.Lenis !== 'undefined') {
         var lenis = new window.Lenis({ lerp: 0.08, smoothWheel: true });
         lenis.on('scroll', onScroll);
@@ -314,7 +266,6 @@ export async function POST(req: NextRequest) {
     })();
 
     ${hasAudio ? `
-    // Scroll-linked audio
     (function() {
       var audio = new Audio('audio/track.${audioExt}');
       audio.loop = true;
@@ -353,7 +304,6 @@ export async function POST(req: NextRequest) {
       }, { passive: true });
     })();
     ` : ""}
-    // Scroll-linked section entrance animations
     (function() {
       const sections = document.querySelectorAll('.scroll-section');
       const observer = new IntersectionObserver(function(entries) {
@@ -368,30 +318,11 @@ export async function POST(req: NextRequest) {
 </body>
 </html>`;
 
-    zip.file("index.html", html);
-
-    // Add a README
-    zip.file("README.txt", `ScrollCraft Export
-==================
-Generated by ScrollCraft (https://scrollcraft.app)
-
-To use:
-1. Extract this zip
-2. Serve from a static file server (e.g. 'npx serve .')
-3. Open in browser and scroll!
-
-Note: The frames/ folder must be in the same directory as index.html.
-Do NOT open index.html directly from your filesystem — use a local server.
-`);
-
-    const zipBuffer = await zip.generateAsync({ type: "nodebuffer", compression: "DEFLATE" });
-    const uint8 = new Uint8Array(zipBuffer);
-
-    return new NextResponse(uint8, {
-      headers: {
-        "Content-Type": "application/zip",
-        "Content-Disposition": `attachment; filename="${(siteName || "scrollcraft-site").replace(/\s+/g, "-")}.zip"`,
-      },
+    return NextResponse.json({
+      html,
+      audioExt,
+      siteName: siteName || "scrollcraft-site",
+      fps: validatedFps,
     });
   } catch (err) {
     console.error("export-site error:", err);
