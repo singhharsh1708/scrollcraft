@@ -3,17 +3,18 @@ import GitHub from "next-auth/providers/github";
 import Google from "next-auth/providers/google";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { db } from "@/lib/db";
+import { env } from "@/lib/env";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(db),
   providers: [
     GitHub({
-      clientId: process.env.GITHUB_CLIENT_ID,
-      clientSecret: process.env.GITHUB_CLIENT_SECRET,
+      clientId: env.AUTH_GITHUB_ID,
+      clientSecret: env.AUTH_GITHUB_SECRET,
     }),
     Google({
-      clientId: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      clientId: env.AUTH_GOOGLE_ID,
+      clientSecret: env.AUTH_GOOGLE_SECRET,
     }),
   ],
   pages: {
@@ -24,6 +25,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async session({ session, user }) {
       if (session.user && user?.id) {
         session.user.id = user.id;
+        const fresh = await db.user.findUnique({
+          where: { id: user.id },
+          select: { plan: true },
+        });
+        if (fresh) session.user.plan = fresh.plan;
       }
       return session;
     },
