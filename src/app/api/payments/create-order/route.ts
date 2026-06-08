@@ -47,7 +47,8 @@ export async function POST(req: NextRequest) {
     const prices = PLAN_PRICES[plan];
     if (!prices) return NextResponse.json({ error: "Unknown plan" }, { status: 400 });
 
-    let baseAmount = billing === "annual" ? prices.annual : prices.monthly;
+    // Annual price is stored as the discounted per-month rate — multiply by 12 for the actual charge.
+    let baseAmount = billing === "annual" ? prices.annual * 12 : prices.monthly;
     let discountPct = 0;
     let validPromo: string | null = null;
 
