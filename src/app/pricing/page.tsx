@@ -1,6 +1,8 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Check, Minus, Sparkles, Zap, Loader2, Tag, X } from "lucide-react";
@@ -191,6 +193,8 @@ function loadRazorpayScript(): Promise<void> {
 }
 
 export default function PricingPage() {
+  const router = useRouter();
+  const { status } = useSession();
   const [annual, setAnnual] = useState(true);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [checkingOut, setCheckingOut] = useState<string | null>(null);
@@ -219,6 +223,10 @@ export default function PricingPage() {
   };
 
   const handleCheckout = async (planName: string) => {
+    if (status !== "authenticated") {
+      router.push("/auth/signin?callbackUrl=/pricing");
+      return;
+    }
     setCheckingOut(planName);
     try {
       const res = await fetch("/api/payments/create-order", {
