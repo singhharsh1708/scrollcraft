@@ -14,7 +14,7 @@ const PRESETS = [
     category: "Agency",
     description: "Premium agency portfolio with bold editorial scroll",
     tags: ["Dark", "Minimal", "Editorial"],
-    gradient: "from-slate-900 via-slate-800 to-black",
+    gradient: "from-slate-700 via-slate-800 to-slate-900",
     accent: "#e2e8f0",
     prompt: "A slow cinematic pan through a modernist architecture interior. Concrete and glass. Dark, premium, editorial feel. Shallow depth of field.",
   },
@@ -23,7 +23,7 @@ const PRESETS = [
     category: "Mobile App",
     description: "Travel app showcase with destination flythrough",
     tags: ["Colorful", "Immersive", "Animated"],
-    gradient: "from-sky-900 via-blue-900 to-indigo-950",
+    gradient: "from-sky-700 via-blue-800 to-indigo-900",
     accent: "#38bdf8",
     prompt: "Aerial cinematic flyover of turquoise tropical coastline at golden hour. Drone shot, warm colors, crystal water, lush green islands.",
   },
@@ -32,7 +32,7 @@ const PRESETS = [
     category: "E-commerce",
     description: "Luxury e-commerce with product reveal scroll",
     tags: ["Luxury", "Dark", "Product"],
-    gradient: "from-amber-950 via-yellow-950 to-black",
+    gradient: "from-amber-800 via-yellow-900 to-amber-950",
     accent: "#f59e0b",
     prompt: "Ultra slow macro product shot. Luxury leather texture in dramatic studio lighting. Black background, golden rim light. Commercial photography.",
   },
@@ -41,7 +41,7 @@ const PRESETS = [
     category: "SaaS",
     description: "Dark SaaS hero with floating UI elements",
     tags: ["SaaS", "Dark", "Tech"],
-    gradient: "from-violet-950 via-purple-950 to-black",
+    gradient: "from-violet-800 via-purple-900 to-violet-950",
     accent: "#a78bfa",
     prompt: "Cinematic flythrough of a dark futuristic digital dashboard. Glowing UI panels float in dark space. Purple and blue neon accents. Depth of field blur.",
   },
@@ -50,7 +50,7 @@ const PRESETS = [
     category: "SaaS",
     description: "Productivity tool with clean minimal scroll",
     tags: ["Minimal", "Clean", "Productivity"],
-    gradient: "from-emerald-950 via-teal-950 to-black",
+    gradient: "from-emerald-800 via-teal-900 to-emerald-950",
     accent: "#34d399",
     prompt: "Abstract flowing data streams in deep space. Green and teal particle effects moving through darkness. Clean, technical, modern.",
   },
@@ -59,7 +59,7 @@ const PRESETS = [
     category: "Developer Tool",
     description: "Dev tool landing with code-aesthetic depth",
     tags: ["Developer", "Dark", "Code"],
-    gradient: "from-gray-900 via-zinc-900 to-black",
+    gradient: "from-zinc-700 via-zinc-800 to-zinc-900",
     accent: "#22d3ee",
     prompt: "Cinematic zoom through lines of glowing code on dark screens. Matrix-like but premium. Cyan and white light trails. Depth of field.",
   },
@@ -68,7 +68,7 @@ const PRESETS = [
     category: "AI Platform",
     description: "AI platform hero with neural network visuals",
     tags: ["AI", "Futuristic", "Dark"],
-    gradient: "from-fuchsia-950 via-pink-950 to-black",
+    gradient: "from-fuchsia-800 via-pink-900 to-fuchsia-950",
     accent: "#e879f9",
     prompt: "Abstract neural network visualization. Glowing nodes and connections in deep purple space. Data flowing between points. Ultra cinematic.",
   },
@@ -77,7 +77,7 @@ const PRESETS = [
     category: "Fintech",
     description: "Fintech stablecoin landing with premium feel",
     tags: ["Finance", "Premium", "Dark"],
-    gradient: "from-blue-950 via-indigo-950 to-black",
+    gradient: "from-blue-800 via-indigo-900 to-blue-950",
     accent: "#60a5fa",
     prompt: "Abstract liquid metal surface with ripples. Futuristic financial data overlays. Dark blue, silver, premium. Cinematic macro shot.",
   },
@@ -86,7 +86,7 @@ const PRESETS = [
     category: "Logistics",
     description: "Transport & logistics with bold red branding",
     tags: ["Bold", "Red", "Dynamic"],
-    gradient: "from-red-950 via-rose-950 to-black",
+    gradient: "from-red-800 via-rose-900 to-red-950",
     accent: "#f87171",
     prompt: "Time-lapse of cargo ships and trucks moving at dusk. Bold industrial aesthetic. Red sky, motion blur, cinematic grade.",
   },
@@ -95,7 +95,7 @@ const PRESETS = [
     category: "Startup",
     description: "Newsletter / content platform with liquid-glass UI",
     tags: ["Glass", "Minimal", "Mono"],
-    gradient: "from-neutral-900 via-zinc-900 to-black",
+    gradient: "from-neutral-700 via-zinc-800 to-neutral-900",
     accent: "#a3a3a3",
     prompt: "Slow motion liquid glass surface with subtle refractions. Monochrome. Ultra minimal. Premium material render. Studio lighting.",
   },
@@ -104,7 +104,7 @@ const PRESETS = [
     category: "AI Platform",
     description: "Full-screen dark video hero with AI gradient",
     tags: ["AI", "Dark", "Bold"],
-    gradient: "from-indigo-950 via-violet-950 to-black",
+    gradient: "from-indigo-800 via-violet-900 to-indigo-950",
     accent: "#818cf8",
     prompt: "Abstract AI energy field. Electric indigo and violet light bursts in dark space. Powerful, dynamic, cinematic. Slow motion.",
   },
@@ -113,7 +113,7 @@ const PRESETS = [
     category: "Developer Tool",
     description: "Automation hero with geometric canvas aesthetic",
     tags: ["Geometric", "Dark", "Automation"],
-    gradient: "from-stone-900 via-neutral-900 to-black",
+    gradient: "from-stone-700 via-neutral-800 to-stone-900",
     accent: "#d4d4d4",
     prompt: "Cinematic shot of robotic assembly arms in dark factory. Sparks flying, precision motion. Industrial but premium. Slow motion.",
   },
@@ -218,10 +218,14 @@ export default function PresetsPage() {
                       />
                     ))}
                   </div>
-                  {/* Accent glow */}
+                  {/* Accent glow — animated for visual interest */}
                   <div
-                    className="absolute inset-0 opacity-20 blur-3xl"
-                    style={{ background: `radial-gradient(circle at 50% 50%, ${preset.accent}, transparent 70%)` }}
+                    className="absolute inset-0 blur-2xl animate-pulse"
+                    style={{ background: `radial-gradient(circle at 40% 40%, ${preset.accent}55, transparent 65%)`, animationDuration: "3s" }}
+                  />
+                  <div
+                    className="absolute inset-0 blur-3xl"
+                    style={{ background: `radial-gradient(circle at 70% 60%, ${preset.accent}33, transparent 60%)` }}
                   />
                   <div className="relative z-10">
                     <div className="flex flex-wrap gap-1.5 mb-2">
