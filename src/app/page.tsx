@@ -1,10 +1,15 @@
 "use client";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useSession } from "next-auth/react";
+import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight, Sparkles, Zap, Download, Play, Check } from "lucide-react";
+
+const DEMO_COUNT = 60;
+const demoFrames = Array.from({ length: DEMO_COUNT }, (_, i) => `/api/demo-frame?i=${i}&total=${DEMO_COUNT}`);
+const ScrollEngine = dynamic(() => import("@/components/ScrollEngine"), { ssr: false });
 
 const PIPELINE = [
   { step: "01", title: "Pick a preset", desc: "Choose from 12+ production-ready templates across SaaS, agency, e-commerce, and more." },
@@ -50,6 +55,7 @@ const FAQ = [
 export default function Home() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const { data: session } = useSession();
+  const demoScrollRef = useRef<HTMLDivElement>(null);
 
   return (
     <main className="min-h-screen bg-background text-foreground overflow-x-hidden">
@@ -144,17 +150,32 @@ export default function Home() {
           ))}
         </div>
 
-        {/* Hero visual */}
+        {/* Hero visual — live scroll demo */}
         <div className="relative mt-16 w-full max-w-5xl mx-auto rounded-2xl overflow-hidden border border-white/10 shadow-2xl shadow-black/60">
-          <div className="aspect-video bg-gradient-to-br from-violet-900/50 via-purple-950 to-black flex items-center justify-center">
-            <div className="flex flex-col items-center gap-4">
-              <div className="w-16 h-16 rounded-full border-2 border-primary/50 flex items-center justify-center animate-pulse">
-                <Play className="w-6 h-6 text-primary ml-1" />
-              </div>
-              <p className="text-muted-foreground text-sm">Scroll to experience the animation</p>
-            </div>
+          {/* Scrollable container drives the demo ScrollEngine */}
+          <div
+            ref={demoScrollRef}
+            className="aspect-video overflow-y-scroll"
+            style={{ scrollbarWidth: "none" }}
+          >
+            {/* 3000px tall — scroll room for the full animation */}
+            <div style={{ height: 3000 }} />
           </div>
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent pointer-events-none" />
+          {/* Canvas fills the rounded box and is driven by demoScrollRef */}
+          <ScrollEngine
+            frames={demoFrames}
+            totalScrollHeight={3000}
+            scrollContainer={demoScrollRef}
+            position="absolute"
+            className="absolute inset-0 pointer-events-none"
+          />
+          {/* Fade-out at bottom */}
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent pointer-events-none" style={{ zIndex: 2 }} />
+          {/* Scroll hint overlay */}
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-muted-foreground text-xs uppercase tracking-widest pointer-events-none" style={{ zIndex: 3 }}>
+            <span>Scroll inside to preview</span>
+            <div className="w-px h-8 bg-gradient-to-b from-transparent to-white/30" />
+          </div>
         </div>
       </section>
 
