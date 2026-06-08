@@ -1,5 +1,6 @@
 "use client";
-import { useState, useEffect, useRef, Suspense } from "react";
+import { useState, useEffect, useRef, useCallback, Suspense } from "react";
+import JSZip from "jszip";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -90,7 +91,12 @@ function EditorInner() {
   const [sections, setSections] = useState<Section[]>([defaultSection(0)]);
   const [selectedSection, setSelectedSection] = useState<string>(sections[0].id);
   const [siteName, setSiteName] = useState("My ScrollCraft Site");
-  const [currentFrame, setCurrentFrame] = useState(0);
+  const frameLabelRef = useRef<HTMLSpanElement>(null);
+  const handleFrameChange = useCallback((i: number) => {
+    if (frameLabelRef.current) {
+      frameLabelRef.current.textContent = `Frame ${i + 1}/${frameCount}`;
+    }
+  }, [frameCount]);
   const [showPreview, setShowPreview] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
   const [isDemo, setIsDemo] = useState(initialIsDemo);
@@ -103,7 +109,15 @@ function EditorInner() {
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [customHead, setCustomHead] = useState("");
   const [customCss, setCustomCss] = useState("");
-  const [mobileFrames, setMobileFrames] = useState<string[]>([]);
+  const [mobileFrames, setMobileFrames] = useState<string[]>(() => {
+    if (typeof window === "undefined") return [];
+    if (searchParams.get("hasMobileFrames") !== "1") return [];
+    try {
+      const stored = sessionStorage.getItem("scrollcraft_mobile_frames");
+      if (stored) { const parsed = JSON.parse(stored); if (Array.isArray(parsed)) return parsed; }
+    } catch { /* unavailable */ }
+    return [];
+  });
   const [viewportMode, setViewportMode] = useState<"desktop" | "tablet" | "mobile">("desktop");
   const [audioSrc, setAudioSrc] = useState<string | null>(null);
   const [siteId, setSiteId] = useState<string | null>(searchParams.get("siteId"));
@@ -113,16 +127,6 @@ function EditorInner() {
 
   useScrollAudio({ audioSrc, scrollEl: previewScrollRef, muted: audioMuted });
 
-  // Load mobile frames from sessionStorage if the create page generated them
-  useEffect(() => {
-    const hasMobile = searchParams.get("hasMobileFrames") === "1";
-    if (!hasMobile) return;
-    try {
-      const stored = sessionStorage.getItem("scrollcraft_mobile_frames");
-      if (stored) setMobileFrames(JSON.parse(stored));
-    } catch { /* sessionStorage unavailable */ }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   // Hydrate a saved site from the DB when opened with ?siteId= and no frames in the URL.
   // This makes saved sites re-editable and lets users return after a Lemon Squeezy
@@ -137,13 +141,20 @@ function EditorInner() {
         if (!res.ok) return;
         const { site } = await res.json();
         if (cancelled || !site) return;
-        if (site.framesJson) {
-          const f = JSON.parse(site.framesJson);
-          if (Array.isArray(f) && f.length) {
-            setFrames(f);
-            setFrameCount(f.length);
-            setIsDemo(false);
+        // Check sessionStorage first (frames saved here to avoid server payload limits).
+        // Fall back to framesJson in DB for sites saved before this change.
+        const storedFrames = sessionStorage.getItem(`scrollcraft_frames_${sid}`);
+        const storedMobile = sessionStorage.getItem(`scrollcraft_mframes_${sid}`);
+        if (storedFrames) {
+          const f = JSON.parse(storedFrames);
+          if (Array.isArray(f) && f.length) { setFrames(f); setFrameCount(f.length); setIsDemo(false); }
+          if (storedMobile) {
+            const mf = JSON.parse(storedMobile);
+            if (Array.isArray(mf) && mf.length) setMobileFrames(mf);
           }
+        } else if (site.framesJson) {
+          const f = JSON.parse(site.framesJson);
+          if (Array.isArray(f) && f.length) { setFrames(f); setFrameCount(f.length); setIsDemo(false); }
         }
         if (site.sectionsJson) {
           const s = JSON.parse(site.sectionsJson);
@@ -223,14 +234,34 @@ function EditorInner() {
         }
       }
 
+      // Parse audio metadata on the client — not sent to server.
+      const audioDataUriMatch = typeof audioSrc === "string"
+        ? audioSrc.match(/^data:(audio\/[a-zA-Z0-9+.-]+);base64,(.+)$/)
+        : null;
+      const hasAudio = !!audioDataUriMatch;
+      const audioMime = audioDataUriMatch?.[1] ?? "audio/mpeg";
+      const audioBase64 = audioDataUriMatch?.[2] ?? "";
+
+      // Ask the server to validate auth + purchase + generate the HTML template.
+      // Frames are NOT sent — they stay on the client to avoid Vercel's 4.5 MB limit.
       const res = await fetch("/api/export-site", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ frames, mobileFrames: mobileFrames.length ? mobileFrames : undefined, audioSrc: audioSrc ?? undefined, sections, siteName, fps, customHead, customCss, siteId: effectiveSiteId }),
+        body: JSON.stringify({
+          sections,
+          siteName,
+          fps,
+          customHead,
+          customCss,
+          siteId: effectiveSiteId,
+          frameCount: frames.length,
+          mobileFrameCount: mobileFrames.length,
+          hasAudio,
+          audioMime,
+        }),
       });
 
       if (res.status === 402) {
-        // FREE user without a paid export — send them to Lemon Squeezy checkout.
         const checkoutRes = await fetch("/api/payments/ls-checkout", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -238,7 +269,6 @@ function EditorInner() {
         });
         const checkoutData = await checkoutRes.json().catch(() => ({}));
         if (checkoutData.alreadyPurchased) {
-          // Webhook just landed between calls — retry the export.
           toast.info("Purchase confirmed — preparing your download…");
           setIsExporting(false);
           return handleExport();
@@ -257,7 +287,45 @@ function EditorInner() {
       }
 
       if (!res.ok) throw new Error(await res.text());
-      const blob = await res.blob();
+      const { html, audioExt } = await res.json();
+
+      // Build ZIP entirely in the browser — no round-trip for large frame data.
+      toast.info("Building ZIP…");
+      const zip = new JSZip();
+      zip.file("index.html", html);
+      zip.file("README.txt", `ScrollCraft Export\n==================\nGenerated by ScrollCraft (https://scrollcraft.app)\n\nTo use:\n1. Extract this zip\n2. Serve from a static file server (e.g. 'npx serve .')\n3. Open in browser and scroll!\n\nNote: The frames/ folder must be in the same directory as index.html.\nDo NOT open index.html directly from your filesystem — use a local server.\n`);
+
+      const framesFolder = zip.folder("frames")!;
+      for (let i = 0; i < frames.length; i++) {
+        const src = frames[i];
+        const name = `frame_${String(i).padStart(4, "0")}.jpg`;
+        if (src.startsWith("data:image/")) {
+          framesFolder.file(name, src.replace(/^data:image\/[a-zA-Z+.-]+;base64,/, ""), { base64: true });
+        } else {
+          const r = await fetch(src);
+          framesFolder.file(name, await r.arrayBuffer());
+        }
+      }
+
+      if (mobileFrames.length) {
+        const mobileFolder = zip.folder("frames-mobile")!;
+        for (let i = 0; i < mobileFrames.length; i++) {
+          const src = mobileFrames[i];
+          const name = `frame_${String(i).padStart(4, "0")}.jpg`;
+          if (src.startsWith("data:image/")) {
+            mobileFolder.file(name, src.replace(/^data:image\/[a-zA-Z+.-]+;base64,/, ""), { base64: true });
+          } else {
+            const r = await fetch(src);
+            mobileFolder.file(name, await r.arrayBuffer());
+          }
+        }
+      }
+
+      if (hasAudio && audioBase64) {
+        zip.file(`audio/track.${audioExt}`, audioBase64, { base64: true });
+      }
+
+      const blob = await zip.generateAsync({ type: "blob", compression: "STORE" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -279,6 +347,8 @@ function EditorInner() {
     }
     setIsSaving(true);
     try {
+      // Frames are NOT sent to the server (would exceed Vercel's 4.5 MB limit).
+      // They are stored in sessionStorage keyed by site ID after a successful save.
       const res = await fetch("/api/sites", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -287,7 +357,6 @@ function EditorInner() {
           name: siteName,
           fps,
           frameCount,
-          framesJson: JSON.stringify(frames),
           sectionsJson: JSON.stringify(sections),
           customHead,
           customCss,
@@ -297,9 +366,19 @@ function EditorInner() {
       if (res.status === 401) { toast.error("Sign in to save your site"); return null; }
       if (!res.ok) throw new Error(await res.text());
       const data = await res.json();
-      setSiteId(data.site.id);
+      const savedId = data.site.id as string;
+      setSiteId(savedId);
+
+      // Persist frames in sessionStorage so they survive navigation within this session.
+      try {
+        sessionStorage.setItem(`scrollcraft_frames_${savedId}`, JSON.stringify(frames));
+        if (mobileFrames.length) {
+          sessionStorage.setItem(`scrollcraft_mframes_${savedId}`, JSON.stringify(mobileFrames));
+        }
+      } catch { /* quota exceeded — non-fatal, user can regenerate frames */ }
+
       if (!opts?.silent) toast.success("Site saved!");
-      return data.site.id as string;
+      return savedId;
     } catch {
       toast.error("Failed to save site");
       return null;
@@ -380,7 +459,7 @@ function EditorInner() {
             ))}
           </div>
           <div className="text-xs text-muted-foreground bg-white/5 px-2 py-1 rounded">
-            Frame {currentFrame + 1}/{frameCount}
+            <span ref={frameLabelRef}>Frame 1/{frameCount}</span>
           </div>
           <Button
             variant="outline"
@@ -483,8 +562,9 @@ function EditorInner() {
                   frames={frames}
                   mobileFrames={mobileFrames.length ? mobileFrames : undefined}
                   totalScrollHeight={totalScrollHeight}
-                  onFrameChange={setCurrentFrame}
+                  onFrameChange={handleFrameChange}
                   scrollContainer={previewScrollRef}
+                  position={viewportMode !== "desktop" ? "absolute" : "fixed"}
                 />
                 {/* Section overlays */}
                 <div className="relative z-10" style={{ height: totalScrollHeight }}>

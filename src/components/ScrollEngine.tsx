@@ -9,9 +9,11 @@ interface ScrollEngineProps {
   onFrameChange?: (index: number) => void;
   scrollContainer?: React.RefObject<HTMLElement | null>;
   altText?: string;
+  /** Use "absolute" in simulator containers (editor preview); "fixed" (default) for full-screen production use */
+  position?: "fixed" | "absolute";
 }
 
-export default function ScrollEngine({ frames, mobileFrames, totalScrollHeight = 5000, className = "", onFrameChange, scrollContainer, altText = "Animated scroll background" }: ScrollEngineProps) {
+export default function ScrollEngine({ frames, mobileFrames, totalScrollHeight = 5000, className = "", onFrameChange, scrollContainer, altText = "Animated scroll background", position = "fixed" }: ScrollEngineProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const imagesRef = useRef<HTMLImageElement[]>([]);
@@ -41,15 +43,14 @@ export default function ScrollEngine({ frames, mobileFrames, totalScrollHeight =
     let keyframesLoaded = 0;
     const KEYFRAME_STEP = 5;
 
+    // When a non-keyframe loads, redraw immediately if it's the active frame.
     const loadImage = (index: number) => {
       const img = new Image();
       img.src = frameSrcs[index];
       img.onload = () => {
         images[index] = img;
-        if (index === 0) {
-          imagesRef.current = images;
-          drawFrame(0);
-        }
+        imagesRef.current = images;
+        if (index === 0 || index === currentFrameRef.current) drawFrame(index);
       };
       return img;
     };
@@ -57,11 +58,14 @@ export default function ScrollEngine({ frames, mobileFrames, totalScrollHeight =
     const keyframeIndices = frameSrcs.map((_, i) => i).filter(i => i % KEYFRAME_STEP === 0);
 
     keyframeIndices.forEach(i => {
-      const img = loadImage(i);
+      const img = new Image();
+      img.src = frameSrcs[i];
       img.onload = () => {
         images[i] = img;
+        imagesRef.current = images;
         keyframesLoaded++;
-        if (i === 0) { imagesRef.current = images; drawFrame(0); }
+        // Draw if this is frame 0 or the user has scrolled to this frame already.
+        if (i === 0 || i === currentFrameRef.current) drawFrame(i);
         if (keyframesLoaded === keyframeIndices.length) {
           frameSrcs.forEach((_, j) => {
             if (j % KEYFRAME_STEP !== 0) loadImage(j);
@@ -119,7 +123,7 @@ export default function ScrollEngine({ frames, mobileFrames, totalScrollHeight =
     if (!canvas) return;
 
     const resize = () => {
-      const dpr = Math.min(window.devicePixelRatio || 1, 2); // cap at 2× — 3× gains nothing visible
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
       const cssW = canvas.offsetWidth || window.innerWidth;
       const cssH = canvas.offsetHeight || window.innerHeight;
       canvas.width = cssW * dpr;
@@ -136,11 +140,15 @@ export default function ScrollEngine({ frames, mobileFrames, totalScrollHeight =
     return () => window.removeEventListener("resize", resize);
   }, [drawFrame]);
 
+  const canvasClass = position === "absolute"
+    ? "absolute inset-0 w-full h-full object-cover"
+    : "fixed inset-0 w-full h-full object-cover";
+
   return (
     <div ref={containerRef} className={className}>
       <canvas
         ref={canvasRef}
-        className="fixed inset-0 w-full h-full object-cover"
+        className={canvasClass}
         style={{ zIndex: 0 }}
         role="img"
         aria-label={altText}
