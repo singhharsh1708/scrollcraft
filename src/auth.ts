@@ -27,9 +27,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.id = user.id;
         const fresh = await db.user.findUnique({
           where: { id: user.id },
-          select: { plan: true },
+          select: { plan: true, credits: true },
         });
-        if (fresh) session.user.plan = fresh.plan;
+        if (fresh) {
+          session.user.plan = fresh.plan;
+          session.user.credits = fresh.credits;
+        }
       }
       return session;
     },
