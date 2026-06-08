@@ -5,6 +5,7 @@ import path from "path";
 import { execFile as _execFile } from "child_process";
 import { promisify } from "util";
 import { readdir, readFile } from "fs/promises";
+import { auth } from "@/auth";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { put } from "@vercel/blob";
 
@@ -22,6 +23,11 @@ async function ffmpegAvailable(): Promise<boolean> {
 }
 
 export async function POST(req: NextRequest) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const rl = await rateLimit(getClientIp(req), { limit: 10, windowMs: 60_000 });
   if (!rl.allowed) {
     return NextResponse.json({ error: "Too many requests. Try again in a minute." }, {
