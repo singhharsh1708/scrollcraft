@@ -18,7 +18,9 @@ export default function ScrollEngine({ frames, mobileFrames, totalScrollHeight =
   const currentFrameRef = useRef(0);
   const rafRef = useRef<number>(0);
   const loadedRef = useRef(false);
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window !== "undefined" ? window.matchMedia("(max-width: 767px)").matches : false
+  );
 
   const activeFrames = isMobile && mobileFrames?.length ? mobileFrames : frames;
 
@@ -77,7 +79,6 @@ export default function ScrollEngine({ frames, mobileFrames, totalScrollHeight =
     if (!mobileFrames?.length) return;
     const mq = window.matchMedia("(max-width: 767px)");
     const onChange = (e: MediaQueryListEvent) => setIsMobile(e.matches);
-    setIsMobile(mq.matches);
     mq.addEventListener("change", onChange);
     return () => mq.removeEventListener("change", onChange);
   }, [mobileFrames]);
