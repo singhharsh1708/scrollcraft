@@ -1,7 +1,7 @@
 import { MetadataRoute } from "next";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const base = "https://scrollcraft.app";
+  const base = process.env.NEXTAUTH_URL ?? "https://scrollcraft.app";
   const now = new Date();
 
   return [

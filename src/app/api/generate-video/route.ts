@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
         }),
       });
       if (!genRes.ok) {
-        console.error("Luma API error:", await genRes.text());
+        console.error("Luma API error:", genRes.status);
         return NextResponse.json({ error: "Video generation failed. Try again later." }, { status: 500 });
       }
       const gen = await genRes.json();
@@ -81,7 +81,7 @@ export async function POST(req: NextRequest) {
         }),
       });
       if (!genRes.ok) {
-        console.error("Runway API error:", await genRes.text());
+        console.error("Runway API error:", genRes.status);
         return NextResponse.json({ error: "Video generation failed. Try again later." }, { status: 500 });
       }
       const task = await genRes.json();

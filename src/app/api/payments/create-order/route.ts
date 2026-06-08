@@ -1,13 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import Razorpay from "razorpay";
 import { auth } from "@/auth";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
 
+const orderSchema = z.object({
+  plan: z.enum(["Basic", "Basic Plus", "Pro", "Premium"]),
+  billing: z.enum(["monthly", "annual"]).default("monthly"),
+});
+
+// Prices in INR paise (1 INR = 100 paise)
 const PLAN_PRICES: Record<string, { monthly: number; annual: number }> = {
-  Basic:      { monthly: 25,  annual: 20  },
-  "Basic Plus": { monthly: 40,  annual: 32  },
-  Pro:        { monthly: 60,  annual: 48  },
-  Premium:    { monthly: 200, annual: 160 },
+  Basic:        { monthly: 199900, annual: 159900 },
+  "Basic Plus": { monthly: 299900, annual: 239900 },
+  Pro:          { monthly: 499900, annual: 399900 },
+  Premium:      { monthly: 1499900, annual: 1199900 },
 };
 
 export async function POST(req: NextRequest) {
@@ -29,24 +36,24 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { plan, billing } = await req.json();
+    const raw = await req.json();
+    const parsed = orderSchema.safeParse(raw);
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Invalid request", details: parsed.error.flatten().fieldErrors }, { status: 400 });
+    }
+    const { plan, billing } = parsed.data;
 
-    const prices = PLAN_PRICES[plan as string];
+    const prices = PLAN_PRICES[plan];
     if (!prices) {
       return NextResponse.json({ error: "Unknown plan" }, { status: 400 });
     }
 
-    const priceUsd = billing === "annual" ? prices.annual : prices.monthly;
-    // Razorpay expects amount in smallest currency unit (paise for INR)
-    // We store price in USD but charge in INR — use a fixed exchange rate placeholder
-    // Production should fetch live rates or store INR prices directly
-    const INR_RATE = 84; // approximate USD → INR
-    const amountPaise = priceUsd * INR_RATE * 100;
+    const amountPaise = billing === "annual" ? prices.annual : prices.monthly;
 
     const rzp = new Razorpay({ key_id: keyId, key_secret: keySecret });
 
     const order = await rzp.orders.create({
-      amount: Math.round(amountPaise),
+      amount: amountPaise,
       currency: "INR",
       notes: { plan, billing: billing ?? "monthly" },
     });
