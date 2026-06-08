@@ -21,11 +21,12 @@ interface Site {
   updatedAt: string;
 }
 
-const PLANS: Record<string, { label: string; credits: number; color: string }> = {
-  free: { label: "Free Trial", credits: 100, color: "text-muted-foreground" },
-  basic: { label: "Basic", credits: 1500, color: "text-blue-400" },
-  pro: { label: "Pro", credits: 6000, color: "text-primary" },
-  premium: { label: "Premium", credits: 25000, color: "text-amber-400" },
+const PLANS: Record<string, { label: string; maxCredits: number; color: string }> = {
+  FREE:       { label: "Free Trial", maxCredits: 100,   color: "text-muted-foreground" },
+  BASIC:      { label: "Basic",      maxCredits: 1500,  color: "text-blue-400" },
+  BASIC_PLUS: { label: "Basic Plus", maxCredits: 3000,  color: "text-cyan-400" },
+  PRO:        { label: "Pro",        maxCredits: 6000,  color: "text-primary" },
+  PREMIUM:    { label: "Premium",    maxCredits: 25000, color: "text-amber-400" },
 };
 
 export default function DashboardPage() {
@@ -35,9 +36,13 @@ export default function DashboardPage() {
   const [sites, setSites] = useState<Site[]>([]);
   const [sitesLoading, setSitesLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const plan = PLANS.free;
-  const usedCredits = 34;
-  const totalCredits = plan.credits;
+  const [exportCount, setExportCount] = useState(0);
+  const userPlanKey = (session?.user?.plan ?? "FREE") as string;
+  const plan = PLANS[userPlanKey] ?? PLANS.FREE;
+  const totalCredits = plan.maxCredits;
+  // credits in the DB is the *remaining* balance; used = max - remaining
+  const remainingCredits = session?.user?.credits ?? 0;
+  const usedCredits = Math.max(0, totalCredits - remainingCredits);
 
   useEffect(() => {
     if (status === "unauthenticated") router.push("/auth/signin");
@@ -45,10 +50,13 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (status !== "authenticated") return;
-    fetch("/api/sites")
-      .then(r => r.json())
-      .then(data => { if (data.sites) setSites(data.sites); })
-      .catch(() => toast.error("Failed to load sites"))
+    Promise.all([
+      fetch("/api/sites").then(r => r.json()),
+      fetch("/api/user/stats").then(r => r.json()).catch(() => ({})),
+    ]).then(([sitesData, statsData]) => {
+      if (sitesData.sites) setSites(sitesData.sites);
+      if (typeof statsData.exportCount === "number") setExportCount(statsData.exportCount);
+    }).catch(() => toast.error("Failed to load dashboard"))
       .finally(() => setSitesLoading(false));
   }, [status]);
 
@@ -152,7 +160,7 @@ export default function DashboardPage() {
               {user?.name?.split(" ")[0] || "there"} 👋
             </h1>
             <div className="flex items-center gap-3">
-              <Badge className="bg-primary/15 text-primary border-primary/30 px-3">
+              <Badge className={`bg-primary/15 border-primary/30 px-3 ${plan.color}`}>
                 {plan.label}
               </Badge>
               <Link href="/pricing">
@@ -167,10 +175,10 @@ export default function DashboardPage() {
           <div className="p-6 rounded-2xl border border-white/8 bg-card space-y-3">
             <div className="flex items-center justify-between">
               <p className="text-sm font-medium">AI Credits</p>
-              <span className="text-xs text-muted-foreground">{usedCredits} / {totalCredits}</span>
+              <span className="text-xs text-muted-foreground">{usedCredits.toLocaleString()} / {totalCredits.toLocaleString()}</span>
             </div>
-            <Progress value={(usedCredits / totalCredits) * 100} className="h-1.5" />
-            <p className="text-xs text-muted-foreground">{totalCredits - usedCredits} credits remaining this month</p>
+            <Progress value={totalCredits > 0 ? (usedCredits / totalCredits) * 100 : 0} className="h-1.5" />
+            <p className="text-xs text-muted-foreground">{remainingCredits.toLocaleString()} credits remaining this month</p>
             <Link href="/pricing">
               <Button size="sm" className="w-full bg-primary/15 hover:bg-primary/25 text-primary border-0 text-xs h-7 mt-1">
                 Get more credits
@@ -184,7 +192,7 @@ export default function DashboardPage() {
           {[
             { label: "Sites created", value: sites.length, icon: Globe },
             { label: "Total frames", value: sites.reduce((a, s) => a + s.frameCount, 0), icon: ExternalLink },
-            { label: "Exports", value: 0, icon: Download },
+            { label: "Exports", value: exportCount, icon: Download },
             { label: "Credits used", value: usedCredits, icon: Zap },
           ].map(stat => (
             <div key={stat.label} className="p-5 rounded-2xl border border-white/8 bg-card">
