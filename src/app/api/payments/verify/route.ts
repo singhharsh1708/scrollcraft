@@ -45,6 +45,11 @@ export async function POST(req: NextRequest) {
     if (!payment) return NextResponse.json({ error: "Order not found" }, { status: 404 });
     if (payment.userId !== user.id) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
+    // Idempotency: if already captured (e.g. webhook arrived first), return success
+    if (payment.status === "CAPTURED") {
+      return NextResponse.json({ success: true, paymentId });
+    }
+
     // Mark payment captured and upgrade plan
     const planMap: Record<string, "BASIC" | "BASIC_PLUS" | "PRO" | "PREMIUM"> = {
       Basic: "BASIC", "Basic Plus": "BASIC_PLUS", Pro: "PRO", Premium: "PREMIUM",

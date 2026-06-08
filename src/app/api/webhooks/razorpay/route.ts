@@ -31,24 +31,22 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
+  try {
   switch (event.event) {
     case "payment.captured": {
       const entity = event.payload?.payment?.entity;
       if (entity?.order_id) {
-        try {
-          const payment = await db.payment.findUnique({ where: { razorpayOrderId: entity.order_id } });
-          if (payment && payment.status !== "CAPTURED") {
-            await db.payment.update({
-              where: { id: payment.id },
-              data: { razorpayPaymentId: entity.id, status: "CAPTURED" },
-            });
-            const newPlan = PLAN_MAP[payment.plan];
-            if (newPlan) {
-              await db.user.update({ where: { id: payment.userId }, data: { plan: newPlan } });
-            }
+        // Idempotency: skip if already captured (verify endpoint may have run first)
+        const payment = await db.payment.findUnique({ where: { razorpayOrderId: entity.order_id } });
+        if (payment && payment.status !== "CAPTURED") {
+          await db.payment.update({
+            where: { id: payment.id },
+            data: { razorpayPaymentId: entity.id, status: "CAPTURED" },
+          });
+          const newPlan = PLAN_MAP[payment.plan];
+          if (newPlan) {
+            await db.user.update({ where: { id: payment.userId }, data: { plan: newPlan } });
           }
-        } catch (err) {
-          console.error("Webhook DB update failed:", err);
         }
       }
       break;
@@ -56,15 +54,20 @@ export async function POST(req: NextRequest) {
     case "payment.failed": {
       const entity = event.payload?.payment?.entity;
       if (entity?.order_id) {
+        // Let errors propagate — a 5xx tells Razorpay to retry the webhook
         await db.payment.updateMany({
           where: { razorpayOrderId: entity.order_id, status: "PENDING" },
           data: { status: "FAILED" },
-        }).catch(() => {});
+        });
       }
       break;
     }
     default:
       break;
+  }
+  } catch (err) {
+    console.error("Webhook processing failed:", err);
+    return NextResponse.json({ error: "Webhook processing failed" }, { status: 500 });
   }
 
   return NextResponse.json({ received: true });
