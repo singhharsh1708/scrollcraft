@@ -2,7 +2,6 @@
 import Link from "next/link";
 import { useState, useRef, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight, Sparkles, Zap, Download, Play, Check } from "lucide-react";
@@ -10,7 +9,6 @@ import Navbar from "@/components/Navbar";
 
 const DEMO_COUNT = 60;
 const demoFrames = Array.from({ length: DEMO_COUNT }, (_, i) => `/api/demo-frame?i=${i}&total=${DEMO_COUNT}`);
-const ScrollEngine = dynamic(() => import("@/components/ScrollEngine"), { ssr: false });
 
 const PIPELINE = [
   { step: "01", title: "Pick a preset", desc: "Choose from 12+ production-ready templates across SaaS, agency, e-commerce, and more." },
@@ -56,12 +54,31 @@ const FAQ = [
 export default function Home() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const { data: session } = useSession();
-  const demoScrollRef = useRef<HTMLDivElement>(null);
   // Detect mobile on mount to skip 60 concurrent frame requests (#156)
   const [isMobileHero, setIsMobileHero] = useState(true);
+  // Autoplay: track current frame index for the hero canvas loop
+  const [heroFrameIdx, setHeroFrameIdx] = useState(0);
   useEffect(() => {
     setIsMobileHero(window.innerWidth < 768);
   }, []);
+  // Cycle through demo frames automatically at ~10fps (no user scroll required)
+  useEffect(() => {
+    if (isMobileHero) return;
+    let frame = 0;
+    let last = 0;
+    let rafId: number;
+    const INTERVAL = 100; // ms per frame → ~10fps
+    const tick = (ts: number) => {
+      if (ts - last >= INTERVAL) {
+        frame = (frame + 1) % DEMO_COUNT;
+        setHeroFrameIdx(frame);
+        last = ts;
+      }
+      rafId = requestAnimationFrame(tick);
+    };
+    rafId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafId);
+  }, [isMobileHero]);
 
   return (
     <main className="min-h-screen bg-background text-foreground overflow-x-hidden">
@@ -129,43 +146,18 @@ export default function Home() {
 
         {/* Hero visual — live scroll demo (desktop only; mobile skips 60 concurrent requests) */}
         <div className="relative mt-16 w-full max-w-5xl mx-auto rounded-2xl overflow-hidden border border-white/10 shadow-2xl shadow-black/60">
-          {isMobileHero ? (
-            /* Mobile: lightweight CSS gradient stand-in */
-            <div className="aspect-video bg-gradient-to-br from-violet-900 via-purple-950 to-indigo-950 flex items-center justify-center">
-              <div className="text-center px-6">
-                <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center mx-auto mb-3">
-                  <Sparkles className="w-5 h-5 text-primary" />
-                </div>
-                <p className="text-sm text-white/50">Open on desktop to see the live scroll demo</p>
-              </div>
-            </div>
-          ) : (
-            <>
-              {/* Scrollable container drives the demo ScrollEngine */}
-              <div
-                ref={demoScrollRef}
-                className="aspect-video overflow-y-scroll"
-                style={{ scrollbarWidth: "none" }}
-              >
-                {/* 3000px tall — scroll room for the full animation */}
-                <div style={{ height: 3000 }} />
-              </div>
-              {/* Canvas fills the rounded box and is driven by demoScrollRef */}
-              <ScrollEngine
-                frames={demoFrames}
-                totalScrollHeight={3000}
-                scrollContainer={demoScrollRef}
-                position="absolute"
-                className="absolute inset-0 pointer-events-none"
-              />
-            </>
-          )}
+          {/* Autoplay animation — cycles through demo frames at ~10fps */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={demoFrames[heroFrameIdx]}
+            alt="ScrollCraft scroll animation preview"
+            className="w-full aspect-video object-cover"
+          />
           {/* Fade-out at bottom */}
           <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent pointer-events-none" style={{ zIndex: 2 }} />
-          {/* Scroll hint overlay */}
-          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-muted-foreground text-xs uppercase tracking-widest pointer-events-none" style={{ zIndex: 3 }}>
-            <span>Scroll inside to preview</span>
-            <div className="w-px h-8 bg-gradient-to-b from-transparent to-white/30" />
+          {/* Label */}
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-xs text-white/30 uppercase tracking-widest pointer-events-none" style={{ zIndex: 3 }}>
+            Live preview
           </div>
         </div>
       </section>

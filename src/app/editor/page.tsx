@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useRef, useCallback, Suspense } from "react";
 import JSZip from "jszip";
-import { loadFrames } from "@/lib/frameStorage";
+import { loadFrames, storeFrames } from "@/lib/frameStorage";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -60,22 +60,15 @@ function EditorInner() {
   const searchParams = useSearchParams();
   const previewScrollRef = useRef<HTMLDivElement>(null);
 
-  // Derive initial frame state — frames are now stored in sessionStorage (never in the URL).
-  // Legacy ?frames= param is still accepted for backward compatibility with any bookmarked URLs.
+  // Derive initial frame state. Frames live in IndexedDB (primary) with sessionStorage as a
+  // legacy fallback for any in-flight sessions created before this change.
   const framesKey = searchParams.get("framesKey");
-  const framesParam = searchParams.get("frames"); // legacy
+  const framesParam = searchParams.get("frames"); // legacy URL param
   const countParam = searchParams.get("frameCount");
   const fpsParam = searchParams.get("fps");
 
+  // Synchronous fast path: check legacy sessionStorage only (may be empty for new sessions)
   const parsedFrames: string[] | null = (() => {
-    // New path: read from sessionStorage via key
-    if (framesKey) {
-      try {
-        const stored = sessionStorage.getItem(framesKey);
-        if (stored) return JSON.parse(stored) as string[];
-      } catch { /* sessionStorage unavailable or corrupt — fall through to demo */ }
-    }
-    // Legacy path: frames were small enough to be in the URL (or direct navigation in tests)
     if (framesParam) {
       try { return JSON.parse(framesParam) as string[]; } catch { return null; }
     }
@@ -84,11 +77,24 @@ function EditorInner() {
 
   const DEMO_COUNT = 120;
   const demoFrameUrls = Array.from({ length: DEMO_COUNT }, (_, i) => `/api/demo-frame?i=${i}&total=${DEMO_COUNT}`);
-  const initialIsDemo = !parsedFrames;
+  const initialIsDemo = !parsedFrames && !framesKey;
 
   const [frames, setFrames] = useState<string[]>(parsedFrames ?? demoFrameUrls);
   const [frameCount, setFrameCount] = useState(parsedFrames ? parseInt(countParam || String(parsedFrames.length)) : DEMO_COUNT);
   const [fps, setFps] = useState(parsedFrames ? parseInt(fpsParam || "24") : 24);
+
+  // Load desktop frames from IndexedDB (primary store; sessionStorage was too small at 5 MB)
+  useEffect(() => {
+    if (!framesKey || parsedFrames) return;
+    loadFrames(framesKey).then((f) => {
+      if (f && f.length) {
+        setFrames(f);
+        setFrameCount(f.length);
+        setIsDemo(false);
+      }
+    }).catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [sections, setSections] = useState<Section[]>([defaultSection(0)]);
   const [selectedSection, setSelectedSection] = useState<string>(sections[0].id);
   const [siteName, setSiteName] = useState("My ScrollCraft Site");
@@ -142,17 +148,12 @@ function EditorInner() {
         if (!res.ok) return;
         const { site } = await res.json();
         if (cancelled || !site) return;
-        // Check sessionStorage first (frames saved here to avoid server payload limits).
-        // Fall back to framesJson in DB for sites saved before this change.
-        const storedFrames = sessionStorage.getItem(`scrollcraft_frames_${sid}`);
-        const storedMobile = sessionStorage.getItem(`scrollcraft_mframes_${sid}`);
-        if (storedFrames) {
-          const f = JSON.parse(storedFrames);
-          if (Array.isArray(f) && f.length) { setFrames(f); setFrameCount(f.length); setIsDemo(false); }
-          if (storedMobile) {
-            const mf = JSON.parse(storedMobile);
-            if (Array.isArray(mf) && mf.length) setMobileFrames(mf);
-          }
+        // Load frames from IndexedDB (primary). Fall back to DB framesJson for old sites.
+        const storedFrames = await loadFrames(`scrollcraft_frames_${sid}`);
+        const storedMobile = await loadFrames(`scrollcraft_mframes_${sid}`).catch(() => null);
+        if (storedFrames && storedFrames.length) {
+          setFrames(storedFrames); setFrameCount(storedFrames.length); setIsDemo(false);
+          if (storedMobile && storedMobile.length) setMobileFrames(storedMobile);
         } else if (site.framesJson) {
           const f = JSON.parse(site.framesJson);
           if (Array.isArray(f) && f.length) { setFrames(f); setFrameCount(f.length); setIsDemo(false); }
@@ -370,13 +371,11 @@ function EditorInner() {
       const savedId = data.site.id as string;
       setSiteId(savedId);
 
-      // Persist frames in sessionStorage so they survive navigation within this session.
-      try {
-        sessionStorage.setItem(`scrollcraft_frames_${savedId}`, JSON.stringify(frames));
-        if (mobileFrames.length) {
-          sessionStorage.setItem(`scrollcraft_mframes_${savedId}`, JSON.stringify(mobileFrames));
-        }
-      } catch { /* quota exceeded — non-fatal, user can regenerate frames */ }
+      // Persist frames in IndexedDB so they survive navigation without hitting sessionStorage quota.
+      await storeFrames(`scrollcraft_frames_${savedId}`, frames).catch(() => {});
+      if (mobileFrames.length) {
+        await storeFrames(`scrollcraft_mframes_${savedId}`, mobileFrames).catch(() => {});
+      }
 
       if (!opts?.silent) toast.success("Site saved!");
       return savedId;

@@ -78,7 +78,7 @@ export default function Navbar({ position = "sticky" }: { position?: "fixed" | "
 
         {/* Mobile hamburger */}
         <button
-          className="md:hidden p-2 rounded-md text-muted-foreground hover:text-foreground"
+          className="md:hidden p-2 rounded-md text-muted-foreground hover:text-foreground cursor-pointer"
           onClick={() => setOpen((v) => !v)}
           aria-label="Toggle menu"
         >

@@ -107,8 +107,8 @@ export default function DemoPage({ params }: { params: Promise<{ slug: string }>
       {/* Sticky nav bar */}
       <div className="fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-6 py-3 bg-black/60 backdrop-blur-xl border-b border-white/8">
         <button
-          onClick={() => router.push("/showcase")}
-          className="flex items-center gap-2 text-sm text-white/60 hover:text-white transition-colors"
+          onClick={() => router.back()}
+          className="flex items-center gap-2 text-sm text-white/60 hover:text-white transition-colors cursor-pointer"
         >
           <ArrowLeft className="w-4 h-4" />
           <span className="hidden sm:inline">Back to showcase</span>
