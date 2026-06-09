@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight, Check, Copy, Sparkles, Zap, Download, Play, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
+import Navbar from "@/components/Navbar";
 
 const PROMO_CODE = "PHHUNT";
 const DISCOUNT = 30;
@@ -63,17 +64,7 @@ export default function LaunchPage() {
   return (
     <main className="min-h-screen bg-background text-foreground overflow-x-hidden">
       {/* Nav */}
-      <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-8 py-4 border-b border-white/5 bg-background/80 backdrop-blur-xl">
-        <Link href="/" className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
-            <Sparkles className="w-4 h-4 text-white" />
-          </div>
-          <span className="font-semibold text-lg tracking-tight">ScrollCraft</span>
-        </Link>
-        <Link href="/pricing">
-          <Button size="sm">View pricing</Button>
-        </Link>
-      </nav>
+      <Navbar />
 
       {/* Hero */}
       <section className="relative pt-32 pb-20 px-4 text-center overflow-hidden">

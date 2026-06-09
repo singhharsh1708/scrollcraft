@@ -11,6 +11,7 @@ import {
   Sparkles, Plus, ExternalLink, Trash2,
   Zap, Globe, Download, LogOut, User, ChevronDown, Settings, Loader2
 } from "lucide-react";
+import Navbar from "@/components/Navbar";
 
 interface Site {
   id: string;
@@ -90,65 +91,7 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* Nav */}
-      <nav className="border-b border-white/5 bg-card/50 px-6 py-3 flex items-center justify-between sticky top-0 z-50 backdrop-blur-xl">
-        <Link href="/" className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
-            <Sparkles className="w-4 h-4 text-white" />
-          </div>
-          <span className="font-semibold tracking-tight">ScrollCraft</span>
-        </Link>
-
-        <div className="flex items-center gap-3">
-          <Link href="/create">
-            <Button size="sm" className="bg-primary hover:bg-primary/90 text-white">
-              <Plus className="w-3.5 h-3.5 mr-1.5" /> New site
-            </Button>
-          </Link>
-
-          {/* User menu */}
-          <div className="relative">
-            <button
-              onClick={() => setMenuOpen(o => !o)}
-              className="flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-lg border border-white/8 hover:bg-white/5 transition-colors"
-            >
-              {user?.image ? (
-                <img src={user.image} alt="" className="w-6 h-6 rounded-full" />
-              ) : (
-                <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center">
-                  <User className="w-3.5 h-3.5 text-primary" />
-                </div>
-              )}
-              <span className="text-sm font-medium max-w-[120px] truncate">{user?.name || user?.email}</span>
-              <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
-            </button>
-
-            {menuOpen && (
-              <div className="absolute right-0 top-full mt-2 w-52 rounded-xl border border-white/10 bg-card shadow-xl z-50 overflow-hidden">
-                <div className="px-4 py-3 border-b border-white/8">
-                  <p className="text-sm font-medium truncate">{user?.name}</p>
-                  <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
-                </div>
-                <div className="p-1">
-                  <Link href="/pricing" onClick={() => setMenuOpen(false)}>
-                    <button className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg hover:bg-white/5 text-left">
-                      <Zap className="w-3.5 h-3.5 text-primary" /> Upgrade plan
-                    </button>
-                  </Link>
-                  <button className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg hover:bg-white/5 text-left text-muted-foreground">
-                    <Settings className="w-3.5 h-3.5" /> Settings
-                  </button>
-                  <button
-                    onClick={() => signOut({ callbackUrl: "/" })}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg hover:bg-white/5 text-left text-destructive"
-                  >
-                    <LogOut className="w-3.5 h-3.5" /> Sign out
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </nav>
+      <Navbar />
 
       <div className="max-w-6xl mx-auto px-6 py-10 space-y-10">
         {/* Welcome + credits */}

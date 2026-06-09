@@ -4,27 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight, Sparkles, Play } from "lucide-react";
 import { DEMO_SITES } from "@/lib/demoSites";
+import Navbar from "@/components/Navbar";
 
 export default function ShowcasePage() {
   return (
     <main className="min-h-screen bg-background text-foreground">
       {/* Nav */}
-      <nav className="flex items-center justify-between px-8 py-4 border-b border-white/5 bg-background/80 backdrop-blur-xl sticky top-0 z-50">
-        <Link href="/" className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
-            <Sparkles className="w-4 h-4 text-white" />
-          </div>
-          <span className="font-semibold text-lg tracking-tight">ScrollCraft</span>
-        </Link>
-        <div className="flex items-center gap-4">
-          <Link href="/showcase" className="text-sm text-foreground font-medium">Examples</Link>
-          <Link href="/presets" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Presets</Link>
-          <Link href="/pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Pricing</Link>
-          <Link href="/create">
-            <Button size="sm" className="bg-primary hover:bg-primary/90 text-white">Start Building</Button>
-          </Link>
-        </div>
-      </nav>
+      <Navbar />
 
       {/* Header */}
       <section className="pt-16 pb-12 text-center px-6">
@@ -50,18 +36,11 @@ export default function ShowcasePage() {
             >
               {/* Preview thumbnail */}
               <div className={`aspect-video bg-gradient-to-br ${demo.gradient} relative overflow-hidden`}>
-                {/* Animated glow */}
+                {/* Static glow — no animate-pulse to avoid GPU strain on mobile */}
                 <div
-                  className="absolute inset-0 blur-2xl animate-pulse"
+                  className="absolute inset-0 blur-xl"
                   style={{
-                    background: `radial-gradient(circle at 40% 40%, ${demo.accentColor}55, transparent 65%)`,
-                    animationDuration: "3s",
-                  }}
-                />
-                <div
-                  className="absolute inset-0 blur-3xl"
-                  style={{
-                    background: `radial-gradient(circle at 70% 65%, ${demo.accentColor}33, transparent 60%)`,
+                    background: `radial-gradient(circle at 40% 40%, ${demo.accentColor}44, transparent 65%)`,
                   }}
                 />
                 {/* Fake section lines */}

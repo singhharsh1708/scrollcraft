@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Check, Minus, Sparkles, Zap, Loader2, Tag, X } from "lucide-react";
 import { toast } from "sonner";
+import Navbar from "@/components/Navbar";
 
 const PLANS = [
   {
@@ -281,21 +282,7 @@ export default function PricingPage() {
   return (
     <main className="min-h-screen bg-background text-foreground">
       {/* Nav */}
-      <nav className="flex items-center justify-between px-8 py-4 border-b border-white/5 bg-background/80 backdrop-blur-xl sticky top-0 z-50">
-        <Link href="/" className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
-            <Sparkles className="w-4 h-4 text-white" />
-          </div>
-          <span className="font-semibold text-lg tracking-tight">ScrollCraft</span>
-        </Link>
-        <div className="flex items-center gap-4">
-          <Link href="/presets" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Presets</Link>
-          <Link href="/pricing" className="text-sm text-foreground font-medium">Pricing</Link>
-          <Link href="/create">
-            <Button size="sm" className="bg-primary hover:bg-primary/90 text-white">Start Building</Button>
-          </Link>
-        </div>
-      </nav>
+      <Navbar />
 
       {/* Header */}
       <section className="pt-20 pb-12 text-center px-6">
