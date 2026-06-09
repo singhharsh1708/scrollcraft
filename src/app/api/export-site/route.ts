@@ -91,13 +91,17 @@ export async function POST(req: NextRequest) {
     const validatedFps = Math.min(Math.max(Number(fps) || 24, 1), 60);
 
     // Generate sections HTML (server-side for XSS safety)
+    // Each section is a tall container; content is sticky so it stays pinned
+    // in the viewport while the background canvas scrubs underneath.
     const sectionsHtml = (sections as Section[]).map((s: Section) => `
-    <section class="scroll-section" style="height:${Number(s.scrollHeight) || 1000}px; position:relative; z-index:10; display:flex; align-items:${safeCss(s.align || "center")}; justify-content:${safeCss(s.justify || "center")};">
-      <div class="section-content" style="text-align:${safeCss(s.textAlign || "center")}; padding:2rem; max-width:800px;">
-        ${s.eyebrow ? `<p class="eyebrow" style="font-size:0.875rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:${safeCss(s.accentColor || "#a78bfa")}; margin-bottom:0.75rem;">${esc(s.eyebrow)}</p>` : ""}
-        ${s.heading ? `<h2 style="font-size:clamp(2rem,5vw,4rem); font-weight:900; line-height:1; letter-spacing:-0.03em; color:${safeCss(s.headingColor || "#ffffff")}; margin-bottom:1rem;">${esc(s.heading)}</h2>` : ""}
-        ${s.body ? `<p style="font-size:1.125rem; line-height:1.7; color:${safeCss(s.bodyColor || "rgba(255,255,255,0.7)")}; max-width:600px; margin:0 auto 1.5rem;">${esc(s.body)}</p>` : ""}
-        ${s.ctaLabel ? `<a href="${safeHref(s.ctaHref || "#")}" style="display:inline-block; background:${safeCss(s.accentColor || "#7c3aed")}; color:white; padding:0.875rem 2rem; border-radius:0.5rem; font-weight:600; text-decoration:none; font-size:1rem;">${esc(s.ctaLabel)}</a>` : ""}
+    <section class="scroll-section" style="height:${Number(s.scrollHeight) || 1000}px; position:relative; z-index:10;">
+      <div class="section-sticky" style="position:sticky; top:0; height:100vh; display:flex; align-items:${safeCss(s.align || "center")}; justify-content:${safeCss(s.justify || "center")}; overflow:hidden;">
+        <div class="section-content" style="text-align:${safeCss(s.textAlign || "center")}; padding:2rem; max-width:800px; opacity:0; transform:translateY(32px); transition:opacity 0.6s cubic-bezier(0.25,0.46,0.45,0.94),transform 0.6s cubic-bezier(0.25,0.46,0.45,0.94);">
+          ${s.eyebrow ? `<p class="eyebrow" style="font-size:0.875rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:${safeCss(s.accentColor || "#a78bfa")}; margin-bottom:0.75rem;">${esc(s.eyebrow)}</p>` : ""}
+          ${s.heading ? `<h2 style="font-size:clamp(2rem,5vw,4rem); font-weight:900; line-height:1; letter-spacing:-0.03em; color:${safeCss(s.headingColor || "#ffffff")}; margin-bottom:1rem;">${esc(s.heading)}</h2>` : ""}
+          ${s.body ? `<p style="font-size:1.125rem; line-height:1.7; color:${safeCss(s.bodyColor || "rgba(255,255,255,0.7)")}; max-width:600px; margin:0 auto 1.5rem;">${esc(s.body)}</p>` : ""}
+          ${s.ctaLabel ? `<a href="${safeHref(s.ctaHref || "#")}" style="display:inline-block; background:${safeCss(s.accentColor || "#7c3aed")}; color:white; padding:0.875rem 2rem; border-radius:0.5rem; font-weight:600; text-decoration:none; font-size:1rem;">${esc(s.ctaLabel)}</a>` : ""}
+        </div>
       </div>
     </section>`).join("\n");
 
@@ -115,9 +119,10 @@ export async function POST(req: NextRequest) {
     body { background: #000; color: #fff; font-family: system-ui, sans-serif; overflow-x: hidden; }
     #scroll-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
     #scroll-container { position: relative; height: ${totalScrollHeight}px; z-index: 1; pointer-events: none; }
-    .scroll-section { pointer-events: auto; opacity: 0; transform: translateY(32px); transition: opacity 0.6s cubic-bezier(0.25,0.46,0.45,0.94), transform 0.6s cubic-bezier(0.25,0.46,0.45,0.94); }
-    .scroll-section.visible { opacity: 1; transform: translateY(0); }
+    .scroll-section { pointer-events: none; }
+    .section-sticky { pointer-events: none; }
     .section-content { pointer-events: auto; }
+    .section-content.visible { opacity: 1 !important; transform: translateY(0) !important; }
     #scroll-hint {
       position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%);
       display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
@@ -183,6 +188,7 @@ export async function POST(req: NextRequest) {
         var images = getImages();
         var img = images[index];
         if (!img || !img.complete) return;
+        if (!img.naturalWidth || !img.naturalHeight) return;
         var cssW = window.innerWidth, cssH = window.innerHeight;
         var scale = Math.max(cssW / img.naturalWidth, cssH / img.naturalHeight);
         var w = img.naturalWidth * scale, h = img.naturalHeight * scale;
@@ -305,14 +311,15 @@ export async function POST(req: NextRequest) {
     })();
     ` : ""}
     (function() {
-      const sections = document.querySelectorAll('.scroll-section');
+      // Observe the section-content divs (inside sticky wrappers) for entrance animations.
+      const contents = document.querySelectorAll('.section-content');
       const observer = new IntersectionObserver(function(entries) {
         entries.forEach(function(entry) {
           if (entry.isIntersecting) entry.target.classList.add('visible');
           else entry.target.classList.remove('visible');
         });
-      }, { threshold: 0.15 });
-      sections.forEach(function(s) { observer.observe(s); });
+      }, { threshold: 0.1 });
+      contents.forEach(function(el) { observer.observe(el); });
     })();
   </script>
 </body>
