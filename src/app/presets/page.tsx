@@ -611,7 +611,7 @@ export default function PresetsPage() {
             <button
               key={cat}
               onClick={() => setActiveCategory(cat)}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
+              className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all cursor-pointer ${
                 activeCategory === cat
                   ? "bg-primary text-white border-primary"
                   : "border-white/10 text-muted-foreground hover:border-white/20 hover:text-foreground"
@@ -640,7 +640,7 @@ export default function PresetsPage() {
             {filtered.map((preset) => (
               <div
                 key={preset.name}
-                className="group relative rounded-2xl border border-white/8 overflow-hidden hover:border-white/20 transition-all hover:-translate-y-1"
+                className="group relative rounded-2xl border border-white/8 overflow-hidden hover:border-white/20 transition-all hover:-translate-y-1 cursor-pointer"
               >
                 {/* Visual preview */}
                 <div className={`aspect-video bg-gradient-to-br ${preset.gradient} relative flex items-end p-4`}>
@@ -670,8 +670,8 @@ export default function PresetsPage() {
                     <p className="font-bold text-base text-white leading-tight">{preset.name}</p>
                     <p className="text-xs text-white/60">{preset.category}</p>
                   </div>
-                  {/* Hover overlay */}
-                  <div className="absolute inset-0 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 backdrop-blur-sm">
+                  {/* Hover overlay — z-20 keeps it above the tags row (z-10) */}
+                  <div className="absolute inset-0 z-20 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 backdrop-blur-sm">
                     <Link href={`/create?template=${encodeURIComponent(preset.name)}&prompt=${encodeURIComponent(preset.prompt)}`}>
                       <Button size="sm" className="bg-primary text-white shadow-lg shadow-primary/30 text-xs h-8 px-3">
                         Use preset <ArrowRight className="ml-1 w-3 h-3" />

@@ -77,9 +77,9 @@ function CreatePageInner() {
         await deleteFrames("scrollcraft_mobile_frames").catch(() => {});
       }
 
-      // Store frames in sessionStorage — never in the URL (base64 payloads are 12-16 MB,
-      // far beyond the ~2 MB browser URL limit, causing silent truncation / 414 errors).
-      sessionStorage.setItem("scrollcraft_desktop_frames", JSON.stringify(frames));
+      // Store frames in IndexedDB — sessionStorage's 5 MB quota is too small for even one
+      // 120-frame set. IndexedDB handles hundreds of MB without issue.
+      await storeFrames("scrollcraft_desktop_frames", frames);
 
       const params = new URLSearchParams({
         framesKey: "scrollcraft_desktop_frames",
@@ -109,7 +109,7 @@ function CreatePageInner() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Extraction failed");
       setProgress(100);
-      sessionStorage.setItem("scrollcraft_desktop_frames", JSON.stringify(data.frames));
+      await storeFrames("scrollcraft_desktop_frames", data.frames);
 
       const params = new URLSearchParams({
         framesKey: "scrollcraft_desktop_frames",
