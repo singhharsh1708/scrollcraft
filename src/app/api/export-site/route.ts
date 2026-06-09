@@ -92,12 +92,14 @@ export async function POST(req: NextRequest) {
 
     // Generate sections HTML (server-side for XSS safety)
     const sectionsHtml = (sections as Section[]).map((s: Section) => `
-    <section class="scroll-section" style="height:${Number(s.scrollHeight) || 1000}px; position:relative; z-index:10; display:flex; align-items:${safeCss(s.align || "center")}; justify-content:${safeCss(s.justify || "center")};">
-      <div class="section-content" style="text-align:${safeCss(s.textAlign || "center")}; padding:2rem; max-width:800px;">
-        ${s.eyebrow ? `<p class="eyebrow" style="font-size:0.875rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:${safeCss(s.accentColor || "#a78bfa")}; margin-bottom:0.75rem;">${esc(s.eyebrow)}</p>` : ""}
-        ${s.heading ? `<h2 style="font-size:clamp(2rem,5vw,4rem); font-weight:900; line-height:1; letter-spacing:-0.03em; color:${safeCss(s.headingColor || "#ffffff")}; margin-bottom:1rem;">${esc(s.heading)}</h2>` : ""}
-        ${s.body ? `<p style="font-size:1.125rem; line-height:1.7; color:${safeCss(s.bodyColor || "rgba(255,255,255,0.7)")}; max-width:600px; margin:0 auto 1.5rem;">${esc(s.body)}</p>` : ""}
-        ${s.ctaLabel ? `<a href="${safeHref(s.ctaHref || "#")}" style="display:inline-block; background:${safeCss(s.accentColor || "#7c3aed")}; color:white; padding:0.875rem 2rem; border-radius:0.5rem; font-weight:600; text-decoration:none; font-size:1rem;">${esc(s.ctaLabel)}</a>` : ""}
+    <section class="scroll-section" style="height:${Number(s.scrollHeight) || 1000}px; position:relative; z-index:10;">
+      <div class="section-content-wrapper" style="align-items:${safeCss(s.align || "center")}; justify-content:${safeCss(s.justify || "center")};">
+        <div class="section-content" style="text-align:${safeCss(s.textAlign || "center")}; padding:2rem; max-width:800px;">
+          ${s.eyebrow ? `<p class="eyebrow" style="font-size:0.875rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:${safeCss(s.accentColor || "#a78bfa")}; margin-bottom:0.75rem;">${esc(s.eyebrow)}</p>` : ""}
+          ${s.heading ? `<h2 style="font-size:clamp(2rem,5vw,4rem); font-weight:900; line-height:1; letter-spacing:-0.03em; color:${safeCss(s.headingColor || "#ffffff")}; margin-bottom:1rem;">${esc(s.heading)}</h2>` : ""}
+          ${s.body ? `<p style="font-size:1.125rem; line-height:1.7; color:${safeCss(s.bodyColor || "rgba(255,255,255,0.7)")}; max-width:600px; margin:0 auto 1.5rem;">${esc(s.body)}</p>` : ""}
+          ${s.ctaLabel ? `<a href="${safeHref(s.ctaHref || "#")}" style="display:inline-block; background:${safeCss(s.accentColor || "#7c3aed")}; color:white; padding:0.875rem 2rem; border-radius:0.5rem; font-weight:600; text-decoration:none; font-size:1rem;">${esc(s.ctaLabel)}</a>` : ""}
+        </div>
       </div>
     </section>`).join("\n");
 
@@ -117,6 +119,13 @@ export async function POST(req: NextRequest) {
     #scroll-container { position: relative; height: ${totalScrollHeight}px; z-index: 1; pointer-events: none; }
     .scroll-section { pointer-events: auto; opacity: 0; transform: translateY(32px); transition: opacity 0.6s cubic-bezier(0.25,0.46,0.45,0.94), transform 0.6s cubic-bezier(0.25,0.46,0.45,0.94); }
     .scroll-section.visible { opacity: 1; transform: translateY(0); }
+    .section-content-wrapper {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      display: flex;
+      overflow: hidden;
+    }
     .section-content { pointer-events: auto; }
     #scroll-hint {
       position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%);

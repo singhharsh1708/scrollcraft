@@ -575,34 +575,44 @@ function EditorInner() {
                       onClick={() => setSelectedSection(s.id)}
                       style={{
                         height: s.scrollHeight,
-                        display: "flex",
-                        alignItems: s.align || "center",
-                        justifyContent: s.justify || "center",
+                        position: "relative",
                         cursor: "pointer",
                         outline: selectedSection === s.id ? "1px solid rgba(124,58,237,0.5)" : "none",
                       }}
                     >
-                      <div style={{ textAlign: s.textAlign, padding: "2rem", maxWidth: "700px" }}>
-                        {s.eyebrow && (
-                          <p style={{ fontSize: "0.75rem", fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: s.accentColor, marginBottom: "0.5rem" }}>
-                            {s.eyebrow}
-                          </p>
-                        )}
-                        {s.heading && (
-                          <h2 style={{ fontSize: "clamp(1.5rem,4vw,3.5rem)", fontWeight: 900, lineHeight: 1, letterSpacing: "-0.03em", color: s.headingColor, marginBottom: "0.75rem" }}>
-                            {s.heading}
-                          </h2>
-                        )}
-                        {s.body && (
-                          <p style={{ fontSize: "1rem", lineHeight: 1.7, color: s.bodyColor, marginBottom: "1rem" }}>
-                            {s.body}
-                          </p>
-                        )}
-                        {s.ctaLabel && (
-                          <span style={{ display: "inline-block", background: s.accentColor, color: "white", padding: "0.625rem 1.5rem", borderRadius: "0.375rem", fontWeight: 600, fontSize: "0.875rem" }}>
-                            {s.ctaLabel}
-                          </span>
-                        )}
+                      <div
+                        style={{
+                          position: "sticky",
+                          top: 0,
+                          height: "100vh",
+                          display: "flex",
+                          alignItems: s.align || "center",
+                          justifyContent: s.justify || "center",
+                          overflow: "hidden",
+                        }}
+                      >
+                        <div style={{ textAlign: s.textAlign, padding: "2rem", maxWidth: "700px" }}>
+                          {s.eyebrow && (
+                            <p style={{ fontSize: "0.75rem", fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: s.accentColor, marginBottom: "0.5rem" }}>
+                              {s.eyebrow}
+                            </p>
+                          )}
+                          {s.heading && (
+                            <h2 style={{ fontSize: "clamp(1.5rem,4vw,3.5rem)", fontWeight: 900, lineHeight: 1, letterSpacing: "-0.03em", color: s.headingColor, marginBottom: "0.75rem" }}>
+                              {s.heading}
+                            </h2>
+                          )}
+                          {s.body && (
+                            <p style={{ fontSize: "1rem", lineHeight: 1.7, color: s.bodyColor, marginBottom: "1rem" }}>
+                              {s.body}
+                            </p>
+                          )}
+                          {s.ctaLabel && (
+                            <span style={{ display: "inline-block", background: s.accentColor, color: "white", padding: "0.625rem 1.5rem", borderRadius: "0.375rem", fontWeight: 600, fontSize: "0.875rem" }}>
+                              {s.ctaLabel}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </ScrollSection>
                   ))}
