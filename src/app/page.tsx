@@ -6,6 +6,7 @@ import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight, Sparkles, Zap, Download, Play, Check } from "lucide-react";
+import Navbar from "@/components/Navbar";
 
 const DEMO_COUNT = 60;
 const demoFrames = Array.from({ length: DEMO_COUNT }, (_, i) => `/api/demo-frame?i=${i}&total=${DEMO_COUNT}`);
@@ -65,37 +66,7 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-background text-foreground overflow-x-hidden">
       {/* Nav */}
-      <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-8 py-4 border-b border-white/5 bg-background/80 backdrop-blur-xl">
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
-            <Sparkles className="w-4 h-4 text-white" />
-          </div>
-          <span className="font-semibold text-lg tracking-tight">ScrollCraft</span>
-        </div>
-        <div className="flex items-center gap-6">
-          <Link href="/showcase" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Examples</Link>
-          <Link href="/presets" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Presets</Link>
-          <Link href="/#features" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Features</Link>
-          <Link href="/pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Pricing</Link>
-          {session ? (
-            <>
-              <Link href="/dashboard" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Dashboard</Link>
-              <Link href="/create">
-                <Button size="sm" className="bg-primary hover:bg-primary/90 text-white">Start Building</Button>
-              </Link>
-            </>
-          ) : (
-            <>
-              <Link href="/auth/signin">
-                <Button size="sm" variant="ghost" className="text-muted-foreground hover:text-foreground">Sign In</Button>
-              </Link>
-              <Link href="/create">
-                <Button size="sm" className="bg-primary hover:bg-primary/90 text-white">Start Building</Button>
-              </Link>
-            </>
-          )}
-        </div>
-      </nav>
+      <Navbar position="fixed" />
 
       {/* Hero */}
       <section className="relative flex flex-col items-center justify-center min-h-screen text-center px-6 pt-20">

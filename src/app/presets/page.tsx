@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { ArrowRight, Search, Sparkles, Eye } from "lucide-react";
+import Navbar from "@/components/Navbar";
 
 const CATEGORIES = [
   "All", "SaaS", "Agency", "E-commerce", "Mobile App", "Startup",
@@ -579,21 +580,7 @@ export default function PresetsPage() {
   return (
     <main className="min-h-screen bg-background text-foreground">
       {/* Nav */}
-      <nav className="flex items-center justify-between px-8 py-4 border-b border-white/5 bg-background/80 backdrop-blur-xl sticky top-0 z-50">
-        <Link href="/" className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
-            <Sparkles className="w-4 h-4 text-white" />
-          </div>
-          <span className="font-semibold text-lg tracking-tight">ScrollCraft</span>
-        </Link>
-        <div className="flex items-center gap-4">
-          <Link href="/presets" className="text-sm text-foreground font-medium">Presets</Link>
-          <Link href="/pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Pricing</Link>
-          <Link href="/create">
-            <Button size="sm" className="bg-primary hover:bg-primary/90 text-white">Start Building</Button>
-          </Link>
-        </div>
-      </nav>
+      <Navbar />
 
       {/* Header */}
       <section className="pt-16 pb-10 text-center px-6">
@@ -669,12 +656,8 @@ export default function PresetsPage() {
                   </div>
                   {/* Animated accent glow */}
                   <div
-                    className="absolute inset-0 blur-2xl animate-pulse"
-                    style={{ background: `radial-gradient(circle at 40% 40%, ${preset.accent}55, transparent 65%)`, animationDuration: "3s" }}
-                  />
-                  <div
-                    className="absolute inset-0 blur-3xl"
-                    style={{ background: `radial-gradient(circle at 70% 60%, ${preset.accent}33, transparent 60%)` }}
+                    className="absolute inset-0 blur-xl"
+                    style={{ background: `radial-gradient(circle at 40% 40%, ${preset.accent}44, transparent 65%)` }}
                   />
                   <div className="relative z-10">
                     <div className="flex flex-wrap gap-1 mb-2">
