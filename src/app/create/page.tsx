@@ -1,6 +1,7 @@
 "use client";
 import { useState, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { DEMO_SITES } from "@/lib/demoSites";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -33,9 +34,16 @@ function CreatePageInner() {
   const searchParams = useSearchParams();
   const planName = searchParams.get("plan") || "";
 
+  // Pre-select style + colors when arriving from a preset or demo link (?template=Name)
+  const presetDemo = DEMO_SITES.find(
+    (d) => d.name.toLowerCase() === (searchParams.get("template") ?? "").toLowerCase()
+  );
+
   const [step, setStep] = useState(0);
-  const [selectedStyle, setSelectedStyle] = useState<Style2D>("gradient");
-  const [colors, setColors] = useState<[string, string, string]>(["#7c3aed", "#2563eb", "#0f172a"]);
+  const [selectedStyle, setSelectedStyle] = useState<Style2D>(presetDemo?.style ?? "gradient");
+  const [colors, setColors] = useState<[string, string, string]>(
+    presetDemo ? [presetDemo.color1, presetDemo.color2, presetDemo.color3] : ["#7c3aed", "#2563eb", "#0f172a"]
+  );
   const [frameCount, setFrameCount] = useState(120);
   const [generateMobile, setGenerateMobile] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);

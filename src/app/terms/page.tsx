@@ -34,7 +34,7 @@ export default function TermsPage() {
         <p>Subscription and one-time export fees are non-refundable except as required by law or at our sole discretion. Prices may change with 30 days notice.</p>
 
         <h2>Disclaimer</h2>
-        <p>ScrollCraft is provided "as is" without warranty of any kind. We are not liable for indirect, incidental, or consequential damages arising from your use of the service.</p>
+        <p>ScrollCraft is provided &quot;as is&quot; without warranty of any kind. We are not liable for indirect, incidental, or consequential damages arising from your use of the service.</p>
 
         <h2>Governing Law</h2>
         <p>These terms are governed by the laws of India. Disputes shall be resolved in courts of competent jurisdiction in India.</p>

@@ -79,9 +79,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "customHead exceeds 50 KB limit" }, { status: 400 });
     }
 
-    const safeCustomHead = typeof customHead === "string"
-      ? customHead.replace(/<script[\s\S]*?<\/script>/gi, "")
-      : "";
+    // Scripts are allowed in customHead — the exported ZIP runs on the user's own domain,
+    // not on scrollcraft.app, so injected scripts (e.g. GA, Hotjar) pose no XSS risk to us.
+    const safeCustomHead = typeof customHead === "string" ? customHead : "";
     const safeCustomCss = typeof customCss === "string"
       ? customCss.replace(/url\s*\(\s*["']?\s*javascript:/gi, "url(#").replace(/expression\s*\(/gi, "(")
       : "";
@@ -200,7 +200,7 @@ export async function POST(req: NextRequest) {
         var STEP = 5;
         var keyframes = [];
         for (var i = 0; i < count; i += STEP) keyframes.push(i);
-        var loaded = 0;
+        var settled = 0; // counts successes + failures so the chain never hangs
 
         function loadFrame(idx) {
           var img = new Image();
@@ -209,22 +209,27 @@ export async function POST(req: NextRequest) {
             target[idx] = img;
             if ((idx === 0 && isPrimary) || idx === currentFrame) drawFrame(idx);
           };
+          // onerror intentionally left empty — slot stays undefined, drawFrame skips it
         }
 
         keyframes.forEach(function(i) {
           var img = new Image();
           img.src = folder + '/frame_' + String(i).padStart(4, '0') + '.jpg';
-          img.onload = function() {
-            target[i] = img;
-            loaded++;
-            if (i === 0 && isPrimary) drawFrame(0);
-            if (i === currentFrame) drawFrame(i);
-            if (loaded === keyframes.length) {
+          function advance() {
+            settled++;
+            if (settled === keyframes.length) {
               for (var j = 0; j < count; j++) {
                 if (j % STEP !== 0) loadFrame(j);
               }
             }
+          }
+          img.onload = function() {
+            target[i] = img;
+            if (i === 0 && isPrimary) drawFrame(0);
+            if (i === currentFrame) drawFrame(i);
+            advance();
           };
+          img.onerror = advance; // count failure so we don't hang
         });
       }
 
