@@ -8,7 +8,6 @@ import ScrollEngine from "@/components/ScrollEngine";
 import { generate2DFrames } from "@/lib/generate2DFrames";
 import { DEMO_SITES } from "@/lib/demoSites";
 
-const FRAME_COUNT = 90;
 const TOTAL_SCROLL = 4600; // 3 sections × 1200 + 1000 intro buffer
 
 export default function DemoPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -19,7 +18,6 @@ export default function DemoPage({ params }: { params: Promise<{ slug: string }>
   const [frames, setFrames] = useState<string[]>([]);
   const [progress, setProgress] = useState(0);
   const [ready, setReady] = useState(false);
-  const scrollRef = useRef<HTMLDivElement>(null);
   const generatedKey = useRef<string | null>(null);
 
   useEffect(() => {
@@ -28,13 +26,22 @@ export default function DemoPage({ params }: { params: Promise<{ slug: string }>
     if (generatedKey.current === cacheKey) return;
     generatedKey.current = cacheKey;
 
-    // Use sessionStorage cache so revisiting is instant
+    // Reduce resolution on mobile to avoid CPU strain (#157)
+    const isMobileViewport = window.innerWidth < 768;
+    const frameCount = isMobileViewport ? 60 : 90;
+    const width = isMobileViewport ? 640 : 1280;
+    const height = isMobileViewport ? 360 : 720;
+
+    // Use sessionStorage cache so revisiting is instant.
+    // Defer setState to avoid react-hooks/set-state-in-effect warning (#149).
     try {
       const cached = sessionStorage.getItem(cacheKey);
       if (cached) {
-        setFrames(JSON.parse(cached));
-        setProgress(100);
-        setReady(true);
+        Promise.resolve(JSON.parse(cached) as string[]).then((f) => {
+          setFrames(f);
+          setProgress(100);
+          setReady(true);
+        });
         return;
       }
     } catch {
@@ -42,15 +49,7 @@ export default function DemoPage({ params }: { params: Promise<{ slug: string }>
     }
 
     generate2DFrames(
-      {
-        style: demo.style,
-        color1: demo.color1,
-        color2: demo.color2,
-        color3: demo.color3,
-        frameCount: FRAME_COUNT,
-        width: 1280,
-        height: 720,
-      },
+      { style: demo.style, color1: demo.color1, color2: demo.color2, color3: demo.color3, frameCount, width, height },
       (p) => setProgress(Math.round(p))
     ).then((generated) => {
       setFrames(generated);
@@ -140,20 +139,18 @@ export default function DemoPage({ params }: { params: Promise<{ slug: string }>
         </div>
       </div>
 
-      {/* Scroll container */}
+      {/* Scroll container — window handles scroll, this div just provides the scroll height */}
       <div
-        ref={scrollRef}
         className="relative"
         style={{ height: TOTAL_SCROLL }}
       >
-        {/* Canvas background — absolute inside scroll container */}
+        {/* Canvas background — fixed, driven by window scroll (#148) */}
         {ready && (
           <ScrollEngine
             frames={frames}
             totalScrollHeight={TOTAL_SCROLL}
-            scrollContainer={scrollRef as React.RefObject<HTMLDivElement>}
-            position="absolute"
-            className="absolute inset-0"
+            position="fixed"
+            className="fixed inset-0"
           />
         )}
 

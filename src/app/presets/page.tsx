@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
+import { DEMO_SITES } from "@/lib/demoSites";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -693,11 +694,19 @@ export default function PresetsPage() {
                         Use preset <ArrowRight className="ml-1 w-3 h-3" />
                       </Button>
                     </Link>
-                    <Link href={`/editor?prompt=${encodeURIComponent(preset.prompt)}`}>
-                      <Button size="sm" variant="outline" className="border-white/20 bg-white/10 backdrop-blur-sm hover:bg-white/20 text-xs h-8 px-3">
-                        <Eye className="w-3 h-3 mr-1" /> Preview
-                      </Button>
-                    </Link>
+                    {(() => {
+                      const demoSlug = DEMO_SITES.find(
+                        (d) => d.name.toLowerCase() === preset.name.toLowerCase()
+                      )?.slug;
+                      const href = demoSlug ? `/demos/${demoSlug}` : `/create?template=${encodeURIComponent(preset.name)}&prompt=${encodeURIComponent(preset.prompt)}`;
+                      return (
+                        <Link href={href}>
+                          <Button size="sm" variant="outline" className="border-white/20 bg-white/10 backdrop-blur-sm hover:bg-white/20 text-xs h-8 px-3">
+                            <Eye className="w-3 h-3 mr-1" /> Preview
+                          </Button>
+                        </Link>
+                      );
+                    })()}
                   </div>
                 </div>
 

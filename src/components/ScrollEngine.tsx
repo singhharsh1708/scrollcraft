@@ -41,10 +41,9 @@ export default function ScrollEngine({ frames, mobileFrames, totalScrollHeight =
 
   const preloadImages = useCallback((frameSrcs: string[]) => {
     const images: HTMLImageElement[] = new Array(frameSrcs.length);
-    let keyframesLoaded = 0;
     const KEYFRAME_STEP = 5;
 
-    // When a non-keyframe loads, redraw immediately if it's the active frame.
+    // When a non-keyframe loads (or errors), redraw if it's the active frame.
     const loadImage = (index: number) => {
       const img = new Image();
       img.src = frameSrcs[index];
@@ -53,27 +52,33 @@ export default function ScrollEngine({ frames, mobileFrames, totalScrollHeight =
         imagesRef.current = images;
         if (index === 0 || index === currentFrameRef.current) drawFrame(index);
       };
+      // onerror: leave slot undefined so drawFrame skips it gracefully.
       return img;
     };
 
     const keyframeIndices = frameSrcs.map((_, i) => i).filter(i => i % KEYFRAME_STEP === 0);
+    let settled = 0; // counts both successes and failures so the chain never hangs
 
     keyframeIndices.forEach(i => {
       const img = new Image();
       img.src = frameSrcs[i];
-      img.onload = () => {
-        images[i] = img;
-        imagesRef.current = images;
-        keyframesLoaded++;
-        // Draw if this is frame 0 or the user has scrolled to this frame already.
-        if (i === 0 || i === currentFrameRef.current) drawFrame(i);
-        if (keyframesLoaded === keyframeIndices.length) {
+      const advance = () => {
+        settled++;
+        if (settled === keyframeIndices.length) {
           frameSrcs.forEach((_, j) => {
             if (j % KEYFRAME_STEP !== 0) loadImage(j);
           });
           loadedRef.current = true;
         }
       };
+      img.onload = () => {
+        images[i] = img;
+        imagesRef.current = images;
+        // Draw if this is frame 0 or the user has scrolled to this frame already.
+        if (i === 0 || i === currentFrameRef.current) drawFrame(i);
+        advance();
+      };
+      img.onerror = advance; // count failure so we don't hang
     });
 
     imagesRef.current = images;

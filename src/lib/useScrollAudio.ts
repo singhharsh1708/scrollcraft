@@ -45,7 +45,8 @@ export function useScrollAudio({ audioSrc, scrollEl, muted = false }: ScrollAudi
       audio.src = "";
       audioRef.current = null;
     };
-  }, [audioSrc]); // intentionally excludes `muted` — toggling mute is handled by the effect below
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [audioSrc]); // intentionally excludes `muted` — toggling mute is handled by the dedicated effect below
 
   // Keep muted in sync without recreating
   useEffect(() => {

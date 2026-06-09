@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
@@ -56,6 +56,11 @@ export default function Home() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const { data: session } = useSession();
   const demoScrollRef = useRef<HTMLDivElement>(null);
+  // Detect mobile on mount to skip 60 concurrent frame requests (#156)
+  const [isMobileHero, setIsMobileHero] = useState(true);
+  useEffect(() => {
+    setIsMobileHero(window.innerWidth < 768);
+  }, []);
 
   return (
     <main className="min-h-screen bg-background text-foreground overflow-x-hidden">
@@ -151,25 +156,39 @@ export default function Home() {
           ))}
         </div>
 
-        {/* Hero visual — live scroll demo */}
+        {/* Hero visual — live scroll demo (desktop only; mobile skips 60 concurrent requests) */}
         <div className="relative mt-16 w-full max-w-5xl mx-auto rounded-2xl overflow-hidden border border-white/10 shadow-2xl shadow-black/60">
-          {/* Scrollable container drives the demo ScrollEngine */}
-          <div
-            ref={demoScrollRef}
-            className="aspect-video overflow-y-scroll"
-            style={{ scrollbarWidth: "none" }}
-          >
-            {/* 3000px tall — scroll room for the full animation */}
-            <div style={{ height: 3000 }} />
-          </div>
-          {/* Canvas fills the rounded box and is driven by demoScrollRef */}
-          <ScrollEngine
-            frames={demoFrames}
-            totalScrollHeight={3000}
-            scrollContainer={demoScrollRef}
-            position="absolute"
-            className="absolute inset-0 pointer-events-none"
-          />
+          {isMobileHero ? (
+            /* Mobile: lightweight CSS gradient stand-in */
+            <div className="aspect-video bg-gradient-to-br from-violet-900 via-purple-950 to-indigo-950 flex items-center justify-center">
+              <div className="text-center px-6">
+                <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center mx-auto mb-3">
+                  <Sparkles className="w-5 h-5 text-primary" />
+                </div>
+                <p className="text-sm text-white/50">Open on desktop to see the live scroll demo</p>
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* Scrollable container drives the demo ScrollEngine */}
+              <div
+                ref={demoScrollRef}
+                className="aspect-video overflow-y-scroll"
+                style={{ scrollbarWidth: "none" }}
+              >
+                {/* 3000px tall — scroll room for the full animation */}
+                <div style={{ height: 3000 }} />
+              </div>
+              {/* Canvas fills the rounded box and is driven by demoScrollRef */}
+              <ScrollEngine
+                frames={demoFrames}
+                totalScrollHeight={3000}
+                scrollContainer={demoScrollRef}
+                position="absolute"
+                className="absolute inset-0 pointer-events-none"
+              />
+            </>
+          )}
           {/* Fade-out at bottom */}
           <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent pointer-events-none" style={{ zIndex: 2 }} />
           {/* Scroll hint overlay */}
