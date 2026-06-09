@@ -30,6 +30,7 @@ export default function ScrollEngine({ frames, mobileFrames, totalScrollHeight =
     const canvas = canvasRef.current;
     const img = imagesRef.current[index];
     if (!canvas || !img || !img.complete) return;
+    if (!img.naturalWidth || !img.naturalHeight) return; // image failed to load (404/timeout)
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     const scale = Math.max(canvas.width / img.naturalWidth, canvas.height / img.naturalHeight);

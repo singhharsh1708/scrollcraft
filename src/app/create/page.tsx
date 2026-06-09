@@ -8,6 +8,7 @@ import { ArrowLeft, ArrowRight, Sparkles, Upload, CheckCircle2, Loader2, Layers,
 import Link from "next/link";
 import { toast } from "sonner";
 import { generate2DFrames, type Style2D } from "@/lib/generate2DFrames";
+import { storeFrames, deleteFrames } from "@/lib/frameStorage";
 
 const STYLES: { id: Style2D; label: string; description: string; icon: React.ReactNode; colors: [string, string, string] }[] = [
   { id: "gradient",  label: "Gradient Flow",  description: "Smooth color morphing with floating light orbs", icon: <Circle className="w-5 h-5" />,  colors: ["#7c3aed", "#2563eb", "#0f172a"] },
@@ -61,13 +62,11 @@ function CreatePageInner() {
           { ...opts, width: 720, height: 1280 },
           (p) => setProgress(50 + Math.round(p * 0.5))
         );
-        try {
-          sessionStorage.setItem("scrollcraft_mobile_frames", JSON.stringify(mobileFrames));
-        } catch {
-          // sessionStorage full — skip mobile frames silently
-        }
+        // Mobile frames are ~8–12 MB — far beyond sessionStorage's 5 MB quota.
+        // Store in IndexedDB which supports hundreds of MB.
+        await storeFrames("scrollcraft_mobile_frames", mobileFrames);
       } else {
-        sessionStorage.removeItem("scrollcraft_mobile_frames");
+        await deleteFrames("scrollcraft_mobile_frames").catch(() => {});
       }
 
       // Store frames in sessionStorage — never in the URL (base64 payloads are 12-16 MB,
