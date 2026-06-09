@@ -17,6 +17,7 @@ import { useScrollAudio } from "@/lib/useScrollAudio";
 import Link from "next/link";
 import { toast } from "sonner";
 import dynamic from "next/dynamic";
+import { motion } from "framer-motion";
 
 const ScrollEngine = dynamic(() => import("@/components/ScrollEngine"), { ssr: false });
 const ScrollSection = dynamic(() => import("@/components/ScrollSection"), { ssr: false });
@@ -575,35 +576,53 @@ function EditorInner() {
                       onClick={() => setSelectedSection(s.id)}
                       style={{
                         height: s.scrollHeight,
-                        display: "flex",
-                        alignItems: s.align || "center",
-                        justifyContent: s.justify || "center",
+                        position: "relative",
                         cursor: "pointer",
                         outline: selectedSection === s.id ? "1px solid rgba(124,58,237,0.5)" : "none",
                       }}
                     >
-                      <div style={{ textAlign: s.textAlign, padding: "2rem", maxWidth: "700px" }}>
-                        {s.eyebrow && (
-                          <p style={{ fontSize: "0.75rem", fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: s.accentColor, marginBottom: "0.5rem" }}>
-                            {s.eyebrow}
-                          </p>
-                        )}
-                        {s.heading && (
-                          <h2 style={{ fontSize: "clamp(1.5rem,4vw,3.5rem)", fontWeight: 900, lineHeight: 1, letterSpacing: "-0.03em", color: s.headingColor, marginBottom: "0.75rem" }}>
-                            {s.heading}
-                          </h2>
-                        )}
-                        {s.body && (
-                          <p style={{ fontSize: "1rem", lineHeight: 1.7, color: s.bodyColor, marginBottom: "1rem" }}>
-                            {s.body}
-                          </p>
-                        )}
-                        {s.ctaLabel && (
-                          <span style={{ display: "inline-block", background: s.accentColor, color: "white", padding: "0.625rem 1.5rem", borderRadius: "0.375rem", fontWeight: 600, fontSize: "0.875rem" }}>
-                            {s.ctaLabel}
-                          </span>
-                        )}
-                      </div>
+                      {(inView: boolean) => (
+                        <div
+                          style={{
+                            position: "sticky",
+                            top: 0,
+                            height: "100vh",
+                            display: "flex",
+                            alignItems: s.align || "center",
+                            justifyContent: s.justify || "center",
+                            overflow: "hidden",
+                          }}
+                        >
+                          <motion.div
+                            initial={{ opacity: 0, y: 32 }}
+                            animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 32 }}
+                            transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
+                          >
+                            <div style={{ textAlign: s.textAlign, padding: "2rem", maxWidth: "700px" }}>
+                              {s.eyebrow && (
+                                <p style={{ fontSize: "0.75rem", fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: s.accentColor, marginBottom: "0.5rem" }}>
+                                  {s.eyebrow}
+                                </p>
+                              )}
+                              {s.heading && (
+                                <h2 style={{ fontSize: "clamp(1.5rem,4vw,3.5rem)", fontWeight: 900, lineHeight: 1, letterSpacing: "-0.03em", color: s.headingColor, marginBottom: "0.75rem" }}>
+                                  {s.heading}
+                                </h2>
+                              )}
+                              {s.body && (
+                                <p style={{ fontSize: "1rem", lineHeight: 1.7, color: s.bodyColor, marginBottom: "1rem" }}>
+                                  {s.body}
+                                </p>
+                              )}
+                              {s.ctaLabel && (
+                                <span style={{ display: "inline-block", background: s.accentColor, color: "white", padding: "0.625rem 1.5rem", borderRadius: "0.375rem", fontWeight: 600, fontSize: "0.875rem" }}>
+                                  {s.ctaLabel}
+                                </span>
+                              )}
+                            </div>
+                          </motion.div>
+                        </div>
+                      )}
                     </ScrollSection>
                   ))}
                 </div>

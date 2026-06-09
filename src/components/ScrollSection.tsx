@@ -3,7 +3,7 @@ import { useRef } from "react";
 import { motion, useInView } from "framer-motion";
 
 interface ScrollSectionProps {
-  children: React.ReactNode;
+  children: React.ReactNode | ((inView: boolean) => React.ReactNode);
   className?: string;
   style?: React.CSSProperties;
   onClick?: () => void;
@@ -13,6 +13,14 @@ interface ScrollSectionProps {
 export default function ScrollSection({ children, className, style, onClick, delay = 0 }: ScrollSectionProps) {
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: false, margin: "-15% 0px -15% 0px" });
+
+  if (typeof children === "function") {
+    return (
+      <div ref={ref} className={className} style={style} onClick={onClick}>
+        {children(inView)}
+      </div>
+    );
+  }
 
   return (
     <motion.div
