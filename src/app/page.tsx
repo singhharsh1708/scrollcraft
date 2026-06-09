@@ -68,6 +68,7 @@ export default function Home() {
           <span className="font-semibold text-lg tracking-tight">ScrollCraft</span>
         </div>
         <div className="flex items-center gap-6">
+          <Link href="/showcase" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Examples</Link>
           <Link href="/presets" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Presets</Link>
           <Link href="/#features" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Features</Link>
           <Link href="/pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Pricing</Link>

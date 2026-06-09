@@ -1,0 +1,306 @@
+import type { Style2D } from "@/lib/generate2DFrames";
+
+export interface DemoSection {
+  eyebrow: string;
+  heading: string;
+  body: string;
+  cta?: string;
+  scrollHeight: number;
+  align: "flex-start" | "center" | "flex-end";
+  justify: "flex-start" | "center" | "flex-end";
+  textAlign: "left" | "center" | "right";
+  accentColor: string;
+}
+
+export interface DemoSite {
+  slug: string;
+  name: string;
+  tagline: string;
+  category: string;
+  style: Style2D;
+  color1: string;
+  color2: string;
+  color3: string;
+  accentColor: string;
+  sections: DemoSection[];
+  gradient: string;
+}
+
+export const DEMO_SITES: DemoSite[] = [
+  {
+    slug: "orbitcrm",
+    name: "OrbitCRM",
+    tagline: "The CRM that revolves around your customers",
+    category: "SaaS",
+    style: "gradient",
+    color1: "#7c3aed",
+    color2: "#2563eb",
+    color3: "#0f172a",
+    accentColor: "#a78bfa",
+    gradient: "from-violet-800 via-purple-900 to-violet-950",
+    sections: [
+      {
+        eyebrow: "Introducing OrbitCRM",
+        heading: "Close deals at the speed of light.",
+        body: "OrbitCRM puts every contact, deal, and conversation in one gravity-defying workspace. No more switching tabs, losing context, or watching leads go cold.",
+        cta: "Start free trial",
+        scrollHeight: 1200,
+        align: "center",
+        justify: "center",
+        textAlign: "center",
+        accentColor: "#a78bfa",
+      },
+      {
+        eyebrow: "Pipeline intelligence",
+        heading: "Your pipeline, finally alive.",
+        body: "Drag-and-drop stages, real-time probability scoring, and AI-powered next-step suggestions. OrbitCRM learns your team's winning patterns and surfaces them automatically.",
+        scrollHeight: 1200,
+        align: "center",
+        justify: "flex-start",
+        textAlign: "left",
+        accentColor: "#818cf8",
+      },
+      {
+        eyebrow: "Trusted by 4,200+ teams",
+        heading: "Revenue teams that never sleep.",
+        body: "From seed-stage startups to Fortune 500 revenue orgs — OrbitCRM scales with you. SOC 2 Type II certified, 99.99% uptime, and human support that actually helps.",
+        cta: "See all features",
+        scrollHeight: 1200,
+        align: "center",
+        justify: "center",
+        textAlign: "center",
+        accentColor: "#a78bfa",
+      },
+    ],
+  },
+  {
+    slug: "aurabeauty",
+    name: "AuraBeauty",
+    tagline: "Luxury skincare, delivered to your door",
+    category: "E-commerce",
+    style: "wave",
+    color1: "#ec4899",
+    color2: "#f43f5e",
+    color3: "#1a0510",
+    accentColor: "#f9a8d4",
+    gradient: "from-pink-700 via-rose-800 to-pink-900",
+    sections: [
+      {
+        eyebrow: "New collection",
+        heading: "Radiance, redefined.",
+        body: "Twelve botanicals. One serum. The Aura Luminance Ritual was formulated by dermatologists and tested on every skin type. Real glow, zero compromise.",
+        cta: "Shop now",
+        scrollHeight: 1200,
+        align: "center",
+        justify: "center",
+        textAlign: "center",
+        accentColor: "#f9a8d4",
+      },
+      {
+        eyebrow: "The science of glow",
+        heading: "Backed by nature, proven by labs.",
+        body: "We partner with climate-positive farms in France and Japan to source cold-pressed botanicals at their peak potency. Every batch is third-party tested before it reaches your skin.",
+        scrollHeight: 1200,
+        align: "center",
+        justify: "flex-end",
+        textAlign: "right",
+        accentColor: "#fda4af",
+      },
+      {
+        eyebrow: "Over 180,000 happy customers",
+        heading: "Your ritual starts here.",
+        body: "Free shipping on orders over $60. Easy returns. And a personalised skin consultation with every first order — because you deserve to feel certain.",
+        cta: "Build your ritual",
+        scrollHeight: 1200,
+        align: "center",
+        justify: "center",
+        textAlign: "center",
+        accentColor: "#f9a8d4",
+      },
+    ],
+  },
+  {
+    slug: "nightrealm",
+    name: "NightRealm",
+    tagline: "Enter the world beyond the veil",
+    category: "Gaming",
+    style: "particles",
+    color1: "#6d28d9",
+    color2: "#1e1b4b",
+    color3: "#030014",
+    accentColor: "#818cf8",
+    gradient: "from-purple-800 via-indigo-900 to-purple-950",
+    sections: [
+      {
+        eyebrow: "Season III — The Veil War",
+        heading: "Darkness has a name.",
+        body: "250 square kilometres of handcrafted dark fantasy. 47 enemy factions. A storyline that adapts to every choice you make. NightRealm is not a game — it's a world.",
+        cta: "Play free",
+        scrollHeight: 1200,
+        align: "center",
+        justify: "center",
+        textAlign: "center",
+        accentColor: "#818cf8",
+      },
+      {
+        eyebrow: "Forge your legend",
+        heading: "Every warrior is different.",
+        body: "Choose from 12 character archetypes, unlock 340+ skills, and craft legendary weapons from materials found nowhere else. No two playthroughs are ever the same.",
+        scrollHeight: 1200,
+        align: "center",
+        justify: "flex-start",
+        textAlign: "left",
+        accentColor: "#a5b4fc",
+      },
+      {
+        eyebrow: "Join 8 million warriors",
+        heading: "The Realm awaits.",
+        body: "Free-to-play. Cross-platform. Available on PC, PS5, Xbox, and mobile. Your progress, your loot, your story — wherever you are.",
+        cta: "Download now",
+        scrollHeight: 1200,
+        align: "center",
+        justify: "center",
+        textAlign: "center",
+        accentColor: "#818cf8",
+      },
+    ],
+  },
+  {
+    slug: "tripvault",
+    name: "TripVault",
+    tagline: "Every adventure, beautifully organised",
+    category: "Mobile App",
+    style: "gradient",
+    color1: "#0284c7",
+    color2: "#0891b2",
+    color3: "#020c1a",
+    accentColor: "#38bdf8",
+    gradient: "from-sky-700 via-blue-800 to-indigo-900",
+    sections: [
+      {
+        eyebrow: "Travel smarter",
+        heading: "Your whole trip in one tap.",
+        body: "Flights, hotels, itineraries, maps, budgets, and memories — TripVault keeps every detail of every adventure in one beautifully simple app. No more email archaeology.",
+        cta: "Download TripVault",
+        scrollHeight: 1200,
+        align: "center",
+        justify: "center",
+        textAlign: "center",
+        accentColor: "#38bdf8",
+      },
+      {
+        eyebrow: "AI trip planning",
+        heading: "Built by travellers, powered by AI.",
+        body: "Describe your dream trip in plain language and TripVault builds a personalised day-by-day itinerary — with local restaurant picks, hidden gems, and real-time price alerts.",
+        scrollHeight: 1200,
+        align: "center",
+        justify: "flex-start",
+        textAlign: "left",
+        accentColor: "#7dd3fc",
+      },
+      {
+        eyebrow: "4.9 stars · 2.1M downloads",
+        heading: "Start your next chapter.",
+        body: "Free for solo travellers. Pro plans for families and groups. Available on iOS and Android. Your passport never felt so organised.",
+        cta: "Get it free",
+        scrollHeight: 1200,
+        align: "center",
+        justify: "center",
+        textAlign: "center",
+        accentColor: "#38bdf8",
+      },
+    ],
+  },
+  {
+    slug: "greenshift",
+    name: "GreenShift",
+    tagline: "Climate technology for a liveable planet",
+    category: "Startup",
+    style: "wave",
+    color1: "#059669",
+    color2: "#0d9488",
+    color3: "#021a10",
+    accentColor: "#86efac",
+    gradient: "from-green-700 via-lime-800 to-green-950",
+    sections: [
+      {
+        eyebrow: "Series B — $42M raised",
+        heading: "Decarbonisation at enterprise scale.",
+        body: "GreenShift's platform connects carbon removal projects directly to corporate supply chains — with real-time monitoring, science-based verification, and audit-ready reporting.",
+        cta: "Book a demo",
+        scrollHeight: 1200,
+        align: "center",
+        justify: "center",
+        textAlign: "center",
+        accentColor: "#86efac",
+      },
+      {
+        eyebrow: "Verified impact",
+        heading: "Carbon removal you can actually trust.",
+        body: "Every tonne removed on GreenShift is independently verified by Gold Standard and Verra. Satellite imagery, IoT sensor data, and third-party audits — all in one transparent dashboard.",
+        scrollHeight: 1200,
+        align: "center",
+        justify: "flex-end",
+        textAlign: "right",
+        accentColor: "#6ee7b7",
+      },
+      {
+        eyebrow: "120+ enterprise partners",
+        heading: "The net-zero future starts now.",
+        body: "Microsoft, Shopify, and 118 other companies trust GreenShift to power their climate commitments. Join them — and mean it.",
+        cta: "Get started",
+        scrollHeight: 1200,
+        align: "center",
+        justify: "center",
+        textAlign: "center",
+        accentColor: "#86efac",
+      },
+    ],
+  },
+  {
+    slug: "ember",
+    name: "Ember",
+    tagline: "Fire-crafted steakhouse, downtown",
+    category: "Restaurant",
+    style: "particles",
+    color1: "#ea580c",
+    color2: "#b91c1c",
+    color3: "#1a0500",
+    accentColor: "#fb923c",
+    gradient: "from-orange-700 via-red-800 to-orange-950",
+    sections: [
+      {
+        eyebrow: "Now taking reservations",
+        heading: "Some things are better burnt.",
+        body: "Ember is a 40-seat steakhouse built around a live-fire hearth. Aged 45 days. Sourced from a single family ranch in Montana. Cooked by chefs who have given their lives to fire.",
+        cta: "Reserve a table",
+        scrollHeight: 1200,
+        align: "center",
+        justify: "center",
+        textAlign: "center",
+        accentColor: "#fb923c",
+      },
+      {
+        eyebrow: "The craft",
+        heading: "Fire is the only seasoning we need.",
+        body: "We use a custom-built 900°C ceramic hearth to achieve a crust that no pan can replicate. Our menu changes with the season. Our commitment to quality never does.",
+        scrollHeight: 1200,
+        align: "center",
+        justify: "flex-start",
+        textAlign: "left",
+        accentColor: "#fdba74",
+      },
+      {
+        eyebrow: "Downtown, Tuesday–Saturday",
+        heading: "A meal worth the occasion.",
+        body: "Dinner service from 6 pm. Tasting menu available Wednesday through Friday. Private dining for up to 14 guests. Sommelier-curated wine list included.",
+        cta: "Make a reservation",
+        scrollHeight: 1200,
+        align: "center",
+        justify: "center",
+        textAlign: "center",
+        accentColor: "#fb923c",
+      },
+    ],
+  },
+];
