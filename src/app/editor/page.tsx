@@ -12,7 +12,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   ArrowLeft, Download, Plus, Trash2, Eye, EyeOff, ChevronUp, ChevronDown,
   Sparkles, Layers, Settings, Type, Loader2, AlignLeft, AlignCenter, AlignRight,
-  MessageSquare, Send, X, Bot, Monitor, Tablet, Smartphone, Music, Volume2, VolumeX, Save
+  MessageSquare, Send, X, Bot, Monitor, Tablet, Smartphone, Music, Volume2, VolumeX, Save,
+  Undo2, Redo2, Copy
 } from "lucide-react";
 import { useScrollAudio } from "@/lib/useScrollAudio";
 import Link from "next/link";
@@ -82,19 +83,6 @@ function EditorInner() {
   const [frames, setFrames] = useState<string[]>(parsedFrames ?? demoFrameUrls);
   const [frameCount, setFrameCount] = useState(parsedFrames ? parseInt(countParam || String(parsedFrames.length)) : DEMO_COUNT);
   const [fps, setFps] = useState(parsedFrames ? parseInt(fpsParam || "24") : 24);
-
-  // Load desktop frames from IndexedDB (primary store; sessionStorage was too small at 5 MB)
-  useEffect(() => {
-    if (!framesKey || parsedFrames) return;
-    loadFrames(framesKey).then((f) => {
-      if (f && f.length) {
-        setFrames(f);
-        setFrameCount(f.length);
-        setIsDemo(false);
-      }
-    }).catch(() => {});
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
   const [sections, setSections] = useState<Section[]>([defaultSection(0)]);
   const [selectedSection, setSelectedSection] = useState<string>(sections[0].id);
   const [siteName, setSiteName] = useState("My ScrollCraft Site");
@@ -130,6 +118,19 @@ function EditorInner() {
   const [siteId, setSiteId] = useState<string | null>(searchParams.get("siteId"));
   const [isSaving, setIsSaving] = useState(false);
   const [audioMuted, setAudioMuted] = useState(false);
+
+  // Load desktop frames from IndexedDB (primary store; sessionStorage was too small at 5 MB)
+  useEffect(() => {
+    if (!framesKey || parsedFrames) return;
+    loadFrames(framesKey).then((f) => {
+      if (f && f.length) {
+        setFrames(f);
+        setFrameCount(f.length);
+        setIsDemo(false);
+      }
+    }).catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const audioFileRef = useRef<HTMLInputElement>(null);
 
   useScrollAudio({ audioSrc, scrollEl: previewScrollRef, muted: audioMuted });
@@ -191,21 +192,97 @@ function EditorInner() {
 
   const selectedSectionData = sections.find(s => s.id === selectedSection);
 
+  // ── Undo / redo history ──────────────────────────────────────────────
+  // sectionsRef always mirrors the latest sections so async callers (AI chat)
+  // and history snapshots never read a stale value.
+  const sectionsRef = useRef(sections);
+  useEffect(() => { sectionsRef.current = sections; }, [sections]);
+
+  const undoStack = useRef<Section[][]>([]);
+  const redoStack = useRef<Section[][]>([]);
+  const lastEditKey = useRef<{ key: string; t: number } | null>(null);
+  // canUndo/canRedo are state (not derived from refs during render) so the
+  // toolbar buttons re-render correctly without reading refs at render time.
+  const [canUndo, setCanUndo] = useState(false);
+  const [canRedo, setCanRedo] = useState(false);
+  const [dirty, setDirty] = useState(false);
+
+  const syncHistoryFlags = useCallback(() => {
+    setCanUndo(undoStack.current.length > 0);
+    setCanRedo(redoStack.current.length > 0);
+  }, []);
+
+  // Apply a section mutation while recording an undo snapshot. Consecutive edits
+  // sharing the same historyKey within 800ms coalesce into one undo step (so
+  // typing a heading is a single undo, not one-per-keystroke).
+  const commitSections = useCallback((updater: (prev: Section[]) => Section[], historyKey?: string) => {
+    const baseline = sectionsRef.current;
+    const next = updater(baseline);
+    const now = Date.now();
+    const coalesce = !!historyKey
+      && lastEditKey.current?.key === historyKey
+      && now - (lastEditKey.current?.t ?? 0) < 800;
+    if (!coalesce) {
+      undoStack.current.push(baseline);
+      if (undoStack.current.length > 100) undoStack.current.shift();
+    }
+    lastEditKey.current = historyKey ? { key: historyKey, t: now } : null;
+    redoStack.current = [];
+    setSections(next);
+    setDirty(true);
+    syncHistoryFlags();
+  }, [syncHistoryFlags]);
+
+  const undo = useCallback(() => {
+    if (!undoStack.current.length) return;
+    redoStack.current.push(sectionsRef.current);
+    const prev = undoStack.current.pop()!;
+    lastEditKey.current = null;
+    setSections(prev);
+    setDirty(true);
+    setSelectedSection(sel => prev.some(s => s.id === sel) ? sel : prev[0]?.id ?? sel);
+    syncHistoryFlags();
+  }, [syncHistoryFlags]);
+
+  const redo = useCallback(() => {
+    if (!redoStack.current.length) return;
+    undoStack.current.push(sectionsRef.current);
+    const next = redoStack.current.pop()!;
+    lastEditKey.current = null;
+    setSections(next);
+    setDirty(true);
+    setSelectedSection(sel => next.some(s => s.id === sel) ? sel : next[0]?.id ?? sel);
+    syncHistoryFlags();
+  }, [syncHistoryFlags]);
+
   const updateSection = (id: string, updates: Partial<Section>) => {
-    setSections(prev => prev.map(s => s.id === id ? { ...s, ...updates } : s));
+    commitSections(prev => prev.map(s => s.id === id ? { ...s, ...updates } : s), `${id}:${Object.keys(updates).join(",")}`);
   };
 
   const addSection = () => {
     const newSection = defaultSection(sections.length);
-    setSections(prev => [...prev, newSection]);
+    commitSections(prev => [...prev, newSection]);
     setSelectedSection(newSection.id);
+  };
+
+  const duplicateSection = (id: string) => {
+    const src = sectionsRef.current.find(s => s.id === id);
+    if (!src) return;
+    const copy: Section = { ...src, id: `section-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, heading: src.heading ? `${src.heading} (copy)` : src.heading };
+    commitSections(prev => {
+      const idx = prev.findIndex(s => s.id === id);
+      const next = [...prev];
+      next.splice(idx + 1, 0, copy);
+      return next;
+    });
+    setSelectedSection(copy.id);
   };
 
   const removeSection = (id: string) => {
     if (sections.length === 1) { toast.error("Need at least one section"); return; }
     if (pendingDeleteId !== id) { setPendingDeleteId(id); return; }
     setPendingDeleteId(null);
-    setSections(prev => prev.filter(s => s.id !== id));
+    commitSections(prev => prev.filter(s => s.id !== id));
     if (selectedSection === id) setSelectedSection(sections.find(s => s.id !== id)!.id);
   };
 
@@ -213,10 +290,12 @@ function EditorInner() {
     const idx = sections.findIndex(s => s.id === id);
     if (dir === "up" && idx === 0) return;
     if (dir === "down" && idx === sections.length - 1) return;
-    const newSections = [...sections];
-    const swap = dir === "up" ? idx - 1 : idx + 1;
-    [newSections[idx], newSections[swap]] = [newSections[swap], newSections[idx]];
-    setSections(newSections);
+    commitSections(prev => {
+      const next = [...prev];
+      const swap = dir === "up" ? idx - 1 : idx + 1;
+      [next[idx], next[swap]] = [next[swap], next[idx]];
+      return next;
+    });
   };
 
   const handleExport = async () => {
@@ -377,6 +456,7 @@ function EditorInner() {
         await storeFrames(`scrollcraft_mframes_${savedId}`, mobileFrames).catch(() => {});
       }
 
+      setDirty(false);
       if (!opts?.silent) toast.success("Site saved!");
       return savedId;
     } catch {
@@ -403,7 +483,8 @@ function EditorInner() {
       });
       const data = await res.json();
       if (data.updates?.length) {
-        setSections(prev => prev.map(s => {
+        // Route through commitSections so AI edits are a single undoable step.
+        commitSections(prev => prev.map(s => {
           const updates = data.updates.filter((u: { id: string }) => u.id === s.id);
           if (!updates.length) return s;
           return updates.reduce((acc: Section, u: { field: string; value: string | number }) => ({ ...acc, [u.field]: u.value }), s);
@@ -417,6 +498,39 @@ function EditorInner() {
     }
   };
 
+  // Keyboard shortcuts: ⌘Z undo, ⌘⇧Z / ⌘Y redo, ⌘S save, ⌘E export
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const mod = e.metaKey || e.ctrlKey;
+      if (!mod) return;
+      const key = e.key.toLowerCase();
+      if (key === "z") {
+        e.preventDefault();
+        if (e.shiftKey) redo(); else undo();
+      } else if (key === "y") {
+        e.preventDefault(); redo();
+      } else if (key === "s") {
+        e.preventDefault(); if (!isSaving) handleSave();
+      } else if (key === "e") {
+        e.preventDefault(); if (!isExporting) handleExport();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [undo, redo, isSaving, isExporting]);
+
+  // Warn before leaving with unsaved changes
+  useEffect(() => {
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (!dirty) return;
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [dirty]);
+
   return (
     <div className="h-screen flex flex-col bg-background text-foreground overflow-hidden">
       {/* Top bar */}
@@ -428,13 +542,33 @@ function EditorInner() {
           <div className="w-px h-4 bg-white/10" />
           <Input
             value={siteName}
-            onChange={(e) => setSiteName(e.target.value)}
+            onChange={(e) => { setSiteName(e.target.value); setDirty(true); }}
             className="h-7 bg-transparent border-transparent hover:border-white/10 focus:border-primary/50 text-sm font-medium w-48"
           />
+          {dirty && <span title="Unsaved changes" className="w-1.5 h-1.5 rounded-full bg-amber-400 flex-shrink-0" />}
           {isDemo && <Badge variant="outline" className="border-amber-500/40 text-amber-400 text-xs">Demo mode</Badge>}
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Undo / redo */}
+          <div className="flex items-center bg-white/5 rounded-md p-0.5 gap-0.5">
+            <button
+              onClick={undo}
+              disabled={!canUndo}
+              title="Undo (⌘Z)"
+              className="p-1 rounded transition-colors text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              <Undo2 className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={redo}
+              disabled={!canRedo}
+              title="Redo (⌘⇧Z)"
+              className="p-1 rounded transition-colors text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              <Redo2 className="w-3.5 h-3.5" />
+            </button>
+          </div>
           {/* Audio mute toggle — only show when audio is loaded */}
           {audioSrc && (
             <button
@@ -522,11 +656,14 @@ function EditorInner() {
                 <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${s.visible ? "bg-primary" : "bg-white/20"}`} />
                 <span className="text-xs flex-1 truncate">{s.heading || `Section ${i + 1}`}</span>
                 <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button onClick={(e) => { e.stopPropagation(); moveSection(s.id, "up"); }} className="p-0.5 hover:text-primary">
+                  <button onClick={(e) => { e.stopPropagation(); moveSection(s.id, "up"); }} className="p-0.5 hover:text-primary" title="Move up">
                     <ChevronUp className="w-3 h-3" />
                   </button>
-                  <button onClick={(e) => { e.stopPropagation(); moveSection(s.id, "down"); }} className="p-0.5 hover:text-primary">
+                  <button onClick={(e) => { e.stopPropagation(); moveSection(s.id, "down"); }} className="p-0.5 hover:text-primary" title="Move down">
                     <ChevronDown className="w-3 h-3" />
+                  </button>
+                  <button onClick={(e) => { e.stopPropagation(); duplicateSection(s.id); }} className="p-0.5 hover:text-primary" title="Duplicate section">
+                    <Copy className="w-3 h-3" />
                   </button>
                   <button
                     onClick={(e) => { e.stopPropagation(); removeSection(s.id); }}
@@ -890,7 +1027,7 @@ function EditorInner() {
                   <p className="text-xs text-muted-foreground/70">Inject analytics, fonts, or meta tags into &lt;head&gt;</p>
                   <Textarea
                     value={customHead}
-                    onChange={(e) => setCustomHead(e.target.value)}
+                    onChange={(e) => { setCustomHead(e.target.value); setDirty(true); }}
                     placeholder={'<!-- e.g. Google Analytics, custom meta -->\n<script async src="..."></script>'}
                     className="min-h-[100px] font-mono text-xs bg-black/30 border-white/10 resize-none"
                   />
@@ -900,7 +1037,7 @@ function EditorInner() {
                   <p className="text-xs text-muted-foreground/70">Extra styles injected after the default stylesheet</p>
                   <Textarea
                     value={customCss}
-                    onChange={(e) => setCustomCss(e.target.value)}
+                    onChange={(e) => { setCustomCss(e.target.value); setDirty(true); }}
                     placeholder={".scroll-section { ... }\n.section-content { ... }"}
                     className="min-h-[100px] font-mono text-xs bg-black/30 border-white/10 resize-none"
                   />

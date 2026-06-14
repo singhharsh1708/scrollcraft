@@ -181,6 +181,28 @@ function drawWave(ctx: CanvasRenderingContext2D, w: number, h: number, p: number
   ctx.fillRect(0, 0, w, h);
 }
 
+/**
+ * Draw a single frame of any 2D style directly to a canvas context.
+ * Used by live preview components (rAF loop) so they can animate a style
+ * without pre-generating and JPEG-encoding a full frame sequence.
+ * @param p progress 0..1 through the animation loop
+ */
+export function drawFrame2D(
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+  p: number,
+  opts: FrameOptions
+) {
+  ctx.clearRect(0, 0, w, h);
+  switch (opts.style) {
+    case "gradient":   drawGradient(ctx, w, h, p, opts);   break;
+    case "geometric":  drawGeometric(ctx, w, h, p, opts);  break;
+    case "particles":  drawParticles(ctx, w, h, p, opts);  break;
+    case "wave":       drawWave(ctx, w, h, p, opts);        break;
+  }
+}
+
 export async function generate2DFrames(opts: FrameOptions, onProgress?: (pct: number) => void): Promise<string[]> {
   const w = opts.width ?? 1280;
   const h = opts.height ?? 720;
@@ -193,13 +215,7 @@ export async function generate2DFrames(opts: FrameOptions, onProgress?: (pct: nu
   for (let i = 0; i < opts.frameCount; i++) {
     const p = i / (opts.frameCount - 1);
 
-    ctx.clearRect(0, 0, w, h);
-    switch (opts.style) {
-      case "gradient":   drawGradient(ctx, w, h, p, opts);   break;
-      case "geometric":  drawGeometric(ctx, w, h, p, opts);  break;
-      case "particles":  drawParticles(ctx, w, h, p, opts);  break;
-      case "wave":       drawWave(ctx, w, h, p, opts);       break;
-    }
+    drawFrame2D(ctx, w, h, p, opts);
 
     frames.push(canvas.toDataURL("image/jpeg", 0.85));
 
