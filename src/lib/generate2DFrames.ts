@@ -212,8 +212,11 @@ export async function generate2DFrames(opts: FrameOptions, onProgress?: (pct: nu
   const ctx = canvas.getContext("2d")!;
   const frames: string[] = [];
 
+  // A single-frame sequence has no span to interpolate across; clamp so p stays 0 rather than NaN.
+  const lastIndex = Math.max(opts.frameCount - 1, 1);
+
   for (let i = 0; i < opts.frameCount; i++) {
-    const p = i / (opts.frameCount - 1);
+    const p = i / lastIndex;
 
     drawFrame2D(ctx, w, h, p, opts);
 

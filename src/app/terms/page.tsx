@@ -1,4 +1,3 @@
-import Link from "next/link";
 import Navbar from "@/components/Navbar";
 
 export const metadata = { title: "Terms of Service — ScrollCraft" };

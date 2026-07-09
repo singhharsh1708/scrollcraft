@@ -1,7 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useState, useRef, useEffect } from "react";
-import { useSession } from "next-auth/react";
+import { useState, useEffect, useSyncExternalStore } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight, Sparkles, Zap, Download, Play, Check } from "lucide-react";
@@ -9,6 +8,17 @@ import Navbar from "@/components/Navbar";
 
 const DEMO_COUNT = 60;
 const demoFrames = Array.from({ length: DEMO_COUNT }, (_, i) => `/api/demo-frame?i=${i}&total=${DEMO_COUNT}`);
+
+// Mobile skips the hero autoplay so it never fires 60 concurrent frame requests (#156).
+// Server-rendered as mobile so the initial HTML never references the frame URLs.
+const MOBILE_HERO_QUERY = "(max-width: 767px)";
+const subscribeMobileHero = (onChange: () => void) => {
+  const mq = window.matchMedia(MOBILE_HERO_QUERY);
+  mq.addEventListener("change", onChange);
+  return () => mq.removeEventListener("change", onChange);
+};
+const getMobileHeroSnapshot = () => window.matchMedia(MOBILE_HERO_QUERY).matches;
+const getMobileHeroServerSnapshot = () => true;
 
 const PIPELINE = [
   { step: "01", title: "Pick a preset", desc: "Choose from 12+ production-ready templates across SaaS, agency, e-commerce, and more." },
@@ -53,14 +63,13 @@ const FAQ = [
 
 export default function Home() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
-  const { data: session } = useSession();
-  // Detect mobile on mount to skip 60 concurrent frame requests (#156)
-  const [isMobileHero, setIsMobileHero] = useState(true);
+  const isMobileHero = useSyncExternalStore(
+    subscribeMobileHero,
+    getMobileHeroSnapshot,
+    getMobileHeroServerSnapshot
+  );
   // Autoplay: track current frame index for the hero canvas loop
   const [heroFrameIdx, setHeroFrameIdx] = useState(0);
-  useEffect(() => {
-    setIsMobileHero(window.innerWidth < 768);
-  }, []);
   // Cycle through demo frames automatically at ~10fps (no user scroll required)
   useEffect(() => {
     if (isMobileHero) return;

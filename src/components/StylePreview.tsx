@@ -25,29 +25,47 @@ export default function StylePreview({
   className = "",
 }: StylePreviewProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const sizeRef = useRef({ w: 1, h: 1 });
 
+  // The running loop reads its draw options from a ref, so recoloring mid-loop
+  // repaints on the next tick instead of tearing the loop down and snapping to p=0.
+  const optsRef = useRef({ style, color1: colors[0], color2: colors[1], color3: colors[2], frameCount: 1 });
+  useEffect(() => {
+    optsRef.current = { style, color1: colors[0], color2: colors[1], color3: colors[2], frameCount: 1 };
+  });
+
+  // Keep the backing store matched to the element's rendered size, capped DPR for perf.
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
 
-    // Size the backing store to the element's rendered size, capped DPR for perf.
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    const rect = canvas.getBoundingClientRect();
-    const w = Math.max(rect.width, 1);
-    const h = Math.max(rect.height, 1);
-    canvas.width = Math.round(w * dpr);
-    canvas.height = Math.round(h * dpr);
-    ctx.scale(dpr, dpr);
-
-    const opts = {
-      style,
-      color1: colors[0],
-      color2: colors[1],
-      color3: colors[2],
-      frameCount: 1, // unused by drawFrame2D
+    const resize = () => {
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const rect = canvas.getBoundingClientRect();
+      const w = Math.max(rect.width, 1);
+      const h = Math.max(rect.height, 1);
+      canvas.width = Math.round(w * dpr);
+      canvas.height = Math.round(h * dpr);
+      // Assigning width/height resets the transform, so re-apply the DPR scale.
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      sizeRef.current = { w, h };
+      // Repaint immediately so a resize never leaves the canvas blank; a running
+      // loop overwrites this on its next tick.
+      drawFrame2D(ctx, w, h, 0, optsRef.current);
     };
+
+    resize();
+    const observer = new ResizeObserver(resize);
+    observer.observe(canvas);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (paused) return;
+    const ctx = canvasRef.current?.getContext("2d");
+    if (!ctx) return;
 
     let rafId = 0;
     let start = 0;
@@ -56,19 +74,23 @@ export default function StylePreview({
       if (!start) start = ts;
       const elapsed = (ts - start) / 1000;
       const p = (elapsed % durationSec) / durationSec; // 0..1 loop
-      drawFrame2D(ctx, w, h, p, opts);
+      const { w, h } = sizeRef.current;
+      drawFrame2D(ctx, w, h, p, optsRef.current);
       rafId = requestAnimationFrame(tick);
     };
 
-    if (paused) {
-      // Draw a single static frame so the card isn't blank while paused.
-      drawFrame2D(ctx, w, h, 0, opts);
-    } else {
-      rafId = requestAnimationFrame(tick);
-    }
-
+    rafId = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(rafId);
-  }, [style, colors, durationSec, paused]);
+  }, [paused, durationSec]);
+
+  // While paused the loop is not running, so redraw the static frame on restyle.
+  useEffect(() => {
+    if (!paused) return;
+    const ctx = canvasRef.current?.getContext("2d");
+    if (!ctx) return;
+    const { w, h } = sizeRef.current;
+    drawFrame2D(ctx, w, h, 0, { style, color1: colors[0], color2: colors[1], color3: colors[2], frameCount: 1 });
+  }, [paused, style, colors]);
 
   return <canvas ref={canvasRef} className={className} aria-hidden="true" />;
 }

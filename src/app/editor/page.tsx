@@ -498,27 +498,35 @@ function EditorInner() {
     }
   };
 
+  // handleSave/handleExport are re-created every render and read sections, frames
+  // and siteName from their closure. The keydown listener below is registered once,
+  // so it must reach them through a ref or it would act on a stale snapshot.
+  const shortcutsRef = useRef({ undo, redo, handleSave, handleExport, isSaving, isExporting });
+  useEffect(() => {
+    shortcutsRef.current = { undo, redo, handleSave, handleExport, isSaving, isExporting };
+  });
+
   // Keyboard shortcuts: ⌘Z undo, ⌘⇧Z / ⌘Y redo, ⌘S save, ⌘E export
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const mod = e.metaKey || e.ctrlKey;
       if (!mod) return;
+      const s = shortcutsRef.current;
       const key = e.key.toLowerCase();
       if (key === "z") {
         e.preventDefault();
-        if (e.shiftKey) redo(); else undo();
+        if (e.shiftKey) s.redo(); else s.undo();
       } else if (key === "y") {
-        e.preventDefault(); redo();
+        e.preventDefault(); s.redo();
       } else if (key === "s") {
-        e.preventDefault(); if (!isSaving) handleSave();
+        e.preventDefault(); if (!s.isSaving) s.handleSave();
       } else if (key === "e") {
-        e.preventDefault(); if (!isExporting) handleExport();
+        e.preventDefault(); if (!s.isExporting) s.handleExport();
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [undo, redo, isSaving, isExporting]);
+  }, []);
 
   // Warn before leaving with unsaved changes
   useEffect(() => {
