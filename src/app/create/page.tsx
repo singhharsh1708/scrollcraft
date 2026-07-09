@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef, Suspense } from "react";
+import { useState, useRef, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { DEMO_SITES } from "@/lib/demoSites";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { generate2DFrames, type Style2D } from "@/lib/generate2DFrames";
 import { storeFrames, deleteFrames } from "@/lib/frameStorage";
+import StylePreview from "@/components/StylePreview";
 
 const STYLES: { id: Style2D; label: string; description: string; icon: React.ReactNode; colors: [string, string, string] }[] = [
   { id: "gradient",  label: "Gradient Flow",  description: "Smooth color morphing with floating light orbs", icon: <Circle className="w-5 h-5" />,  colors: ["#7c3aed", "#2563eb", "#0f172a"] },
@@ -49,6 +50,7 @@ function CreatePageInner() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [progress, setProgress] = useState(0);
   const [progressLabel, setProgressLabel] = useState("");
+  const [dragActive, setDragActive] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const handleGenerate = async () => {
@@ -77,9 +79,9 @@ function CreatePageInner() {
         await deleteFrames("scrollcraft_mobile_frames").catch(() => {});
       }
 
-      // Store frames in sessionStorage — never in the URL (base64 payloads are 12-16 MB,
-      // far beyond the ~2 MB browser URL limit, causing silent truncation / 414 errors).
-      sessionStorage.setItem("scrollcraft_desktop_frames", JSON.stringify(frames));
+      // Store frames in IndexedDB — sessionStorage's 5 MB quota is too small for even one
+      // 120-frame set. IndexedDB handles hundreds of MB without issue.
+      await storeFrames("scrollcraft_desktop_frames", frames);
 
       const params = new URLSearchParams({
         framesKey: "scrollcraft_desktop_frames",
@@ -109,7 +111,7 @@ function CreatePageInner() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Extraction failed");
       setProgress(100);
-      sessionStorage.setItem("scrollcraft_desktop_frames", JSON.stringify(data.frames));
+      await storeFrames("scrollcraft_desktop_frames", data.frames);
 
       const params = new URLSearchParams({
         framesKey: "scrollcraft_desktop_frames",
@@ -123,6 +125,30 @@ function CreatePageInner() {
       setStep(1);
       setIsGenerating(false);
     }
+  };
+
+  // Enter advances Style → Configure → Generate (ignored while typing in a field)
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Enter" || isGenerating) return;
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA") return;
+      if (step === 0) { e.preventDefault(); setStep(1); }
+      else if (step === 1) { e.preventDefault(); handleGenerate(); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, isGenerating]);
+
+  const VIDEO_RE = /^video\//;
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragActive(false);
+    const file = e.dataTransfer.files?.[0];
+    if (!file) return;
+    if (!VIDEO_RE.test(file.type)) { toast.error("Please drop a video file (MP4, MOV, WebM)"); return; }
+    handleUpload(file);
   };
 
   return (
@@ -181,17 +207,33 @@ function CreatePageInner() {
                 <button
                   key={s.id}
                   onClick={() => { setSelectedStyle(s.id); setColors(s.colors); }}
-                  className={`text-left p-4 rounded-2xl border transition-all ${
+                  className={`group text-left rounded-2xl border overflow-hidden transition-all ${
                     selectedStyle === s.id
-                      ? "border-primary/60 bg-primary/10 shadow-lg shadow-primary/10"
-                      : "border-white/8 bg-card hover:border-white/20"
+                      ? "border-primary/60 shadow-lg shadow-primary/10"
+                      : "border-white/8 hover:border-white/25"
                   }`}
                 >
-                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center mb-3 ${selectedStyle === s.id ? "bg-primary/20 text-primary" : "bg-white/5 text-muted-foreground"}`}>
-                    {s.icon}
+                  {/* Live animated preview — the selected card animates; others show a static frame */}
+                  <div className="aspect-video relative bg-black">
+                    <StylePreview
+                      style={s.id}
+                      colors={selectedStyle === s.id ? colors : s.colors}
+                      paused={selectedStyle !== s.id}
+                      className="absolute inset-0 w-full h-full"
+                    />
+                    {selectedStyle === s.id && (
+                      <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-primary flex items-center justify-center shadow-lg">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-white" />
+                      </div>
+                    )}
                   </div>
-                  <div className="font-semibold mb-0.5">{s.label}</div>
-                  <div className="text-xs text-muted-foreground">{s.description}</div>
+                  <div className="p-3 bg-card">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <span className={selectedStyle === s.id ? "text-primary" : "text-muted-foreground"}>{s.icon}</span>
+                      <span className="font-semibold text-sm">{s.label}</span>
+                    </div>
+                    <div className="text-xs text-muted-foreground">{s.description}</div>
+                  </div>
                 </button>
               ))}
             </div>
@@ -210,6 +252,18 @@ function CreatePageInner() {
             <div className="text-center">
               <h1 className="text-3xl font-black tracking-tighter mb-2">Configure</h1>
               <p className="text-muted-foreground">Pick a color palette and frame count</p>
+            </div>
+
+            {/* Live preview — reflects the selected style + current palette in real time */}
+            <div className="rounded-2xl overflow-hidden border border-white/10 relative aspect-video bg-black">
+              <StylePreview
+                style={selectedStyle}
+                colors={colors}
+                className="absolute inset-0 w-full h-full"
+              />
+              <div className="absolute bottom-3 left-3 text-xs font-medium text-white/70 bg-black/40 backdrop-blur-sm px-2.5 py-1 rounded-full">
+                Live preview · {STYLES.find(s => s.id === selectedStyle)?.label}
+              </div>
             </div>
 
             <div className="space-y-6 p-6 rounded-2xl border border-white/8 bg-card">
@@ -271,10 +325,17 @@ function CreatePageInner() {
               <p className="text-center text-sm text-muted-foreground">— or upload your own video —</p>
               <button
                 onClick={() => fileRef.current?.click()}
-                className="w-full p-5 rounded-2xl border-2 border-dashed border-white/15 hover:border-primary/40 transition-colors flex flex-col items-center gap-2 text-muted-foreground hover:text-foreground"
+                onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
+                onDragLeave={(e) => { e.preventDefault(); setDragActive(false); }}
+                onDrop={handleDrop}
+                className={`w-full p-5 rounded-2xl border-2 border-dashed transition-colors flex flex-col items-center gap-2 ${
+                  dragActive
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-white/15 hover:border-primary/40 text-muted-foreground hover:text-foreground"
+                }`}
               >
                 <Upload className="w-6 h-6" />
-                <p className="font-medium text-sm">Drop a video or click to upload</p>
+                <p className="font-medium text-sm">{dragActive ? "Drop to upload" : "Drop a video or click to upload"}</p>
                 <p className="text-xs">MP4, MOV, WebM — max 500MB</p>
               </button>
               <input ref={fileRef} type="file" accept="video/*" className="hidden" onChange={(e) => e.target.files?.[0] && handleUpload(e.target.files[0])} />

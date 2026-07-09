@@ -1,5 +1,5 @@
 "use client";
-import { useSession, signOut } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -9,7 +9,7 @@ import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import {
   Sparkles, Plus, ExternalLink, Trash2,
-  Zap, Globe, Download, LogOut, User, ChevronDown, Settings, Loader2
+  Zap, Globe, Download, Loader2
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 
@@ -33,7 +33,6 @@ const PLANS: Record<string, { label: string; maxCredits: number; color: string }
 export default function DashboardPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [menuOpen, setMenuOpen] = useState(false);
   const [sites, setSites] = useState<Site[]>([]);
   const [sitesLoading, setSitesLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);

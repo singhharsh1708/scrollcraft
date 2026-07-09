@@ -15,12 +15,12 @@ const securityHeaders = [
     value: [
       "default-src 'self'",
       "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://checkout.razorpay.com",
-      "style-src 'self' 'unsafe-inline'",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "img-src 'self' data: blob: https:",
       "media-src 'self' blob:",
       "connect-src 'self' https://api.anthropic.com https://api.lumalabs.ai https://api.dev.runwayml.com https://checkout.razorpay.com https://*.sentry.io",
       "frame-src https://api.razorpay.com https://checkout.razorpay.com",
-      "font-src 'self'",
+      "font-src 'self' https://fonts.gstatic.com",
     ].join("; "),
   },
 ];
