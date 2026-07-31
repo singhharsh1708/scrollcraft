@@ -1,5 +1,5 @@
 // Lightweight auth config — no Prisma, no Node.js-only modules.
-// Used by middleware (Edge Runtime) and merged into the full auth.ts config.
+// Merged into the full auth.ts config, and safe to import from Edge contexts.
 import type { NextAuthConfig } from "next-auth";
 import type { Provider } from "next-auth/providers";
 import GitHub from "next-auth/providers/github";

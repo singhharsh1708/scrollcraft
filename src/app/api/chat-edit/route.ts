@@ -3,11 +3,14 @@ import { z } from "zod";
 import { auth } from "@/auth";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
 
+const MAX_BODY_BYTES = 1_000_000;
+const MAX_MODEL_UPDATES = 50;
+
 const chatEditSchema = z.object({
   message: z.string().min(1).max(2000),
   selectedSectionId: z.string().max(100),
   sections: z.array(z.object({
-    id: z.string(),
+    id: z.string().max(100),
     heading: z.string().max(500).optional(),
     body: z.string().max(5000).optional(),
     eyebrow: z.string().max(200).optional(),
@@ -35,6 +38,32 @@ interface Section {
   textAlign?: string;
 }
 
+// The model's output is applied straight to the user's document, so it is
+// treated as untrusted input: only these fields, types and ranges get through.
+const sectionIdSchema = z.string().min(1).max(100);
+const colorSchema = z.string().max(50)
+  .regex(/^(?:#[0-9a-fA-F]{3,8}|(?:rgb|hsl)a?\([\d\s.,%/]+\)|[a-zA-Z]{3,20})$/);
+const ctaHrefSchema = z.string().max(2000)
+  .refine(v => v === "" || /^(?:#|\/|\.{1,2}\/|https?:\/\/|mailto:|tel:)/i.test(v));
+
+const modelUpdateSchema = z.discriminatedUnion("field", [
+  z.object({ id: sectionIdSchema, field: z.literal("heading"), value: z.string().max(500) }),
+  z.object({ id: sectionIdSchema, field: z.literal("body"), value: z.string().max(5000) }),
+  z.object({ id: sectionIdSchema, field: z.literal("eyebrow"), value: z.string().max(200) }),
+  z.object({ id: sectionIdSchema, field: z.literal("ctaLabel"), value: z.string().max(200) }),
+  z.object({ id: sectionIdSchema, field: z.literal("ctaHref"), value: ctaHrefSchema }),
+  z.object({ id: sectionIdSchema, field: z.literal("accentColor"), value: colorSchema }),
+  z.object({ id: sectionIdSchema, field: z.literal("headingColor"), value: colorSchema }),
+  z.object({ id: sectionIdSchema, field: z.literal("bodyColor"), value: colorSchema }),
+  z.object({ id: sectionIdSchema, field: z.literal("textAlign"), value: z.enum(["left", "center", "right"]) }),
+  z.object({ id: sectionIdSchema, field: z.literal("scrollHeight"), value: z.number().int().min(100).max(20_000) }),
+]);
+
+const modelResponseSchema = z.object({
+  message: z.string().optional(),
+  updates: z.array(z.unknown()).max(200).optional(),
+});
+
 export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.email) {
@@ -46,7 +75,22 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Too many requests. Try again in a minute." }, { status: 429 });
   }
 
-  const raw = await req.json();
+  const declaredLength = Number(req.headers.get("content-length") ?? 0);
+  if (declaredLength > MAX_BODY_BYTES) {
+    return NextResponse.json({ error: "Request too large" }, { status: 413 });
+  }
+
+  let raw: unknown;
+  try {
+    const body = await req.text();
+    if (body.length > MAX_BODY_BYTES) {
+      return NextResponse.json({ error: "Request too large" }, { status: 413 });
+    }
+    raw = JSON.parse(body);
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+
   const parsed = chatEditSchema.safeParse(raw);
   if (!parsed.success) {
     return NextResponse.json({ error: "Invalid request", details: parsed.error.flatten().fieldErrors }, { status: 400 });
@@ -92,15 +136,31 @@ Only include updates that actually change something. Keep edits focused and rele
         system: systemPrompt,
         messages: [{ role: "user", content: message }],
       }),
+      signal: AbortSignal.timeout(30_000),
     });
+
+    if (!res.ok) throw new Error(`Anthropic API returned ${res.status}`);
 
     const data = await res.json();
     const text = data.content?.[0]?.text || "";
 
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) throw new Error("No JSON in response");
-    const parsed = JSON.parse(jsonMatch[0]);
-    return NextResponse.json(parsed);
+    const modelResponse = modelResponseSchema.safeParse(JSON.parse(jsonMatch[0]));
+    if (!modelResponse.success) throw new Error("Malformed model response");
+
+    const knownIds = new Set(sections.map((s: Section) => s.id));
+    const updates: z.infer<typeof modelUpdateSchema>[] = [];
+    for (const candidate of modelResponse.data.updates ?? []) {
+      if (updates.length >= MAX_MODEL_UPDATES) break;
+      const update = modelUpdateSchema.safeParse(candidate);
+      if (update.success && knownIds.has(update.data.id)) updates.push(update.data);
+    }
+
+    return NextResponse.json({
+      message: (modelResponse.data.message ?? "").slice(0, 1000) || "Done!",
+      updates,
+    });
   } catch {
     return demoEdit(message, sections, selectedSectionId);
   }

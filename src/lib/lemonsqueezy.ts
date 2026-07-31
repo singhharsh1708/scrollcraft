@@ -69,11 +69,35 @@ export async function createExportCheckout(params: {
   };
 }
 
+/**
+ * Look up an existing checkout so a user who already has one in flight is sent
+ * back to the same payment page instead of being charged twice.
+ * Returns null when the checkout can no longer be resolved.
+ */
+export async function getExportCheckoutUrl(checkoutId: string): Promise<string | null> {
+  const res = await fetch(`${LS_API_BASE}/checkouts/${encodeURIComponent(checkoutId)}`, {
+    method: "GET",
+    headers: headers(),
+    cache: "no-store",
+  });
+
+  if (!res.ok) return null;
+
+  const json = await res.json();
+  const url = json?.data?.attributes?.url;
+  return typeof url === "string" && url.length > 0 ? url : null;
+}
+
+const LS_SIGNATURE_HEX = /^[0-9a-f]{64}$/i;
+
 export function verifyLSWebhookSignature(
   rawBody: string,
   signature: string
 ): boolean {
   if (!env.LEMONSQUEEZY_WEBHOOK_SECRET || !signature) return false;
+  // HMAC-SHA256 hex digest — reject anything that isn't the exact expected shape
+  // before it reaches Buffer.from, which silently truncates invalid hex.
+  if (!LS_SIGNATURE_HEX.test(signature)) return false;
   const expected = crypto
     .createHmac("sha256", env.LEMONSQUEEZY_WEBHOOK_SECRET)
     .update(rawBody)
