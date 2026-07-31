@@ -17,8 +17,8 @@ import type * as Prisma from "./prismaNamespace"
 
 const config: runtime.GetPrismaClientConfig = {
   "previewFeatures": [],
-  "clientVersion": "7.8.0",
-  "engineVersion": "3c6e192761c0362d496ed980de936e2f3cebcd3a",
+  "clientVersion": "7.9.1",
+  "engineVersion": "e922089b7d7502aff4249d5da3420f6fa55fc6ad",
   "activeProvider": "postgresql",
   "inlineSchema": "generator client {\n  provider = \"prisma-client\"\n  output   = \"../src/generated/prisma\"\n}\n\ndatasource db {\n  provider = \"postgresql\"\n}\n\nmodel User {\n  id        String   @id @default(cuid())\n  email     String   @unique\n  name      String?\n  image     String?\n  plan      Plan     @default(FREE)\n  credits   Int      @default(100)\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n\n  sites           Site[]\n  payments        Payment[]\n  exportPurchases ExportPurchase[]\n  accounts        Account[]\n  sessions        Session[]\n}\n\nmodel Site {\n  id           String   @id @default(cuid())\n  userId       String\n  name         String   @default(\"My ScrollCraft Site\")\n  fps          Int      @default(24)\n  frameCount   Int      @default(0)\n  framesJson   String?  @db.Text\n  sectionsJson String?  @db.Text\n  customHead   String?  @db.Text\n  customCss    String?  @db.Text\n  audioUrl     String?\n  createdAt    DateTime @default(now())\n  updatedAt    DateTime @updatedAt\n\n  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)\n  exportPurchases ExportPurchase[]\n\n  @@index([userId])\n}\n\nmodel Payment {\n  id                String        @id @default(cuid())\n  userId            String\n  razorpayOrderId   String        @unique\n  razorpayPaymentId String?\n  plan              String\n  billing           String\n  amount            Int\n  currency          String        @default(\"INR\")\n  status            PaymentStatus @default(PENDING)\n  promoCode         String?\n  discountPct       Int?\n  createdAt         DateTime      @default(now())\n\n  user User @relation(fields: [userId], references: [id], onDelete: Cascade)\n\n  @@index([userId])\n  @@index([status])\n}\n\nmodel ExportPurchase {\n  id           String               @id @default(cuid())\n  userId       String\n  siteId       String\n  lsOrderId    String               @unique\n  lsCheckoutId String?\n  amount       Int\n  currency     String               @default(\"USD\")\n  status       ExportPurchaseStatus @default(PENDING)\n  createdAt    DateTime             @default(now())\n\n  user User @relation(fields: [userId], references: [id], onDelete: Cascade)\n  site Site @relation(fields: [siteId], references: [id], onDelete: Cascade)\n\n  @@index([userId])\n  @@index([siteId])\n}\n\nmodel PromoCode {\n  id          String    @id @default(cuid())\n  code        String    @unique\n  discountPct Int\n  maxUses     Int?\n  uses        Int       @default(0)\n  expiresAt   DateTime?\n  active      Boolean   @default(true)\n  createdAt   DateTime  @default(now())\n}\n\nmodel Account {\n  id                String  @id @default(cuid())\n  userId            String\n  type              String\n  provider          String\n  providerAccountId String\n  refresh_token     String? @db.Text\n  access_token      String? @db.Text\n  expires_at        Int?\n  token_type        String?\n  scope             String?\n  id_token          String? @db.Text\n  session_state     String?\n\n  user User @relation(fields: [userId], references: [id], onDelete: Cascade)\n\n  @@unique([provider, providerAccountId])\n  @@index([userId])\n}\n\nmodel Session {\n  id           String   @id @default(cuid())\n  sessionToken String   @unique\n  userId       String\n  expires      DateTime\n  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)\n\n  @@index([userId])\n}\n\nmodel VerificationToken {\n  identifier String\n  token      String   @unique\n  expires    DateTime\n\n  @@unique([identifier, token])\n}\n\nenum Plan {\n  FREE\n  BASIC\n  BASIC_PLUS\n  PRO\n  PREMIUM\n}\n\nenum PaymentStatus {\n  PENDING\n  CAPTURED\n  FAILED\n  REFUNDED\n}\n\nenum ExportPurchaseStatus {\n  PENDING\n  PAID\n  FAILED\n  REFUNDED\n}\n",
   "runtimeDataModel": {
@@ -82,7 +82,7 @@ export interface PrismaClientConstructor {
     LogOpts extends LogOptions<Options> = LogOptions<Options>,
     OmitOpts extends Prisma.PrismaClientOptions['omit'] = Options extends { omit: infer U } ? U : Prisma.PrismaClientOptions['omit'],
     ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs
-  >(options: Prisma.Subset<Options, Prisma.PrismaClientOptions> ): PrismaClient<LogOpts, OmitOpts, ExtArgs>
+  >(options: Prisma.PrismaClientConstructorArgs<Options>): PrismaClient<LogOpts, OmitOpts, ExtArgs>
 }
 
 /**
@@ -103,7 +103,7 @@ export interface PrismaClientConstructor {
 
 export interface PrismaClient<
   in LogOpts extends Prisma.LogLevel = never,
-  in out OmitOpts extends Prisma.PrismaClientOptions['omit'] = undefined,
+  in out OmitOpts extends Prisma.PrismaClientOptions['omit'] = Prisma.PrismaClientOptions['omit'],
   in out ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs
 > {
   [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['other'] }

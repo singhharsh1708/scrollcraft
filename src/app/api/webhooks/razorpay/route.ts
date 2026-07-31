@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import Razorpay from "razorpay";
 import { db } from "@/lib/db";
+import { consumePromoCode } from "@/lib/promo";
 
 const PLAN_MAP: Record<string, "BASIC" | "BASIC_PLUS" | "PRO" | "PREMIUM"> = {
   Basic: "BASIC", "Basic Plus": "BASIC_PLUS", Pro: "PRO", Premium: "PREMIUM",
@@ -43,18 +44,6 @@ async function repriceUserPlan(userId: string) {
 }
 
 // Conditional UPDATE so concurrent captures can never push uses past maxUses.
-async function consumePromoCode(code: string | null) {
-  if (!code) return;
-  const consumed = await db.$executeRaw`
-    UPDATE "PromoCode"
-    SET uses = uses + 1
-    WHERE code = ${code} AND ("maxUses" IS NULL OR uses < "maxUses")
-  `;
-  if (consumed === 0) {
-    console.warn("Promo code exhausted before capture:", code);
-  }
-}
-
 async function applyPlan(userId: string, planName: string | null | undefined) {
   const newPlan = planName ? PLAN_MAP[planName] : undefined;
   if (newPlan) {
