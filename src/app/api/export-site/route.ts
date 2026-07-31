@@ -3,17 +3,19 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
 
-function esc(s: string): string {
-  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+function esc(s: unknown): string {
+  return String(s ?? "")
+          .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
           .replace(/"/g, "&quot;").replace(/'/g, "&#x27;");
 }
 
-function safeCss(s: string): string {
-  return s.replace(/[<>"'\\]/g, "");
+function safeCss(s: unknown): string {
+  return String(s ?? "").replace(/[<>"'\\]/g, "");
 }
 
-function safeHref(s: string): string {
-  return /^https?:\/\//i.test(s) ? s : "#";
+function safeHref(s: unknown): string {
+  const href = String(s ?? "");
+  return /^https?:\/\//i.test(href) ? href : "#";
 }
 
 export async function POST(req: NextRequest) {
@@ -31,16 +33,24 @@ export async function POST(req: NextRequest) {
     // Frames are assembled client-side — only metadata is sent to the server.
     const body = await req.json();
     const {
+      mobileFrameCount = 0,
+      hasAudio = false,
+      audioMime = "audio/mpeg",
+      frameCount,
+    } = body;
+    // siteId feeds Prisma `where` clauses, whose generated type also accepts a filter
+    // object — an unvalidated `{"not":""}` would match any owned site and defeat the
+    // per-site export entitlement, so only a plain string is ever passed through.
+    const siteId: string | null =
+      typeof body.siteId === "string" && body.siteId.length > 0 && body.siteId.length <= 128
+        ? body.siteId
+        : null;
+    let {
       sections,
       siteName,
       customHead = "",
       customCss = "",
-      siteId,
       fps = 24,
-      frameCount,
-      mobileFrameCount = 0,
-      hasAudio = false,
-      audioMime = "audio/mpeg",
     } = body;
 
     // FREE users must purchase an export; paid subscribers export freely
@@ -61,6 +71,39 @@ export async function POST(req: NextRequest) {
           { status: 402 }
         );
       }
+
+      // A purchase unlocks one site, so build the export from that site's stored
+      // content — body content would let a single purchase export anything.
+      const site = await db.site.findFirst({
+        where: { id: siteId, userId: session.user.id },
+        select: {
+          name: true,
+          fps: true,
+          sectionsJson: true,
+          customHead: true,
+          customCss: true,
+        },
+      });
+      if (!site) {
+        return NextResponse.json({ error: "Site not found" }, { status: 404 });
+      }
+      try {
+        sections = site.sectionsJson ? JSON.parse(site.sectionsJson) : [];
+      } catch {
+        return NextResponse.json(
+          { error: "Saved site content is unreadable. Re-save your site and try again." },
+          { status: 400 }
+        );
+      }
+      siteName = site.name;
+      customHead = site.customHead ?? "";
+      customCss = site.customCss ?? "";
+      fps = site.fps;
+      // frameCount, mobileFrameCount and the audio flags stay request-sourced: those
+      // assets never reach the server and are written into the ZIP by the browser, so
+      // the generated page must count what the client is actually shipping. The stored
+      // Site.frameCount can lag (or be 0) and would leave the export requesting frames
+      // the ZIP does not contain.
     }
 
     if (!Array.isArray(sections) || sections.length === 0) {
@@ -84,10 +127,13 @@ export async function POST(req: NextRequest) {
     const safeCustomHead = typeof customHead === "string" ? customHead : "";
     const safeCustomCss = typeof customCss === "string"
       ? customCss.replace(/url\s*\(\s*["']?\s*javascript:/gi, "url(#").replace(/expression\s*\(/gi, "(")
+                 .replace(/<\/style/gi, "<\\/style")
       : "";
 
-    const hasMobileFrames = mobileFrameCount > 0;
-    const audioExt = audioMime.split("/")[1]?.split(";")[0] ?? "mp3";
+    const validatedMobileFrameCount = Math.max(Math.floor(Number(mobileFrameCount) || 0), 0);
+    const hasMobileFrames = validatedMobileFrameCount > 0;
+    const rawAudioExt: string = typeof audioMime === "string" ? (audioMime.split("/")[1]?.split(";")[0] ?? "") : "";
+    const audioExt = rawAudioExt.replace(/[^a-z0-9]/gi, "") || "mp3";
     const validatedFps = Math.min(Math.max(Number(fps) || 24, 1), 60);
 
     // Generate sections HTML (server-side for XSS safety)
@@ -100,12 +146,12 @@ export async function POST(req: NextRequest) {
           ${s.eyebrow ? `<p class="eyebrow" style="font-size:0.875rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:${safeCss(s.accentColor || "#a78bfa")}; margin-bottom:0.75rem;">${esc(s.eyebrow)}</p>` : ""}
           ${s.heading ? `<h2 style="font-size:clamp(2rem,5vw,4rem); font-weight:900; line-height:1; letter-spacing:-0.03em; color:${safeCss(s.headingColor || "#ffffff")}; margin-bottom:1rem;">${esc(s.heading)}</h2>` : ""}
           ${s.body ? `<p style="font-size:1.125rem; line-height:1.7; color:${safeCss(s.bodyColor || "rgba(255,255,255,0.7)")}; max-width:600px; margin:0 auto 1.5rem;">${esc(s.body)}</p>` : ""}
-          ${s.ctaLabel ? `<a href="${safeHref(s.ctaHref || "#")}" style="display:inline-block; background:${safeCss(s.accentColor || "#7c3aed")}; color:white; padding:0.875rem 2rem; border-radius:0.5rem; font-weight:600; text-decoration:none; font-size:1rem;">${esc(s.ctaLabel)}</a>` : ""}
+          ${s.ctaLabel ? `<a href="${esc(safeHref(s.ctaHref || "#"))}" style="display:inline-block; background:${safeCss(s.accentColor || "#7c3aed")}; color:white; padding:0.875rem 2rem; border-radius:0.5rem; font-weight:600; text-decoration:none; font-size:1rem;">${esc(s.ctaLabel)}</a>` : ""}
         </div>
       </div>
     </section>`).join("\n");
 
-    const totalScrollHeight = (sections as Section[]).reduce((acc: number, s: Section) => acc + (s.scrollHeight || 1000), 0) + 1000;
+    const totalScrollHeight = (sections as Section[]).reduce((acc: number, s: Section) => acc + (Number(s.scrollHeight) || 1000), 0) + 1000;
 
     const html = `<!DOCTYPE html>
 <html lang="en">
@@ -160,7 +206,7 @@ export async function POST(req: NextRequest) {
       const canvas = document.getElementById('scroll-canvas');
       const ctx = canvas.getContext('2d');
       const desktopCount = ${frameCount};
-      const mobileCount = ${mobileFrameCount};
+      const mobileCount = ${validatedMobileFrameCount};
       const hasMobile = ${hasMobileFrames ? "true" : "false"};
       const totalScrollHeight = ${totalScrollHeight};
 

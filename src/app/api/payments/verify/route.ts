@@ -4,6 +4,19 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
 
+// Conditional UPDATE so concurrent captures can never push uses past maxUses.
+async function consumePromoCode(code: string | null) {
+  if (!code) return;
+  const consumed = await db.$executeRaw`
+    UPDATE "PromoCode"
+    SET uses = uses + 1
+    WHERE code = ${code} AND ("maxUses" IS NULL OR uses < "maxUses")
+  `;
+  if (consumed === 0) {
+    console.warn("Promo code exhausted before capture:", code);
+  }
+}
+
 export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.email) {
@@ -58,8 +71,17 @@ export async function POST(req: NextRequest) {
     };
     const newPlan = planMap[payment.plan];
 
-    await db.payment.update({ where: { id: payment.id }, data: { razorpayPaymentId: paymentId, status: "CAPTURED" } });
-    if (newPlan) await db.user.update({ where: { id: user.id }, data: { plan: newPlan } });
+    // Claim the capture atomically — the webhook may be processing the same payment,
+    // and only the winner grants the plan and consumes the promo use. A refunded
+    // payment is never re-captured.
+    const claimed = await db.payment.updateMany({
+      where: { id: payment.id, status: { in: ["PENDING", "FAILED"] } },
+      data: { razorpayPaymentId: paymentId, status: "CAPTURED" },
+    });
+    if (claimed.count > 0) {
+      if (newPlan) await db.user.update({ where: { id: user.id }, data: { plan: newPlan } });
+      await consumePromoCode(payment.promoCode);
+    }
 
     return NextResponse.json({ success: true, paymentId });
   } catch (err) {

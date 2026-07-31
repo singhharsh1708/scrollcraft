@@ -11,6 +11,10 @@ const orderSchema = z.object({
   promoCode: z.string().max(50).optional(),
 });
 
+// How long an issued-but-unpaid order keeps holding a promo use. Past this the
+// checkout is treated as abandoned and the use is released to someone else.
+const PROMO_HOLD_MS = 30 * 60_000;
+
 // Prices in INR paise (1 INR = 100 paise)
 const PLAN_PRICES: Record<string, { monthly: number; annual: number }> = {
   Basic:        { monthly: 199900, annual: 159900 },
@@ -47,30 +51,41 @@ export async function POST(req: NextRequest) {
     const prices = PLAN_PRICES[plan];
     if (!prices) return NextResponse.json({ error: "Unknown plan" }, { status: 400 });
 
+    const user = await db.user.findUnique({ where: { email: session.user.email }, select: { id: true } });
+    if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
+
     // Annual price is stored as the discounted per-month rate — multiply by 12 for the actual charge.
     let baseAmount = billing === "annual" ? prices.annual * 12 : prices.monthly;
     let discountPct = 0;
     let validPromo: string | null = null;
 
-    // Validate promo code if provided
+    // Validate promo code if provided. The use is only consumed once the payment is
+    // captured, so an abandoned or failed checkout does not burn one.
     if (promoCode) {
       const promo = await db.promoCode.findUnique({
         where: { code: promoCode.toUpperCase() },
       });
-      if (
-        promo &&
-        promo.active &&
-        (!promo.expiresAt || promo.expiresAt > new Date()) &&
-        (promo.maxUses === null || promo.uses < promo.maxUses)
-      ) {
-        discountPct = promo.discountPct;
-        validPromo = promo.code;
-        baseAmount = Math.round(baseAmount * (1 - discountPct / 100));
-        // Increment usage count
-        await db.promoCode.update({
-          where: { code: promo.code },
-          data: { uses: { increment: 1 } },
-        });
+      if (promo && promo.active && (!promo.expiresAt || promo.expiresAt > new Date())) {
+        const { maxUses } = promo;
+        let withinCap = maxUses === null;
+        if (maxUses !== null) {
+          // `uses` only moves at capture, so orders already issued against this code
+          // count as held uses here. Without them a burst of concurrent checkouts
+          // would all read the same `uses` and every one would be discounted.
+          const held = await db.payment.count({
+            where: {
+              promoCode: promo.code,
+              status: "PENDING",
+              createdAt: { gte: new Date(Date.now() - PROMO_HOLD_MS) },
+            },
+          });
+          withinCap = promo.uses + held < maxUses;
+        }
+        if (withinCap) {
+          discountPct = promo.discountPct;
+          validPromo = promo.code;
+          baseAmount = Math.round(baseAmount * (1 - discountPct / 100));
+        }
       }
     }
 
@@ -80,8 +95,24 @@ export async function POST(req: NextRequest) {
       currency: "INR",
       notes: {
         plan,
-        billing: billing ?? "monthly",
+        billing,
+        userId: user.id,
         ...(validPromo ? { promoCode: validPromo, discountPct: String(discountPct) } : {}),
+      },
+    });
+
+    // Persist the order before returning — verify and the webhook both key off this row.
+    await db.payment.create({
+      data: {
+        userId: user.id,
+        razorpayOrderId: order.id,
+        plan,
+        billing,
+        amount: baseAmount,
+        currency: "INR",
+        promoCode: validPromo,
+        discountPct: validPromo ? discountPct : null,
+        status: "PENDING",
       },
     });
 

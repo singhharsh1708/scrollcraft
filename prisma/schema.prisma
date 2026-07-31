@@ -150,4 +150,5 @@ enum ExportPurchaseStatus {
   PENDING
   PAID
   FAILED
+  REFUNDED
 }

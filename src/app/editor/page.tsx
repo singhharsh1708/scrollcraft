@@ -305,14 +305,19 @@ function EditorInner() {
     }
     setIsExporting(true);
     try {
-      // A purchase must be tied to a saved site — auto-save first if needed.
-      let effectiveSiteId = siteId;
+      // A purchase must be tied to a saved site, and a purchased export is rebuilt
+      // server-side from that site's stored content — so save first, or unsaved edits
+      // are silently dropped from the ZIP. A failed save is not fatal on its own:
+      // paid plans export straight from the editor's own content, so only fall back
+      // to the last known site id and warn.
+      const savedSiteId = await handleSave({ silent: true });
+      const effectiveSiteId = savedSiteId ?? siteId;
       if (!effectiveSiteId) {
-        effectiveSiteId = await handleSave({ silent: true });
-        if (!effectiveSiteId) {
-          toast.error("Couldn't save your site — sign in and try again.");
-          return;
-        }
+        toast.error("Couldn't save your site — sign in and try again.");
+        return;
+      }
+      if (!savedSiteId) {
+        toast.warning("Couldn't save your latest edits — exporting the last saved version.");
       }
 
       // Parse audio metadata on the client — not sent to server.
@@ -441,7 +446,10 @@ function EditorInner() {
           sectionsJson: JSON.stringify(sections),
           customHead,
           customCss,
-          audioUrl: audioSrc ?? undefined,
+          // Uploaded audio is a multi-MB data: URI held on the client only — the API
+          // stores a URL and rejects anything longer than 2000 chars, so sending it
+          // would fail the whole save.
+          audioUrl: audioSrc && !audioSrc.startsWith("data:") ? audioSrc : undefined,
         }),
       });
       if (res.status === 401) { toast.error("Sign in to save your site"); return null; }

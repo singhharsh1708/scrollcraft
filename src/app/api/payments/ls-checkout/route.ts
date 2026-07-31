@@ -2,11 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { createExportCheckout } from "@/lib/lemonsqueezy";
+import { createExportCheckout, getExportCheckoutUrl } from "@/lib/lemonsqueezy";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { env } from "@/lib/env";
 
 const schema = z.object({ siteId: z.string().min(1).max(128) });
+
+// How long an unresolved checkout is treated as still in flight.
+const PENDING_CHECKOUT_TTL_MS = 30 * 60_000;
 
 export async function POST(req: NextRequest) {
   const rl = await rateLimit(getClientIp(req), { limit: 10, windowMs: 60_000 });
@@ -47,15 +50,53 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ alreadyPurchased: true });
   }
 
+  // A payment already in flight (webhook not landed yet) must not start a second
+  // checkout — send the user back to the one they already opened.
+  const pending = await db.exportPurchase.findFirst({
+    where: {
+      siteId,
+      userId: session.user.id,
+      status: "PENDING",
+      createdAt: { gte: new Date(Date.now() - PENDING_CHECKOUT_TTL_MS) },
+    },
+    orderBy: { createdAt: "desc" },
+    select: { lsCheckoutId: true },
+  });
+
+  if (pending?.lsCheckoutId) {
+    const pendingUrl = await getExportCheckoutUrl(pending.lsCheckoutId).catch(() => null);
+    if (pendingUrl) {
+      return NextResponse.json({ checkoutUrl: pendingUrl, pending: true });
+    }
+  }
+
   try {
-    const { checkoutUrl } = await createExportCheckout({
+    const { checkoutUrl, checkoutId } = await createExportCheckout({
       siteId: site.id,
       userId: session.user.id,
       userEmail: session.user.email ?? "",
       siteName: site.name,
     });
-    // The PAID record is created by the webhook (keyed on the real LS order ID,
-    // carrying site_id/user_id in custom_data) — no placeholder row needed here.
+
+    // Placeholder row recording the in-flight checkout. The PAID record is still
+    // created by the webhook, keyed on the real LS order ID; `lsOrderId` is
+    // prefixed here so it can never collide with a numeric LS order id.
+    try {
+      await db.exportPurchase.create({
+        data: {
+          userId: session.user.id,
+          siteId: site.id,
+          lsOrderId: `pending:${checkoutId}`,
+          lsCheckoutId: checkoutId,
+          amount: 0,
+          status: "PENDING",
+        },
+      });
+    } catch (err) {
+      // Losing the guard is better than losing the checkout the user is waiting on.
+      console.error("LS pending purchase record failed:", err);
+    }
+
     return NextResponse.json({ checkoutUrl });
   } catch (err) {
     console.error("LS checkout error:", err);

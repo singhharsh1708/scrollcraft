@@ -27,12 +27,53 @@ const PROVIDER_META: Record<string, { label: string; icon: () => React.ReactElem
   google: { label: "Continue with Google", icon: GoogleIcon },
 };
 
+// Auth.js bounces back to the sign-in page with ?error=<code> when a sign-in attempt
+// fails. Codes are never shown verbatim — anything unrecognised gets the generic copy.
+const AUTH_ERROR_MESSAGES: Record<string, string> = {
+  Configuration: "Sign-in isn't set up correctly on our end. Please try again later.",
+  AccessDenied: "You don't have permission to sign in with that account.",
+  OAuthAccountNotLinked:
+    "That email is already registered through a different provider. Please sign in with the one you used originally.",
+  AccountNotLinked:
+    "That email is already registered through a different provider. Please sign in with the one you used originally.",
+  OAuthCallbackError: "We couldn't finish signing you in with that provider. Please try again.",
+  OAuthSignInError: "We couldn't reach that provider. Please try again.",
+  Verification: "That sign-in link is invalid or has expired. Please request a new one.",
+  MissingCSRF: "Your sign-in session expired. Please try again.",
+};
+
+const GENERIC_AUTH_ERROR = "Something went wrong while signing you in. Please try again.";
+
+function authErrorMessage(code: string): string {
+  return Object.prototype.hasOwnProperty.call(AUTH_ERROR_MESSAGES, code)
+    ? AUTH_ERROR_MESSAGES[code]
+    : GENERIC_AUTH_ERROR;
+}
+
+const DEFAULT_CALLBACK_URL = "/dashboard";
+
+// callbackUrl comes straight from the query string, so keep it on this origin and
+// hand signIn a relative path — an absolute URL here would be an open redirect.
+function toSafeCallbackUrl(raw: string | null): string {
+  if (!raw) return DEFAULT_CALLBACK_URL;
+  try {
+    const url = new URL(raw, window.location.origin);
+    if (url.origin !== window.location.origin) return DEFAULT_CALLBACK_URL;
+    return `${url.pathname}${url.search}${url.hash}`;
+  } catch {
+    return DEFAULT_CALLBACK_URL;
+  }
+}
+
 function SignInForm() {
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
+  const callbackUrl = searchParams.get("callbackUrl");
+  const errorCode = searchParams.get("error");
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [providers, setProviders] = useState<string[] | null>(null);
+
+  const errorMessage = error ?? (errorCode ? authErrorMessage(errorCode) : null);
 
   // Fetch only the providers that are actually configured server-side
   useEffect(() => {
@@ -45,7 +86,7 @@ function SignInForm() {
     setLoading(provider);
     setError(null);
     try {
-      await signIn(provider, { callbackUrl });
+      await signIn(provider, { callbackUrl: toSafeCallbackUrl(callbackUrl) });
     } catch {
       setError("Sign-in failed. Please check your connection and try again.");
       setLoading(null);
@@ -69,9 +110,12 @@ function SignInForm() {
         </div>
 
         <div className="space-y-3 p-6 rounded-2xl border border-white/8 bg-card">
-          {error && (
-            <div className="text-xs text-destructive bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2">
-              {error}
+          {errorMessage && (
+            <div
+              role="alert"
+              className="text-xs text-destructive bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2"
+            >
+              {errorMessage}
             </div>
           )}
 
