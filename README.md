@@ -69,7 +69,7 @@ npm install
 
 # 2. Configure environment
 cp .env.example .env
-# → fill in DATABASE_URL, NEXTAUTH_SECRET, and any providers you want
+# → fill in DATABASE_URL, AUTH_SECRET, and any providers you want
 
 # 3. Apply the database schema
 npx prisma migrate deploy
@@ -91,8 +91,8 @@ See [`.env.example`](.env.example) for the full list. The essentials:
 | Variable | Required | Purpose |
 |----------|----------|---------|
 | `DATABASE_URL` | ✅ | PostgreSQL connection string |
-| `NEXTAUTH_SECRET` | ✅ (prod) | Session encryption secret |
-| `NEXTAUTH_URL` | ✅ (prod) | Canonical app URL |
+| `AUTH_SECRET` | ✅ (prod) | Session encryption secret (`NEXTAUTH_SECRET` is accepted as a v4 alias) |
+| `AUTH_URL` | ✅ (prod) | Canonical app URL (`NEXTAUTH_URL` is accepted as a v4 alias) |
 | `AUTH_GITHUB_ID` / `AUTH_GITHUB_SECRET` | – | GitHub OAuth |
 | `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET` | – | Google OAuth |
 | `LUMAAI_API_KEY` / `RUNWAYML_API_KEY` | – | AI video generation (else demo mode) |
@@ -130,7 +130,8 @@ src/
 │   └── launch/           # Product Hunt landing page
 ├── components/           # UI + scroll engine (ScrollEngine, ScrollSection)
 ├── lib/                  # db, auth env, rate limiting, logger, payments clients
-└── generated/prisma/     # Generated Prisma client
+├── generated/prisma/     # Generated Prisma client
+└── proxy.ts              # Edge route guard (Next 16 renamed middleware → proxy)
 prisma/
 ├── schema.prisma         # Data model
 ├── migrations/           # SQL migrations

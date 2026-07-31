@@ -3,6 +3,7 @@ import { useState, useEffect, useRef, useCallback, Suspense } from "react";
 import JSZip from "jszip";
 import { loadFrames, storeFrames } from "@/lib/frameStorage";
 import { useSearchParams } from "next/navigation";
+import RequireAuth from "@/components/RequireAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -1074,7 +1075,9 @@ export default function EditorPage() {
         <Loader2 className="w-8 h-8 text-primary animate-spin" />
       </div>
     }>
-      <EditorInner />
+      <RequireAuth>
+        <EditorInner />
+      </RequireAuth>
     </Suspense>
   );
 }
