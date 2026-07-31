@@ -40,6 +40,7 @@ const envSchema = z.object({
   LEMONSQUEEZY_VARIANT_ID: z.string().optional(),
   LEMONSQUEEZY_WEBHOOK_SECRET: z.string().optional(),
   LEMONSQUEEZY_EXPORT_PRICE_CENTS: z.coerce.number().int().nonnegative().optional(),
+  LEMONSQUEEZY_EXPORT_CURRENCY: z.string().length(3).toUpperCase().optional(),
 
   // Observability
   NEXT_PUBLIC_SENTRY_DSN: z.string().url().optional(),

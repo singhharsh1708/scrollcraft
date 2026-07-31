@@ -20,7 +20,10 @@ function safeHref(s: unknown): string {
 
 export async function POST(req: NextRequest) {
   const session = await auth();
-  if (!session?.user?.email) {
+  // Guard on the same field the entitlement queries below are scoped by: Prisma drops
+  // a `where` key whose value is undefined, so a session without an id would turn the
+  // purchase lookup into "any PAID purchase for this site".
+  if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

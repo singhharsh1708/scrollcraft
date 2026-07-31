@@ -18,7 +18,11 @@ export async function consumePromoCode(code: string | null): Promise<boolean> {
     WHERE code = ${code} AND ("maxUses" IS NULL OR uses < "maxUses")
   `;
   if (consumed === 0) {
-    logger.warn("Promo code exhausted before capture", { code });
+    // The order was already priced with the discount at checkout, so the customer has
+    // been charged the reduced amount while the counter stays put — the cap held on
+    // `uses` but not on money. Reachable when a hold expires, or when a FAILED payment
+    // is captured later. Logged at error level so it surfaces rather than accumulating.
+    logger.error("Promo code discount honored past its cap", { code });
     return false;
   }
   return true;
