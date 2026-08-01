@@ -93,6 +93,22 @@ export const env = parseEnv();
 export const authSecret = env.AUTH_SECRET ?? env.NEXTAUTH_SECRET;
 export const authUrl = env.AUTH_URL ?? env.NEXTAUTH_URL;
 
+const CANONICAL_FALLBACK_URL = "https://scrollcraft.app";
+
+/**
+ * Public origin for robots.txt and the sitemap. `.env.example` ships AUTH_URL pointed at
+ * localhost, and that value carried into a production deploy would publish localhost URLs
+ * to search engines — so it is ignored there rather than trusted.
+ */
+export const siteUrl = (() => {
+  const candidate = authUrl?.trim();
+  if (!candidate) return CANONICAL_FALLBACK_URL;
+  if (env.NODE_ENV === "production" && /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:|\/|$)/i.test(candidate)) {
+    return CANONICAL_FALLBACK_URL;
+  }
+  return candidate.replace(/\/+$/, "");
+})();
+
 /** Variables the app cannot serve requests without. */
 const errors: EnvIssue[] = [];
 if (!rawEnv.DATABASE_URL) {

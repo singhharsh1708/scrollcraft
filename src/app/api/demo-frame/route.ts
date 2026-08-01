@@ -2,8 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
-  const i = parseInt(searchParams.get("i") || "0");
-  const total = parseInt(searchParams.get("total") || "120");
+  // Unvalidated params reached the SVG as NaN ("hsl(NaN,65%,15%)", cx="NaN"), producing an
+  // unrenderable image that was then cached for an hour.
+  const clamp = (raw: string | null, fallback: number, min: number, max: number) => {
+    const n = Number(raw);
+    return Number.isFinite(n) ? Math.min(Math.max(Math.trunc(n), min), max) : fallback;
+  };
+  const total = clamp(searchParams.get("total"), 120, 1, 1000);
+  const i = clamp(searchParams.get("i"), 0, 0, total);
   const p = i / Math.max(total - 1, 1);
 
   const hue  = Math.floor(p * 280 + 220) % 360;
@@ -51,7 +57,9 @@ export async function GET(req: NextRequest) {
   return new NextResponse(svg, {
     headers: {
       "Content-Type": "image/svg+xml",
-      "Cache-Control": "public, max-age=3600",
+      // Output depends only on (i, total), so let the CDN absorb the 60-120 requests a
+      // single page view fans out — max-age alone left every cold visitor hitting the origin.
+      "Cache-Control": "public, max-age=3600, s-maxage=86400, immutable",
     },
   });
 }

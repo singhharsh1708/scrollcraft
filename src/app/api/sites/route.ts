@@ -2,6 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
+import { rateLimit, getClientIp } from "@/lib/rateLimit";
+
+// The schema alone admits ~11 MB per call; without a cap a client could stream far more
+// before Zod ever sees it.
+const MAX_BODY_BYTES = 12_000_000;
+// Guards against a loop of `POST /api/sites` with no id filling the table with 10 MB rows.
+const MAX_SITES_PER_USER = 100;
 
 const siteSchema = z.object({
   id: z.string().optional(),
@@ -44,13 +51,35 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const rl = await rateLimit(getClientIp(req), { limit: 30, windowMs: 60_000 });
+  if (!rl.allowed) {
+    return NextResponse.json({ error: "Too many requests. Try again in a minute." }, { status: 429 });
+  }
+
+  const declaredLength = Number(req.headers.get("content-length") ?? 0);
+  if (Number.isFinite(declaredLength) && declaredLength > MAX_BODY_BYTES) {
+    return NextResponse.json({ error: "Payload too large" }, { status: 413 });
+  }
+
   const user = await db.user.findUnique({
     where: { email: session.user.email },
     select: { id: true },
   });
   if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
 
-  const raw = await req.json();
+  // A malformed body threw SyntaxError straight out of the handler, producing a bare 500
+  // with no JSON at all rather than a 400.
+  const body = await req.text();
+  if (body.length > MAX_BODY_BYTES) {
+    return NextResponse.json({ error: "Payload too large" }, { status: 413 });
+  }
+  let raw: unknown;
+  try {
+    raw = JSON.parse(body);
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+
   const parsed = siteSchema.safeParse(raw);
   if (!parsed.success) {
     return NextResponse.json({ error: "Invalid request", details: parsed.error.flatten().fieldErrors }, { status: 400 });
@@ -70,6 +99,14 @@ export async function POST(req: NextRequest) {
   }
 
   // Create new site
+  const siteCount = await db.site.count({ where: { userId: user.id } });
+  if (siteCount >= MAX_SITES_PER_USER) {
+    return NextResponse.json(
+      { error: `You've reached the limit of ${MAX_SITES_PER_USER} sites. Delete one to make room.` },
+      { status: 409 }
+    );
+  }
+
   const site = await db.site.create({
     data: { userId: user.id, name, fps, frameCount, framesJson, sectionsJson, customHead, customCss, audioUrl },
   });

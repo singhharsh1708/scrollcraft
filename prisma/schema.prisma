@@ -76,7 +76,9 @@ model ExportPurchase {
   createdAt   DateTime            @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  site Site @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  // Restrict, not Cascade: deleting a site must not erase the record of money taken for
+  // it — that record is what a refund or chargeback is reconciled against.
+  site Site @relation(fields: [siteId], references: [id], onDelete: Restrict)
 
   @@index([userId])
   @@index([siteId])
