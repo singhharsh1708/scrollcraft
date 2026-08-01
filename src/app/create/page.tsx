@@ -2,6 +2,7 @@
 import { useState, useRef, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { DEMO_SITES } from "@/lib/demoSites";
+import { findPreset } from "@/lib/presets";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -36,15 +37,25 @@ function CreatePageInner() {
   const searchParams = useSearchParams();
   const planName = searchParams.get("plan") || "";
 
-  // Pre-select style + colors when arriving from a preset or demo link (?template=Name)
+  // Pre-select style + colors when arriving from a preset or demo link (?template=Name).
+  // Demo sites win where both exist, since they carry richer section content; the preset
+  // catalogue covers the rest, which would otherwise all fall back to the same default.
+  const templateName = searchParams.get("template") ?? "";
   const presetDemo = DEMO_SITES.find(
-    (d) => d.name.toLowerCase() === (searchParams.get("template") ?? "").toLowerCase()
+    (d) => d.name.toLowerCase() === templateName.toLowerCase()
   );
+  const preset = presetDemo ? undefined : findPreset(templateName);
+  const templateStyle = presetDemo?.style ?? preset?.style;
+  const templateColors: [string, string, string] | undefined = presetDemo
+    ? [presetDemo.color1, presetDemo.color2, presetDemo.color3]
+    : preset?.colors;
+  // Carried through to the editor so a generated site is named after what was picked.
+  const templateLabel = presetDemo?.name ?? preset?.name ?? "";
 
   const [step, setStep] = useState(0);
-  const [selectedStyle, setSelectedStyle] = useState<Style2D>(presetDemo?.style ?? "gradient");
+  const [selectedStyle, setSelectedStyle] = useState<Style2D>(templateStyle ?? "gradient");
   const [colors, setColors] = useState<[string, string, string]>(
-    presetDemo ? [presetDemo.color1, presetDemo.color2, presetDemo.color3] : ["#7c3aed", "#2563eb", "#0f172a"]
+    templateColors ?? ["#7c3aed", "#2563eb", "#0f172a"]
   );
   const [frameCount, setFrameCount] = useState(120);
   const [generateMobile, setGenerateMobile] = useState(false);
@@ -88,7 +99,7 @@ function CreatePageInner() {
         framesKey: "scrollcraft_desktop_frames",
         frameCount: String(frames.length),
         fps: "24",
-        prompt: STYLES.find(s => s.id === selectedStyle)?.label ?? selectedStyle,
+        name: templateLabel || STYLES.find(s => s.id === selectedStyle)?.label || selectedStyle,
         ...(generateMobile ? { hasMobileFrames: "1" } : {}),
       });
       router.push(`/editor?${params.toString()}`);
@@ -118,7 +129,7 @@ function CreatePageInner() {
         framesKey: "scrollcraft_desktop_frames",
         frameCount: String(data.frameCount),
         fps: "24",
-        prompt: "Video upload",
+        name: file.name.replace(/\.[^.]+$/, "") || "Video upload",
       });
       router.push(`/editor?${params.toString()}`);
     } catch (err) {
