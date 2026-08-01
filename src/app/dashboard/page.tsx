@@ -12,6 +12,7 @@ import {
   Zap, Globe, Download, Loader2
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
+import { planByKey } from "@/lib/plans";
 
 interface Site {
   id: string;
@@ -22,13 +23,6 @@ interface Site {
   updatedAt: string;
 }
 
-const PLANS: Record<string, { label: string; maxCredits: number; color: string }> = {
-  FREE:       { label: "Free Trial", maxCredits: 100,   color: "text-muted-foreground" },
-  BASIC:      { label: "Basic",      maxCredits: 1500,  color: "text-blue-400" },
-  BASIC_PLUS: { label: "Basic Plus", maxCredits: 3000,  color: "text-cyan-400" },
-  PRO:        { label: "Pro",        maxCredits: 6000,  color: "text-primary" },
-  PREMIUM:    { label: "Premium",    maxCredits: 25000, color: "text-amber-400" },
-};
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
@@ -38,8 +32,8 @@ export default function DashboardPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [exportCount, setExportCount] = useState(0);
   const userPlanKey = (session?.user?.plan ?? "FREE") as string;
-  const plan = PLANS[userPlanKey] ?? PLANS.FREE;
-  const totalCredits = plan.maxCredits;
+  const plan = planByKey(userPlanKey);
+  const totalCredits = plan.credits;
   // credits in the DB is the *remaining* balance; used = max - remaining
   const remainingCredits = session?.user?.credits ?? 0;
   const usedCredits = Math.max(0, totalCredits - remainingCredits);

@@ -130,7 +130,7 @@ describe("Razorpay webhook — payment.captured", () => {
     });
     expect(dbMock.user.update).toHaveBeenCalledWith({
       where: { id: "user_1" },
-      data: { plan: "PRO" },
+      data: { plan: "PRO", credits: 6000 },
     });
     expect(dbMock.$executeRaw).toHaveBeenCalledTimes(1);
   });
@@ -175,7 +175,7 @@ describe("Razorpay webhook — payment.captured", () => {
 
     expect(dbMock.user.update).toHaveBeenCalledWith({
       where: { id: "user_1" },
-      data: { plan: "BASIC" },
+      data: { plan: "BASIC", credits: 1500 },
     });
   });
 
@@ -240,7 +240,7 @@ describe("Razorpay webhook — payment.captured with no local order row", () => 
     });
     expect(dbMock.user.update).toHaveBeenCalledWith({
       where: { id: "user_1" },
-      data: { plan: "PRO" },
+      data: { plan: "PRO", credits: 6000 },
     });
   });
 
@@ -263,7 +263,7 @@ describe("Razorpay webhook — payment.captured with no local order row", () => 
     });
     expect(dbMock.user.update).toHaveBeenCalledWith({
       where: { id: "user_1" },
-      data: { plan: "PRO" },
+      data: { plan: "PRO", credits: 6000 },
     });
   });
 
@@ -343,7 +343,7 @@ describe("Razorpay webhook — refunds", () => {
     });
     expect(dbMock.user.update).toHaveBeenCalledWith({
       where: { id: "user_1" },
-      data: { plan: "FREE" },
+      data: { plan: "FREE", credits: 100 },
     });
   });
 
@@ -361,7 +361,7 @@ describe("Razorpay webhook — refunds", () => {
     );
     expect(dbMock.user.update).toHaveBeenCalledWith({
       where: { id: "user_1" },
-      data: { plan: "BASIC_PLUS" },
+      data: { plan: "BASIC_PLUS", credits: 2500 },
     });
   });
 
@@ -407,7 +407,7 @@ describe("Razorpay webhook — refunds", () => {
 
     expect(dbMock.user.update).toHaveBeenCalledWith({
       where: { id: "user_1" },
-      data: { plan: "FREE" },
+      data: { plan: "FREE", credits: 100 },
     });
   });
 

@@ -11,19 +11,29 @@ interface ScrollEngineProps {
   altText?: string;
   /** Use "absolute" in simulator containers (editor preview); "fixed" (default) for full-screen production use */
   position?: "fixed" | "absolute";
+  /** Force the mobile frame set regardless of the real viewport — used by the editor's device simulator. */
+  forceMobile?: boolean;
 }
 
-export default function ScrollEngine({ frames, mobileFrames, totalScrollHeight = 5000, className = "", onFrameChange, scrollContainer, altText = "Animated scroll background", position = "fixed" }: ScrollEngineProps) {
+export default function ScrollEngine({ frames, mobileFrames, totalScrollHeight = 5000, className = "", onFrameChange, scrollContainer, altText = "Animated scroll background", position = "fixed", forceMobile }: ScrollEngineProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const imagesRef = useRef<HTMLImageElement[]>([]);
   const currentFrameRef = useRef(0);
   const rafRef = useRef<number>(0);
   const loadedRef = useRef(false);
-  const [isMobile, setIsMobile] = useState(() =>
+  // drawFrame needs CSS pixels: the context is already scaled by DPR, so measuring the
+  // backing store instead drew every frame devicePixelRatio times too large on retina.
+  const cssSizeRef = useRef({ w: 0, h: 0 });
+  // Guards against a stale frame set winning. Late-arriving loads from a previous set
+  // used to reassign imagesRef to their own array — in the editor the slow demo-frame
+  // HTTP requests reliably landed after the real data: URLs and clobbered them.
+  const loadTokenRef = useRef(0);
+  const [matchesMobile, setMatchesMobile] = useState(() =>
     typeof window !== "undefined" ? window.matchMedia("(max-width: 767px)").matches : false
   );
 
+  const isMobile = forceMobile ?? matchesMobile;
   const activeFrames = isMobile && mobileFrames?.length ? mobileFrames : frames;
 
   const drawFrame = useCallback((index: number) => {
@@ -33,14 +43,19 @@ export default function ScrollEngine({ frames, mobileFrames, totalScrollHeight =
     if (!img.naturalWidth || !img.naturalHeight) return; // image failed to load (404/timeout)
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    const scale = Math.max(canvas.width / img.naturalWidth, canvas.height / img.naturalHeight);
+    const { w: cw, h: ch } = cssSizeRef.current;
+    if (!cw || !ch) return;
+    const scale = Math.max(cw / img.naturalWidth, ch / img.naturalHeight);
     const w = img.naturalWidth * scale;
     const h = img.naturalHeight * scale;
-    ctx.drawImage(img, (canvas.width - w) / 2, (canvas.height - h) / 2, w, h);
+    ctx.clearRect(0, 0, cw, ch);
+    ctx.drawImage(img, (cw - w) / 2, (ch - h) / 2, w, h);
   }, []);
 
   const preloadImages = useCallback((frameSrcs: string[]) => {
     const images: HTMLImageElement[] = new Array(frameSrcs.length);
+    const token = ++loadTokenRef.current;
+    const isCurrent = () => loadTokenRef.current === token;
     const KEYFRAME_STEP = 5;
 
     // When a non-keyframe loads (or errors), redraw if it's the active frame.
@@ -48,6 +63,7 @@ export default function ScrollEngine({ frames, mobileFrames, totalScrollHeight =
       const img = new Image();
       img.src = frameSrcs[index];
       img.onload = () => {
+        if (!isCurrent()) return;
         images[index] = img;
         imagesRef.current = images;
         if (index === 0 || index === currentFrameRef.current) drawFrame(index);
@@ -63,6 +79,7 @@ export default function ScrollEngine({ frames, mobileFrames, totalScrollHeight =
       const img = new Image();
       img.src = frameSrcs[i];
       const advance = () => {
+        if (!isCurrent()) return;
         settled++;
         if (settled === keyframeIndices.length) {
           frameSrcs.forEach((_, j) => {
@@ -72,6 +89,7 @@ export default function ScrollEngine({ frames, mobileFrames, totalScrollHeight =
         }
       };
       img.onload = () => {
+        if (!isCurrent()) return;
         images[i] = img;
         imagesRef.current = images;
         // Draw if this is frame 0 or the user has scrolled to this frame already.
@@ -86,12 +104,12 @@ export default function ScrollEngine({ frames, mobileFrames, totalScrollHeight =
 
   // Detect mobile viewport
   useEffect(() => {
-    if (!mobileFrames?.length) return;
+    if (!mobileFrames?.length || forceMobile !== undefined) return;
     const mq = window.matchMedia("(max-width: 767px)");
-    const onChange = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    const onChange = (e: MediaQueryListEvent) => setMatchesMobile(e.matches);
     mq.addEventListener("change", onChange);
     return () => mq.removeEventListener("change", onChange);
-  }, [mobileFrames]);
+  }, [mobileFrames, forceMobile]);
 
   useEffect(() => {
     loadedRef.current = false;
@@ -130,31 +148,60 @@ export default function ScrollEngine({ frames, mobileFrames, totalScrollHeight =
 
     const resize = () => {
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      const cssW = canvas.offsetWidth || window.innerWidth;
-      const cssH = canvas.offsetHeight || window.innerHeight;
+      // In simulator mode the canvas is pinned inside a scroll container, so its own
+      // offset size is not the visible area — measure the container instead.
+      const host = position === "absolute" ? scrollContainer?.current : null;
+      const cssW = host?.clientWidth || canvas.offsetWidth || window.innerWidth;
+      const cssH = host?.clientHeight || canvas.offsetHeight || window.innerHeight;
       canvas.width = cssW * dpr;
       canvas.height = cssH * dpr;
       canvas.style.width = cssW + "px";
       canvas.style.height = cssH + "px";
+      cssSizeRef.current = { w: cssW, h: cssH };
       const ctx = canvas.getContext("2d");
+      // Assigning width/height resets the transform, so this scale does not compound.
       if (ctx) ctx.scale(dpr, dpr);
       drawFrame(currentFrameRef.current);
     };
 
     resize();
     window.addEventListener("resize", resize);
-    return () => window.removeEventListener("resize", resize);
-  }, [drawFrame]);
 
-  const canvasClass = position === "absolute"
-    ? "absolute inset-0 w-full h-full object-cover"
-    : "fixed inset-0 w-full h-full object-cover";
+    // The simulator container resizes when the device mode changes without the window
+    // ever resizing, which would otherwise leave the canvas at the old dimensions.
+    const host = position === "absolute" ? scrollContainer?.current : null;
+    const observer = host ? new ResizeObserver(resize) : null;
+    if (host && observer) observer.observe(host);
+
+    return () => {
+      window.removeEventListener("resize", resize);
+      observer?.disconnect();
+    };
+  }, [drawFrame, position, scrollContainer]);
+
+  // "fixed" pins to the viewport. In a scroll container that is wrong — and plain
+  // "absolute" positioned the canvas at the top of the scrolled content, so the
+  // background scrolled away and left the overlays over bare backdrop. A zero-height
+  // sticky wrapper keeps it pinned to the container without consuming flow space.
+  if (position === "absolute") {
+    return (
+      <div ref={containerRef} className={className} style={{ position: "sticky", top: 0, height: 0, zIndex: 0 }}>
+        <canvas
+          ref={canvasRef}
+          className="absolute top-0 left-0 object-cover"
+          role="img"
+          aria-label={altText}
+        />
+        <span className="sr-only">{altText}</span>
+      </div>
+    );
+  }
 
   return (
     <div ref={containerRef} className={className}>
       <canvas
         ref={canvasRef}
-        className={canvasClass}
+        className="fixed inset-0 w-full h-full object-cover"
         style={{ zIndex: 0 }}
         role="img"
         aria-label={altText}
