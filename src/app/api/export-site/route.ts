@@ -10,7 +10,13 @@ function esc(s: unknown): string {
 }
 
 function safeCss(s: unknown): string {
-  return String(s ?? "").replace(/[<>"'\\]/g, "");
+  // Also strip ;{} — these values are pasted mid-declaration in inline style
+  // attributes, so a colour of `#fff;background-image:url(https://tracker/x.png)`
+  // would append a declaration and make every visitor call out to that host,
+  // bypassing the url()/expression() filtering applied to customCss.
+  // Parentheses stay: legitimate values like rgba(255,255,255,0.7) need them, and
+  // without a semicolon or brace the value cannot escape its own declaration.
+  return String(s ?? "").replace(/[<>"'\\;{}]/g, "");
 }
 
 function safeHref(s: unknown): string {
@@ -112,8 +118,11 @@ export async function POST(req: NextRequest) {
     if (!Array.isArray(sections) || sections.length === 0) {
       return NextResponse.json({ error: "sections must be a non-empty array" }, { status: 400 });
     }
-    if (typeof frameCount !== "number" || frameCount < 1) {
-      return NextResponse.json({ error: "frameCount must be a positive number" }, { status: 400 });
+    // Number.isInteger, not just "> 1": JSON.parse turns 1e999 into Infinity, which
+    // passed the old check and emitted `new Array(Infinity)` into the exported script —
+    // a RangeError that killed the whole IIFE, leaving a black page with no error.
+    if (!Number.isInteger(frameCount) || frameCount < 1 || frameCount > 2000) {
+      return NextResponse.json({ error: "frameCount must be an integer between 1 and 2000" }, { status: 400 });
     }
 
     const MAX_CSS = 50_000;
@@ -133,16 +142,36 @@ export async function POST(req: NextRequest) {
                  .replace(/<\/style/gi, "<\\/style")
       : "";
 
-    const validatedMobileFrameCount = Math.max(Math.floor(Number(mobileFrameCount) || 0), 0);
+    const rawMobileCount = Math.floor(Number(mobileFrameCount) || 0);
+    const validatedMobileFrameCount = Number.isFinite(rawMobileCount)
+      ? Math.min(Math.max(rawMobileCount, 0), 2000)
+      : 0;
     const hasMobileFrames = validatedMobileFrameCount > 0;
-    const rawAudioExt: string = typeof audioMime === "string" ? (audioMime.split("/")[1]?.split(";")[0] ?? "") : "";
-    const audioExt = rawAudioExt.replace(/[^a-z0-9]/gi, "") || "mp3";
+    // Map through an allowlist. Stripping non-alphanumerics from the raw mime turned
+    // audio/x-m4a into ".xm4a", which static hosts serve as application/octet-stream
+    // and browsers refuse to decode — a silent site.
+    const AUDIO_EXT: Record<string, string> = {
+      "audio/mpeg": "mp3", "audio/mp3": "mp3",
+      "audio/x-m4a": "m4a", "audio/m4a": "m4a", "audio/mp4": "m4a",
+      "audio/wav": "wav", "audio/x-wav": "wav", "audio/wave": "wav",
+      "audio/ogg": "ogg", "audio/webm": "webm", "audio/aac": "aac", "audio/flac": "flac",
+    };
+    const baseMime = typeof audioMime === "string" ? audioMime.split(";")[0].trim().toLowerCase() : "";
+    const audioExt = AUDIO_EXT[baseMime] ?? "mp3";
     const validatedFps = Math.min(Math.max(Number(fps) || 24, 1), 60);
 
     // Generate sections HTML (server-side for XSS safety)
     // Each section is a tall container; content is sticky so it stays pinned
     // in the viewport while the background canvas scrubs underneath.
-    const sectionsHtml = (sections as Section[]).map((s: Section) => `
+    // The editor hides sections with visible === false in both its preview and its own
+    // scroll-height total, but POSTs the unfiltered array. Exporting them shipped draft
+    // copy verbatim and inflated the scroll track, desynchronizing every frame.
+    const visibleSections = (sections as Section[]).filter((s: Section) => s.visible !== false);
+    if (visibleSections.length === 0) {
+      return NextResponse.json({ error: "At least one section must be visible to export" }, { status: 400 });
+    }
+
+    const sectionsHtml = visibleSections.map((s: Section) => `
     <section class="scroll-section" style="height:${Number(s.scrollHeight) || 1000}px; position:relative; z-index:10;">
       <div class="section-sticky" style="position:sticky; top:0; height:100vh; display:flex; align-items:${safeCss(s.align || "center")}; justify-content:${safeCss(s.justify || "center")}; overflow:hidden;">
         <div class="section-content" style="text-align:${safeCss(s.textAlign || "center")}; padding:2rem; max-width:800px; opacity:0; transform:translateY(32px); transition:opacity 0.6s cubic-bezier(0.25,0.46,0.45,0.94),transform 0.6s cubic-bezier(0.25,0.46,0.45,0.94);">
@@ -154,7 +183,7 @@ export async function POST(req: NextRequest) {
       </div>
     </section>`).join("\n");
 
-    const totalScrollHeight = (sections as Section[]).reduce((acc: number, s: Section) => acc + (Number(s.scrollHeight) || 1000), 0) + 1000;
+    const totalScrollHeight = visibleSections.reduce((acc: number, s: Section) => acc + (Number(s.scrollHeight) || 1000), 0) + 1000;
 
     const html = `<!DOCTYPE html>
 <html lang="en">
@@ -190,7 +219,7 @@ export async function POST(req: NextRequest) {
   </style>
   ${safeCustomCss ? `<style>\n${safeCustomCss}\n  </style>` : ""}
   ${safeCustomHead || ""}
-  <script src="https://cdn.jsdelivr.net/npm/@studio-freight/lenis@1.0.42/dist/lenis.min.js"></script>
+  <script src="lenis.min.js"></script>
 </head>
 <body>
   <canvas id="scroll-canvas"></canvas>
@@ -222,8 +251,11 @@ export async function POST(req: NextRequest) {
       function getImages() { return (isMobile && mobileImages) ? mobileImages : desktopImages; }
 
       var dpr = Math.min(window.devicePixelRatio || 1, 2);
+      // Recomputed inside resize() as well — captured once, zooming or dragging the
+      // window to a non-Retina display rebuilt the backing store at the stale ratio.
 
       function resize() {
+        dpr = Math.min(window.devicePixelRatio || 1, 2);
         var cssW = window.innerWidth, cssH = window.innerHeight;
         canvas.width = cssW * dpr;
         canvas.height = cssH * dpr;
@@ -282,9 +314,13 @@ export async function POST(req: NextRequest) {
         });
       }
 
+      // Load only the set actually being drawn. Fetching both meant a phone on
+      // cellular downloaded the desktop frames too — for a 240+240 frame export at
+      // ~150 KB each that is ~70 MB, half of it never rendered.
+      var mobileLoaded = false, desktopLoaded = false;
       function preload() {
-        preloadSet(desktopCount, 'frames', desktopImages, !isMobile);
-        if (hasMobile) preloadSet(mobileCount, 'frames-mobile', mobileImages, isMobile);
+        if (hasMobile && isMobile) { preloadSet(mobileCount, 'frames-mobile', mobileImages, true); mobileLoaded = true; }
+        else { preloadSet(desktopCount, 'frames', desktopImages, true); desktopLoaded = true; }
       }
 
       if (hasMobile) {
@@ -292,15 +328,22 @@ export async function POST(req: NextRequest) {
         mq.addEventListener('change', function(e) {
           isMobile = e.matches;
           frameCount = isMobile ? mobileCount : desktopCount;
-          currentFrame = 0;
-          drawFrame(0);
+          if (isMobile && !mobileLoaded) { preloadSet(mobileCount, 'frames-mobile', mobileImages, true); mobileLoaded = true; }
+          if (!isMobile && !desktopLoaded) { preloadSet(desktopCount, 'frames', desktopImages, true); desktopLoaded = true; }
+          // Recompute from the current scroll position instead of snapping to frame 0 —
+          // rotating a phone mid-page used to jump the background back to the start.
+          onScroll();
         });
       }
 
       var rafId;
       function onScroll() {
         var scrollTop = window.scrollY;
-        var maxScroll = totalScrollHeight - window.innerHeight;
+        // Measure the real scrollable distance. totalScrollHeight - innerHeight ignored
+        // the 100vh spacer inside the container, so on any viewport taller than 1000px
+        // the animation finished early — and with one short section the denominator went
+        // negative and the canvas never left frame 0.
+        var maxScroll = Math.max(document.documentElement.scrollHeight - window.innerHeight, 1);
         var progress = Math.min(Math.max(scrollTop / maxScroll, 0), 1);
         var frameIndex = Math.min(Math.floor(progress * (frameCount - 1)), frameCount - 1);
         if (frameIndex !== currentFrame) {
@@ -323,6 +366,9 @@ export async function POST(req: NextRequest) {
       window.addEventListener('resize', resize);
       resize();
       preload();
+      // Browsers restore scroll position on refresh without firing a scroll event, so
+      // without this the opening frame sat behind whatever section the visitor was on.
+      onScroll();
     })();
 
     ${hasAudio ? `
@@ -344,10 +390,27 @@ export async function POST(req: NextRequest) {
         fadeRaf = requestAnimationFrame(tick);
       }
 
+      // Scrolling is not a user-activation gesture, so the play() attempted from the
+      // scroll handler below always rejected with NotAllowedError and was swallowed —
+      // exported audio never played at all. A click is a gesture, so start playback
+      // here; the first real gesture on the page also unblocks it.
+      var started = false;
+      function startAudio() {
+        if (started) return;
+        started = true;
+        audio.play().catch(function() { started = false; });
+      }
+
       var muteBtn = document.getElementById('audio-mute');
       if (muteBtn) muteBtn.addEventListener('click', function() {
         audio.muted = !audio.muted;
+        if (!audio.muted) startAudio();
         muteBtn.textContent = audio.muted ? '🔇' : '🔊';
+      });
+
+      // Any first interaction counts as activation; harmless if autoplay is allowed.
+      ['pointerdown', 'keydown', 'touchstart'].forEach(function(evt) {
+        window.addEventListener(evt, startAudio, { once: true, passive: true });
       });
 
       window.addEventListener('scroll', function() {
@@ -404,4 +467,6 @@ interface Section {
   bodyColor?: string;
   ctaLabel?: string;
   ctaHref?: string;
+  /** Editor visibility toggle. Absent on older saved sites, which are treated as visible. */
+  visible?: boolean;
 }
