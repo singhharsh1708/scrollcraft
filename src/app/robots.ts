@@ -1,6 +1,5 @@
 import { MetadataRoute } from "next";
-
-const baseUrl = process.env.NEXTAUTH_URL ?? "https://scrollcraft.app";
+import { siteUrl } from "@/lib/env";
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -11,6 +10,6 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ["/dashboard", "/editor", "/create", "/api/"],
       },
     ],
-    sitemap: `${baseUrl}/sitemap.xml`,
+    sitemap: `${siteUrl}/sitemap.xml`,
   };
 }

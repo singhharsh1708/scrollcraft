@@ -2,33 +2,58 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
+import { logger } from "@/lib/logger";
 
 const schema = z.object({ code: z.string().min(1).max(50) });
 
+// One response for every unusable code. Splitting 404 "no such code" from 410 "expired"
+// told an enumerator which guesses were real codes.
+const REJECTED = { error: "That promo code isn't valid." };
+
 export async function POST(req: NextRequest) {
-  const rl = await rateLimit(getClientIp(req), { limit: 10, windowMs: 60_000 });
+  // Deliberately unauthenticated: visitors apply a code on /pricing before signing in,
+  // and only checkout gates on auth. Enumeration is limited by rate and by the uniform
+  // response below rather than by requiring an account.
+  const rl = await rateLimit(`promo:${getClientIp(req)}`, { limit: 10, windowMs: 60_000 });
   if (!rl.allowed) {
     return NextResponse.json({ error: "Too many requests" }, { status: 429 });
   }
 
-  const raw = await req.json();
+  // A malformed body threw out of the handler as a bare 500 rather than a 400.
+  let raw: unknown;
+  try {
+    raw = JSON.parse(await req.text());
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+
   const parsed = schema.safeParse(raw);
   if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid code" }, { status: 400 });
+    return NextResponse.json(REJECTED, { status: 404 });
   }
 
-  const promo = await db.promoCode.findUnique({
-    where: { code: parsed.data.code.toUpperCase() },
-  });
+  // An unreachable database threw straight out of the handler as an empty-bodied 500.
+  let promo: Awaited<ReturnType<typeof db.promoCode.findUnique>>;
+  try {
+    promo = await db.promoCode.findUnique({
+      where: { code: parsed.data.code.toUpperCase() },
+    });
+  } catch (err) {
+    logger.error("Promo lookup failed", { error: String(err) });
+    return NextResponse.json({ error: "Couldn't check that code right now." }, { status: 503 });
+  }
 
-  if (!promo || !promo.active) {
-    return NextResponse.json({ error: "Invalid promo code" }, { status: 404 });
+  if (!promo) {
+    return NextResponse.json(REJECTED, { status: 404 });
   }
-  if (promo.expiresAt && promo.expiresAt < new Date()) {
-    return NextResponse.json({ error: "Promo code has expired" }, { status: 410 });
-  }
-  if (promo.maxUses !== null && promo.uses >= promo.maxUses) {
-    return NextResponse.json({ error: "Promo code has reached its usage limit" }, { status: 410 });
+
+  const unusable =
+    !promo.active ||
+    (promo.expiresAt !== null && promo.expiresAt < new Date()) ||
+    (promo.maxUses !== null && promo.uses >= promo.maxUses);
+
+  if (unusable) {
+    return NextResponse.json(REJECTED, { status: 404 });
   }
 
   return NextResponse.json({ code: promo.code, discountPct: promo.discountPct });
