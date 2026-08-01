@@ -1,8 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { auth } from "@/auth";
 
 export const maxDuration = 300;
+
+// The poll loop must finish inside maxDuration with room for request latency. 60 × 5s is
+// exactly the budget, so the platform killed the invocation (504, no JSON body) before the
+// timeout branch below could ever run.
+const POLL_INTERVAL_MS = 5_000;
+const MAX_POLLS = 45;
+const MAX_BODY_BYTES = 8_000;
+
+const bodySchema = z.object({ prompt: z.string().trim().min(1).max(2000) });
+
+/** A permanent provider failure should not burn the whole budget polling. */
+function isPermanentFailure(status: number): boolean {
+  return status >= 400 && status < 500 && status !== 408 && status !== 429;
+}
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 export async function POST(req: NextRequest) {
   const session = await auth();
@@ -19,8 +36,23 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { prompt } = await req.json();
-    if (!prompt) return NextResponse.json({ error: "Prompt required" }, { status: 400 });
+    // `prompt` was previously forwarded to a paid provider with no type or length check,
+    // so a 5 MB string or a non-string value went straight upstream.
+    const rawBody = await req.text();
+    if (rawBody.length > MAX_BODY_BYTES) {
+      return NextResponse.json({ error: "Payload too large" }, { status: 413 });
+    }
+    let parsedBody: unknown;
+    try {
+      parsedBody = JSON.parse(rawBody);
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    }
+    const parsed = bodySchema.safeParse(parsedBody);
+    if (!parsed.success) {
+      return NextResponse.json({ error: "A prompt of 1-2000 characters is required" }, { status: 400 });
+    }
+    const { prompt } = parsed.data;
 
     // Luma AI (Dream Machine) path
     if (process.env.LUMAAI_API_KEY) {
@@ -41,16 +73,29 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "Video generation failed. Try again later." }, { status: 500 });
       }
       const gen = await genRes.json();
-      const generationId = gen.id;
+      const generationId = typeof gen?.id === "string" ? gen.id.trim() : "";
+      // Without this an unexpected 200 response shape polled ".../generations/undefined".
+      if (!generationId) {
+        console.error("Luma API returned no generation id");
+        return NextResponse.json({ error: "Video generation failed. Try again later." }, { status: 502 });
+      }
 
       // Poll until complete
       let videoUrl = "";
-      for (let i = 0; i < 60; i++) {
-        await new Promise(r => setTimeout(r, 5000));
-        const pollRes = await fetch(`https://api.lumalabs.ai/dream-machine/v1/generations/${generationId}`, {
+      for (let i = 0; i < MAX_POLLS; i++) {
+        await sleep(POLL_INTERVAL_MS);
+        const pollRes = await fetch(`https://api.lumalabs.ai/dream-machine/v1/generations/${encodeURIComponent(generationId)}`, {
           headers: { "Authorization": `Bearer ${process.env.LUMAAI_API_KEY}` },
         });
-        if (!pollRes.ok) continue;
+        if (!pollRes.ok) {
+          // A revoked key or over-quota account returns 401/403 on every poll; continuing
+          // just burned the entire budget before failing.
+          if (isPermanentFailure(pollRes.status)) {
+            console.error("Luma poll failed permanently:", pollRes.status);
+            return NextResponse.json({ error: "Video generation failed. Try again later." }, { status: 502 });
+          }
+          continue;
+        }
         const pollData = await pollRes.json();
         if (pollData.state === "completed") {
           videoUrl = pollData.assets?.video;
@@ -85,17 +130,27 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "Video generation failed. Try again later." }, { status: 500 });
       }
       const task = await genRes.json();
-      const taskId = task.id;
+      const taskId = typeof task?.id === "string" ? task.id.trim() : "";
+      if (!taskId) {
+        console.error("Runway API returned no task id");
+        return NextResponse.json({ error: "Video generation failed. Try again later." }, { status: 502 });
+      }
 
-      for (let i = 0; i < 60; i++) {
-        await new Promise(r => setTimeout(r, 5000));
-        const pollRes = await fetch(`https://api.dev.runwayml.com/v1/tasks/${taskId}`, {
+      for (let i = 0; i < MAX_POLLS; i++) {
+        await sleep(POLL_INTERVAL_MS);
+        const pollRes = await fetch(`https://api.dev.runwayml.com/v1/tasks/${encodeURIComponent(taskId)}`, {
           headers: {
             "Authorization": `Bearer ${process.env.RUNWAYML_API_KEY}`,
             "X-Runway-Version": "2024-11-06",
           },
         });
-        if (!pollRes.ok) continue;
+        if (!pollRes.ok) {
+          if (isPermanentFailure(pollRes.status)) {
+            console.error("Runway poll failed permanently:", pollRes.status);
+            return NextResponse.json({ error: "Video generation failed. Try again later." }, { status: 502 });
+          }
+          continue;
+        }
         const pollData = await pollRes.json();
         if (pollData.status === "SUCCEEDED") {
           return NextResponse.json({ videoUrl: pollData.output?.[0] });

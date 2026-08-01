@@ -5,9 +5,15 @@ interface ScrollAudioOptions {
   audioSrc: string | null;
   scrollEl: React.RefObject<HTMLElement | null> | null;
   muted?: boolean;
+  /**
+   * Changes whenever the scroll element is replaced. The ref's `.current` mutating is
+   * invisible to the effect below, so without this the listener stays bound to a
+   * detached node after the container remounts and audio is dead until a reload.
+   */
+  rebindKey?: unknown;
 }
 
-export function useScrollAudio({ audioSrc, scrollEl, muted = false }: ScrollAudioOptions) {
+export function useScrollAudio({ audioSrc, scrollEl, muted = false, rebindKey }: ScrollAudioOptions) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const lastScrollY = useRef(0);
   const lastScrollTime = useRef(0);
@@ -42,7 +48,11 @@ export function useScrollAudio({ audioSrc, scrollEl, muted = false }: ScrollAudi
 
     return () => {
       audio.pause();
-      audio.src = "";
+      // Setting src to "" resolves against the document URL, so the browser would fetch
+      // the whole page again as a media resource and log a decode error.
+      audio.removeAttribute("src");
+      audio.load();
+      cancelAnimationFrame(fadeRaf.current);
       audioRef.current = null;
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -91,6 +101,7 @@ export function useScrollAudio({ audioSrc, scrollEl, muted = false }: ScrollAudi
     return () => {
       el.removeEventListener("scroll", onScroll);
       if (idleTimer.current) clearTimeout(idleTimer.current);
+      cancelAnimationFrame(fadeRaf.current);
     };
-  }, [audioSrc, scrollEl, fadeVolume]);
+  }, [audioSrc, scrollEl, fadeVolume, rebindKey]);
 }

@@ -33,6 +33,21 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   const existing = await db.site.findFirst({ where: { id, userId: user.id } });
   if (!existing) return NextResponse.json({ error: "Site not found" }, { status: 404 });
 
-  await db.site.delete({ where: { id } });
+  // ExportPurchase now restricts this delete rather than cascading, so a site someone paid
+  // to export can't be removed along with the record of that payment.
+  const purchases = await db.exportPurchase.count({ where: { siteId: id } });
+  if (purchases > 0) {
+    return NextResponse.json(
+      { error: "This site has a purchased export and can't be deleted.", code: "HAS_PURCHASE" },
+      { status: 409 }
+    );
+  }
+
+  try {
+    await db.site.delete({ where: { id } });
+  } catch {
+    // Covers the race where a purchase lands between the count above and the delete.
+    return NextResponse.json({ error: "Couldn't delete this site." }, { status: 409 });
+  }
   return NextResponse.json({ success: true });
 }
