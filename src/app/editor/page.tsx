@@ -86,7 +86,11 @@ function EditorInner() {
   const [fps, setFps] = useState(parsedFrames ? parseInt(fpsParam || "24") : 24);
   const [sections, setSections] = useState<Section[]>([defaultSection(0)]);
   const [selectedSection, setSelectedSection] = useState<string>(sections[0].id);
-  const [siteName, setSiteName] = useState("My ScrollCraft Site");
+  // Named after the preset or upload it came from, so a generated site does not
+  // arrive here as an anonymous "My ScrollCraft Site".
+  const [siteName, setSiteName] = useState(
+    () => searchParams.get("name")?.slice(0, 80) || "My ScrollCraft Site"
+  );
   const frameLabelRef = useRef<HTMLSpanElement>(null);
   const handleFrameChange = useCallback((i: number) => {
     if (frameLabelRef.current) {

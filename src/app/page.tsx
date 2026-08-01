@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight, Sparkles, Zap, Download, Play, Check } from "lucide-react";
 import Navbar from "@/components/Navbar";
+import StylePreview from "@/components/StylePreview";
+import { findPreset } from "@/lib/presets";
 
 const DEMO_COUNT = 60;
 const demoFrames = Array.from({ length: DEMO_COUNT }, (_, i) => `/api/demo-frame?i=${i}&total=${DEMO_COUNT}`);
@@ -36,14 +38,13 @@ const FEATURES = [
   { icon: Download, title: "One-Click Export", desc: "Production-ready HTML/CSS/JS ZIP. Deploy anywhere in under a minute." },
 ];
 
-const PRESETS = [
-  { name: "OrbitCRM", category: "SaaS", gradient: "from-violet-900 to-black", accent: "#a78bfa" },
-  { name: "TripVault", category: "Mobile App", gradient: "from-sky-900 to-indigo-950", accent: "#38bdf8" },
-  { name: "Shopnest", category: "E-commerce", gradient: "from-amber-950 to-black", accent: "#f59e0b" },
-  { name: "VisionForge", category: "AI Platform", gradient: "from-fuchsia-950 to-black", accent: "#e879f9" },
-  { name: "StackForge", category: "Dev Tool", gradient: "from-gray-900 to-black", accent: "#22d3ee" },
-  { name: "Meridian", category: "Agency", gradient: "from-slate-900 to-black", accent: "#e2e8f0" },
-];
+// Featured selection drawn from the shared catalogue rather than restated here — the
+// local copy had already drifted (StackForge was "Dev Tool" against "Developer Tool",
+// and the gradients no longer matched the gallery).
+const FEATURED_PRESET_NAMES = ["OrbitCRM", "TripVault", "Shopnest", "VisionForge", "StackForge", "Meridian"];
+const FEATURED_PRESETS = FEATURED_PRESET_NAMES
+  .map((n) => findPreset(n))
+  .filter((p): p is NonNullable<typeof p> => Boolean(p));
 
 const TESTIMONIALS = [
   { name: "Isabella R.", location: "Italy", role: "E-commerce founder", quote: "Sales converted from day one. The animated scroll background made our product page feel like a luxury brand site overnight." },
@@ -63,6 +64,8 @@ const FAQ = [
 
 export default function Home() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  // Only the hovered featured card animates.
+  const [hoveredPreset, setHoveredPreset] = useState<string | null>(null);
   const isMobileHero = useSyncExternalStore(
     subscribeMobileHero,
     getMobileHeroSnapshot,
@@ -248,14 +251,23 @@ export default function Home() {
             </Link>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {PRESETS.map((p) => (
-              <Link key={p.name} href={`/presets`}>
-                <div className="group relative rounded-2xl border border-white/8 overflow-hidden hover:border-white/20 transition-all hover:-translate-y-1 cursor-pointer">
-                  <div className={`aspect-video bg-gradient-to-br ${p.gradient} flex items-end p-5 relative`}>
-                    <div
-                      className="absolute inset-0 opacity-20 blur-3xl"
-                      style={{ background: `radial-gradient(circle at 50% 50%, ${p.accent}, transparent 70%)` }}
+            {FEATURED_PRESETS.map((p) => (
+              // Links to the preset itself — this previously dropped everyone on the
+              // gallery index while the button read "Use preset".
+              <Link key={p.name} href={`/create?template=${encodeURIComponent(p.name)}`}>
+                <div
+                  className="group relative rounded-2xl border border-white/8 overflow-hidden hover:border-white/20 transition-all hover:-translate-y-1 cursor-pointer"
+                  onMouseEnter={() => setHoveredPreset(p.name)}
+                  onMouseLeave={() => setHoveredPreset((h) => (h === p.name ? null : h))}
+                >
+                  <div className="aspect-video flex items-end p-5 relative bg-black">
+                    <StylePreview
+                      style={p.style}
+                      colors={p.colors}
+                      paused={hoveredPreset !== p.name}
+                      className="absolute inset-0 w-full h-full"
                     />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
                     <div className="relative z-10">
                       <p className="font-bold text-white">{p.name}</p>
                       <p className="text-sm text-white/60">{p.category}</p>

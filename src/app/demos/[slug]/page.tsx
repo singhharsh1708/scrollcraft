@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Sparkles, ArrowLeft, ArrowRight, Loader2, ExternalLink } from "lucide-react";
 import ScrollEngine from "@/components/ScrollEngine";
 import { generate2DFrames } from "@/lib/generate2DFrames";
+import { loadFrames, storeFrames } from "@/lib/frameStorage";
 import { DEMO_SITES } from "@/lib/demoSites";
 
 const TOTAL_SCROLL = 4600; // 3 sections × 1200 + 1000 intro buffer
@@ -18,6 +19,7 @@ export default function DemoPage({ params }: { params: Promise<{ slug: string }>
   const [frames, setFrames] = useState<string[]>([]);
   const [progress, setProgress] = useState(0);
   const [ready, setReady] = useState(false);
+  const [error, setError] = useState(false);
   const generatedKey = useRef<string | null>(null);
 
   useEffect(() => {
@@ -32,35 +34,40 @@ export default function DemoPage({ params }: { params: Promise<{ slug: string }>
     const width = isMobileViewport ? 640 : 1280;
     const height = isMobileViewport ? 360 : 720;
 
-    // Use sessionStorage cache so revisiting is instant.
-    // Defer setState to avoid react-hooks/set-state-in-effect warning (#149).
-    try {
-      const cached = sessionStorage.getItem(cacheKey);
-      if (cached) {
-        Promise.resolve(JSON.parse(cached) as string[]).then((f) => {
-          setFrames(f);
-          setProgress(100);
-          setReady(true);
-        });
-        return;
-      }
-    } catch {
-      // sessionStorage full or unavailable — fall through to regenerate
-    }
+    // Cache in IndexedDB so revisiting is instant. A 90-frame set is several MB, which
+    // overflows sessionStorage's ~5 MB quota — writes there failed silently and every
+    // visit paid the full regeneration cost.
+    let cancelled = false;
 
-    generate2DFrames(
-      { style: demo.style, color1: demo.color1, color2: demo.color2, color3: demo.color3, frameCount, width, height },
-      (p) => setProgress(Math.round(p))
-    ).then((generated) => {
-      setFrames(generated);
+    const show = (f: string[]) => {
+      if (cancelled) return;
+      setFrames(f);
       setProgress(100);
       setReady(true);
-      try {
-        sessionStorage.setItem(cacheKey, JSON.stringify(generated));
-      } catch {
-        // quota exceeded — not critical, frames are in memory
-      }
-    });
+    };
+
+    loadFrames(cacheKey)
+      .catch(() => null)
+      .then((cached) => {
+        if (cancelled) return;
+        if (cached && cached.length) {
+          show(cached);
+          return;
+        }
+        return generate2DFrames(
+          { style: demo.style, color1: demo.color1, color2: demo.color2, color3: demo.color3, frameCount, width, height },
+          (p) => { if (!cancelled) setProgress(Math.round(p)); }
+        ).then((generated) => {
+          show(generated);
+          return storeFrames(cacheKey, generated).catch(() => {});
+        });
+      })
+      .catch(() => {
+        // Without this the rejection is unhandled and the page sits on the loader forever.
+        if (!cancelled) setError(true);
+      });
+
+    return () => { cancelled = true; };
   }, [demo, slug]);
 
   if (!demo) {
@@ -97,10 +104,24 @@ export default function DemoPage({ params }: { params: Promise<{ slug: string }>
               style={{ width: `${progress}%`, background: demo.accentColor }}
             />
           </div>
-          <div className="flex items-center gap-2 text-sm text-white/40">
-            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-            Generating frames… {progress}%
-          </div>
+          {error ? (
+            <div className="flex flex-col items-center gap-3 text-sm text-white/60">
+              <p>Couldn&apos;t build this demo in your browser.</p>
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-white/20 bg-white/10 hover:bg-white/20"
+                onClick={() => window.location.reload()}
+              >
+                Try again
+              </Button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 text-sm text-white/40">
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              Generating frames… {progress}%
+            </div>
+          )}
         </div>
       )}
 
