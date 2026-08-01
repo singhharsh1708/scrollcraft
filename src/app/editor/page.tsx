@@ -332,13 +332,37 @@ function EditorInner() {
         toast.warning("Couldn't save your latest edits — exporting the last saved version.");
       }
 
-      // Parse audio metadata on the client — not sent to server.
-      const audioDataUriMatch = typeof audioSrc === "string"
-        ? audioSrc.match(/^data:(audio\/[a-zA-Z0-9+.-]+);base64,(.+)$/)
-        : null;
-      const hasAudio = !!audioDataUriMatch;
-      const audioMime = audioDataUriMatch?.[1] ?? "audio/mpeg";
-      const audioBase64 = audioDataUriMatch?.[2] ?? "";
+      // Resolve audio for the ZIP. Only data: URIs used to qualify, so a track stored
+      // as a remote URL — which is the only form that survives a save, since a
+      // multi-megabyte data: URI is never persisted — silently exported with no audio
+      // at all: no audio/ folder, no mute button, and no warning.
+      let hasAudio = false;
+      let audioMime = "audio/mpeg";
+      let audioBase64 = "";
+      if (typeof audioSrc === "string" && audioSrc) {
+        const dataUri = audioSrc.match(/^data:(audio\/[a-zA-Z0-9+.-]+);base64,(.+)$/);
+        if (dataUri) {
+          hasAudio = true;
+          audioMime = dataUri[1];
+          audioBase64 = dataUri[2];
+        } else if (/^https?:\/\//i.test(audioSrc) || audioSrc.startsWith("/")) {
+          try {
+            const audioRes = await fetch(audioSrc);
+            if (!audioRes.ok) throw new Error(String(audioRes.status));
+            const blob = await audioRes.blob();
+            audioMime = blob.type || "audio/mpeg";
+            audioBase64 = await new Promise<string>((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onload = () => resolve(String(reader.result).split(",")[1] ?? "");
+              reader.onerror = () => reject(reader.error);
+              reader.readAsDataURL(blob);
+            });
+            hasAudio = audioBase64.length > 0;
+          } catch {
+            toast.warning("Couldn't fetch your audio track — exporting without it.");
+          }
+        }
+      }
 
       // Ask the server to validate auth + purchase + generate the HTML template.
       // Frames are NOT sent — they stay on the client to avoid Vercel's 4.5 MB limit.
@@ -1066,6 +1090,14 @@ function EditorInner() {
                       reader.readAsDataURL(file);
                     }}
                   />
+                  {audioSrc?.startsWith("data:") && (
+                    // An uploaded track is a multi-megabyte data: URI, which is far past
+                    // what the site record stores — it exports fine now but will not
+                    // survive a reload, so say so instead of letting it vanish quietly.
+                    <p className="text-[10px] leading-snug text-amber-400/80 px-0.5">
+                      Uploaded audio stays in this session — export before reloading, or re-upload after.
+                    </p>
+                  )}
                   {audioSrc && (
                     <button
                       onClick={() => { setAudioSrc(null); if (audioFileRef.current) audioFileRef.current.value = ""; }}
