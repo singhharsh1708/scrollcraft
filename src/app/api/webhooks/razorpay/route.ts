@@ -3,6 +3,7 @@ import crypto from "crypto";
 import Razorpay from "razorpay";
 import { db } from "@/lib/db";
 import { consumePromoCode } from "@/lib/promo";
+import { PLANS } from "@/lib/plans";
 
 const PLAN_MAP: Record<string, "BASIC" | "BASIC_PLUS" | "PRO" | "PREMIUM"> = {
   Basic: "BASIC", "Basic Plus": "BASIC_PLUS", Pro: "PRO", Premium: "PREMIUM",
@@ -40,14 +41,25 @@ async function repriceUserPlan(userId: string) {
     select: { plan: true },
   });
   const nextPlan = (latest ? PLAN_MAP[latest.plan] : undefined) ?? "FREE";
-  await db.user.update({ where: { id: userId }, data: { plan: nextPlan } });
+  // Reprice the credit allowance with the plan — otherwise a user refunded from
+  // Premium down to Basic Plus keeps Premium's 25,000 credits.
+  await db.user.update({
+    where: { id: userId },
+    data: { plan: nextPlan, credits: PLANS[nextPlan].credits },
+  });
 }
 
 // Conditional UPDATE so concurrent captures can never push uses past maxUses.
 async function applyPlan(userId: string, planName: string | null | undefined) {
   const newPlan = planName ? PLAN_MAP[planName] : undefined;
   if (newPlan) {
-    await db.user.update({ where: { id: userId }, data: { plan: newPlan } });
+    // Grant credits alongside the plan — the webhook is the path that runs when the
+    // browser never returns from checkout, so omitting them here leaves exactly the
+    // same "paid but shows 100 credits left" state as the verify route did.
+    await db.user.update({
+      where: { id: userId },
+      data: { plan: newPlan, credits: PLANS[newPlan].credits },
+    });
   }
 }
 
