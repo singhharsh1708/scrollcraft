@@ -268,29 +268,48 @@ export default function PricingPage() {
         name: "ScrollCraft",
         description: `${planName} plan — ${annual ? "Annual" : "Monthly"}`,
         theme: { color: "#7c3aed" },
+        // The user has already been charged by the time this runs, so nothing in here
+        // may throw unhandled — an unhandled rejection left them with no toast, no
+        // redirect and no way to know whether the payment landed.
         handler: async (response: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string }) => {
-          const verifyRes = await fetch("/api/payments/verify", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              orderId: response.razorpay_order_id,
-              paymentId: response.razorpay_payment_id,
-              signature: response.razorpay_signature,
-            }),
-          });
-          const verifyData = await verifyRes.json();
-          if (verifyData.success) {
-            toast.success(`${planName} activated! Welcome aboard.`);
-            window.location.href = `/create?plan=${encodeURIComponent(planName)}`;
-          } else {
-            toast.error("Payment verification failed. Contact support.");
+          try {
+            const verifyRes = await fetch("/api/payments/verify", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                orderId: response.razorpay_order_id,
+                paymentId: response.razorpay_payment_id,
+                signature: response.razorpay_signature,
+              }),
+            });
+            const verifyData = await verifyRes.json().catch(() => ({}));
+            if (verifyRes.ok && verifyData.success) {
+              toast.success(`${planName} activated! Welcome aboard.`);
+              window.location.href = `/create?plan=${encodeURIComponent(planName)}`;
+              return;
+            }
+            // Surface the reason the server gave instead of one generic string.
+            toast.error(
+              verifyData.error
+                ? `${verifyData.error} Your payment went through — contact support if this persists.`
+                : "We couldn't confirm your payment. Contact support with your payment ID."
+            );
+          } catch {
+            toast.error("Your payment went through but we couldn't confirm it. Contact support before paying again.");
+          } finally {
+            setCheckingOut(null);
           }
+        },
+        modal: {
+          // Without this the button left its "Processing…" state as soon as the modal
+          // opened, so dismissing and clicking again created more orders — five cycles
+          // hit the 5/hour create-order limit and locked the user out of buying at all.
+          ondismiss: () => setCheckingOut(null),
         },
       });
       rzp.open();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Checkout failed");
-    } finally {
       setCheckingOut(null);
     }
   };

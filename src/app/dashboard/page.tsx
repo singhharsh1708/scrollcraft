@@ -29,6 +29,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const [sites, setSites] = useState<Site[]>([]);
   const [sitesLoading, setSitesLoading] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [exportCount, setExportCount] = useState(0);
   const userPlanKey = (session?.user?.plan ?? "FREE") as string;
@@ -44,14 +45,25 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (status !== "authenticated") return;
+    // A failed load used to parse fine (the body is valid JSON, just `{error}`), so
+    // `sites` stayed empty, the catch never ran, and a user with sites was shown the
+    // "no sites yet" empty state. Reject on a non-ok status so failure is visible.
     Promise.all([
-      fetch("/api/sites").then(r => r.json()),
-      fetch("/api/user/stats").then(r => r.json()).catch(() => ({})),
+      fetch("/api/sites").then(async r => {
+        if (!r.ok) throw new Error("sites");
+        return r.json();
+      }),
+      fetch("/api/user/stats")
+        .then(r => (r.ok ? r.json() : {}))
+        .catch(() => ({})) as Promise<{ exportCount?: number }>,
     ]).then(([sitesData, statsData]) => {
-      if (sitesData.sites) setSites(sitesData.sites);
+      setSites(Array.isArray(sitesData.sites) ? sitesData.sites : []);
       if (typeof statsData.exportCount === "number") setExportCount(statsData.exportCount);
-    }).catch(() => toast.error("Failed to load dashboard"))
-      .finally(() => setSitesLoading(false));
+      setLoadFailed(false);
+    }).catch(() => {
+      setLoadFailed(true);
+      toast.error("Couldn't load your sites. Refresh to try again.");
+    }).finally(() => setSitesLoading(false));
   }, [status]);
 
   const deleteSite = async (id: string) => {
@@ -59,7 +71,13 @@ export default function DashboardPage() {
     setDeletingId(id);
     try {
       const res = await fetch(`/api/sites/${id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error();
+      if (!res.ok) {
+        // Throwing away the body made the 409 "this site has a purchased export"
+        // unreachable — the user saw "Failed to delete" and retried forever.
+        const data = await res.json().catch(() => ({}));
+        toast.error(data.error || "Failed to delete site");
+        return;
+      }
       setSites(prev => prev.filter(s => s.id !== id));
       toast.success("Site deleted");
     } catch {
@@ -155,6 +173,16 @@ export default function DashboardPage() {
           {sitesLoading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="w-6 h-6 text-primary animate-spin" />
+            </div>
+          ) : loadFailed ? (
+            // Distinct from the empty state: telling someone with 12 sites to "create
+            // their first" is worse than telling them the load failed.
+            <div className="text-center py-20 rounded-2xl border border-dashed border-amber-500/30">
+              <p className="font-medium mb-1">Couldn&apos;t load your sites</p>
+              <p className="text-sm text-muted-foreground mb-4">Your sites are safe — this is a loading problem.</p>
+              <Button className="bg-primary text-white" onClick={() => window.location.reload()}>
+                Try again
+              </Button>
             </div>
           ) : sites.length === 0 ? (
             <div className="text-center py-20 rounded-2xl border border-dashed border-white/10">
