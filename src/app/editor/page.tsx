@@ -522,7 +522,12 @@ function EditorInner() {
         setChatMessages(m => [...m, { role: "ai", text: data.error || "That didn't go through. Try again." }]);
         return;
       }
-      if (data.aiUnavailable) {
+      if (data.quotaExhausted) {
+        setChatMessages(m => [...m, {
+          role: "ai",
+          text: "You've used your AI design chats for this period, so I applied a basic edit instead. Upgrade for more.",
+        }]);
+      } else if (data.aiUnavailable) {
         setChatMessages(m => [...m, { role: "ai", text: "The AI is unavailable right now — I applied a basic edit instead." }]);
       }
       if (data.updates?.length) {

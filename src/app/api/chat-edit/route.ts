@@ -3,6 +3,11 @@ import { z } from "zod";
 import { auth } from "@/auth";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { logger } from "@/lib/logger";
+import { db } from "@/lib/db";
+import { PLANS } from "@/lib/plans";
+
+/** Chat allowance window. */
+const PERIOD_MS = 30 * 24 * 60 * 60 * 1000;
 
 const MAX_BODY_BYTES = 1_000_000;
 const MAX_MODEL_UPDATES = 50;
@@ -104,11 +109,49 @@ export async function POST(req: NextRequest) {
     return demoEdit(message, sections, selectedSectionId);
   }
 
+  // The pricing page sells design-change chats as a per-plan allowance, but nothing
+  // metered them: auth plus a per-IP rate limit was the entire gate, so a free account
+  // could spend unbounded Anthropic budget. Users without an allowance still get the
+  // rule-based editor, which costs nothing to serve.
+  const user = await db.user.findUnique({
+    where: { id: session.user.id },
+    select: { plan: true, chatEditsUsed: true, chatPeriodStart: true },
+  });
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  const quota = PLANS[user.plan as keyof typeof PLANS]?.chatEdits ?? 0;
+  const periodElapsedMs = Date.now() - user.chatPeriodStart.getTime();
+  const periodExpired = periodElapsedMs >= PERIOD_MS;
+  const usedThisPeriod = periodExpired ? 0 : user.chatEditsUsed;
+
+  if (usedThisPeriod >= quota) {
+    return demoEdit(message, sections, selectedSectionId, false, true);
+  }
+
+  // Claim the use before calling out, so concurrent requests cannot both spend the
+  // last one. The conditional WHERE is what makes it atomic.
+  const claimed = periodExpired
+    ? await db.user.updateMany({
+        where: { id: session.user.id },
+        data: { chatEditsUsed: 1, chatPeriodStart: new Date() },
+      })
+    : await db.user.updateMany({
+        where: { id: session.user.id, chatEditsUsed: { lt: quota } },
+        data: { chatEditsUsed: { increment: 1 } },
+      });
+  if (claimed.count === 0) {
+    return demoEdit(message, sections, selectedSectionId, false, true);
+  }
+
   const selectedSection = sections.find((s: Section) => s.id === selectedSectionId);
 
+  // Only ids and headings for the other sections — the full array was embedded twice,
+  // which the schema allows to reach ~50 x 5 KB of input tokens on every single call.
+  const sectionIndex = (sections as Section[]).map((s: Section) => ({ id: s.id, heading: s.heading }));
   const systemPrompt = `You are an AI assistant helping a user edit their scroll website sections.
 Current selected section: ${JSON.stringify(selectedSection, null, 2)}
-All sections: ${JSON.stringify(sections, null, 2)}
+Other sections (id and heading only): ${JSON.stringify(sectionIndex, null, 2)}
 
 The user will ask you to edit the website. You MUST respond with valid JSON in this exact format:
 {
@@ -173,10 +216,10 @@ Only include updates that actually change something. Keep edits focused and rele
   }
 }
 
-function demoEdit(message: string, sections: Section[], selectedSectionId: string, aiUnavailable = false) {
+function demoEdit(message: string, sections: Section[], selectedSectionId: string, aiUnavailable = false, quotaExhausted = false) {
   const lower = message.toLowerCase();
   const section = sections.find((s: Section) => s.id === selectedSectionId) || sections[0];
-  if (!section) return NextResponse.json({ message: "No section selected", updates: [], aiUnavailable });
+  if (!section) return NextResponse.json({ message: "No section selected", updates: [], aiUnavailable, quotaExhausted });
 
   const updates: { id: string; field: string; value: string | number }[] = [];
   let reply = "";
@@ -223,5 +266,5 @@ function demoEdit(message: string, sections: Section[], selectedSectionId: strin
     reply = "I can help you change colors, text alignment, scroll height, headings, and button labels. Try: 'Make it purple', 'Center the text', 'Make the section taller'.";
   }
 
-  return NextResponse.json({ message: reply, updates, aiUnavailable });
+  return NextResponse.json({ message: reply, updates, aiUnavailable, quotaExhausted });
 }
