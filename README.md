@@ -28,7 +28,7 @@ ScrollCraft removes all of that. You:
 
 ## Features
 
-- 🎨 **AI‑generated scroll frames** — turn a text prompt into a full frame sequence.
+- 🎨 **Generated scroll frames** — pick a style (gradient, geometric, particles, wave) and a palette; the frame sequence is rendered in-browser on canvas, no API key required.
 - 🎬 **Scroll‑linked animation engine** — smooth canvas scrubbing, desktop + mobile frame sets.
 - 🤖 **AI chat editor** — *"make it purple"*, *"center the text"* — edits applied live.
 - 📦 **Pure HTML export** — zero dependencies, zero lock‑in, deploy anywhere.
@@ -95,7 +95,7 @@ See [`.env.example`](.env.example) for the full list. The essentials:
 | `AUTH_URL` | ✅ (prod) | Canonical app URL (`NEXTAUTH_URL` is accepted as a v4 alias) |
 | `AUTH_GITHUB_ID` / `AUTH_GITHUB_SECRET` | – | GitHub OAuth |
 | `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET` | – | Google OAuth |
-| `LUMAAI_API_KEY` / `RUNWAYML_API_KEY` | – | AI video generation (else demo mode) |
+| `LUMAAI_API_KEY` / `RUNWAYML_API_KEY` | – | Text-to-video generation. The `/api/generate-video` route is implemented but not yet wired to any UI — frame generation currently runs on canvas in the browser. |
 | `ANTHROPIC_API_KEY` | – | AI chat editing |
 | `RAZORPAY_*` | – | Subscription payments |
 | `LEMONSQUEEZY_*` | – | One‑time export purchases |

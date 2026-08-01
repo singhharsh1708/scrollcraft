@@ -59,7 +59,7 @@ const FAQ = [
   { q: "How does the scroll animation work?", a: "ScrollCraft generates 2D canvas frames in your browser, then a scroll engine displays the correct frame as you scroll. No WebGL, no external dependencies." },
   { q: "Can I use my own video?", a: "Yes. On the /create page you can upload your own MP4, MOV, or WebM and we'll extract frames from it just like AI-generated videos." },
   { q: "Where can I host the exported site?", a: "Anywhere that serves static files — Vercel, Netlify, Cloudflare Pages, GitHub Pages, or your own server. Just unzip and upload." },
-  { q: "What AI models do you use?", a: "We support Luma AI (Dream Machine) and Runway ML for video generation. On Pro plans you can bring your own API key. Fal.ai and Gemini support coming soon." },
+  { q: "How are the frames generated?", a: "Frames are rendered in your browser on canvas from the style and palette you pick — nothing is sent to a model, so generation is instant and works without an API key. The AI chat editor uses Claude to apply design changes you describe in plain English." },
 ];
 
 export default function Home() {
