@@ -25,13 +25,14 @@ export const metadata: Metadata = {
     siteName: "ScrollCraft",
     title: "ScrollCraft — AI Scroll Sites",
     description: "Build immersive 2D scroll websites with animated canvas backgrounds. No code needed.",
-    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "ScrollCraft" }],
+    // No images key: src/app/opengraph-image.tsx generates the real 1200x630 card and
+    // Next wires it up automatically. The hardcoded /og-image.png overrode that with a
+    // file that does not exist, so every share rendered with no preview.
   },
   twitter: {
     card: "summary_large_image",
     title: "ScrollCraft — AI Scroll Sites",
     description: "Build immersive 2D scroll websites with animated canvas backgrounds. No code needed.",
-    images: ["/og-image.png"],
   },
   robots: { index: true, follow: true },
 };
