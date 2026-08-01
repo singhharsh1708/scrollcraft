@@ -514,7 +514,17 @@ function EditorInner() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: text, sections, selectedSectionId: selectedSection }),
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        // The route returns {error} with no message/updates for 401, 429, 400 and 413.
+        // Reading straight through rendered every one of those as a cheerful "Done!"
+        // while nothing changed — reachable from a long chat message or a big section.
+        setChatMessages(m => [...m, { role: "ai", text: data.error || "That didn't go through. Try again." }]);
+        return;
+      }
+      if (data.aiUnavailable) {
+        setChatMessages(m => [...m, { role: "ai", text: "The AI is unavailable right now — I applied a basic edit instead." }]);
+      }
       if (data.updates?.length) {
         // Route through commitSections so AI edits are a single undoable step.
         commitSections(prev => prev.map(s => {
