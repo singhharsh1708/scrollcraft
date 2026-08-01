@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/auth";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
+import { logger } from "@/lib/logger";
 
 const MAX_BODY_BYTES = 1_000_000;
 const MAX_MODEL_UPDATES = 50;
@@ -132,7 +133,9 @@ Only include updates that actually change something. Keep edits focused and rele
       },
       body: JSON.stringify({
         model: "claude-sonnet-4-6",
-        max_tokens: 1024,
+        // A response truncated by max_tokens is invalid JSON, which lands in the catch
+        // below and silently degrades to the rule-based path — give it room.
+        max_tokens: 4096,
         system: systemPrompt,
         messages: [{ role: "user", content: message }],
       }),
@@ -161,15 +164,19 @@ Only include updates that actually change something. Keep edits focused and rele
       message: (modelResponse.data.message ?? "").slice(0, 1000) || "Done!",
       updates,
     });
-  } catch {
-    return demoEdit(message, sections, selectedSectionId);
+  } catch (err) {
+    // Falling back to the keyword rules is good resilience, but doing it silently is
+    // not: the user asked the AI for an edit, got a rule-based one, and had no way to
+    // tell. Log it, and mark the response so the client can say the AI was unavailable.
+    logger.error("chat-edit: AI request failed, using rule-based fallback", { error: String(err) });
+    return demoEdit(message, sections, selectedSectionId, true);
   }
 }
 
-function demoEdit(message: string, sections: Section[], selectedSectionId: string) {
+function demoEdit(message: string, sections: Section[], selectedSectionId: string, aiUnavailable = false) {
   const lower = message.toLowerCase();
   const section = sections.find((s: Section) => s.id === selectedSectionId) || sections[0];
-  if (!section) return NextResponse.json({ message: "No section selected", updates: [] });
+  if (!section) return NextResponse.json({ message: "No section selected", updates: [], aiUnavailable });
 
   const updates: { id: string; field: string; value: string | number }[] = [];
   let reply = "";
@@ -216,5 +223,5 @@ function demoEdit(message: string, sections: Section[], selectedSectionId: strin
     reply = "I can help you change colors, text alignment, scroll height, headings, and button labels. Try: 'Make it purple', 'Center the text', 'Make the section taller'.";
   }
 
-  return NextResponse.json({ message: reply, updates });
+  return NextResponse.json({ message: reply, updates, aiUnavailable });
 }

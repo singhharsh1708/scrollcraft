@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Check, Minus, Sparkles, Zap, Loader2, Tag, X } from "lucide-react";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
+import { planByName, formatINR } from "@/lib/plans";
 
 const PLANS = [
   {
@@ -191,6 +192,21 @@ function loadRazorpayScript(): Promise<void> {
     script.onerror = () => reject(new Error("Failed to load Razorpay"));
     document.head.appendChild(script);
   });
+}
+
+// Displayed prices must match what create-order actually charges. The page rendered
+// dollar amounts ("$200/mo") against a Razorpay order billed in INR (₹14,999) — the
+// wrong symbol and a different number at the moment of payment.
+function priceLabel(name: string, annual: boolean): string {
+  const p = planByName(name);
+  if (!p) return "—";
+  const paise = annual ? p.annualPaise : p.monthlyPaise;
+  return paise === 0 ? "Free" : formatINR(paise);
+}
+
+function annualTotalLabel(name: string): string {
+  const p = planByName(name);
+  return p ? formatINR(p.annualPaise * 12) : "—";
 }
 
 export default function PricingPage() {
@@ -382,13 +398,13 @@ export default function PricingPage() {
               <div>
                 <div className="flex items-end gap-1">
                   <span className="text-4xl font-black tracking-tighter">
-                    ${annual ? plan.annual : plan.monthly}
+                    {priceLabel(plan.name, annual)}
                   </span>
                   <span className="text-muted-foreground text-sm mb-1">/mo</span>
                 </div>
                 {plan.annual > 0 && annual && (
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    Billed ${plan.annual * 12}/yr
+                    Billed {annualTotalLabel(plan.name)}/yr
                   </p>
                 )}
                 {plan.annual === 0 && (

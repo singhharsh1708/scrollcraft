@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { consumePromoCode } from "@/lib/promo";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
+import { PLANS } from "@/lib/plans";
 
 // Conditional UPDATE so concurrent captures can never push uses past maxUses.
 export async function POST(req: NextRequest) {
@@ -68,7 +69,16 @@ export async function POST(req: NextRequest) {
       data: { razorpayPaymentId: paymentId, status: "CAPTURED" },
     });
     if (claimed.count > 0) {
-      if (newPlan) await db.user.update({ where: { id: user.id }, data: { plan: newPlan } });
+      if (newPlan) {
+        // Grant the plan's credit allowance. Nothing wrote `credits` anywhere, so it sat
+        // at the schema default of 100 forever — the dashboard computes used = max
+        // remaining, and a customer who had just paid for Pro was shown "5,900 / 6,000
+        // used" with 100 left.
+        await db.user.update({
+          where: { id: user.id },
+          data: { plan: newPlan, credits: PLANS[newPlan].credits },
+        });
+      }
       await consumePromoCode(payment.promoCode);
     }
 
