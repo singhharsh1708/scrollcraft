@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { generate2DFrames, type Style2D } from "@/lib/generate2DFrames";
 import { storeFrames, deleteFrames } from "@/lib/frameStorage";
 import StylePreview from "@/components/StylePreview";
+import RequireAuth from "@/components/RequireAuth";
 
 const STYLES: { id: Style2D; label: string; description: string; icon: React.ReactNode; colors: [string, string, string] }[] = [
   { id: "gradient",  label: "Gradient Flow",  description: "Smooth color morphing with floating light orbs", icon: <Circle className="w-5 h-5" />,  colors: ["#7c3aed", "#2563eb", "#0f172a"] },
@@ -377,7 +378,9 @@ function CreatePageInner() {
 export default function CreatePage() {
   return (
     <Suspense>
-      <CreatePageInner />
+      <RequireAuth>
+        <CreatePageInner />
+      </RequireAuth>
     </Suspense>
   );
 }

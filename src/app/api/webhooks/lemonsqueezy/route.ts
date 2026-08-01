@@ -118,6 +118,17 @@ export async function POST(req: NextRequest) {
       });
       return NextResponse.json({ received: true });
     }
+    // A pinned price is a bare number, so without this the same total in a weaker
+    // currency would satisfy it once the store accepts more than one currency.
+    const expectedCurrency = env.LEMONSQUEEZY_EXPORT_CURRENCY;
+    if (hasExpectedAmount && expectedCurrency && currency.toUpperCase() !== expectedCurrency) {
+      logger.warn("LS webhook: order currency does not match export currency", {
+        orderId,
+        currency,
+        expectedCurrency,
+      });
+      return NextResponse.json({ received: true });
+    }
 
     // custom_data is attacker-supplied at checkout time — never grant against a
     // site the claimed user does not own.
