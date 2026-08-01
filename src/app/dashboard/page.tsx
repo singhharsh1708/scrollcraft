@@ -31,6 +31,10 @@ export default function DashboardPage() {
   const [sitesLoading, setSitesLoading] = useState(true);
   const [loadFailed, setLoadFailed] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  // Two-click confirm, matching the editor's existing pattern. The trash button sits
+  // directly beside Edit in the hover row, and one misclick permanently destroyed the
+  // site and its stored frames with no undo.
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [exportCount, setExportCount] = useState(0);
   const userPlanKey = (session?.user?.plan ?? "FREE") as string;
   const plan = planByKey(userPlanKey);
@@ -68,6 +72,14 @@ export default function DashboardPage() {
 
   const deleteSite = async (id: string) => {
     if (deletingId) return;
+    if (pendingDeleteId !== id) {
+      setPendingDeleteId(id);
+      // Reset if they do not confirm, so the armed state cannot linger and catch a
+      // later stray click.
+      window.setTimeout(() => setPendingDeleteId(cur => (cur === id ? null : cur)), 4000);
+      return;
+    }
+    setPendingDeleteId(null);
     setDeletingId(id);
     try {
       const res = await fetch(`/api/sites/${id}`, { method: "DELETE" });
@@ -217,11 +229,13 @@ export default function DashboardPage() {
                       variant="outline"
                       onClick={() => deleteSite(site.id)}
                       disabled={deletingId === site.id}
-                      className="border-white/10 h-7 w-7 p-0 hover:border-destructive hover:text-destructive"
+                      className={`border-white/10 h-7 p-0 hover:border-destructive hover:text-destructive ${pendingDeleteId === site.id ? "w-12 border-destructive text-destructive" : "w-7"}`}
                     >
                       {deletingId === site.id
                         ? <Loader2 className="w-3 h-3 animate-spin" />
-                        : <Trash2 className="w-3 h-3" />}
+                        : pendingDeleteId === site.id
+                          ? <span className="text-[10px] font-semibold px-1">Sure?</span>
+                          : <Trash2 className="w-3 h-3" />}
                     </Button>
                   </div>
                 </div>
