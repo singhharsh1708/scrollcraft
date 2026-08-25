@@ -78,9 +78,10 @@ export default function TemplatePreview({ params }: { params: Promise<{ slug: st
 
   return (
     <div
-      className="relative overflow-hidden"
+      className="relative"
       style={{
         background: "#000",
+        overflowX: "clip",
         color: theme.ink ?? "#fff",
         ["--sc-accent" as string]: theme.accent ?? "#7c3aed",
         ["--sc-accent-text" as string]: theme.accentText ?? "#ede9fe",
@@ -148,10 +149,10 @@ export default function TemplatePreview({ params }: { params: Promise<{ slug: st
         {visible.map((s, i) => {
           const L = LAYOUT_STYLES[s.layout ?? "center"] ?? LAYOUT_STYLES.center;
           if (s.kind === "spacer") {
-            return <section key={i} aria-hidden="true" style={{ height: s.scrollHeight ?? 1000 }} />;
+            return <section key={i} aria-hidden="true" data-sc-section={i} data-sc-kind="spacer" style={{ height: s.scrollHeight ?? 1000 }} />;
           }
           return (
-            <section key={i} style={{ height: s.scrollHeight ?? 1000, position: "relative" }}>
+            <section key={i} data-sc-section={i} data-sc-kind={s.kind ?? "text"} style={{ height: s.scrollHeight ?? 1000, position: "relative" }}>
               <div
                 style={{
                   position: "sticky", top: 0, height: "100vh", display: "flex",

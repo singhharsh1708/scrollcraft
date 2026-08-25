@@ -20,7 +20,7 @@ const securityHeaders = [
       // data: is required — the editor reads an uploaded track with readAsDataURL, so
       // without it every upload is blocked by CSP and scroll audio silently never plays.
       "media-src 'self' blob: data:",
-      "connect-src 'self' https://api.anthropic.com https://api.lumalabs.ai https://api.dev.runwayml.com https://checkout.razorpay.com https://*.sentry.io",
+      "connect-src 'self' https://checkout.razorpay.com https://*.sentry.io",
       "frame-src https://api.razorpay.com https://checkout.razorpay.com",
       "font-src 'self' https://fonts.gstatic.com",
     ].join("; "),
@@ -28,6 +28,13 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  async redirects() {
+    return [
+      { source: "/showcase", destination: "/templates", permanent: true },
+      { source: "/demos", destination: "/templates", permanent: true },
+      { source: "/demos/:slug", destination: "/templates/:slug", permanent: true },
+    ];
+  },
   async headers() {
     return [{ source: "/(.*)", headers: securityHeaders }];
   },

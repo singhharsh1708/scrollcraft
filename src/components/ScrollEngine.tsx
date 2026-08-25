@@ -1,6 +1,21 @@
 "use client";
 import { useEffect, useRef, useCallback, useState } from "react";
 
+/**
+ * The real distance the reader can travel. `totalScrollHeight` describes the container,
+ * but the page also carries a 100vh spacer above it, so subtracting only the viewport
+ * finished the animation early on any viewport taller than the assumed 1000px — and with
+ * one short section the denominator went negative and the canvas never left frame 0. The
+ * exported page already measures it this way; this brings the in-app engine in line.
+ */
+export function scrollableDistance(container: HTMLElement | null, totalScrollHeight: number): number {
+  const measured = container
+    ? container.scrollHeight - container.clientHeight
+    : document.documentElement.scrollHeight - window.innerHeight;
+  const viewHeight = container ? container.clientHeight : window.innerHeight;
+  return Math.max(measured, totalScrollHeight - viewHeight, 1);
+}
+
 interface ScrollEngineProps {
   frames: string[];
   mobileFrames?: string[];
@@ -123,10 +138,7 @@ export default function ScrollEngine({ frames, mobileFrames, totalScrollHeight =
       const scrollTop = scrollContainer?.current
         ? scrollContainer.current.scrollTop
         : window.scrollY;
-      const viewHeight = scrollContainer?.current
-        ? scrollContainer.current.clientHeight
-        : window.innerHeight;
-      const maxScroll = totalScrollHeight - viewHeight;
+      const maxScroll = scrollableDistance(scrollContainer?.current ?? null, totalScrollHeight);
       const progress = Math.min(Math.max(scrollTop / maxScroll, 0), 1);
       const frameIndex = Math.floor(progress * (activeFrames.length - 1));
 
