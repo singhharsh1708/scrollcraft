@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
-import { REVEALS, SECTION_LAYOUTS, type Section, visibleSections as onlyVisible } from "@/lib/siteSchema";
+import { REVEALS, type Section, visibleSections as onlyVisible } from "@/lib/siteSchema";
+import { layoutStyle } from "@/lib/layoutStyles";
 
 function esc(s: unknown): string {
   return String(s ?? "")
@@ -10,16 +11,9 @@ function esc(s: unknown): string {
           .replace(/"/g, "&quot;").replace(/'/g, "&#x27;");
 }
 
-const LAYOUTS: Record<(typeof SECTION_LAYOUTS)[number], { align: string; justify: string; textAlign: string; maxWidth: number; pad: string }> = {
-  center: { align: "center", justify: "center", textAlign: "center", maxWidth: 800, pad: "2rem" },
-  left: { align: "center", justify: "flex-start", textAlign: "left", maxWidth: 620, pad: "2rem clamp(2rem, 8vw, 8rem)" },
-  right: { align: "center", justify: "flex-end", textAlign: "left", maxWidth: 620, pad: "2rem clamp(2rem, 8vw, 8rem)" },
-  "lower-third": { align: "flex-end", justify: "flex-start", textAlign: "left", maxWidth: 900, pad: "0 clamp(2rem, 8vw, 8rem) clamp(3rem, 10vh, 7rem)" },
-  "upper-third": { align: "flex-start", justify: "center", textAlign: "center", maxWidth: 800, pad: "clamp(3rem, 12vh, 8rem) 2rem 0" },
-};
 
 function layoutFor(s: Section) {
-  return LAYOUTS[s.layout ?? "center"] ?? LAYOUTS.center;
+  return layoutStyle(s.layout);
 }
 
 function exportableImage(src: unknown): string | null {

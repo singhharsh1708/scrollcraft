@@ -247,7 +247,7 @@ export default function DashboardPage() {
           <h2 className="text-lg font-bold tracking-tight mb-5">Quick actions</h2>
           <div className="grid md:grid-cols-3 gap-4">
             {[
-              { icon: Plus, title: "Start from a template", desc: "Pick a ready-made scroll site", href: "/presets", color: "text-primary" },
+              { icon: Plus, title: "Start from a template", desc: "Pick a ready-made scroll site", href: "/templates", color: "text-primary" },
               { icon: Sparkles, title: "Browse presets", desc: "12 production-ready templates", href: "/presets", color: "text-violet-400" },
               { icon: Zap, title: "Upgrade plan", desc: "Keep more websites saved", href: "/pricing", color: "text-amber-400" },
             ].map(action => (

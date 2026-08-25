@@ -21,6 +21,7 @@ import Link from "next/link";
 import { toast } from "sonner";
 import dynamic from "next/dynamic";
 import type { EditorSection } from "@/lib/siteSchema";
+import { templateBySlug } from "@/lib/templates";
 
 const ScrollEngine = dynamic(() => import("@/components/ScrollEngine"), { ssr: false });
 const ScrollSection = dynamic(() => import("@/components/ScrollSection"), { ssr: false });
@@ -50,6 +51,27 @@ function EditorInner() {
 
   // Derive initial frame state. Frames live in IndexedDB (primary) with sessionStorage as a
   // legacy fallback for any in-flight sessions created before this change.
+  const pickedTemplate = templateBySlug(searchParams.get("template") ?? "");
+  // A template arrives as a finished site: its sections become the starting document,
+  // with the ids the editor needs to track selection and undo.
+  const templateSections = pickedTemplate
+    ? pickedTemplate.sections.map((s, i) => ({
+        ...defaultSection(i),
+        ...s,
+        id: `section-${i}-${pickedTemplate.slug}`,
+        heading: s.heading ?? "",
+        eyebrow: s.eyebrow ?? "",
+        body: s.body ?? "",
+        ctaLabel: s.ctaLabel ?? "",
+        ctaHref: s.ctaHref ?? "#",
+        accentColor: s.accentColor ?? pickedTemplate.theme.accentText ?? "#ede9fe",
+        headingColor: s.headingColor ?? pickedTemplate.theme.ink ?? "#ffffff",
+        bodyColor: s.bodyColor ?? pickedTemplate.theme.muted ?? "rgba(255,255,255,0.7)",
+        scrollHeight: s.scrollHeight ?? 1000,
+        visible: true,
+      }))
+    : null;
+
   const framesKey = searchParams.get("framesKey");
   const framesParam = searchParams.get("frames"); // legacy URL param
   const countParam = searchParams.get("frameCount");
@@ -70,12 +92,12 @@ function EditorInner() {
   const [frames, setFrames] = useState<string[]>(parsedFrames ?? demoFrameUrls);
   const [frameCount, setFrameCount] = useState(parsedFrames ? parseInt(countParam || String(parsedFrames.length)) : DEMO_COUNT);
   const [fps, setFps] = useState(parsedFrames ? parseInt(fpsParam || "24") : 24);
-  const [sections, setSections] = useState<Section[]>([defaultSection(0)]);
+  const [sections, setSections] = useState<Section[]>(() => templateSections ?? [defaultSection(0)]);
   const [selectedSection, setSelectedSection] = useState<string>(sections[0].id);
   // Named after the preset or upload it came from, so a generated site does not
   // arrive here as an anonymous "My ScrollCraft Site".
   const [siteName, setSiteName] = useState(
-    () => searchParams.get("name")?.slice(0, 80) || "My ScrollCraft Site"
+    () => searchParams.get("name")?.slice(0, 80) || pickedTemplate?.name || "My ScrollCraft Site"
   );
   const frameLabelRef = useRef<HTMLSpanElement>(null);
   const handleFrameChange = useCallback((i: number) => {

@@ -47,7 +47,7 @@ export default function PresetsPage() {
           Start from a preset
         </h1>
         <p className="text-muted-foreground text-lg max-w-xl mx-auto">
-          Every preset includes a pre-built AI prompt, scroll layout, and section structure. Customize in seconds.
+          Every preset carries a style and palette. For finished sites with copy, browse the templates.
         </p>
       </section>
 

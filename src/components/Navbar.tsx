@@ -7,9 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Sparkles, Menu, X } from "lucide-react";
 
 const NAV_LINKS = [
-  { href: "/showcase", label: "Examples" },
-  { href: "/presets",  label: "Presets"  },
-  { href: "/pricing",  label: "Pricing"  },
+  { href: "/templates", label: "Templates" },
+  { href: "/showcase",  label: "Examples"  },
+  { href: "/pricing",   label: "Pricing"   },
 ];
 
 export default function Navbar({ position = "sticky" }: { position?: "fixed" | "sticky" | "relative" }) {
