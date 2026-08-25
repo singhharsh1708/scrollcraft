@@ -5,6 +5,7 @@ import { PLANS } from "@/lib/plans";
 const dbMock = vi.hoisted(() => ({
   user: { findUnique: vi.fn() },
   site: { findFirst: vi.fn(), count: vi.fn(), update: vi.fn() },
+  $transaction: vi.fn(),
 }));
 const authMock = vi.hoisted(() => vi.fn());
 const rateLimitMock = vi.hoisted(() => vi.fn());
@@ -43,9 +44,16 @@ beforeEach(async () => {
   authMock.mockResolvedValue({ user: { email: "a@b.c" } });
   dbMock.user.findUnique.mockResolvedValue({ id: "u1", plan: "FREE" });
   dbMock.site.count.mockResolvedValue(0);
-  dbMock.site.update.mockImplementation(({ data }: { data: { publishSlug?: string } }) =>
-    Promise.resolve({ publishSlug: data.publishSlug ?? null })
+  dbMock.site.update.mockResolvedValue({ id: "s1" });
+  // Run the transaction callback against a tx that advisory-locks (a no-op here), counts,
+  // and updates — the count is what the allowance tests drive.
+  dbMock.$transaction.mockImplementation((fn: (tx: unknown) => unknown) =>
+    Promise.resolve(fn({
+      $executeRaw: vi.fn().mockResolvedValue(1),
+      site: { count: dbMock.site.count, update: dbMock.site.update },
+    }))
   );
+  dbMock.site.count.mockResolvedValue(0);
   ({ POST } = await import("../app/api/sites/[id]/publish/route"));
 });
 
@@ -70,6 +78,7 @@ describe("publish", () => {
     const body = await res.json();
     expect(body.published).toBe(true);
     expect(body.slug).toMatch(/^my-launch-[a-z0-9]{6}$/);
+    expect(dbMock.$transaction).toHaveBeenCalled();
   });
 
   it("refuses a site whose background cannot be rebuilt", async () => {
@@ -102,7 +111,7 @@ describe("publish", () => {
     expect((await POST(req("publish"), ctx)).status).toBe(400);
   });
 
-  it("enforces the plan's publish allowance", async () => {
+  it("enforces the plan's publish allowance inside the locked transaction", async () => {
     dbMock.site.findFirst.mockResolvedValue(site());
     dbMock.site.count.mockResolvedValue(PLANS.FREE.sites);
     const res = await POST(req("publish"), ctx);
@@ -115,23 +124,25 @@ describe("publish", () => {
 
   it("republishing an already-published site does not spend allowance and keeps its slug", async () => {
     dbMock.site.findFirst.mockResolvedValue(site({ published: true, publishSlug: "my-launch-abc123" }));
-    dbMock.site.count.mockResolvedValue(PLANS.FREE.sites);
     const res = await POST(req("publish"), ctx);
     expect(res.status).toBe(200);
     expect((await res.json()).slug).toBe("my-launch-abc123");
-    expect(dbMock.site.count).not.toHaveBeenCalled();
+    expect(dbMock.$transaction).not.toHaveBeenCalled();
   });
 
   it("retries on a slug collision instead of failing", async () => {
     dbMock.site.findFirst.mockResolvedValue(site());
-    dbMock.site.update
+    dbMock.$transaction
       .mockRejectedValueOnce(Object.assign(new Error("unique"), { code: "P2002" }))
-      .mockImplementation(({ data }: { data: { publishSlug?: string } }) =>
-        Promise.resolve({ publishSlug: data.publishSlug ?? null })
+      .mockImplementationOnce((fn: (tx: unknown) => unknown) =>
+        Promise.resolve(fn({
+          $executeRaw: vi.fn().mockResolvedValue(1),
+          site: { count: vi.fn().mockResolvedValue(0), update: vi.fn().mockResolvedValue({ id: "s1" }) },
+        }))
       );
     const res = await POST(req("publish"), ctx);
     expect(res.status).toBe(200);
-    expect(dbMock.site.update).toHaveBeenCalledTimes(2);
+    expect(dbMock.$transaction).toHaveBeenCalledTimes(2);
   });
 
   it("unpublishes without touching the slug, so republishing restores the same URL", async () => {

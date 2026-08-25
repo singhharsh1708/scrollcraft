@@ -84,33 +84,49 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     );
   }
 
-  if (!site.published) {
-    const publishedCount = await db.site.count({ where: { userId: user.id, published: true } });
-    const allowance = planByKey(user.plan).sites;
-    if (publishedCount >= allowance) {
-      return NextResponse.json(
-        {
-          error: `Your plan publishes ${allowance} site${allowance === 1 ? "" : "s"}. Unpublish one or upgrade.`,
-          code: "PUBLISH_LIMIT",
-          allowance,
-        },
-        { status: 409 }
-      );
-    }
+  // Already published: refresh the timestamp without re-checking the allowance (it does
+  // not consume another slot). Kept out of the atomic path below because that path only
+  // flips a currently-unpublished row.
+  if (site.published) {
+    await db.site.update({ where: { id: site.id }, data: { publishedAt: new Date() } });
+    return NextResponse.json({ published: true, slug: site.publishSlug });
   }
 
+  const allowance = planByKey(user.plan).sites;
+
+  // Serialise this user's concurrent publishes. A plain count-then-update races under
+  // READ COMMITTED: two transactions publishing DIFFERENT rows both read count=0 and both
+  // commit, exceeding the plan. A transaction-scoped advisory lock keyed on the user makes
+  // the second wait for the first to commit, so its count is current. The lock releases at
+  // transaction end.
+  const userLockKey = `publish:${user.id}`;
   for (let attempt = 0; attempt < 3; attempt++) {
     const slug = site.publishSlug ?? slugify(site.name);
     try {
-      const updated = await db.site.update({
-        where: { id: site.id },
-        data: { published: true, publishSlug: slug, publishedAt: new Date() },
-        select: { publishSlug: true },
+      const outcome = await db.$transaction(async (tx) => {
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${userLockKey}))`;
+        const publishedCount = await tx.site.count({ where: { userId: user.id, published: true } });
+        if (publishedCount >= allowance) return { limited: true as const };
+        await tx.site.update({
+          where: { id: site.id },
+          data: { published: true, publishSlug: slug, publishedAt: new Date() },
+        });
+        return { limited: false as const };
       });
-      return NextResponse.json({ published: true, slug: updated.publishSlug });
+      if (outcome.limited) {
+        return NextResponse.json(
+          {
+            error: `Your plan publishes ${allowance} site${allowance === 1 ? "" : "s"}. Unpublish one or upgrade.`,
+            code: "PUBLISH_LIMIT",
+            allowance,
+          },
+          { status: 409 }
+        );
+      }
+      return NextResponse.json({ published: true, slug });
     } catch (err) {
-      const code = (err as { code?: string })?.code;
-      if (code === "P2002" && !site.publishSlug) continue;
+      // A slug collision only happens for a site publishing for the first time; regenerate.
+      if ((err as { code?: string })?.code === "P2002" && !site.publishSlug) continue;
       throw err;
     }
   }
