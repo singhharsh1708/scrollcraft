@@ -1,0 +1,11 @@
+{
+  "name": "scrollcraft",
+  "description": "Build cinematic scroll-driven websites. Turns a video or image sequence into a scroll-scrubbed canvas site and emits a self-contained static bundle, using the same output contract as the ScrollCraft hosted builder.",
+  "version": "0.1.0",
+  "author": {
+    "name": "Harsh Singh",
+    "url": "https://github.com/singhharsh1708"
+  },
+  "homepage": "https://github.com/singhharsh1708/scrollcraft",
+  "license": "MIT"
+}

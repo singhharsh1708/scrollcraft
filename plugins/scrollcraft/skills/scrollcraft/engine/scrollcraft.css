@@ -1,0 +1,28 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: auto; }
+body { background: #000; color: #fff; font-family: system-ui, sans-serif; overflow-x: hidden; }
+#scroll-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
+#scroll-container { position: relative; z-index: 1; pointer-events: none; }
+.scroll-section { pointer-events: none; }
+.section-sticky { pointer-events: none; }
+.section-content { pointer-events: auto; }
+.section-content.visible { opacity: 1 !important; transform: translateY(0) !important; }
+#scroll-hint {
+  position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
+  color: rgba(255,255,255,0.4); font-size: 0.75rem; letter-spacing: 0.1em;
+  text-transform: uppercase; z-index: 20; transition: opacity 0.5s;
+}
+#scroll-hint .arrow { width: 1px; height: 40px; background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.4)); }
+#audio-mute {
+  position: fixed; top: 1rem; right: 1rem; z-index: 30;
+  background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.15);
+  color: #fff; border-radius: 50%; width: 2rem; height: 2rem;
+  cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center;
+  transition: background 0.2s;
+}
+#audio-mute:hover { background: rgba(255,255,255,0.1); }
+@media (prefers-reduced-motion: reduce) {
+  .section-content { transition: none !important; }
+  #scroll-hint { display: none; }
+}
