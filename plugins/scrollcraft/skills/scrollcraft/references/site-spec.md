@@ -21,16 +21,17 @@ spec file, not the working directory.
 
 | Field | Type | Default | Notes |
 | --- | --- | --- | --- |
+| `layout` | string | `center` | One of `center`, `left`, `right`, `lower-third`, `upper-third`. Sets alignment, measure and padding together. An unknown value fails the build. |
 | `heading` | string | none | Renders as `<h2>`, `clamp(2rem, 5vw, 4rem)`. |
 | `body` | string | none | One paragraph, capped at 600px measure. |
 | `eyebrow` | string | none | Small uppercase label above the heading. |
 | `ctaLabel` | string | none | Renders a button-styled link. Needs `ctaHref` to go anywhere. |
 | `ctaHref` | string | `"#"` | Only `http://`, `https://` and in-page `#anchors` survive; anything else becomes `#`. |
 | `scrollHeight` | number | `1000` | Scroll track in px this section occupies. Drives pacing. |
-| `align` | string | `"center"` | Flex `align-items` on the sticky wrapper. |
-| `justify` | string | `"center"` | Flex `justify-content`. |
-| `textAlign` | string | `"center"` | Text alignment inside the content block. |
-| `accentColor` | string | `#a78bfa` eyebrow / `#7c3aed` CTA | Used for both. |
+| `align` | string | from `layout` | Flex `align-items` on the sticky wrapper. Overrides the layout. |
+| `justify` | string | from `layout` | Flex `justify-content`. Overrides the layout. |
+| `textAlign` | string | from `layout` | Text alignment inside the content block. Overrides the layout. |
+| `accentColor` | string | `#ddd6fe` eyebrow / `#7c3aed` CTA | Used for both. Note the two roles pull in opposite directions: a colour readable as text on a dark frame is usually too light behind white CTA text. Run `verify.mjs` after overriding it. |
 | `headingColor` | string | `#ffffff` | |
 | `bodyColor` | string | `rgba(255,255,255,0.7)` | |
 | `visible` | boolean | `true` | `false` excludes the section from both the output and the scroll-track total. |

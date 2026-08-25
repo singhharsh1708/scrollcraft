@@ -114,18 +114,31 @@ when the spec names audio. All CSS and JS is inlined into the one HTML file.
 
 ### 5. Verify before claiming it works
 
+Two checks. Run both. Neither is optional.
+
 ```bash
 node "${CLAUDE_PLUGIN_ROOT}/skills/scrollcraft/scripts/doctor.mjs" --spec scrollcraft.json
-node "${CLAUDE_PLUGIN_ROOT}/skills/scrollcraft/scripts/serve.mjs" --dir dist --port 4321
+node "${CLAUDE_PLUGIN_ROOT}/skills/scrollcraft/scripts/verify.mjs" --dir dist --shots shots
 ```
 
-`doctor` exits non-zero on a real problem: gapped frame sequence, empty spec, missing audio,
-non-positive `scrollHeight`. Fix those before reporting success. It also warns on heavy
-frame payloads and missing mobile sets, which are judgement calls, not failures.
+`doctor` reads the files: gapped frame sequence, empty spec, missing audio, non-positive
+`scrollHeight`. It cannot tell you the page renders.
 
-Then actually look at the page. Load `http://127.0.0.1:4321`, scroll it, and confirm the
-background advances and the copy pins. A frame sequence that 404s renders as a black canvas
-with no error, so "the build succeeded" is not evidence the site works.
+`verify` opens the built site in headless Chrome, scrolls it, and measures what the reader
+actually sees at each position:
+
+- the canvas is painting at all, instead of the black rectangle a 404 frame produces
+- the background genuinely advances, instead of holding one frame the whole way down
+- **every line of copy clears 4.5:1 contrast against the pixels behind it**, sampled from the
+  real composite at that scroll offset, with an element's own background used when it has one
+- nothing 404s, nothing throws, the page never scrolls sideways
+
+It exits non-zero on any of those. `--shots <dir>` also writes a PNG per sampled position if
+you want to look. It needs Chrome, Chromium or Edge on the machine and nothing installed.
+
+This is the check that matters, because the characteristic failure of this kind of page is
+silent: a missing frame set renders a black canvas, throws nothing, and logs nothing. A build
+that exits 0 is not evidence the site works. `verify` exiting 0 is.
 
 ### 6. Deploy
 
@@ -135,6 +148,9 @@ with no error, so "the build succeeded" is not evidence the site works.
 
 These are what separate a convincing scroll site from an obviously generated one.
 
+- **Vary the layout.** Every section takes `layout`: `center`, `left`, `right`, `lower-third`,
+  `upper-third`. Consecutive screens that share a shape are what makes a scroll site read as a
+  template. The build says so when all of them match.
 - **One idea per section.** A heading and at most two lines. The reader is scrolling, not studying.
 - **Let the footage breathe.** Sections that fire every 600px feel frantic. Long quiet stretches with no copy are correct and confident.
 - **Match copy to motion.** If the camera pushes in on section three, that is where the product name belongs.

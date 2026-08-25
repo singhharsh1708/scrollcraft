@@ -40,17 +40,26 @@ function starterSpec(name, style) {
     framesMobile: "frames-mobile",
     sections: [
       {
+        layout: "center",
         eyebrow: "Introducing",
         heading: name,
         body: "Replace this copy. One idea per section, a heading and at most two lines — the reader is scrolling, not studying.",
         scrollHeight: 1400,
       },
       {
+        layout: "left",
         heading: "Give the good part room",
         body: "This section owns more of the scroll track than the others, so the background moves further while it is on screen.",
         scrollHeight: 2000,
       },
       {
+        layout: "lower-third",
+        heading: "Change shape as you go",
+        body: "Each section sets its own layout, so consecutive screens do not share a skeleton.",
+        scrollHeight: 1200,
+      },
+      {
+        layout: "center",
         heading: "Then ask for something",
         ctaLabel: "Get started",
         ctaHref: "https://example.com",

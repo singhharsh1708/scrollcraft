@@ -96,10 +96,17 @@ node scripts/frames-from-style.mjs --style nebula --count 180 \
 # 2. write scrollcraft.json describing your sections, then build
 node scripts/build-site.mjs --spec scrollcraft.json --out dist
 
-# 3. check it before shipping, then look at it
+# 3. check the files, then check what actually renders
 node scripts/doctor.mjs --spec scrollcraft.json
+node scripts/verify.mjs --dir dist --shots shots
 node scripts/serve.mjs --dir dist --port 4321
 ```
+
+`verify.mjs` drives headless Chrome over the DevTools Protocol with no npm dependencies,
+scrolls the built page, and measures the frames a reader actually sees: that the canvas
+paints, that it advances, and that every line of copy clears 4.5:1 contrast against the
+pixels behind it. It catches the failure that matters — a missing frame set renders a black
+canvas, throws nothing, and logs nothing.
 
 Two slash commands come with the plugin: `/scrollcraft-new` to start a site and
 `/scrollcraft-build` to rebuild, check and preview one.

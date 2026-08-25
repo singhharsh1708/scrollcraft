@@ -15,6 +15,7 @@ Steps:
 3. Scaffold with `node "${CLAUDE_PLUGIN_ROOT}/skills/scrollcraft/scripts/init.mjs" --name "<name>" --style <style>`.
 4. Rewrite the placeholder sections in `scrollcraft.json` as real copy for their subject. One idea
    per section. Do not leave the starter text in place.
-5. Rebuild, run the doctor, then serve it and tell them the URL.
+5. Vary each section's `layout` so consecutive screens do not share a shape.
+6. Rebuild, run `doctor.mjs` and `verify.mjs`, then serve it and tell them the URL and the measured contrast.
 
 If they have their own footage, use `frames-from-video.mjs` instead of the procedural style.
