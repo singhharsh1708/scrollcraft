@@ -21,16 +21,18 @@ or ship a heavy JavaScript framework that tanks your Lighthouse score.
 
 ScrollCraft removes all of that. You:
 
-1. **Pick a template** — a finished scroll site with its own palette, pacing and copy structure. Or upload your own video.
+1. **Pick a template** — a finished scroll site with its own palette, typography, pacing and copy. Or upload your own video.
 2. **Get frames** — the engine renders a sequence of canvas frames mapped to scroll position, in your browser.
 3. **Edit visually** — change sections, copy, CTAs, audio and custom CSS.
-4. **Export** — download a self‑contained ZIP (`index.html`, frames, audio). No runtime dependencies, deploys to any static host in under a minute.
+4. **Publish** — one click gives the site a hosted link at `/s/your-site` you can send to anyone. No hosting account, no build step.
+5. **Or export** — download a self‑contained ZIP (`index.html`, frames, audio). No runtime dependencies, deploys to any static host in under a minute.
 
 ## Features
 
 - 🎨 **Generated scroll frames** — pick a style (gradient, geometric, particles, wave) and a palette; the frame sequence is rendered in-browser on canvas, no API key required.
 - 🎬 **Scroll‑linked animation engine** — smooth canvas scrubbing, desktop + mobile frame sets.
-- 🧩 **Template library** — finished scroll sites by category, free on every plan.
+- 🧩 **Template library** — 21 finished scroll sites across 11 categories, free on every plan, each with its own Google Fonts pairing and palette.
+- 🌐 **One‑click publish** — every site gets a hosted link at `/s/your-site`; the background is regenerated in the visitor's browser, so a published site costs a database row, not megabytes.
 - 📦 **Pure HTML export** — zero dependencies, zero lock‑in, deploy anywhere.
 - 🎞️ **Bring your own video** — upload an MP4 or paste a URL; frames are extracted automatically.
 - 🔊 **Scroll‑synced audio** — attach a soundtrack that responds to scroll position.
@@ -39,12 +41,11 @@ ScrollCraft removes all of that. You:
 
 ## Two ways to use ScrollCraft
 
-**Hosted app** — describe a vibe, get generated frames, edit visually, export a ZIP. Best when
-you have no footage. See [Getting started](#getting-started) to run it.
+**Hosted app** — pick a template, edit it visually, then publish to a link or export a ZIP.
+An account, a dashboard, and saved sites. See [Getting started](#getting-started) to run it.
 
-**Claude Code skill** — build the same kind of site on your machine, from your own video, with
-the whole thing in version control. No account, no server, no payment. Best when you already
-have footage.
+**Claude Code skill** — build the same kind of site on your machine, in version control, with
+generated backgrounds or your own footage. No account, no server, no payment.
 
 Both emit the identical bundle layout (`index.html` + `frames/frame_0000.jpg` upward), so a
 site built by the skill opens in the hosted editor and an exported ZIP can be rebuilt by the
@@ -199,11 +200,12 @@ See [`.env.example`](.env.example) for the full list. The essentials:
 src/
 ├── app/
 │   ├── api/              # Route handlers (sites, payments, webhooks, export, …)
+│   ├── templates/        # Template gallery + preview (/templates, /templates/[slug])
+│   ├── s/                # Public published pages (/s/[slug])
 │   ├── editor/           # The visual scroll-site editor
-│   ├── create/           # Prompt → generation flow
-│   ├── dashboard/        # User dashboard
-│   ├── pricing/          # Plans + promo codes
-│   └── launch/           # Product Hunt landing page
+│   ├── create/           # Style + upload → editor flow
+│   ├── dashboard/        # User dashboard: publish, edit, delete
+│   └── pricing/          # Plans
 ├── components/           # UI + scroll engine (ScrollEngine, ScrollSection)
 ├── lib/                  # db, auth env, rate limiting, logger, payments clients
 ├── generated/prisma/     # Generated Prisma client
@@ -214,14 +216,31 @@ prisma/
 └── seed.ts               # Seed script
 ```
 
-## How payments work
+## Deploying
 
-- **Subscriptions (Razorpay, INR):** paid plans unlock unlimited exports and higher limits.
-  Webhooks verify HMAC signatures and update the user's plan idempotently.
-- **One‑time export purchases (Lemon Squeezy, global):** free users can buy a single site
-  export. The checkout carries `site_id`/`user_id` as custom data; the webhook records a
-  `PAID` `ExportPurchase` (idempotent, keyed on the LS order id), which the export endpoint
-  checks before serving the ZIP.
+The app deploys to Vercel. Migrations run **separately** from the Vercel build, which has no
+database access:
+
+- A GitHub Action (`.github/workflows/migrate.yml`) runs `prisma migrate deploy` on every push
+  to `main` that touches `prisma/migrations/`. It needs a `DATABASE_URL` repository secret
+  pointing at the production database; without it the job no-ops rather than failing.
+- Or run it by hand against production: `DATABASE_URL=... npm run deploy`.
+
+Apply new migrations before the code that depends on them serves traffic, or routes reading a
+new column will error.
+
+## Plans and payments
+
+Every template is free on every plan, including the free one. Paid plans raise how many
+websites you keep **saved and published** (1 / 2 / 4 / 7 / 30), remove the "Made with
+ScrollCraft" badge from published pages, and add priority support. The publish allowance is
+enforced per plan in `POST /api/sites/[id]/publish`.
+
+- **Subscriptions (Razorpay, INR):** webhooks verify HMAC signatures and update the user's
+  plan idempotently.
+- **One‑time purchases (Lemon Squeezy, global):** the checkout carries `site_id`/`user_id` as
+  custom data; the webhook records a `PAID` `ExportPurchase` idempotently, keyed on the LS
+  order id.
 
 ## Contributing
 
