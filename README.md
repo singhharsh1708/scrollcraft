@@ -71,11 +71,27 @@ Updating later:
 ### What the skill does
 
 `ffmpeg` is the only external requirement (`brew install ffmpeg`, or `apt install ffmpeg`).
+Everything else is plain Node with no dependencies.
+
+Ask Claude for a scroll site, or drive it yourself:
 
 ```bash
-# 1. video -> frame sequence, desktop + mobile
+# Fastest path — no footage needed. Scaffolds the spec, generates a
+# background, and builds a working site in one command.
+node scripts/init.mjs --name "Orrery" --style aurora
+```
+
+Or step by step:
+
+```bash
+# 1a. your own video -> frame sequence, desktop + mobile
 node scripts/frames-from-video.mjs --input hero.mp4 --out frames \
   --fps 24 --width 1920 --mobile-width 828 --mobile-out frames-mobile
+
+# 1b. or generate one: six cinematic styles, ~1MB instead of ~36MB
+node scripts/frames-from-style.mjs --list
+node scripts/frames-from-style.mjs --style nebula --count 180 \
+  --width 1920 --mobile-width 828 --mobile-out frames-mobile
 
 # 2. write scrollcraft.json describing your sections, then build
 node scripts/build-site.mjs --spec scrollcraft.json --out dist
@@ -84,6 +100,9 @@ node scripts/build-site.mjs --spec scrollcraft.json --out dist
 node scripts/doctor.mjs --spec scrollcraft.json
 node scripts/serve.mjs --dir dist --port 4321
 ```
+
+Two slash commands come with the plugin: `/scrollcraft-new` to start a site and
+`/scrollcraft-build` to rebuild, check and preview one.
 
 `dist/` is a static directory with no runtime dependencies and no external requests. Deploy it
 anywhere.
