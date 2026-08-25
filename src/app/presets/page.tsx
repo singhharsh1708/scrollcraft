@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import { DEMO_SITES } from "@/lib/demoSites";
+import { TEMPLATES } from "@/lib/templates";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -133,14 +133,14 @@ export default function PresetsPage() {
                       // Only offer a walkthrough where a real one exists. The rest previewed
                       // themselves by linking to /create, which is not a preview — the card's
                       // own animation now fills that role.
-                      const demoSlug = DEMO_SITES.find(
+                      const demoSlug = TEMPLATES.find(
                         (d) => d.name.toLowerCase() === preset.name.toLowerCase()
                       )?.slug;
                       if (!demoSlug) return null;
                       return (
-                        <Link href={`/demos/${demoSlug}`}>
+                        <Link href={`/templates/${demoSlug}`}>
                           <Button size="sm" variant="outline" className="border-white/20 bg-white/10 backdrop-blur-sm hover:bg-white/20 text-xs h-8 px-3">
-                            <Eye className="w-3 h-3 mr-1" /> Live demo
+                            <Eye className="w-3 h-3 mr-1" /> Preview
                           </Button>
                         </Link>
                       );

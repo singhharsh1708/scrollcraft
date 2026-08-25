@@ -1,7 +1,7 @@
 "use client";
 import { useState, useRef, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { DEMO_SITES } from "@/lib/demoSites";
+import { TEMPLATES } from "@/lib/templates";
 import { findPreset } from "@/lib/presets";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -37,17 +37,17 @@ function CreatePageInner() {
   const searchParams = useSearchParams();
   const planName = searchParams.get("plan") || "";
 
-  // Pre-select style + colors when arriving from a preset or demo link (?template=Name).
-  // Demo sites win where both exist, since they carry richer section content; the preset
+  // Pre-select style + colors when arriving from a preset or template link (?template=Name).
+  // Templates win where both exist, since they carry richer section content; the preset
   // catalogue covers the rest, which would otherwise all fall back to the same default.
   const templateName = searchParams.get("template") ?? "";
-  const presetDemo = DEMO_SITES.find(
+  const presetDemo = TEMPLATES.find(
     (d) => d.name.toLowerCase() === templateName.toLowerCase()
   );
   const preset = presetDemo ? undefined : findPreset(templateName);
   const templateStyle = presetDemo?.style ?? preset?.style;
   const templateColors: [string, string, string] | undefined = presetDemo
-    ? [presetDemo.color1, presetDemo.color2, presetDemo.color3]
+    ? presetDemo.colors
     : preset?.colors;
   // Carried through to the editor so a generated site is named after what was picked.
   const templateLabel = presetDemo?.name ?? preset?.name ?? "";

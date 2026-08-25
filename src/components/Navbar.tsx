@@ -8,7 +8,7 @@ import { Sparkles, Menu, X } from "lucide-react";
 
 const NAV_LINKS = [
   { href: "/templates", label: "Templates" },
-  { href: "/showcase",  label: "Examples"  },
+  { href: "/presets",   label: "Styles"    },
   { href: "/pricing",   label: "Pricing"   },
 ];
 
