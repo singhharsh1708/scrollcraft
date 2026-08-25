@@ -17,6 +17,58 @@ const EXT_OK = new Set(Object.values(AUDIO_EXT));
 
 const IMAGE_EXT = new Set(["png", "jpg", "jpeg", "webp", "avif", "gif", "svg"]);
 
+const KINDS = new Set(["text", "statement", "spacer"]);
+const REVEALS = new Set(["rise", "fade", "mask", "stagger", "scale", "none"]);
+
+const TYPE_SCALES = {
+  compact: { heading: "clamp(1.6rem,3.4vw,2.6rem)", body: "1rem", measure: 560 },
+  editorial: { heading: "clamp(2rem,5vw,4rem)", body: "1.125rem", measure: 600 },
+  poster: { heading: "clamp(2.6rem,8vw,6.5rem)", body: "1.25rem", measure: 640 },
+};
+
+const FONT_RE = /^[A-Za-z0-9][A-Za-z0-9 ]*$/;
+
+function themeCss(theme) {
+  if (!theme || typeof theme !== "object") return "";
+  const scale = TYPE_SCALES[theme.scale] || TYPE_SCALES.editorial;
+  const v = [];
+  if (theme.fontDisplay) v.push(`  --sc-font-display: '${theme.fontDisplay}', system-ui, sans-serif;`);
+  if (theme.fontBody) v.push(`  --sc-font-body: '${theme.fontBody}', system-ui, sans-serif;`);
+  if (theme.displayWeight) v.push(`  --sc-display-weight: ${Math.min(Math.max(Number(theme.displayWeight) || 800, 100), 900)};`);
+  if (theme.displayCase === "upper") v.push("  --sc-display-case: uppercase;");
+  if (theme.displayTracking !== undefined) {
+    const tr = Math.min(Math.max(Number(theme.displayTracking) || 0, -0.08), 0.4);
+    v.push(`  --sc-display-tracking: ${tr}em;`);
+  }
+  if (theme.ink) v.push(`  --sc-ink: ${safeCss(theme.ink)};`);
+  if (theme.ground) v.push(`  --sc-ground: ${safeCss(theme.ground)};`);
+  if (theme.muted) v.push(`  --sc-muted: ${safeCss(theme.muted)};`);
+  if (theme.accent) v.push(`  --sc-accent: ${safeCss(theme.accent)};`);
+  if (theme.accentText) v.push(`  --sc-accent-text: ${safeCss(theme.accentText)};`);
+  if (theme.radius !== undefined) v.push(`  --sc-radius: ${Math.min(Math.max(Number(theme.radius) || 0, 0), 64)}px;`);
+  v.push(`  --sc-heading-size: ${scale.heading};`);
+  v.push(`  --sc-body-size: ${scale.body};`);
+  v.push(`  --sc-measure: ${scale.measure}px;`);
+  return `:root {\n${v.join("\n")}\n}`;
+}
+
+function themeHead(theme) {
+  if (!theme || typeof theme !== "object") return "";
+  const fams = [];
+  for (const f of [theme.fontDisplay, theme.fontBody]) {
+    if (!f) continue;
+    if (!FONT_RE.test(f)) fail(`theme font "${f}" may contain only letters, digits and spaces`);
+    if (!fams.includes(f)) fams.push(f);
+  }
+  if (!fams.length) return "";
+  const q = fams.map((f) => `family=${f.replace(/ /g, "+")}:wght@400;600;800`).join("&");
+  return [
+    '<link rel="preconnect" href="https://fonts.googleapis.com" />',
+    '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />',
+    `<link rel="stylesheet" href="https://fonts.googleapis.com/css2?${q}&display=swap" />`,
+  ].join("\n  ");
+}
+
 const LAYOUTS = {
   center: { align: "center", justify: "center", textAlign: "center", maxWidth: 800, pad: "2rem" },
   left: { align: "center", justify: "flex-start", textAlign: "left", maxWidth: 620, pad: "2rem clamp(2rem, 8vw, 8rem)" },
@@ -90,7 +142,7 @@ function copyFrames(srcDir, outDir) {
   }
 }
 
-function renderSections(sections, images) {
+function renderSections(sections, images, specScrim) {
   return sections.map((s, idx) => {
     const height = Number(s.scrollHeight) || 1000;
     const L = LAYOUTS[s.layout] || LAYOUTS.center;
@@ -103,21 +155,33 @@ function renderSections(sections, images) {
       parts.push(`<img src="${esc(img)}" alt="${esc(s.imageAlt || "")}" style="display:block; max-width:min(100%, ${cap}px); height:auto; margin:${m};" />`);
     }
     if (s.eyebrow) {
-      parts.push(`<p class="eyebrow" style="font-size:0.875rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:${safeCss(s.accentColor || "#ddd6fe")}; margin-bottom:0.75rem;">${esc(s.eyebrow)}</p>`);
+      parts.push(`<p class="eyebrow" style="font-size:0.875rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:${safeCss(s.accentColor || "var(--sc-accent-text, #ede9fe)")}; margin-bottom:0.75rem;">${esc(s.eyebrow)}</p>`);
     }
     if (s.heading) {
-      parts.push(`<h2 style="font-size:clamp(2rem,5vw,4rem); font-weight:900; line-height:1; letter-spacing:-0.03em; color:${safeCss(s.headingColor || "#ffffff")}; margin-bottom:1rem;">${esc(s.heading)}</h2>`);
+      const statement = s.kind === "statement";
+      const hClass = statement ? "sc-display sc-statement" : "sc-display";
+      const hStyle = statement
+        ? `color:${safeCss(s.headingColor || "var(--sc-ink, #ffffff)")}; margin-bottom:1rem;`
+        : `font-size:var(--sc-heading-size, clamp(2rem,5vw,4rem)); font-weight:var(--sc-display-weight, 900); line-height:1; letter-spacing:var(--sc-display-tracking, -0.03em); text-transform:var(--sc-display-case, none); color:${safeCss(s.headingColor || "var(--sc-ink, #ffffff)")}; margin-bottom:1rem;`;
+      parts.push(`<h2 class="${hClass}" style="${hStyle}">${esc(s.heading)}</h2>`);
     }
     const bodyMargin = L.textAlign === "center" ? "0 auto 1.5rem" : "0 0 1.5rem";
     if (s.body) {
-      parts.push(`<p style="font-size:1.125rem; line-height:1.7; color:${safeCss(s.bodyColor || "rgba(255,255,255,0.72)")}; max-width:600px; margin:${bodyMargin};">${esc(s.body)}</p>`);
+      parts.push(`<p style="font-size:var(--sc-body-size, 1.125rem); line-height:1.7; color:${safeCss(s.bodyColor || "var(--sc-muted, rgba(255,255,255,0.72))")}; max-width:var(--sc-measure, 600px); margin:${bodyMargin};">${esc(s.body)}</p>`);
     }
     if (s.ctaLabel) {
-      parts.push(`<a href="${esc(safeHref(s.ctaHref || "#"))}" style="display:inline-block; background:${safeCss(s.accentColor || "#7c3aed")}; color:#fff; padding:0.875rem 2rem; border-radius:0.5rem; font-weight:600; text-decoration:none; font-size:1rem;">${esc(s.ctaLabel)}</a>`);
+      parts.push(`<a href="${esc(safeHref(s.ctaHref || "#"))}" style="display:inline-block; background:${safeCss(s.accentColor || "var(--sc-accent, #7c3aed)")}; color:#fff; padding:0.875rem 2rem; border-radius:var(--sc-radius, 0.5rem); font-weight:600; text-decoration:none; font-size:1rem;">${esc(s.ctaLabel)}</a>`);
     }
+    if (s.kind === "spacer") {
+      return `    <section class="scroll-section" aria-hidden="true" style="height:${height}px; position:relative; z-index:10;"></section>`;
+    }
+
+    const reveal = REVEALS.has(s.reveal) ? s.reveal : "rise";
+    const scrimRaw = s.scrim !== undefined ? Number(s.scrim) : Number(specScrim);
+    const scrim = Number.isFinite(scrimRaw) ? Math.min(Math.max(scrimRaw, 0), 1) : 0;
     return `    <section class="scroll-section" style="height:${height}px; position:relative; z-index:10;">
       <div class="section-sticky" style="position:sticky; top:0; height:100vh; display:flex; align-items:${safeCss(s.align || L.align)}; justify-content:${safeCss(s.justify || L.justify)}; overflow:hidden;">
-        <div class="section-content" style="text-align:${safeCss(s.textAlign || L.textAlign)}; padding:${L.pad}; max-width:${L.maxWidth}px; opacity:0; transform:translateY(32px); transition:opacity 0.6s cubic-bezier(0.25,0.46,0.45,0.94),transform 0.6s cubic-bezier(0.25,0.46,0.45,0.94);">
+        <div class="section-content" data-reveal="${reveal}" style="${scrim > 0 ? `background:radial-gradient(ellipse 120% 100% at 50% 50%, rgba(0,0,0,${scrim}) 0%, rgba(0,0,0,${(scrim * 0.72).toFixed(3)}) 45%, rgba(0,0,0,0) 78%); ` : ""}text-align:${safeCss(s.textAlign || L.textAlign)}; padding:${L.pad}; max-width:${L.maxWidth}px; transition:opacity 0.6s cubic-bezier(0.25,0.46,0.45,0.94),transform 0.6s cubic-bezier(0.25,0.46,0.45,0.94),clip-path 0.7s cubic-bezier(0.25,0.46,0.45,0.94);">
 ${parts.map((p) => "          " + p).join("\n")}
         </div>
       </div>
@@ -157,6 +221,12 @@ function main() {
   sections.forEach((s, i) => {
     if (s.layout !== undefined && !LAYOUTS[s.layout]) {
       fail(`section ${i} has unknown layout "${s.layout}" (allowed: ${Object.keys(LAYOUTS).join(", ")})`);
+    }
+    if (s.kind !== undefined && !KINDS.has(s.kind)) {
+      fail(`section ${i} has unknown kind "${s.kind}" (allowed: ${[...KINDS].join(", ")})`);
+    }
+    if (s.reveal !== undefined && !REVEALS.has(s.reveal)) {
+      fail(`section ${i} has unknown reveal "${s.reveal}" (allowed: ${[...REVEALS].join(", ")})`);
     }
   });
 
@@ -224,6 +294,9 @@ function main() {
     fail(`engine placeholder(s) never substituted: ${[...new Set(leftover)].join(", ")}`);
   }
 
+  const specScrim = (spec.theme && spec.theme.scrim !== undefined) ? spec.theme.scrim : 0;
+  const themeStyles = themeCss(spec.theme);
+  const fontLinks = themeHead(spec.theme);
   const title = esc(spec.name || "ScrollCraft Site");
   const description = esc(spec.description || "");
   const customCss = safeCssBlock(spec.customCss || "");
@@ -236,15 +309,15 @@ function main() {
   <title>${title}</title>
 ${description ? `  <meta name="description" content="${description}" />\n` : ""}  <meta property="og:title" content="${title}" />
 ${description ? `  <meta property="og:description" content="${description}" />\n` : ""}  <meta property="og:type" content="website" />
-  <style>
-${css}
+${fontLinks ? `  ${fontLinks}\n` : ""}  <style>
+${themeStyles ? themeStyles + "\n" : ""}${css}
   </style>
 ${customCss ? `  <style>\n${customCss}\n  </style>\n` : ""}</head>
 <body>
   <canvas id="scroll-canvas" role="img" aria-label="${esc(spec.canvasAlt || title)}"></canvas>
   <div id="scroll-container" style="height:${totalScrollHeight}px;">
     <div style="height:100vh;"></div>
-${renderSections(sections, images)}
+${renderSections(sections, images, specScrim)}
   </div>
   <div id="scroll-hint" aria-hidden="true">
     <span>Scroll</span>

@@ -118,12 +118,14 @@ describe("skill verify", () => {
   });
 
   renderIt("passes a real built site and reports measured contrast", () => {
-    expect(node(STYLE, ["--style", "aurora", "--count", "8", "--width", "640", "--out", "frames"]).status).toBe(0);
+    expect(node(STYLE, ["--style", "monolith", "--count", "8", "--width", "640", "--out", "frames"]).status).toBe(0);
     spec({
       name: "Probe",
       sections: [
-        { eyebrow: "Intro", heading: "Probe", body: "Readable copy over a dark frame.", scrollHeight: 1200 },
-        { heading: "Second", layout: "left", body: "More copy.", scrollHeight: 1200 },
+        { eyebrow: "Intro", heading: "Probe", body: "Readable copy over a dark frame.", scrollHeight: 1200,
+          headingColor: "#ffffff", bodyColor: "#ffffff", accentColor: "#ffffff" },
+        { heading: "Second", layout: "left", body: "More copy.", scrollHeight: 1200,
+          headingColor: "#ffffff", bodyColor: "#ffffff" },
       ],
     });
     expect(node(BUILD, ["--spec", "scrollcraft.json", "--out", "dist"]).status).toBe(0);
@@ -168,4 +170,124 @@ describe("skill verify", () => {
     expect(run.stdout).toMatch(/needs 4\.5:1/);
   });
 
+});
+
+describe("skill themes, kinds and reveals", () => {
+  const frames = () => {
+    fs.mkdirSync(path.join(tmp, "frames"), { recursive: true });
+    fs.writeFileSync(path.join(tmp, "frames", "frame_0000.jpg"), ONE_PX_JPEG);
+  };
+  const build = () => node(BUILD, ["--spec", "scrollcraft.json", "--out", "dist"]);
+
+  it("compiles a theme into font links and custom properties", () => {
+    frames();
+    spec({
+      theme: { fontDisplay: "Archivo", fontBody: "IBM Plex Sans", scale: "poster", displayCase: "upper", accent: "#c0550f", accentText: "#f8c9aa" },
+      sections: [{ heading: "A" }],
+    });
+    expect(build().status).toBe(0);
+    const out = html();
+    expect(out).toContain("family=Archivo:wght@400;600;800");
+    expect(out).toContain("family=IBM+Plex+Sans");
+    expect(out).toContain("--sc-font-display: 'Archivo'");
+    expect(out).toContain("--sc-display-case: uppercase");
+    expect(out).toContain("--sc-accent: #c0550f");
+    expect(out).toContain("--sc-accent-text: #f8c9aa");
+  });
+
+  it("emits no font link when the theme names no fonts", () => {
+    frames();
+    spec({ theme: { accent: "#c0550f" }, sections: [{ heading: "A" }] });
+    expect(build().status).toBe(0);
+    expect(html()).not.toContain("fonts.googleapis.com");
+  });
+
+  it("refuses a font family that could break out of the stylesheet URL", () => {
+    frames();
+    spec({ theme: { fontDisplay: 'Archivo&family=Evil"' }, sections: [{ heading: "A" }] });
+    const run = build();
+    expect(run.status).toBe(1);
+    expect(run.stderr).toContain("letters, digits and spaces");
+  });
+
+  it("renders a statement heading with its own type treatment", () => {
+    frames();
+    spec({ sections: [{ heading: "Loud", kind: "statement" }] });
+    expect(build().status).toBe(0);
+    expect(html()).toContain("sc-display sc-statement");
+  });
+
+  it("renders a spacer as empty scroll track hidden from screen readers", () => {
+    frames();
+    spec({ sections: [{ heading: "A" }, { kind: "spacer", scrollHeight: 800 }] });
+    expect(build().status).toBe(0);
+    const out = html();
+    expect(out).toContain('aria-hidden="true" style="height:800px');
+    expect(out).toContain("var totalScrollHeight = 2800;");
+  });
+
+  it("carries the reveal onto the content as a data attribute", () => {
+    frames();
+    spec({ sections: [{ heading: "A", reveal: "mask" }, { heading: "B", reveal: "stagger" }] });
+    expect(build().status).toBe(0);
+    const out = html();
+    expect(out).toContain('class="section-content" data-reveal="mask"');
+    expect(out).toContain('class="section-content" data-reveal="stagger"');
+  });
+
+  it("defaults an unspecified reveal to rise", () => {
+    frames();
+    spec({ sections: [{ heading: "A" }] });
+    expect(build().status).toBe(0);
+    expect(html()).toContain('class="section-content" data-reveal="rise"');
+  });
+
+  it("rejects an unknown kind or reveal", () => {
+    frames();
+    spec({ sections: [{ heading: "A", kind: "carousel" }] });
+    expect(build().status).toBe(1);
+    expect(build().stderr).toContain('unknown kind "carousel"');
+
+    spec({ sections: [{ heading: "A", reveal: "explode" }] });
+    expect(build().status).toBe(1);
+    expect(build().stderr).toContain('unknown reveal "explode"');
+  });
+});
+
+describe("skill scrim", () => {
+  const frames = () => {
+    fs.mkdirSync(path.join(tmp, "frames"), { recursive: true });
+    fs.writeFileSync(path.join(tmp, "frames", "frame_0000.jpg"), ONE_PX_JPEG);
+  };
+  const build = () => node(BUILD, ["--spec", "scrollcraft.json", "--out", "dist"]);
+
+  it("emits no scrim by default, so nothing is darkened unasked", () => {
+    frames();
+    spec({ sections: [{ heading: "A" }] });
+    expect(build().status).toBe(0);
+    expect(html()).not.toContain("radial-gradient(ellipse 120%");
+  });
+
+  it("renders a scrim behind the copy when a section asks for one", () => {
+    frames();
+    spec({ sections: [{ heading: "A", scrim: 0.5 }] });
+    expect(build().status).toBe(0);
+    const out = html();
+    expect(out).toContain("radial-gradient(ellipse 120% 100% at 50% 50%");
+    expect(out).toContain("rgba(0,0,0,0.5) 0%");
+  });
+
+  it("lets the theme set a scrim for every section", () => {
+    frames();
+    spec({ theme: { scrim: 0.3 }, sections: [{ heading: "A" }, { heading: "B" }] });
+    expect(build().status).toBe(0);
+    expect(html().match(/radial-gradient\(ellipse 120%/g)).toHaveLength(2);
+  });
+
+  it("lets a section override the theme scrim", () => {
+    frames();
+    spec({ theme: { scrim: 0.6 }, sections: [{ heading: "A", scrim: 0 }] });
+    expect(build().status).toBe(0);
+    expect(html()).not.toContain("radial-gradient(ellipse 120%");
+  });
 });

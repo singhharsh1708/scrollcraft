@@ -3,6 +3,12 @@ import { z } from "zod";
 export const SECTION_LAYOUTS = ["center", "left", "right", "lower-third", "upper-third"] as const;
 export type SectionLayout = (typeof SECTION_LAYOUTS)[number];
 
+export const SECTION_KINDS = ["text", "statement", "spacer"] as const;
+export type SectionKind = (typeof SECTION_KINDS)[number];
+
+export const REVEALS = ["rise", "fade", "mask", "stagger", "scale", "none"] as const;
+export type Reveal = (typeof REVEALS)[number];
+
 export const MAX_SECTIONS = 100;
 
 export const sectionIdSchema = z.string().min(1).max(100);
@@ -21,6 +27,9 @@ export const imageSrcSchema = z.string().max(2000)
 export const sectionSchema = z.object({
   id: sectionIdSchema.optional(),
   layout: z.enum(SECTION_LAYOUTS).optional(),
+  kind: z.enum(SECTION_KINDS).optional(),
+  reveal: z.enum(REVEALS).optional(),
+  scrim: z.number().min(0).max(1).optional(),
   eyebrow: z.string().max(200).optional(),
   heading: z.string().max(500).optional(),
   body: z.string().max(5000).optional(),

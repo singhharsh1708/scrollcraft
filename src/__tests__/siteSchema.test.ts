@@ -1,6 +1,8 @@
 import { describe, it, expect } from "vitest";
 import {
   SECTION_LAYOUTS,
+  SECTION_KINDS,
+  REVEALS,
   MAX_SECTIONS,
   parseSectionsJson,
   sectionSchema,
@@ -54,6 +56,20 @@ describe("sectionSchema", () => {
     expect(ok({ image: "assets/img_00.png" })).toBe(true);
     expect(ok({ image: "javascript:alert(1)" })).toBe(false);
     expect(ok({ image: "data:image/svg+xml;base64,PHN2Zz4=" })).toBe(false);
+  });
+
+  it("bounds the scrim to 0-1", () => {
+    expect(ok({ scrim: 0 })).toBe(true);
+    expect(ok({ scrim: 1 })).toBe(true);
+    expect(ok({ scrim: 1.5 })).toBe(false);
+    expect(ok({ scrim: -0.2 })).toBe(false);
+  });
+
+  it("accepts every kind and reveal, and rejects invented ones", () => {
+    for (const k of SECTION_KINDS) expect(ok({ kind: k })).toBe(true);
+    for (const r of REVEALS) expect(ok({ reveal: r })).toBe(true);
+    expect(ok({ kind: "carousel" })).toBe(false);
+    expect(ok({ reveal: "explode" })).toBe(false);
   });
 
   it("bounds imageWidth", () => {

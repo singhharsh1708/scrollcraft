@@ -21,12 +21,32 @@ spec file, not the working directory.
 | `framesMobile` | string | none | Mobile frame directory. Omit and phones load desktop frames. |
 | `audio` | string | none | Path to an audio file. Copied to `dist/audio.<ext>`. |
 | `customCss` | string | none | Injected as a second `<style>` block, after the engine CSS, so it wins on ties. Filtered. |
+| `theme` | object | none | Fonts, type scale and palette. Compiles to a Google Fonts link plus CSS custom properties. See below. |
 | `sections` | array | required | At least one entry with `visible !== false`. |
+
+## Theme
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| `fontDisplay` | string | Google Fonts family for headings. Letters, digits and spaces only, because the name is interpolated into the stylesheet URL. |
+| `fontBody` | string | Google Fonts family for body text. |
+| `scale` | string | `compact`, `editorial` (default) or `poster`. Sets heading size, body size and measure together. |
+| `displayWeight` | number | 100-900. |
+| `displayCase` | string | `none` or `upper`. |
+| `displayTracking` | number | em, -0.08 to 0.4. Negative suits large display type, positive suits small uppercase labels. |
+| `ink` | colour | Body and heading colour. |
+| `muted` | colour | Body copy, normally the ink at 70-75%. |
+| `accent` | colour | CTA background. Must be dark enough to carry white text: relative luminance at or below 0.183. |
+| `accentText` | colour | Eyebrow text over the frame. Needs the opposite, a light tint. |
+| `ground` | colour | Page background behind the canvas. |
+| `radius` | number | px, 0-64. |
 
 ## Section fields
 
 | Field | Type | Default | Notes |
 | --- | --- | --- | --- |
+| `kind` | string | `text` | `text`, `statement` (oversized heading) or `spacer` (empty scroll track, no content). |
+| `reveal` | string | `rise` | `rise`, `fade`, `mask`, `stagger`, `scale` or `none`. |
 | `layout` | string | `center` | One of `center`, `left`, `right`, `lower-third`, `upper-third`. Sets alignment, measure and padding together. An unknown value fails the build. |
 | `heading` | string | none | Renders as `<h2>`, `clamp(2rem, 5vw, 4rem)`. |
 | `body` | string | none | One paragraph, capped at 600px measure. |

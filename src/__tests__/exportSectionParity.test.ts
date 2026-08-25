@@ -98,3 +98,66 @@ describe("exported sections keep every field the schema allows", () => {
     expect(html).toContain("align-items:flex-end");
   });
 });
+
+describe("exported sections honour kinds and reveals", () => {
+  it("carries the reveal and defaults to rise", async () => {
+    const html = await exportHtml([
+      { heading: "A", reveal: "mask", scrollHeight: 1000 },
+      { heading: "B", scrollHeight: 1000 },
+    ]);
+    expect(html).toContain('class="section-content" data-reveal="mask"');
+    expect(html).toContain('class="section-content" data-reveal="rise"');
+  });
+
+  it("falls back to rise for a reveal the schema would not allow", async () => {
+    const html = await exportHtml([{ heading: "A", reveal: "explode", scrollHeight: 1000 }]);
+    expect(html).toContain('class="section-content" data-reveal="rise"');
+    expect(html).not.toContain("explode");
+  });
+
+  it("renders a statement heading with its own class", async () => {
+    const html = await exportHtml([{ heading: "Loud", kind: "statement", scrollHeight: 1000 }]);
+    expect(html).toContain("sc-display sc-statement");
+  });
+
+  it("renders a spacer as empty track and keeps it in the scroll total", async () => {
+    const html = await exportHtml([
+      { heading: "A", scrollHeight: 1000 },
+      { kind: "spacer", scrollHeight: 800 },
+    ]);
+    expect(html).toContain('aria-hidden="true" style="height:800px');
+    expect(html).toContain("const totalScrollHeight = 2800;");
+  });
+
+  it("ships the reveal stylesheet so the data attributes mean something", async () => {
+    const html = await exportHtml([{ heading: "A", reveal: "stagger", scrollHeight: 1000 }]);
+    expect(html).toContain('.section-content[data-reveal="stagger"] > *');
+    expect(html).toContain('.section-content[data-reveal="mask"]');
+    expect(html).toContain("prefers-reduced-motion");
+  });
+
+  it("reads its palette from theme custom properties so a themed site keeps its colours", async () => {
+    const html = await exportHtml([{ heading: "A", body: "b", ctaLabel: "Go", ctaHref: "https://x.com", eyebrow: "e", scrollHeight: 1000 }]);
+    expect(html).toContain("var(--sc-ink, #ffffff)");
+    expect(html).toContain("var(--sc-muted, rgba(255,255,255,0.72))");
+    expect(html).toContain("var(--sc-accent, #7c3aed)");
+    expect(html).toContain("var(--sc-accent-text, #ede9fe)");
+  });
+});
+
+describe("exported sections honour the scrim", () => {
+  it("emits none by default", async () => {
+    const html = await exportHtml([{ heading: "A", scrollHeight: 1000 }]);
+    expect(html).not.toContain("radial-gradient(ellipse 120%");
+  });
+
+  it("renders one when the section asks", async () => {
+    const html = await exportHtml([{ heading: "A", scrim: 0.4, scrollHeight: 1000 }]);
+    expect(html).toContain("rgba(0,0,0,0.4) 0%");
+  });
+
+  it("clamps a scrim outside 0-1", async () => {
+    const html = await exportHtml([{ heading: "A", scrim: 5, scrollHeight: 1000 }]);
+    expect(html).toContain("rgba(0,0,0,1) 0%");
+  });
+});
