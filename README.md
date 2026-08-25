@@ -216,6 +216,19 @@ prisma/
 └── seed.ts               # Seed script
 ```
 
+## Deploying
+
+The app deploys to Vercel. Migrations run **separately** from the Vercel build, which has no
+database access:
+
+- A GitHub Action (`.github/workflows/migrate.yml`) runs `prisma migrate deploy` on every push
+  to `main` that touches `prisma/migrations/`. It needs a `DATABASE_URL` repository secret
+  pointing at the production database; without it the job no-ops rather than failing.
+- Or run it by hand against production: `DATABASE_URL=... npm run deploy`.
+
+Apply new migrations before the code that depends on them serves traffic, or routes reading a
+new column will error.
+
 ## Plans and payments
 
 Every template is free on every plan, including the free one. Paid plans raise how many
