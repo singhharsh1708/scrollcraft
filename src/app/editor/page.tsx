@@ -203,12 +203,31 @@ function EditorInner() {
         // Load frames from IndexedDB (primary). Fall back to DB framesJson for old sites.
         const storedFrames = await loadFrames(`scrollcraft_frames_${sid}`);
         const storedMobile = await loadFrames(`scrollcraft_mframes_${sid}`).catch(() => null);
+        let framesResolved = false;
         if (storedFrames && storedFrames.length) {
           setFrames(storedFrames); setFrameCount(storedFrames.length); setIsDemo(false);
           if (storedMobile && storedMobile.length) setMobileFrames(storedMobile);
+          framesResolved = true;
         } else if (site.framesJson) {
           const f = JSON.parse(site.framesJson);
-          if (Array.isArray(f) && f.length) { setFrames(f); setFrameCount(f.length); setIsDemo(false); }
+          if (Array.isArray(f) && f.length) { setFrames(f); setFrameCount(f.length); setIsDemo(false); framesResolved = true; }
+        }
+        // Opened on a second device: the IndexedDB frames live in the other browser, but a
+        // stored style recipe lets us regenerate the background instead of leaving the demo.
+        if (!framesResolved && site.styleJson) {
+          const recipe = siteStyleSchema.safeParse(JSON.parse(site.styleJson));
+          if (recipe.success) {
+            const mob = window.innerWidth < 768;
+            const regen = await generate2DFrames({
+              style: recipe.data.style,
+              color1: recipe.data.colors[0], color2: recipe.data.colors[1], color3: recipe.data.colors[2],
+              frameCount: mob ? 60 : 90, width: mob ? 640 : 1280, height: mob ? 360 : 720,
+            }, () => {}).catch(() => null);
+            if (!cancelled && regen && regen.length) {
+              setFrames(regen); setFrameCount(regen.length); setIsDemo(false);
+              storeFrames(`scrollcraft_frames_${sid}`, regen).catch(() => {});
+            }
+          }
         }
         if (site.sectionsJson) {
           const s = JSON.parse(site.sectionsJson);

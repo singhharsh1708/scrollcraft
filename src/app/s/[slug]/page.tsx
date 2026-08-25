@@ -3,6 +3,10 @@ import type { Metadata } from "next";
 import SiteRenderer from "@/components/SiteRenderer";
 import { getPublishedSite } from "@/lib/publishedSite";
 
+// Cache the rendered page per slug; a publish/unpublish changes the row, and stale reads
+// for up to a minute are acceptable for a public marketing page.
+export const revalidate = 60;
+
 export async function generateMetadata(
   { params }: { params: Promise<{ slug: string }> }
 ): Promise<Metadata> {

@@ -77,7 +77,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
   if (!style?.ok && !hasFrameUrls(site.framesJson)) {
     return NextResponse.json(
       {
-        error: "This site's background can't be rebuilt on a hosted page. Re-save it from the editor first.",
+        error: "This site predates hosted publishing and its background can't be rebuilt. Recreate it from a template or the create flow to publish.",
         code: "NO_BACKGROUND",
       },
       { status: 400 }

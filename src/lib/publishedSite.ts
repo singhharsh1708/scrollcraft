@@ -22,15 +22,19 @@ export interface PublishedSite {
   badge: boolean;
 }
 
+// A published site draws at most this many frames; a larger stored array is an abuse
+// vector (an ~11 MB blob parsed on every uncached public request), not a real site.
+const MAX_PUBLISHED_FRAMES = 600;
+
 function frameUrlsFrom(framesJson: string | null): string[] | null {
   if (!framesJson) return null;
   try {
     const decoded: unknown = JSON.parse(framesJson);
-    if (!Array.isArray(decoded)) return null;
+    if (!Array.isArray(decoded) || decoded.length === 0 || decoded.length > MAX_PUBLISHED_FRAMES) return null;
     const urls = decoded.filter(
       (f): f is string => typeof f === "string" && /^https?:\/\//i.test(f)
     );
-    return urls.length === decoded.length && urls.length > 0 ? urls : null;
+    return urls.length === decoded.length ? urls : null;
   } catch {
     return null;
   }

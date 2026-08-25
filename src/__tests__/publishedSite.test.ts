@@ -135,6 +135,20 @@ describe("sanitizeHostedCss", () => {
     expect(sanitizeHostedCss("</style><script>alert(1)</script>")).not.toContain("</style>");
   });
 
+  it("cannot reconstruct a close tag from a token split across a removed span", () => {
+    // The bug the review found: an escape pass that ran before the removal passes let
+    // `</sty@import a;le>` rejoin into a live `</style>`. No "<" may survive, ever.
+    for (const attack of [
+      "x{}</sty@import a;le><img src=x onerror=alert(1)>",
+      "</sty<scriptle><img src=x onerror=alert(1)>",
+      "a</st<scriptyle>b",
+    ]) {
+      const out = sanitizeHostedCss(attack);
+      expect(out).not.toContain("<");
+      expect(out).not.toContain("</style>");
+    }
+  });
+
   it("caps pathological input", () => {
     expect(sanitizeHostedCss("x".repeat(200_000)).length).toBeLessThanOrEqual(50_000);
   });

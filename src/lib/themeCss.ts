@@ -70,9 +70,14 @@ export function varsToCss(vars: Record<string, string>): string {
 export function sanitizeHostedCss(css: unknown): string {
   return String(css ?? "")
     .slice(0, 50_000)
-    .replace(/<\/style/gi, "<\\/style")
-    .replace(/<\s*script/gi, "")
+    // CSS-level attacks that do not need a "<": data exfiltration via @import, the IE
+    // expression() vector, and script/data/vbscript URLs.
     .replace(/@import[^;]*;?/gi, "")
     .replace(/expression\s*\(/gi, "(")
-    .replace(/url\(\s*["']?\s*(javascript|data|vbscript):[^)]*\)/gi, "url()");
+    .replace(/url\(\s*["']?\s*(javascript|data|vbscript):[^)]*\)/gi, "url()")
+    // Final, order-independent pass: neutralise every "<" so no markup tag can form,
+    // however the passes above rejoined the text. A removal that runs after an escape
+    // can otherwise reconstruct a "</style>" and break out of the injected block. CSS
+    // never needs a literal "<"; a legitimate one inside a string survives as \\3c.
+    .replace(/</g, "\\3c ");
 }
