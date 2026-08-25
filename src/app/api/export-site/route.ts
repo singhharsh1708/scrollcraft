@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
-import { SECTION_LAYOUTS, type Section, visibleSections as onlyVisible } from "@/lib/siteSchema";
+import { REVEALS, SECTION_LAYOUTS, type Section, visibleSections as onlyVisible } from "@/lib/siteSchema";
 
 function esc(s: unknown): string {
   return String(s ?? "")
@@ -194,15 +194,23 @@ export async function POST(req: NextRequest) {
       const stack = L.textAlign === "center" ? "0 auto 1.5rem" : "0 0 1.5rem";
       const imgSrc = exportableImage(s.image);
       const imgWidth = Math.min(Number(s.imageWidth) || 480, 1600);
+      if (s.kind === "spacer") {
+        return `
+    <section class="scroll-section" aria-hidden="true" style="height:${Number(s.scrollHeight) || 1000}px; position:relative; z-index:10;"></section>`;
+      }
+      const reveal = (REVEALS as readonly string[]).includes(s.reveal ?? "") ? s.reveal : "rise";
+      const scrim = Math.min(Math.max(Number(s.scrim ?? 0) || 0, 0), 1);
       return `
     <section class="scroll-section" style="height:${Number(s.scrollHeight) || 1000}px; position:relative; z-index:10;">
       <div class="section-sticky" style="position:sticky; top:0; height:100vh; display:flex; align-items:${safeCss(s.align || L.align)}; justify-content:${safeCss(s.justify || L.justify)}; overflow:hidden;">
-        <div class="section-content" style="text-align:${safeCss(s.textAlign || L.textAlign)}; padding:${L.pad}; max-width:${L.maxWidth}px; opacity:0; transform:translateY(32px); transition:opacity 0.6s cubic-bezier(0.25,0.46,0.45,0.94),transform 0.6s cubic-bezier(0.25,0.46,0.45,0.94);">
+        <div class="section-content" data-reveal="${reveal}" style="${scrim > 0 ? `background:radial-gradient(ellipse 120% 100% at 50% 50%, rgba(0,0,0,${scrim}) 0%, rgba(0,0,0,${(scrim * 0.72).toFixed(3)}) 45%, rgba(0,0,0,0) 78%); ` : ""}text-align:${safeCss(s.textAlign || L.textAlign)}; padding:${L.pad}; max-width:${L.maxWidth}px; transition:opacity 0.6s cubic-bezier(0.25,0.46,0.45,0.94),transform 0.6s cubic-bezier(0.25,0.46,0.45,0.94),clip-path 0.7s cubic-bezier(0.25,0.46,0.45,0.94);">
           ${imgSrc ? `<img src="${esc(imgSrc)}" alt="${esc(s.imageAlt || "")}" style="display:block; max-width:min(100%, ${imgWidth}px); height:auto; margin:${stack};" />` : ""}
-          ${s.eyebrow ? `<p class="eyebrow" style="font-size:0.875rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:${safeCss(s.accentColor || "#ddd6fe")}; margin-bottom:0.75rem;">${esc(s.eyebrow)}</p>` : ""}
-          ${s.heading ? `<h2 style="font-size:clamp(2rem,5vw,4rem); font-weight:900; line-height:1; letter-spacing:-0.03em; color:${safeCss(s.headingColor || "#ffffff")}; margin-bottom:1rem;">${esc(s.heading)}</h2>` : ""}
-          ${s.body ? `<p style="font-size:1.125rem; line-height:1.7; color:${safeCss(s.bodyColor || "rgba(255,255,255,0.72)")}; max-width:600px; margin:${stack};">${esc(s.body)}</p>` : ""}
-          ${s.ctaLabel ? `<a href="${esc(safeHref(s.ctaHref || "#"))}" style="display:inline-block; background:${safeCss(s.accentColor || "#7c3aed")}; color:white; padding:0.875rem 2rem; border-radius:0.5rem; font-weight:600; text-decoration:none; font-size:1rem;">${esc(s.ctaLabel)}</a>` : ""}
+          ${s.eyebrow ? `<p class="eyebrow" style="font-size:0.875rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:${safeCss(s.accentColor || "var(--sc-accent-text, #ede9fe)")}; margin-bottom:0.75rem;">${esc(s.eyebrow)}</p>` : ""}
+          ${s.heading ? (s.kind === "statement"
+            ? `<h2 class="sc-display sc-statement" style="color:${safeCss(s.headingColor || "var(--sc-ink, #ffffff)")}; margin-bottom:1rem;">${esc(s.heading)}</h2>`
+            : `<h2 class="sc-display" style="font-size:var(--sc-heading-size, clamp(2rem,5vw,4rem)); font-weight:var(--sc-display-weight, 900); line-height:1; letter-spacing:var(--sc-display-tracking, -0.03em); text-transform:var(--sc-display-case, none); color:${safeCss(s.headingColor || "var(--sc-ink, #ffffff)")}; margin-bottom:1rem;">${esc(s.heading)}</h2>`) : ""}
+          ${s.body ? `<p style="font-size:var(--sc-body-size, 1.125rem); line-height:1.7; color:${safeCss(s.bodyColor || "var(--sc-muted, rgba(255,255,255,0.72))")}; max-width:var(--sc-measure, 600px); margin:${stack};">${esc(s.body)}</p>` : ""}
+          ${s.ctaLabel ? `<a href="${esc(safeHref(s.ctaHref || "#"))}" style="display:inline-block; background:${safeCss(s.accentColor || "var(--sc-accent, #7c3aed)")}; color:white; padding:0.875rem 2rem; border-radius:0.5rem; font-weight:600; text-decoration:none; font-size:1rem;">${esc(s.ctaLabel)}</a>` : ""}
         </div>
       </div>
     </section>`;
@@ -226,6 +234,25 @@ export async function POST(req: NextRequest) {
     .section-sticky { pointer-events: none; }
     .section-content { pointer-events: auto; }
     .section-content.visible { opacity: 1 !important; transform: translateY(0) !important; }
+    .section-content[data-reveal] { opacity: 0; }
+    .section-content[data-reveal="rise"] { transform: translateY(32px); }
+    .section-content[data-reveal="fade"] { transform: none; }
+    .section-content[data-reveal="scale"] { transform: scale(0.94); }
+    .section-content[data-reveal="mask"] { clip-path: inset(0 0 100% 0); transform: none; }
+    .section-content[data-reveal="none"] { opacity: 1; transform: none; }
+    .section-content[data-reveal].visible { opacity: 1 !important; transform: none !important; clip-path: inset(0 0 0 0); }
+    .section-content[data-reveal="stagger"] > * { opacity: 0; transform: translateY(22px); transition: opacity 0.55s cubic-bezier(0.25,0.46,0.45,0.94), transform 0.55s cubic-bezier(0.25,0.46,0.45,0.94); }
+    .section-content[data-reveal="stagger"].visible > * { opacity: 1; transform: none; }
+    .section-content[data-reveal="stagger"].visible > *:nth-child(2) { transition-delay: 90ms; }
+    .section-content[data-reveal="stagger"].visible > *:nth-child(3) { transition-delay: 180ms; }
+    .section-content[data-reveal="stagger"].visible > *:nth-child(n+4) { transition-delay: 270ms; }
+    .sc-display { font-family: var(--sc-font-display, var(--sc-font-body, system-ui, sans-serif)); }
+    .sc-statement { font-size: clamp(2.75rem, 11vw, 9rem); font-weight: var(--sc-display-weight, 800); line-height: 0.92; letter-spacing: var(--sc-display-tracking, -0.045em); text-transform: var(--sc-display-case, none); margin: 0; }
+    @media (prefers-reduced-motion: reduce) {
+      .section-content[data-reveal], .section-content[data-reveal="stagger"] > * {
+        opacity: 1 !important; transform: none !important; clip-path: none !important; transition: none !important;
+      }
+    }
     #scroll-hint {
       position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%);
       display: flex; flex-direction: column; align-items: center; gap: 0.5rem;

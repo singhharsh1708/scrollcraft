@@ -160,6 +160,15 @@ const PROBE = `(() => {
     return { r: p[0], g: p[1], b: p[2], a: p.length > 3 ? p[3] : 1 };
   };
 
+  const effectiveOpacity = (el) => {
+    let o = 1;
+    for (let n = el; n && n !== document.documentElement; n = n.parentElement) {
+      const v = parseFloat(getComputedStyle(n).opacity);
+      if (!Number.isNaN(v)) o *= v;
+    }
+    return o;
+  };
+
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
   const sampleRect = (cssX, cssY, cssW, cssH) => {
     const x = Math.max(0, Math.round(cssX * dpr));
@@ -189,7 +198,7 @@ const PROBE = `(() => {
   for (const el of document.querySelectorAll('.section-content')) {
     const r = el.getBoundingClientRect();
     if (r.bottom < 0 || r.top > window.innerHeight || r.width < 1 || r.height < 1) continue;
-    if (getComputedStyle(el).opacity === '0') continue;
+    if (effectiveOpacity(el) < 0.01) continue;
     const behind = sampleRect(r.left, Math.max(0, r.top), r.width, Math.min(r.height, window.innerHeight));
     if (!behind) continue;
     for (const t of el.querySelectorAll('h2, p, a')) {
@@ -211,14 +220,15 @@ const PROBE = `(() => {
         over = 'frame';
       }
 
+      const alpha = Math.max(0, Math.min(1, fg.a * effectiveOpacity(t)));
       const lfRaw = relLum(fg.r, fg.g, fg.b);
-      const lf = fg.a >= 0.999 ? lfRaw : lfRaw * fg.a + bgLum * (1 - fg.a);
+      const lf = alpha >= 0.999 ? lfRaw : lfRaw * alpha + bgLum * (1 - alpha);
       const ratio = (Math.max(lf, bgLum) + 0.05) / (Math.min(lf, bgLum) + 0.05);
       contrasts.push({
         tag: t.tagName.toLowerCase(),
         text: t.textContent.trim().slice(0, 48),
         ratio: Math.round(ratio * 100) / 100,
-        alpha: fg.a,
+        alpha: Math.round(alpha * 1000) / 1000,
         over,
       });
     }
@@ -330,7 +340,36 @@ async function main() {
 
     for (let i = 0; i < samples; i++) {
       const y = Math.round((track > 0 ? track : 0) * (i / (samples - 1)));
-      await cdp.eval(`window.scrollTo(0, ${y}); new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(r, 90))))`);
+      await cdp.eval(
+        `window.scrollTo(0, ${y});\n` +
+        `new Promise((resolve) => {\n` +
+        `  const deadline = performance.now() + 3000;\n` +
+        `  const opacityOf = (el) => {\n` +
+        `    let o = 1;\n` +
+        `    for (let n = el; n && n !== document.documentElement; n = n.parentElement) {\n` +
+        `      const v = parseFloat(getComputedStyle(n).opacity);\n` +
+        `      if (!Number.isNaN(v)) o *= v;\n` +
+        `    }\n` +
+        `    return o;\n` +
+        `  };\n` +
+        `  const settled = () => {\n` +
+        `    if (performance.now() > deadline) { resolve(); return; }\n` +
+        `    const onscreen = [...document.querySelectorAll('.section-content')].filter((el) => {\n` +
+        `      const r = el.getBoundingClientRect();\n` +
+        `      return r.bottom > 0 && r.top < window.innerHeight && r.width > 0;\n` +
+        `    });\n` +
+        `    const faded = onscreen.some((el) => {\n` +
+        `      if (!el.classList.contains('visible')) return true;\n` +
+        `      if (opacityOf(el) < 0.99) return true;\n` +
+        `      return [...el.children].some((c) => opacityOf(c) < 0.99);\n` +
+        `    });\n` +
+        `    const running = document.getAnimations().some((a) => a.playState === 'running');\n` +
+        `    if (faded || running) { requestAnimationFrame(settled); return; }\n` +
+        `    setTimeout(resolve, 60);\n` +
+        `  };\n` +
+        `  requestAnimationFrame(() => requestAnimationFrame(settled));\n` +
+        `})`
+      );
       const s = await cdp.eval(PROBE);
       if (s?.error) { problems.push(`probe failed at y=${y}: ${s.error}`); break; }
 

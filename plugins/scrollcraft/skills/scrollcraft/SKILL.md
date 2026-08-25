@@ -28,11 +28,13 @@ this skill to work on disk and in version control, with or without footage of yo
 If the user has no footage and just wants a site, one command produces a working one:
 
 ```bash
-node "${CLAUDE_PLUGIN_ROOT}/skills/scrollcraft/scripts/init.mjs" --name "Orrery" --style aurora
+node "${CLAUDE_PLUGIN_ROOT}/skills/scrollcraft/scripts/init.mjs" \
+  --name "Orrery" --style aurora --grammar reveal
 ```
 
 That writes `scrollcraft.json`, generates a procedural background plus its mobile set, and
-builds `dist/`. Then replace the placeholder sections with real copy and rebuild. **Never
+builds `dist/`. `--grammar` picks the page's shape and `--style` picks its mood; the style
+also brings a matching type pairing and palette. Then replace the placeholder sections with real copy and rebuild. **Never
 leave the starter copy in place** — it says "Replace this copy" and shipping it is worse
 than shipping nothing.
 
@@ -80,6 +82,28 @@ procedural background is the cheaper choice on payload as well as effort.
 Pick the style from what the user is building, not at random, and say which you picked.
 `--colors` overrides the palette; if your override is too bright the script warns, because
 white copy over a light frame is unreadable no matter how good the palette looks alone.
+
+### 2c. Choose a grammar and a theme, deliberately
+
+The reason generated scroll sites look generated is that every one of them is centred, rises
+in, and runs 1000px a section. Two things prevent that, and both are choices you must make
+rather than defaults you accept.
+
+**Grammar** is the shape of the page: `reveal`, `catalogue`, `manifesto`, `dossier`,
+`descent`, `single`. Each fixes an order of layouts, reveals and pacing. `references/grammars.md`
+has all six with their section tables and what each is for.
+
+**Theme** is `spec.theme`: a display face and a body face from Google Fonts, a type scale
+(`compact`, `editorial`, `poster`), ink, muted, accent and accentText colours, weight, case,
+tracking and radius. It compiles to a font link and CSS custom properties, so it needs no
+extra plumbing and travels with the site.
+
+`accent` sits behind white CTA text and `accentText` is the eyebrow over the frame. They are
+separate because a colour readable as text on a dark frame is too light behind white button
+text — every built-in theme ships both, each measured against its own requirement.
+
+Say out loud which grammar and which style you picked, and why they suit the subject. Read
+`references/taste.md` before writing copy.
 
 ### 3. Author the spec
 
@@ -151,6 +175,11 @@ These are what separate a convincing scroll site from an obviously generated one
 - **Vary the layout.** Every section takes `layout`: `center`, `left`, `right`, `lower-third`,
   `upper-third`. Consecutive screens that share a shape are what makes a scroll site read as a
   template. The build says so when all of them match.
+- **Vary the reveal, but not much.** `reveal` is `rise`, `fade`, `mask`, `stagger`, `scale` or
+  `none`. Pick one and repeat it, with a single exception at the peak. `mask` is the loudest;
+  use it once. `stagger` needs three or more elements or it looks broken.
+- **Use `kind` for emphasis and silence.** `statement` gives a heading its own oversized
+  treatment; `spacer` is scroll track with nothing in it, which is how a page gets a pause.
 - **One idea per section.** A heading and at most two lines. The reader is scrolling, not studying.
 - **Let the footage breathe.** Sections that fire every 600px feel frantic. Long quiet stretches with no copy are correct and confident.
 - **Match copy to motion.** If the camera pushes in on section three, that is where the product name belongs.
