@@ -24,8 +24,8 @@ const getMobileHeroServerSnapshot = () => true;
 
 const PIPELINE = [
   { step: "01", title: "Pick a preset", desc: "Choose from 12+ production-ready templates across SaaS, agency, e-commerce, and more." },
-  { step: "02", title: "Describe your atmosphere", desc: "Tell the AI your visual style — noir, golden hour, brutalist, neon dystopia — in plain English." },
-  { step: "03", title: "AI generates keyframes", desc: "State-of-the-art image generation creates cinematic web-first visuals from your prompt." },
+  { step: "02", title: "Pick a template", desc: "Browse ready-made scroll sites by category and open the one closest to what you want." },
+  { step: "03", title: "Frames render in your browser", desc: "The template's palette and style are drawn to canvas locally — instant, and nothing leaves your machine." },
   { step: "04", title: "Image animates to video", desc: "The keyframe comes to life as an 8-second cinematic video with subtle camera movement." },
   { step: "05", title: "Frames extracted for scroll", desc: "400+ optimized frames are extracted and mapped to your scroll position automatically." },
   { step: "06", title: "Deploy as HTML/CSS/JS", desc: "Download a production-ready ZIP and deploy to Vercel, Netlify, or any static host instantly." },
@@ -51,15 +51,15 @@ const TESTIMONIALS = [
   { name: "Arjun M.", location: "India", role: "Startup founder", quote: "Replaced a $4,000 agency quote with a 15-minute session. The output was honestly better than what they proposed." },
   { name: "Priya S.", location: "India", role: "Restaurant owner", quote: "Built my restaurant's full site in under 10 minutes. Customers keep asking who designed it." },
   { name: "Lukas B.", location: "Germany", role: "Indie developer", quote: "Launched my SaaS landing page before the weekend was over. The scroll animation is unlike anything I could have hand-coded." },
-  { name: "Amara O.", location: "Ghana", role: "Consultant", quote: "My clients think I hired a design agency. I just type a prompt and export the ZIP." },
+  { name: "Amara O.", location: "Ghana", role: "Consultant", quote: "My clients think I hired a design agency. I pick a template, change the copy, and export the ZIP." },
 ];
 
 const FAQ = [
-  { q: "Do I need to know how to code?", a: "Not at all. You describe your vision in plain English, the AI handles everything else. The export is pure HTML/CSS/JS you can deploy anywhere." },
+  { q: "Do I need to know how to code?", a: "Not at all. Pick a template, edit the copy and colours, and export. The result is pure HTML/CSS/JS you can deploy anywhere." },
   { q: "How does the scroll animation work?", a: "ScrollCraft generates 2D canvas frames in your browser, then a scroll engine displays the correct frame as you scroll. No WebGL, no external dependencies." },
-  { q: "Can I use my own video?", a: "Yes. On the /create page you can upload your own MP4, MOV, or WebM and we'll extract frames from it just like AI-generated videos." },
+  { q: "Can I use my own video?", a: "Yes. On the /create page you can upload your own MP4, MOV, or WebM and we'll extract frames from it and build the scroll around them." },
   { q: "Where can I host the exported site?", a: "Anywhere that serves static files — Vercel, Netlify, Cloudflare Pages, GitHub Pages, or your own server. Just unzip and upload." },
-  { q: "How are the frames generated?", a: "Frames are rendered in your browser on canvas from the style and palette you pick — nothing is sent to a model, so generation is instant and works without an API key. The AI chat editor uses Claude to apply design changes you describe in plain English." },
+  { q: "How are the frames generated?", a: "Frames are rendered in your browser on canvas from the style and palette the template carries. Nothing is sent to a server, so it is instant and works offline." },
 ];
 
 export default function Home() {
@@ -119,7 +119,7 @@ export default function Home() {
         </a>
 
         <Badge variant="outline" className="mb-6 border-primary/40 text-primary bg-primary/10 px-4 py-1.5">
-          <Sparkles className="w-3 h-3 mr-1.5" /> AI-Powered · No Code · Animated Scroll
+          <Sparkles className="w-3 h-3 mr-1.5" /> Ready-made templates · No code · Animated scroll
         </Badge>
 
         <h1 className="text-6xl md:text-8xl font-black tracking-tighter mb-6 leading-none">
@@ -192,7 +192,7 @@ export default function Home() {
           <div className="text-center mb-16">
             <Badge variant="outline" className="mb-4 border-white/10">The pipeline</Badge>
             <h2 className="text-4xl md:text-5xl font-black tracking-tighter">
-              From prompt to production<br />
+              From template to production<br />
               <span className="text-muted-foreground">in 6 steps</span>
             </h2>
           </div>
@@ -241,7 +241,7 @@ export default function Home() {
               <Badge variant="outline" className="mb-4 border-white/10">12 presets & counting</Badge>
               <h2 className="text-4xl md:text-5xl font-black tracking-tighter">Start from a preset</h2>
               <p className="text-muted-foreground mt-3 max-w-lg">
-                Production-tested starters with pre-built AI prompts, scroll layouts, and section structures.
+                Production-tested starters with finished scroll layouts, copy structure, and palettes.
               </p>
             </div>
             <Link href="/presets">
@@ -342,7 +342,7 @@ export default function Home() {
             <span className="text-muted-foreground">Scales with you.</span>
           </h2>
           <p className="text-muted-foreground text-lg mb-10 max-w-xl mx-auto">
-            7-day free trial with 100 AI credits. No card required. Upgrade to unlock more sites, higher resolution, and custom domains.
+            Every template is free on every plan. No card required. Upgrade only to keep more websites saved.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link href="/create">
@@ -425,7 +425,7 @@ export default function Home() {
                 </div>
                 <span className="font-semibold">ScrollCraft</span>
               </div>
-              <p className="text-xs text-muted-foreground leading-relaxed">AI-powered scroll website builder with animated canvas backgrounds. Build cinematic sites in minutes.</p>
+              <p className="text-xs text-muted-foreground leading-relaxed">Ready-made cinematic scroll templates with animated canvas backgrounds. Ship a site in minutes.</p>
             </div>
             <div>
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-4">Product</p>
@@ -454,7 +454,7 @@ export default function Home() {
           </div>
           <div className="flex flex-col md:flex-row items-center justify-between pt-8 border-t border-white/5 gap-4">
             <p className="text-xs text-muted-foreground">© 2026 ScrollCraft. All rights reserved.</p>
-            <p className="text-xs text-muted-foreground">Built with Next.js & AI</p>
+            <p className="text-xs text-muted-foreground">Built with Next.js</p>
           </div>
         </div>
       </footer>

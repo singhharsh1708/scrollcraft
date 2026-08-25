@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   ArrowLeft, Download, Plus, Trash2, Eye, EyeOff, ChevronUp, ChevronDown,
   Sparkles, Layers, Settings, Type, Loader2, AlignLeft, AlignCenter, AlignRight,
-  MessageSquare, Send, X, Bot, Monitor, Tablet, Smartphone, Music, Volume2, VolumeX, Save,
+  Monitor, Tablet, Smartphone, Music, Volume2, VolumeX, Save,
   Undo2, Redo2, Copy
 } from "lucide-react";
 import { useScrollAudio } from "@/lib/useScrollAudio";
@@ -86,12 +86,6 @@ function EditorInner() {
   const [showPreview, setShowPreview] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
   const [isDemo, setIsDemo] = useState(initialIsDemo);
-  const [chatOpen, setChatOpen] = useState(false);
-  const [chatMessages, setChatMessages] = useState<{ role: "user" | "ai"; text: string }[]>([
-    { role: "ai", text: "Hi! I can edit your site for you. Try: \"Make it purple\", \"Center the text\", \"Change the heading to...\"" },
-  ]);
-  const [chatInput, setChatInput] = useState("");
-  const [chatLoading, setChatLoading] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [customHead, setCustomHead] = useState("");
   const [customCss, setCustomCss] = useState("");
@@ -512,49 +506,6 @@ function EditorInner() {
 
   const totalScrollHeight = sections.filter(s => s.visible).reduce((a, s) => a + s.scrollHeight, 0) + 1000;
 
-  const sendChat = async () => {
-    const text = chatInput.trim();
-    if (!text || chatLoading) return;
-    setChatInput("");
-    setChatMessages(m => [...m, { role: "user", text }]);
-    setChatLoading(true);
-    try {
-      const res = await fetch("/api/chat-edit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text, sections, selectedSectionId: selectedSection }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        // The route returns {error} with no message/updates for 401, 429, 400 and 413.
-        // Reading straight through rendered every one of those as a cheerful "Done!"
-        // while nothing changed — reachable from a long chat message or a big section.
-        setChatMessages(m => [...m, { role: "ai", text: data.error || "That didn't go through. Try again." }]);
-        return;
-      }
-      if (data.quotaExhausted) {
-        setChatMessages(m => [...m, {
-          role: "ai",
-          text: "You've used your AI design chats for this period, so I applied a basic edit instead. Upgrade for more.",
-        }]);
-      } else if (data.aiUnavailable) {
-        setChatMessages(m => [...m, { role: "ai", text: "The AI is unavailable right now — I applied a basic edit instead." }]);
-      }
-      if (data.updates?.length) {
-        // Route through commitSections so AI edits are a single undoable step.
-        commitSections(prev => prev.map(s => {
-          const updates = data.updates.filter((u: { id: string }) => u.id === s.id);
-          if (!updates.length) return s;
-          return updates.reduce((acc: Section, u: { field: string; value: string | number }) => ({ ...acc, [u.field]: u.value }), s);
-        }));
-      }
-      setChatMessages(m => [...m, { role: "ai", text: data.message || "Done!" }]);
-    } catch {
-      setChatMessages(m => [...m, { role: "ai", text: "Something went wrong. Try again." }]);
-    } finally {
-      setChatLoading(false);
-    }
-  };
 
   // handleSave/handleExport are re-created every render and read sections, frames
   // and siteName from their closure. The keydown listener below is registered once,
@@ -661,14 +612,6 @@ function EditorInner() {
           <div className="text-xs text-muted-foreground bg-white/5 px-2 py-1 rounded">
             <span ref={frameLabelRef}>Frame 1/{frameCount}</span>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setChatOpen(o => !o)}
-            className={`border-white/10 h-7 px-2 text-xs gap-1.5 ${chatOpen ? "border-primary/50 text-primary" : ""}`}
-          >
-            <MessageSquare className="w-3.5 h-3.5" /> AI Chat
-          </Button>
           <Button
             variant="outline"
             size="sm"
@@ -835,63 +778,6 @@ function EditorInner() {
                 <Loader2 className="w-8 h-8 text-primary animate-spin" />
               </div>
             )}
-          </div>
-        )}
-
-        {/* Chat panel */}
-        {chatOpen && (
-          <div className="w-72 border-l border-white/5 flex flex-col bg-card/30 flex-shrink-0">
-            <div className="p-3 border-b border-white/5 flex items-center justify-between">
-              <div className="flex items-center gap-2 text-sm font-medium">
-                <Bot className="w-3.5 h-3.5 text-primary" /> AI Editor
-              </div>
-              <button onClick={() => setChatOpen(false)} className="text-muted-foreground hover:text-foreground transition-colors">
-                <X className="w-3.5 h-3.5" />
-              </button>
-            </div>
-            <div className="flex-1 overflow-y-auto p-3 space-y-3" data-lenis-prevent>
-              {chatMessages.map((msg, i) => (
-                <div key={i} className={`flex gap-2 ${msg.role === "user" ? "flex-row-reverse" : ""}`}>
-                  <div className={`w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold mt-0.5 ${msg.role === "ai" ? "bg-primary/20 text-primary" : "bg-white/10 text-foreground"}`}>
-                    {msg.role === "ai" ? <Sparkles className="w-3 h-3" /> : "U"}
-                  </div>
-                  <div className={`max-w-[200px] rounded-xl px-3 py-2 text-xs leading-relaxed ${msg.role === "ai" ? "bg-white/5 text-foreground" : "bg-primary/20 text-foreground"}`}>
-                    {msg.text}
-                  </div>
-                </div>
-              ))}
-              {chatLoading && (
-                <div className="flex gap-2">
-                  <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
-                    <Sparkles className="w-3 h-3 text-primary" />
-                  </div>
-                  <div className="bg-white/5 rounded-xl px-3 py-2">
-                    <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />
-                  </div>
-                </div>
-              )}
-            </div>
-            <div className="p-3 border-t border-white/5">
-              <div className="flex gap-2">
-                <input
-                  value={chatInput}
-                  onChange={e => setChatInput(e.target.value)}
-                  onKeyDown={e => e.key === "Enter" && sendChat()}
-                  placeholder="Make it purple..."
-                  className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-primary/50 placeholder:text-muted-foreground"
-                />
-                <button
-                  onClick={sendChat}
-                  disabled={chatLoading || !chatInput.trim()}
-                  className="w-7 h-7 rounded-lg bg-primary hover:bg-primary/90 disabled:opacity-40 flex items-center justify-center flex-shrink-0 transition-colors"
-                >
-                  <Send className="w-3 h-3 text-white" />
-                </button>
-              </div>
-              <p className="text-xs text-muted-foreground mt-2 text-center">
-                Powered by Claude AI
-              </p>
-            </div>
           </div>
         )}
 

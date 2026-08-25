@@ -2,11 +2,8 @@ import { z } from "zod";
 
 const envSchema = z.object({
   // AI video providers — at least one should be set for real generation
-  LUMAAI_API_KEY: z.string().optional(),
-  RUNWAYML_API_KEY: z.string().optional(),
 
   // AI chat editing
-  ANTHROPIC_API_KEY: z.string().optional(),
 
   // Database
   DATABASE_URL: z.string().url().optional(),
@@ -143,6 +140,3 @@ export function getEnvIssues(): { errors: EnvIssue[]; warnings: EnvIssue[] } {
   return { errors: [...errors], warnings: [...warnings] };
 }
 
-export function isDemoMode(): boolean {
-  return !env.LUMAAI_API_KEY && !env.RUNWAYML_API_KEY;
-}

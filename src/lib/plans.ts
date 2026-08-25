@@ -1,5 +1,5 @@
 /**
- * Single source of truth for plan pricing and credit allowances.
+ * Single source of truth for plan pricing and the saved-website allowance.
  *
  * These lived in three places that had already drifted apart: the pricing page
  * rendered dollar amounts while the order endpoint charged rupees, and the
@@ -21,39 +21,35 @@ export interface Plan {
   annualPaise: number;
   /** Credits granted for the billing period. */
   credits: number;
-  /**
-   * AI design-change chats per billing period, as advertised on the pricing page.
-   * 0 means the AI editor is not included — those users still get the rule-based
-   * editor, which costs nothing to serve.
-   */
-  chatEdits: number;
+  /** Saved websites the plan allows. Enforced by POST /api/sites. */
+  sites: number;
   color: string;
 }
 
 export const PLANS: Record<PlanKey, Plan> = {
   FREE: {
     key: "FREE", name: "Free Trial", label: "Free Trial",
-    monthlyPaise: 0, annualPaise: 0, credits: 100, chatEdits: 0,
+    monthlyPaise: 0, annualPaise: 0, credits: 100, sites: 1,
     color: "text-muted-foreground",
   },
   BASIC: {
     key: "BASIC", name: "Basic", label: "Basic",
-    monthlyPaise: 199900, annualPaise: 159900, credits: 1500, chatEdits: 20,
+    monthlyPaise: 199900, annualPaise: 159900, credits: 1500, sites: 2,
     color: "text-blue-400",
   },
   BASIC_PLUS: {
     key: "BASIC_PLUS", name: "Basic Plus", label: "Basic Plus",
-    monthlyPaise: 299900, annualPaise: 239900, credits: 2500, chatEdits: 35,
+    monthlyPaise: 299900, annualPaise: 239900, credits: 2500, sites: 4,
     color: "text-cyan-400",
   },
   PRO: {
     key: "PRO", name: "Pro", label: "Pro",
-    monthlyPaise: 499900, annualPaise: 399900, credits: 6000, chatEdits: 40,
+    monthlyPaise: 499900, annualPaise: 399900, credits: 6000, sites: 7,
     color: "text-primary",
   },
   PREMIUM: {
     key: "PREMIUM", name: "Premium", label: "Premium",
-    monthlyPaise: 1499900, annualPaise: 1199900, credits: 25000, chatEdits: 160,
+    monthlyPaise: 1499900, annualPaise: 1199900, credits: 25000, sites: 30,
     color: "text-amber-400",
   },
 };

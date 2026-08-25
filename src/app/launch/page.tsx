@@ -13,7 +13,7 @@ const DISCOUNT = 30;
 const FEATURES = [
   {
     icon: Sparkles,
-    title: "AI-generated scroll frames",
+    title: "Ready-made scroll templates",
     desc: "Describe a visual vibe — noir cityscape, golden gradient, neon particles — and get 400+ canvas frames in seconds.",
   },
   {
@@ -47,7 +47,7 @@ const TESTIMONIALS = [
   {
     name: "Amara O.",
     role: "Consultant · Ghana",
-    quote: "My clients think I hired a design agency. I just type a prompt and export the ZIP.",
+    quote: "My clients think I hired a design agency. I pick a template, change the copy, and export the ZIP.",
   },
 ];
 
@@ -93,7 +93,7 @@ export default function LaunchPage() {
           </h1>
 
           <p className="text-xl text-muted-foreground mb-10 max-w-xl mx-auto">
-            AI-generated frames. Scroll-linked animation. Pure HTML export. No code, no WebGL, no dependencies.
+            Finished templates. Scroll-linked animation. Pure HTML export. No code, no WebGL, no dependencies.
           </p>
 
           {/* Promo code banner */}

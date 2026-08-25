@@ -4,6 +4,19 @@ import Navbar from "@/components/Navbar";
 
 const ENTRIES = [
   {
+    version: "v0.4.0",
+    date: "August 26, 2026",
+    tag: "Major",
+    tagColor: "bg-primary/15 text-primary border-primary/30",
+    changes: [
+      { type: "new", text: "Every template is free on every plan, including the free one" },
+      { type: "improved", text: "Paid plans now differ only by how many websites you keep saved, and that limit is enforced" },
+      { type: "removed", text: "AI chat editing and AI video generation — the product is a template library now" },
+      { type: "removed", text: "AI credits, which nothing consumed" },
+      { type: "fixed", text: "First-time sign-up through GitHub or Google, which failed for every new account" },
+    ],
+  },
+  {
     version: "v0.3.0",
     date: "June 7, 2026",
     tag: "Major",
@@ -110,7 +123,7 @@ export default function ChangelogPage() {
           <div className="w-5 h-5 rounded bg-primary/20 flex items-center justify-center">
             <Sparkles className="w-3 h-3 text-primary" />
           </div>
-          ScrollCraft — Built with Next.js & AI
+          ScrollCraft — Built with Next.js
         </div>
       </footer>
     </main>

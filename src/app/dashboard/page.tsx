@@ -38,10 +38,7 @@ export default function DashboardPage() {
   const [exportCount, setExportCount] = useState(0);
   const userPlanKey = (session?.user?.plan ?? "FREE") as string;
   const plan = planByKey(userPlanKey);
-  const totalCredits = plan.credits;
-  // credits in the DB is the *remaining* balance; used = max - remaining
-  const remainingCredits = session?.user?.credits ?? 0;
-  const usedCredits = Math.max(0, totalCredits - remainingCredits);
+  const siteLimit = plan.sites;
 
   useEffect(() => {
     if (status === "unauthenticated") router.push("/auth/signin");
@@ -137,17 +134,19 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Credits */}
+          {/* Plan */}
           <div className="p-6 rounded-2xl border border-white/8 bg-card space-y-3">
             <div className="flex items-center justify-between">
-              <p className="text-sm font-medium">AI Credits</p>
-              <span className="text-xs text-muted-foreground">{usedCredits.toLocaleString()} / {totalCredits.toLocaleString()}</span>
+              <p className="text-sm font-medium">Saved websites</p>
+              <span className="text-xs text-muted-foreground">{sites.length} / {siteLimit}</span>
             </div>
-            <Progress value={totalCredits > 0 ? (usedCredits / totalCredits) * 100 : 0} className="h-1.5" />
-            <p className="text-xs text-muted-foreground">{remainingCredits.toLocaleString()} credits remaining this month</p>
+            <Progress value={siteLimit > 0 ? Math.min(100, (sites.length / siteLimit) * 100) : 0} className="h-1.5" />
+            <p className="text-xs text-muted-foreground">
+              {Math.max(0, siteLimit - sites.length)} slot{siteLimit - sites.length === 1 ? "" : "s"} left on {plan.label}
+            </p>
             <Link href="/pricing">
               <Button size="sm" className="w-full bg-primary/15 hover:bg-primary/25 text-primary border-0 text-xs h-7 mt-1">
-                Get more credits
+                Upgrade for more
               </Button>
             </Link>
           </div>
@@ -159,7 +158,6 @@ export default function DashboardPage() {
             { label: "Sites created", value: sites.length, icon: Globe },
             { label: "Total frames", value: sites.reduce((a, s) => a + s.frameCount, 0), icon: ExternalLink },
             { label: "Exports", value: exportCount, icon: Download },
-            { label: "Credits used", value: usedCredits, icon: Zap },
           ].map(stat => (
             <div key={stat.label} className="p-5 rounded-2xl border border-white/8 bg-card">
               <div className="flex items-center gap-2 mb-2">
@@ -249,9 +247,9 @@ export default function DashboardPage() {
           <h2 className="text-lg font-bold tracking-tight mb-5">Quick actions</h2>
           <div className="grid md:grid-cols-3 gap-4">
             {[
-              { icon: Plus, title: "New site from scratch", desc: "Start with a custom AI prompt", href: "/create", color: "text-primary" },
+              { icon: Plus, title: "Start from a template", desc: "Pick a ready-made scroll site", href: "/presets", color: "text-primary" },
               { icon: Sparkles, title: "Browse presets", desc: "12 production-ready templates", href: "/presets", color: "text-violet-400" },
-              { icon: Zap, title: "Upgrade plan", desc: "More credits, more sites, 4K video", href: "/pricing", color: "text-amber-400" },
+              { icon: Zap, title: "Upgrade plan", desc: "Keep more websites saved", href: "/pricing", color: "text-amber-400" },
             ].map(action => (
               <Link key={action.title} href={action.href}>
                 <div className="p-5 rounded-2xl border border-white/8 bg-card hover:border-primary/30 transition-colors cursor-pointer group">
