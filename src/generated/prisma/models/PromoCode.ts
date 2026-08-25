@@ -427,10 +427,6 @@ export type PromoCodeSumOrderByAggregateInput = {
   uses?: Prisma.SortOrder
 }
 
-export type NullableDateTimeFieldUpdateOperationsInput = {
-  set?: Date | string | null
-}
-
 export type BoolFieldUpdateOperationsInput = {
   set?: boolean
 }
