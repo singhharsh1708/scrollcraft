@@ -1,0 +1,17 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "scrollcraft",
+  "description": "Cinematic scroll-driven websites, as a Claude Code skill and as a hosted builder.",
+  "owner": {
+    "name": "Harsh Singh",
+    "url": "https://github.com/singhharsh1708"
+  },
+  "plugins": [
+    {
+      "name": "scrollcraft",
+      "description": "Build scroll-scrubbed canvas websites from a video or image sequence, and export a self-contained static site.",
+      "source": "./plugins/scrollcraft",
+      "category": "web-design"
+    }
+  ]
+}

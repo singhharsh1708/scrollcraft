@@ -37,6 +37,61 @@ ScrollCraft removes all of that. You:
 - 💳 **Payments** — Razorpay subscriptions (INR) + Lemon Squeezy one‑time export purchases (global).
 - 🔒 **Production‑grade** — rate limiting, structured logging, security headers, Sentry, Zod‑validated APIs.
 
+## Two ways to use ScrollCraft
+
+**Hosted app** — describe a vibe, get generated frames, edit visually, export a ZIP. Best when
+you have no footage. See [Getting started](#getting-started) to run it.
+
+**Claude Code skill** — build the same kind of site on your machine, from your own video, with
+the whole thing in version control. No account, no server, no payment. Best when you already
+have footage.
+
+Both emit the identical bundle layout (`index.html` + `frames/frame_0000.jpg` upward), so a
+site built by the skill opens in the hosted editor and an exported ZIP can be rebuilt by the
+skill.
+
+### Installing the skill
+
+This repository is also a Claude Code plugin marketplace. From inside Claude Code:
+
+```
+/plugin marketplace add singhharsh1708/scrollcraft
+/plugin install scrollcraft@scrollcraft
+```
+
+Then just describe what you want — "build me a scroll site from hero.mp4" — and the skill
+activates. To confirm it registered, run `/plugin` and look for `scrollcraft`.
+
+Updating later:
+
+```
+/plugin marketplace update scrollcraft
+```
+
+### What the skill does
+
+`ffmpeg` is the only external requirement (`brew install ffmpeg`, or `apt install ffmpeg`).
+
+```bash
+# 1. video -> frame sequence, desktop + mobile
+node scripts/frames-from-video.mjs --input hero.mp4 --out frames \
+  --fps 24 --width 1920 --mobile-width 828 --mobile-out frames-mobile
+
+# 2. write scrollcraft.json describing your sections, then build
+node scripts/build-site.mjs --spec scrollcraft.json --out dist
+
+# 3. check it before shipping, then look at it
+node scripts/doctor.mjs --spec scrollcraft.json
+node scripts/serve.mjs --dir dist --port 4321
+```
+
+`dist/` is a static directory with no runtime dependencies and no external requests. Deploy it
+anywhere.
+
+Skill source lives in [plugins/scrollcraft/](plugins/scrollcraft/); the bundle invariants both
+halves rely on are written down in
+[references/export-contract.md](plugins/scrollcraft/skills/scrollcraft/references/export-contract.md).
+
 ## Tech stack
 
 | Layer | Technology |
