@@ -4,6 +4,19 @@ import Navbar from "@/components/Navbar";
 
 const ENTRIES = [
   {
+    version: "v0.5.0",
+    date: "August 26, 2026",
+    tag: "Major",
+    tagColor: "bg-primary/15 text-primary border-primary/30",
+    changes: [
+      { type: "new", text: "Publish — every site gets a hosted link at /s/your-site, one button from the dashboard" },
+      { type: "new", text: "Template library — 21 finished sites across 11 categories, free on every plan" },
+      { type: "new", text: "Templates carry real typography: Google Fonts pairings, type scales, and palettes that survive into the export" },
+      { type: "improved", text: "One browse surface — showcase and demos folded into /templates" },
+      { type: "fixed", text: "Scroll scrubbing finished early on tall viewports; the sequence now maps to the page's real height" },
+    ],
+  },
+  {
     version: "v0.4.0",
     date: "August 26, 2026",
     tag: "Major",

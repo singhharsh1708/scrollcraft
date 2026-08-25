@@ -1080,9 +1080,14 @@ export const SiteScalarFieldEnum = {
   frameCount: 'frameCount',
   framesJson: 'framesJson',
   sectionsJson: 'sectionsJson',
+  themeJson: 'themeJson',
+  styleJson: 'styleJson',
   customHead: 'customHead',
   customCss: 'customCss',
   audioUrl: 'audioUrl',
+  published: 'published',
+  publishSlug: 'publishSlug',
+  publishedAt: 'publishedAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -1261,6 +1266,13 @@ export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel,
 
 
 /**
+ * Reference to a field of type 'Boolean'
+ */
+export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
+    
+
+
+/**
  * Reference to a field of type 'PaymentStatus'
  */
 export type EnumPaymentStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PaymentStatus'>
@@ -1285,13 +1297,6 @@ export type EnumExportPurchaseStatusFieldRefInput<$PrismaModel> = FieldRefInputT
  * Reference to a field of type 'ExportPurchaseStatus[]'
  */
 export type ListEnumExportPurchaseStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ExportPurchaseStatus[]'>
-    
-
-
-/**
- * Reference to a field of type 'Boolean'
- */
-export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
     
 
 

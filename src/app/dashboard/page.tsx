@@ -19,6 +19,8 @@ interface Site {
   name: string;
   frameCount: number;
   fps: number;
+  published: boolean;
+  publishSlug: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -35,6 +37,7 @@ export default function DashboardPage() {
   // directly beside Edit in the hover row, and one misclick permanently destroyed the
   // site and its stored frames with no undo.
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [publishingId, setPublishingId] = useState<string | null>(null);
   const [exportCount, setExportCount] = useState(0);
   const userPlanKey = (session?.user?.plan ?? "FREE") as string;
   const plan = planByKey(userPlanKey);
@@ -66,6 +69,34 @@ export default function DashboardPage() {
       toast.error("Couldn't load your sites. Refresh to try again.");
     }).finally(() => setSitesLoading(false));
   }, [status]);
+
+  const togglePublish = async (site: Site) => {
+    setPublishingId(site.id);
+    try {
+      const res = await fetch(`/api/sites/${site.id}/publish`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: site.published ? "unpublish" : "publish" }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || "Couldn't update publishing");
+        return;
+      }
+      setSites((all) => all.map((s) =>
+        s.id === site.id ? { ...s, published: data.published, publishSlug: data.slug ?? s.publishSlug } : s
+      ));
+      if (data.published) {
+        const url = `${window.location.origin}/s/${data.slug}`;
+        await navigator.clipboard.writeText(url).catch(() => {});
+        toast.success("Published — link copied", { description: url });
+      } else {
+        toast.success("Unpublished");
+      }
+    } finally {
+      setPublishingId(null);
+    }
+  };
 
   const deleteSite = async (id: string) => {
     if (deletingId) return;
@@ -217,6 +248,25 @@ export default function DashboardPage() {
                   </div>
 
                   <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    {site.published && site.publishSlug && (
+                      <a href={`/s/${site.publishSlug}`} target="_blank" rel="noreferrer">
+                        <Button size="sm" variant="outline" className="border-white/10 h-7 px-2 text-xs gap-1">
+                          <ExternalLink className="w-3 h-3" /> View
+                        </Button>
+                      </a>
+                    )}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => togglePublish(site)}
+                      disabled={publishingId === site.id}
+                      className={`border-white/10 h-7 px-2 text-xs gap-1 ${site.published ? "text-emerald-400 border-emerald-500/30" : ""}`}
+                    >
+                      {publishingId === site.id
+                        ? <Loader2 className="w-3 h-3 animate-spin" />
+                        : <Globe className="w-3 h-3" />}
+                      {site.published ? "Published" : "Publish"}
+                    </Button>
                     <Link href={`/editor?siteId=${site.id}`}>
                       <Button size="sm" variant="outline" className="border-white/10 h-7 px-2 text-xs">
                         Edit

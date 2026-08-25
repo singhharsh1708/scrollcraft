@@ -100,6 +100,8 @@ function CreatePageInner() {
         frameCount: String(frames.length),
         fps: "24",
         name: templateLabel || STYLES.find(s => s.id === selectedStyle)?.label || selectedStyle,
+        style: selectedStyle,
+        c1: colors[0], c2: colors[1], c3: colors[2],
         ...(generateMobile ? { hasMobileFrames: "1" } : {}),
       });
       router.push(`/editor?${params.toString()}`);
