@@ -10,6 +10,9 @@ datasource db {
 model User {
   id        String   @id @default(cuid())
   email     String   @unique
+  // Written by the Auth.js adapter on every account creation, so the column must exist
+  // even though nothing in the app reads it.
+  emailVerified DateTime?
   name      String?
   image     String?
   plan      Plan     @default(FREE)
