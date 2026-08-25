@@ -1,5 +1,11 @@
 # `scrollcraft.json` reference
 
+The authoritative definition of a section is `src/lib/siteSchema.ts` in this repository. The
+hosted app validates every save against it and the exporter renders from it, so a spec the
+skill produces is the same shape the product stores. This page documents that schema; if the
+two ever disagree, the module is right.
+
+
 The spec is the single source of truth for a build. Paths inside it resolve relative to the
 spec file, not the working directory.
 

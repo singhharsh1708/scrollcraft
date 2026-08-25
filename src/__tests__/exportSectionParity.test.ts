@@ -1,0 +1,100 @@
+import { describe, it, expect, beforeEach, vi } from "vitest";
+import type { NextRequest } from "next/server";
+import { SECTION_LAYOUTS } from "@/lib/siteSchema";
+
+const dbMock = vi.hoisted(() => ({
+  exportPurchase: { findFirst: vi.fn() },
+  site: { findFirst: vi.fn() },
+}));
+const authMock = vi.hoisted(() => vi.fn());
+const rateLimitMock = vi.hoisted(() => vi.fn());
+
+vi.mock("@/lib/db", () => ({ db: dbMock }));
+vi.mock("@/auth", () => ({ auth: authMock }));
+vi.mock("@/lib/rateLimit", () => ({ rateLimit: rateLimitMock, getClientIp: () => "1.2.3.4" }));
+
+type Handler = typeof import("../app/api/export-site/route").POST;
+let POST: Handler;
+
+function exportRequest(body: Record<string, unknown>): NextRequest {
+  return new Request("https://scrollcraft.app/api/export-site", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body),
+  }) as unknown as NextRequest;
+}
+
+async function exportHtml(sections: unknown[]): Promise<string> {
+  const res = await POST(exportRequest({ sections, siteName: "Parity", frameCount: 10, fps: 24 }));
+  expect(res.status).toBe(200);
+  const json = await res.json();
+  expect(typeof json.html).toBe("string");
+  return json.html as string;
+}
+
+beforeEach(async () => {
+  vi.clearAllMocks();
+  rateLimitMock.mockResolvedValue({ allowed: true });
+  authMock.mockResolvedValue({ user: { id: "u1", email: "a@b.c", plan: "PRO" } });
+  ({ POST } = await import("../app/api/export-site/route"));
+});
+
+describe("exported sections keep every field the schema allows", () => {
+  it("renders each layout with its own alignment rather than centring everything", async () => {
+    const html = await exportHtml(
+      SECTION_LAYOUTS.map((layout, i) => ({ heading: `H${i}`, layout, scrollHeight: 1000 }))
+    );
+    expect(html).toContain("justify-content:flex-start");
+    expect(html).toContain("justify-content:flex-end");
+    expect(html).toContain("align-items:flex-end");
+    expect(html).toContain("align-items:flex-start");
+    expect(html).toContain("text-align:left");
+  });
+
+  it("renders a section image with its alt text", async () => {
+    const html = await exportHtml([{
+      heading: "With art",
+      image: "https://cdn.example.com/logo.png",
+      imageAlt: "Orrery logo",
+      scrollHeight: 1000,
+    }]);
+    expect(html).toContain('src="https://cdn.example.com/logo.png"');
+    expect(html).toContain('alt="Orrery logo"');
+  });
+
+  it("caps an oversized imageWidth", async () => {
+    const html = await exportHtml([{
+      heading: "Big", image: "https://cdn.example.com/a.png", imageAlt: "a", imageWidth: 99999, scrollHeight: 1000,
+    }]);
+    expect(html).toContain("max-width:min(100%, 1600px)");
+  });
+
+  it("drops a relative image, which would 404 inside the exported zip", async () => {
+    const html = await exportHtml([{
+      heading: "Local", image: "assets/img_00.png", imageAlt: "a", scrollHeight: 1000,
+    }]);
+    expect(html).not.toContain("assets/img_00.png");
+    expect(html).toContain("Local");
+  });
+
+  it("escapes hostile alt text", async () => {
+    const html = await exportHtml([{
+      heading: "X",
+      image: "https://cdn.example.com/a.png",
+      imageAlt: '"><script>alert(1)</script>',
+      scrollHeight: 1000,
+    }]);
+    expect(html).not.toContain("<script>alert(1)</script>");
+  });
+
+  it("still centres a legacy section that names no layout", async () => {
+    const html = await exportHtml([{ heading: "Legacy", scrollHeight: 1000 }]);
+    expect(html).toContain("justify-content:center");
+    expect(html).toContain("text-align:center");
+  });
+
+  it("keeps honouring an explicit align that overrides the layout", async () => {
+    const html = await exportHtml([{ heading: "X", layout: "center", align: "flex-end", scrollHeight: 1000 }]);
+    expect(html).toContain("align-items:flex-end");
+  });
+});

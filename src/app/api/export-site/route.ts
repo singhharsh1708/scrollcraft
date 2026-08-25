@@ -2,11 +2,29 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
+import { SECTION_LAYOUTS, type Section, visibleSections as onlyVisible } from "@/lib/siteSchema";
 
 function esc(s: unknown): string {
   return String(s ?? "")
           .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
           .replace(/"/g, "&quot;").replace(/'/g, "&#x27;");
+}
+
+const LAYOUTS: Record<(typeof SECTION_LAYOUTS)[number], { align: string; justify: string; textAlign: string; maxWidth: number; pad: string }> = {
+  center: { align: "center", justify: "center", textAlign: "center", maxWidth: 800, pad: "2rem" },
+  left: { align: "center", justify: "flex-start", textAlign: "left", maxWidth: 620, pad: "2rem clamp(2rem, 8vw, 8rem)" },
+  right: { align: "center", justify: "flex-end", textAlign: "left", maxWidth: 620, pad: "2rem clamp(2rem, 8vw, 8rem)" },
+  "lower-third": { align: "flex-end", justify: "flex-start", textAlign: "left", maxWidth: 900, pad: "0 clamp(2rem, 8vw, 8rem) clamp(3rem, 10vh, 7rem)" },
+  "upper-third": { align: "flex-start", justify: "center", textAlign: "center", maxWidth: 800, pad: "clamp(3rem, 12vh, 8rem) 2rem 0" },
+};
+
+function layoutFor(s: Section) {
+  return LAYOUTS[s.layout ?? "center"] ?? LAYOUTS.center;
+}
+
+function exportableImage(src: unknown): string | null {
+  const v = String(src ?? "");
+  return /^https:\/\//i.test(v) || /^http:\/\//i.test(v) ? v : null;
 }
 
 function safeCss(s: unknown): string {
@@ -166,22 +184,29 @@ export async function POST(req: NextRequest) {
     // The editor hides sections with visible === false in both its preview and its own
     // scroll-height total, but POSTs the unfiltered array. Exporting them shipped draft
     // copy verbatim and inflated the scroll track, desynchronizing every frame.
-    const visibleSections = (sections as Section[]).filter((s: Section) => s.visible !== false);
+    const visibleSections = onlyVisible(sections as Section[]);
     if (visibleSections.length === 0) {
       return NextResponse.json({ error: "At least one section must be visible to export" }, { status: 400 });
     }
 
-    const sectionsHtml = visibleSections.map((s: Section) => `
+    const sectionsHtml = visibleSections.map((s: Section) => {
+      const L = layoutFor(s);
+      const stack = L.textAlign === "center" ? "0 auto 1.5rem" : "0 0 1.5rem";
+      const imgSrc = exportableImage(s.image);
+      const imgWidth = Math.min(Number(s.imageWidth) || 480, 1600);
+      return `
     <section class="scroll-section" style="height:${Number(s.scrollHeight) || 1000}px; position:relative; z-index:10;">
-      <div class="section-sticky" style="position:sticky; top:0; height:100vh; display:flex; align-items:${safeCss(s.align || "center")}; justify-content:${safeCss(s.justify || "center")}; overflow:hidden;">
-        <div class="section-content" style="text-align:${safeCss(s.textAlign || "center")}; padding:2rem; max-width:800px; opacity:0; transform:translateY(32px); transition:opacity 0.6s cubic-bezier(0.25,0.46,0.45,0.94),transform 0.6s cubic-bezier(0.25,0.46,0.45,0.94);">
-          ${s.eyebrow ? `<p class="eyebrow" style="font-size:0.875rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:${safeCss(s.accentColor || "#a78bfa")}; margin-bottom:0.75rem;">${esc(s.eyebrow)}</p>` : ""}
+      <div class="section-sticky" style="position:sticky; top:0; height:100vh; display:flex; align-items:${safeCss(s.align || L.align)}; justify-content:${safeCss(s.justify || L.justify)}; overflow:hidden;">
+        <div class="section-content" style="text-align:${safeCss(s.textAlign || L.textAlign)}; padding:${L.pad}; max-width:${L.maxWidth}px; opacity:0; transform:translateY(32px); transition:opacity 0.6s cubic-bezier(0.25,0.46,0.45,0.94),transform 0.6s cubic-bezier(0.25,0.46,0.45,0.94);">
+          ${imgSrc ? `<img src="${esc(imgSrc)}" alt="${esc(s.imageAlt || "")}" style="display:block; max-width:min(100%, ${imgWidth}px); height:auto; margin:${stack};" />` : ""}
+          ${s.eyebrow ? `<p class="eyebrow" style="font-size:0.875rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:${safeCss(s.accentColor || "#ddd6fe")}; margin-bottom:0.75rem;">${esc(s.eyebrow)}</p>` : ""}
           ${s.heading ? `<h2 style="font-size:clamp(2rem,5vw,4rem); font-weight:900; line-height:1; letter-spacing:-0.03em; color:${safeCss(s.headingColor || "#ffffff")}; margin-bottom:1rem;">${esc(s.heading)}</h2>` : ""}
-          ${s.body ? `<p style="font-size:1.125rem; line-height:1.7; color:${safeCss(s.bodyColor || "rgba(255,255,255,0.7)")}; max-width:600px; margin:0 auto 1.5rem;">${esc(s.body)}</p>` : ""}
+          ${s.body ? `<p style="font-size:1.125rem; line-height:1.7; color:${safeCss(s.bodyColor || "rgba(255,255,255,0.72)")}; max-width:600px; margin:${stack};">${esc(s.body)}</p>` : ""}
           ${s.ctaLabel ? `<a href="${esc(safeHref(s.ctaHref || "#"))}" style="display:inline-block; background:${safeCss(s.accentColor || "#7c3aed")}; color:white; padding:0.875rem 2rem; border-radius:0.5rem; font-weight:600; text-decoration:none; font-size:1rem;">${esc(s.ctaLabel)}</a>` : ""}
         </div>
       </div>
-    </section>`).join("\n");
+    </section>`;
+    }).join("\n");
 
     const totalScrollHeight = visibleSections.reduce((acc: number, s: Section) => acc + (Number(s.scrollHeight) || 1000), 0) + 1000;
 
@@ -452,21 +477,4 @@ export async function POST(req: NextRequest) {
     console.error("export-site error:", err);
     return NextResponse.json({ error: "Export failed" }, { status: 500 });
   }
-}
-
-interface Section {
-  scrollHeight?: number;
-  align?: string;
-  justify?: string;
-  textAlign?: string;
-  accentColor?: string;
-  eyebrow?: string;
-  heading?: string;
-  headingColor?: string;
-  body?: string;
-  bodyColor?: string;
-  ctaLabel?: string;
-  ctaHref?: string;
-  /** Editor visibility toggle. Absent on older saved sites, which are treated as visible. */
-  visible?: boolean;
 }
