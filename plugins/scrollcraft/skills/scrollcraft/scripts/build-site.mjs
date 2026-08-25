@@ -17,6 +17,14 @@ const EXT_OK = new Set(Object.values(AUDIO_EXT));
 
 const IMAGE_EXT = new Set(["png", "jpg", "jpeg", "webp", "avif", "gif", "svg"]);
 
+const LAYOUTS = {
+  center: { align: "center", justify: "center", textAlign: "center", maxWidth: 800, pad: "2rem" },
+  left: { align: "center", justify: "flex-start", textAlign: "left", maxWidth: 620, pad: "2rem clamp(2rem, 8vw, 8rem)" },
+  right: { align: "center", justify: "flex-end", textAlign: "left", maxWidth: 620, pad: "2rem clamp(2rem, 8vw, 8rem)" },
+  "lower-third": { align: "flex-end", justify: "flex-start", textAlign: "left", maxWidth: 900, pad: "0 clamp(2rem, 8vw, 8rem) clamp(3rem, 10vh, 7rem)" },
+  "upper-third": { align: "flex-start", justify: "center", textAlign: "center", maxWidth: 800, pad: "clamp(3rem, 12vh, 8rem) 2rem 0" },
+};
+
 function fail(msg) {
   process.stderr.write("build-site: " + msg + "\n");
   process.exit(1);
@@ -85,28 +93,31 @@ function copyFrames(srcDir, outDir) {
 function renderSections(sections, images) {
   return sections.map((s, idx) => {
     const height = Number(s.scrollHeight) || 1000;
+    const L = LAYOUTS[s.layout] || LAYOUTS.center;
     const parts = [];
     const img = images.get(idx);
     if (img) {
       const w = Number(s.imageWidth);
       const cap = Number.isFinite(w) && w > 0 ? Math.min(w, 1600) : 480;
-      parts.push(`<img src="${esc(img)}" alt="${esc(s.imageAlt || "")}" style="display:block; max-width:min(100%, ${cap}px); height:auto; margin:0 auto 1.5rem;" />`);
+      const m = L.textAlign === "center" ? "0 auto 1.5rem" : "0 0 1.5rem";
+      parts.push(`<img src="${esc(img)}" alt="${esc(s.imageAlt || "")}" style="display:block; max-width:min(100%, ${cap}px); height:auto; margin:${m};" />`);
     }
     if (s.eyebrow) {
-      parts.push(`<p class="eyebrow" style="font-size:0.875rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:${safeCss(s.accentColor || "#a78bfa")}; margin-bottom:0.75rem;">${esc(s.eyebrow)}</p>`);
+      parts.push(`<p class="eyebrow" style="font-size:0.875rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:${safeCss(s.accentColor || "#ddd6fe")}; margin-bottom:0.75rem;">${esc(s.eyebrow)}</p>`);
     }
     if (s.heading) {
       parts.push(`<h2 style="font-size:clamp(2rem,5vw,4rem); font-weight:900; line-height:1; letter-spacing:-0.03em; color:${safeCss(s.headingColor || "#ffffff")}; margin-bottom:1rem;">${esc(s.heading)}</h2>`);
     }
+    const bodyMargin = L.textAlign === "center" ? "0 auto 1.5rem" : "0 0 1.5rem";
     if (s.body) {
-      parts.push(`<p style="font-size:1.125rem; line-height:1.7; color:${safeCss(s.bodyColor || "rgba(255,255,255,0.7)")}; max-width:600px; margin:0 auto 1.5rem;">${esc(s.body)}</p>`);
+      parts.push(`<p style="font-size:1.125rem; line-height:1.7; color:${safeCss(s.bodyColor || "rgba(255,255,255,0.72)")}; max-width:600px; margin:${bodyMargin};">${esc(s.body)}</p>`);
     }
     if (s.ctaLabel) {
       parts.push(`<a href="${esc(safeHref(s.ctaHref || "#"))}" style="display:inline-block; background:${safeCss(s.accentColor || "#7c3aed")}; color:#fff; padding:0.875rem 2rem; border-radius:0.5rem; font-weight:600; text-decoration:none; font-size:1rem;">${esc(s.ctaLabel)}</a>`);
     }
     return `    <section class="scroll-section" style="height:${height}px; position:relative; z-index:10;">
-      <div class="section-sticky" style="position:sticky; top:0; height:100vh; display:flex; align-items:${safeCss(s.align || "center")}; justify-content:${safeCss(s.justify || "center")}; overflow:hidden;">
-        <div class="section-content" style="text-align:${safeCss(s.textAlign || "center")}; padding:2rem; max-width:800px; opacity:0; transform:translateY(32px); transition:opacity 0.6s cubic-bezier(0.25,0.46,0.45,0.94),transform 0.6s cubic-bezier(0.25,0.46,0.45,0.94);">
+      <div class="section-sticky" style="position:sticky; top:0; height:100vh; display:flex; align-items:${safeCss(s.align || L.align)}; justify-content:${safeCss(s.justify || L.justify)}; overflow:hidden;">
+        <div class="section-content" style="text-align:${safeCss(s.textAlign || L.textAlign)}; padding:${L.pad}; max-width:${L.maxWidth}px; opacity:0; transform:translateY(32px); transition:opacity 0.6s cubic-bezier(0.25,0.46,0.45,0.94),transform 0.6s cubic-bezier(0.25,0.46,0.45,0.94);">
 ${parts.map((p) => "          " + p).join("\n")}
         </div>
       </div>
@@ -142,6 +153,22 @@ function main() {
 
   const sections = Array.isArray(spec.sections) ? spec.sections.filter((s) => s && s.visible !== false) : [];
   if (sections.length === 0) fail("spec needs at least one section with visible !== false");
+
+  sections.forEach((s, i) => {
+    if (s.layout !== undefined && !LAYOUTS[s.layout]) {
+      fail(`section ${i} has unknown layout "${s.layout}" (allowed: ${Object.keys(LAYOUTS).join(", ")})`);
+    }
+  });
+
+  if (sections.length > 2) {
+    const used = new Set(sections.map((s) => s.layout || "center"));
+    if (used.size === 1) {
+      process.stdout.write(
+        `note: all ${sections.length} sections use the "${[...used][0]}" layout, so every screen has the same shape. ` +
+        `Vary "layout" (${Object.keys(LAYOUTS).join(", ")}) so the page does not read as a template.\n`
+      );
+    }
+  }
 
   const desktopCount = countFrames(framesDir);
   if (desktopCount === 0) fail(`no frames found in ${framesDir} (expected frame_0000.jpg upward)`);
