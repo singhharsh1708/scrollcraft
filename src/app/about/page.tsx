@@ -8,11 +8,11 @@ import Navbar from "@/components/Navbar";
 
 const TEAM = [
   { name: "Harsh Singh", role: "Founder & Engineer", avatar: "HS", bio: "Building the future of no-code web experiences." },
-  { name: "AI", role: "Design Partner", avatar: "AI", bio: "Luma AI, Runway ML, and Fal.ai power our video generation." },
+  { name: "Templates", role: "The library", avatar: "TL", bio: "A growing catalogue of finished scroll sites, free on every plan." },
 ];
 
 const VALUES = [
-  { icon: Sparkles, title: "AI-first", desc: "Every feature starts with the question: how can AI make this 10x easier?" },
+  { icon: Sparkles, title: "Ready to ship", desc: "Every template is a finished site, not a blank canvas. Pick one and change the words." },
   { icon: Zap, title: "Ship fast", desc: "We release weekly. Features, fixes, and improvements every single week." },
   { icon: Globe, title: "Own your code", desc: "Everything you export belongs to you. No lock-in, ever." },
   { icon: Users, title: "Built for builders", desc: "Freelancers, founders, agencies — we build for people who make things." },
@@ -51,7 +51,7 @@ export default function AboutPage() {
               A solo founder launching a SaaS shouldn&apos;t have to learn WebGL to make an impression.
             </p>
             <p className="text-muted-foreground leading-relaxed">
-              ScrollCraft puts AI video generation, frame extraction, and a production-grade scroll engine 
+              ScrollCraft puts a library of finished templates, frame extraction, and a production-grade scroll engine 
               into a single tool — and gets out of your way.
             </p>
           </div>
@@ -132,7 +132,7 @@ export default function AboutPage() {
           <div className="w-5 h-5 rounded bg-primary/20 flex items-center justify-center">
             <Sparkles className="w-3 h-3 text-primary" />
           </div>
-          ScrollCraft — Built with Next.js & AI
+          ScrollCraft — Built with Next.js
         </div>
       </footer>
     </main>

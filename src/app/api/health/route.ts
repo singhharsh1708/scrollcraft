@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { env, getEnvIssues, isDemoMode } from "@/lib/env";
+import { env, getEnvIssues } from "@/lib/env";
 
 export async function GET() {
   const { errors, warnings } = getEnvIssues();
@@ -19,7 +19,6 @@ export async function GET() {
 
   const body: Record<string, unknown> = {
     status: healthy ? "ok" : "degraded",
-    mode: isDemoMode() ? "demo" : "production",
     checks: {
       database,
       config: errors.length > 0 ? "invalid" : warnings.length > 0 ? "incomplete" : "ok",

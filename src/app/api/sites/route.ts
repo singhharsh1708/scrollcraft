@@ -4,11 +4,13 @@ import { db } from "@/lib/db";
 import { auth } from "@/auth";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { parseSectionsJson } from "@/lib/siteSchema";
+import { planByKey } from "@/lib/plans";
 
 // The schema alone admits ~11 MB per call; without a cap a client could stream far more
 // before Zod ever sees it.
 const MAX_BODY_BYTES = 12_000_000;
-// Guards against a loop of `POST /api/sites` with no id filling the table with 10 MB rows.
+// Hard ceiling regardless of plan, so a loop of `POST /api/sites` with no id cannot fill
+// the table with 10 MB rows.
 const MAX_SITES_PER_USER = 100;
 
 const siteSchema = z.object({
@@ -64,7 +66,7 @@ export async function POST(req: NextRequest) {
 
   const user = await db.user.findUnique({
     where: { email: session.user.email },
-    select: { id: true },
+    select: { id: true, plan: true },
   });
   if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
 
@@ -111,9 +113,14 @@ export async function POST(req: NextRequest) {
 
   // Create new site
   const siteCount = await db.site.count({ where: { userId: user.id } });
-  if (siteCount >= MAX_SITES_PER_USER) {
+  const allowance = Math.min(planByKey(user.plan).sites, MAX_SITES_PER_USER);
+  if (siteCount >= allowance) {
     return NextResponse.json(
-      { error: `You've reached the limit of ${MAX_SITES_PER_USER} sites. Delete one to make room.` },
+      {
+        error: `Your plan keeps ${allowance} saved website${allowance === 1 ? "" : "s"}. Delete one or upgrade to make room.`,
+        code: "SITE_LIMIT",
+        allowance,
+      },
       { status: 409 }
     );
   }

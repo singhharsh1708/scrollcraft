@@ -2,10 +2,10 @@
 
 # ✦ ScrollCraft
 
-**Build cinematic scroll websites with AI — no code, pure HTML.**
+**Ready-made cinematic scroll websites — no code, pure HTML.**
 
-Describe a visual atmosphere, and ScrollCraft generates hundreds of scroll‑linked
-canvas frames, then exports a production‑ready HTML/CSS/JS ZIP you can deploy anywhere.
+Pick a template, change the words, and export a production‑ready HTML/CSS/JS ZIP you can
+deploy anywhere. Every template is free on every plan.
 
 [Live demo](https://scrollcraft-gilt.vercel.app) · [Report a bug](https://github.com/singhharsh1708/scrollcraft/issues) · [Request a feature](https://github.com/singhharsh1708/scrollcraft/issues)
 
@@ -21,20 +21,20 @@ or ship a heavy JavaScript framework that tanks your Lighthouse score.
 
 ScrollCraft removes all of that. You:
 
-1. **Describe a vibe** — *"neon rain cityscape"*, *"golden desert sunrise"*, *"brutalist grid"* — or upload your own video.
-2. **Get frames** — the engine produces a sequence of canvas frames mapped to scroll position.
-3. **Edit visually** — add sections, copy, CTAs, audio, custom CSS, and chat‑edit with AI.
+1. **Pick a template** — a finished scroll site with its own palette, pacing and copy structure. Or upload your own video.
+2. **Get frames** — the engine renders a sequence of canvas frames mapped to scroll position, in your browser.
+3. **Edit visually** — change sections, copy, CTAs, audio and custom CSS.
 4. **Export** — download a self‑contained ZIP (`index.html`, frames, audio). No runtime dependencies, deploys to any static host in under a minute.
 
 ## Features
 
 - 🎨 **Generated scroll frames** — pick a style (gradient, geometric, particles, wave) and a palette; the frame sequence is rendered in-browser on canvas, no API key required.
 - 🎬 **Scroll‑linked animation engine** — smooth canvas scrubbing, desktop + mobile frame sets.
-- 🤖 **AI chat editor** — *"make it purple"*, *"center the text"* — edits applied live.
+- 🧩 **Template library** — finished scroll sites by category, free on every plan.
 - 📦 **Pure HTML export** — zero dependencies, zero lock‑in, deploy anywhere.
 - 🎞️ **Bring your own video** — upload an MP4 or paste a URL; frames are extracted automatically.
 - 🔊 **Scroll‑synced audio** — attach a soundtrack that responds to scroll position.
-- 💳 **Payments** — Razorpay subscriptions (INR) + Lemon Squeezy one‑time export purchases (global).
+- 💳 **Payments** — Razorpay subscriptions (INR) + Lemon Squeezy one‑time purchases (global). Paid plans change how many websites you keep saved, not which templates you can use.
 - 🔒 **Production‑grade** — rate limiting, structured logging, security headers, Sentry, Zod‑validated APIs.
 
 ## Two ways to use ScrollCraft
@@ -162,9 +162,6 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
-> **Demo mode:** without an AI provider key, ScrollCraft runs in demo mode using placeholder
-> frames so you can explore the editor without any external services.
-
 ## Environment variables
 
 See [`.env.example`](.env.example) for the full list. The essentials:
@@ -176,8 +173,6 @@ See [`.env.example`](.env.example) for the full list. The essentials:
 | `AUTH_URL` | ✅ (prod) | Canonical app URL (`NEXTAUTH_URL` is accepted as a v4 alias) |
 | `AUTH_GITHUB_ID` / `AUTH_GITHUB_SECRET` | – | GitHub OAuth |
 | `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET` | – | Google OAuth |
-| `LUMAAI_API_KEY` / `RUNWAYML_API_KEY` | – | Text-to-video generation. The `/api/generate-video` route is implemented but not yet wired to any UI — frame generation currently runs on canvas in the browser. |
-| `ANTHROPIC_API_KEY` | – | AI chat editing |
 | `RAZORPAY_*` | – | Subscription payments |
 | `LEMONSQUEEZY_*` | – | One‑time export purchases |
 | `UPSTASH_REDIS_REST_*` | – | Distributed rate limiting |

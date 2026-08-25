@@ -15,136 +15,101 @@ const PLANS = [
     name: "Free Trial",
     monthly: 0,
     annual: 0,
-    description: "Try everything, no card needed",
+    description: "Every template, no card needed",
     badge: null,
     cta: "Start free",
     ctaVariant: "outline" as const,
     highlight: false,
-    credits: "100 AI credits",
+    allowance: "1 website",
     features: [
-      "100 AI credits",
-      "1 website",
-      "Free subdomain",
-      "720p video generation",
+      "Every template",
+      "1 saved website",
+      "Visual editor",
       "ZIP export",
       "Community support",
     ],
     missing: [
-      "Custom domain",
-      "Design-change chats",
-      "Image upscaling",
-      "Cloud save",
+      "More than one saved website",
+      "Priority support",
     ],
   },
   {
     name: "Basic",
     monthly: 25,
     annual: 20,
-    description: "Perfect for freelancers & side projects",
+    description: "For freelancers and side projects",
     badge: null,
     cta: "Get Basic",
     ctaVariant: "outline" as const,
     highlight: false,
-    credits: "1,500 credits / mo",
+    allowance: "2 websites",
     features: [
-      "1,500 AI credits / month",
-      "2 full scroll websites",
-      "Free subdomain",
-      "30 images / 15 videos",
-      "20 design-change chats",
-      "HD image generation",
-      "720p video generation",
+      "Every template",
+      "2 saved websites",
+      "Visual editor",
       "ZIP export",
       "Email support",
     ],
     missing: [
-      "Custom domain",
-      "1080p video generation",
-      "Image upscaling",
-      "Cloud save",
+      "Priority support",
     ],
   },
   {
     name: "Basic Plus",
-    monthly: 40,
-    annual: 32,
-    description: "More credits, more sites",
+    monthly: 37,
+    annual: 30,
+    description: "For people shipping more than one thing",
     badge: null,
     cta: "Get Basic Plus",
     ctaVariant: "outline" as const,
     highlight: false,
-    credits: "2,500 credits / mo",
+    allowance: "4 websites",
     features: [
-      "2,500 AI credits / month",
-      "4 full scroll websites",
-      "Free subdomain",
-      "50 images / 25 videos",
-      "35 design-change chats",
-      "HD image generation",
-      "720p video generation",
+      "Every template",
+      "4 saved websites",
+      "Visual editor",
       "ZIP export",
-      "Priority email support",
+      "Email support",
     ],
     missing: [
-      "Custom domain",
-      "1080p video generation",
-      "Image upscaling",
-      "Cloud save",
+      "Priority support",
     ],
   },
   {
     name: "Pro",
-    monthly: 60,
-    annual: 48,
-    description: "For serious builders & agencies",
-    badge: "Most Popular",
+    monthly: 62,
+    annual: 50,
+    description: "For studios and agencies",
+    badge: "Most popular",
     cta: "Get Pro",
     ctaVariant: "default" as const,
     highlight: true,
-    credits: "6,000 credits / mo",
+    allowance: "7 websites",
     features: [
-      "6,000 AI credits / month",
-      "7 full scroll websites",
-      "Free subdomain",
-      "Custom domain support",
-      "120 images / 60 videos",
-      "40 design-change chats",
-      "HD + 1080p video generation",
-      "All base AI models",
-      "Image upscaling",
+      "Every template",
+      "7 saved websites",
+      "Visual editor",
       "ZIP export",
       "Priority support",
     ],
-    missing: [
-      "4K video generation",
-      "Cloud save",
-      "Business OS",
-    ],
+    missing: [],
   },
   {
     name: "Premium",
-    monthly: 200,
-    annual: 160,
-    description: "Maximum power for power users",
+    monthly: 187,
+    annual: 150,
+    description: "For teams running many sites",
     badge: null,
     cta: "Get Premium",
     ctaVariant: "outline" as const,
     highlight: false,
-    credits: "25,000 credits / mo",
+    allowance: "30 websites",
     features: [
-      "25,000 AI credits / month",
-      "30 full scroll websites",
-      "Free subdomain",
-      "Custom domain support",
-      "500 images / 250 videos",
-      "160 design-change chats",
-      "HD + 1080p + 4K video",
-      "All base AI models",
-      "Image upscaling",
-      "Full cloud save",
-      "Business OS",
-      "REST API access",
-      "Dedicated support",
+      "Every template",
+      "30 saved websites",
+      "Visual editor",
+      "ZIP export",
+      "Priority support",
     ],
     missing: [],
   },
@@ -152,8 +117,12 @@ const PLANS = [
 
 const FAQ = [
   {
-    q: "What is an AI credit?",
-    a: "Credits are consumed when you generate images or videos. Roughly: 1 image = 1 credit, 1 video = 50 credits. Unused credits don't roll over.",
+    q: "Are the templates really free?",
+    a: "Yes. Every template is available on every plan, including the free one, and you can export any site you build to a ZIP you own outright.",
+  },
+  {
+    q: "What do the paid plans actually add?",
+    a: "How many websites you can keep saved in your account, and how quickly we answer support. Nothing about the templates themselves is gated.",
   },
   {
     q: "Can I cancel anytime?",
@@ -166,10 +135,6 @@ const FAQ = [
   {
     q: "Do I own the exported code?",
     a: "Yes, 100%. You can modify, host, resell, or white-label any site you export.",
-  },
-  {
-    q: "Can I bring my own AI API key?",
-    a: "Yes on Pro and above — connect your own Fal.ai, Gemini, or Luma AI key to use your own quota.",
   },
   {
     q: "Is there an enterprise plan?",
@@ -432,7 +397,7 @@ export default function PricingPage() {
               </div>
 
               <Badge variant="outline" className="border-primary/30 text-primary bg-primary/8 text-xs w-fit">
-                {plan.credits}
+                {plan.allowance}
               </Badge>
 
               <div className="mt-auto">
@@ -484,7 +449,7 @@ export default function PricingPage() {
           <div>
             <p className="font-semibold text-lg mb-1">Enterprise</p>
             <p className="text-muted-foreground text-sm max-w-md">
-              Custom scroll websites built for your brand by our team. White-label, dedicated infrastructure, SLA, and custom AI model training.
+              Custom scroll websites built for your brand by our team. White-label, dedicated infrastructure, and an SLA.
             </p>
           </div>
           <Link href="mailto:hello@scrollcraft.app">
@@ -512,17 +477,10 @@ export default function PricingPage() {
             </thead>
             <tbody>
               {[
-                { label: "AI credits / mo", values: ["100", "1,500", "2,500", "6,000", "25,000"] },
-                { label: "Websites", values: ["1", "2", "4", "7", "30"] },
-                { label: "Design-change chats", values: ["—", "20", "35", "40", "160"] },
-                { label: "Video resolution", values: ["720p", "720p", "720p", "1080p", "4K"] },
-                { label: "Image upscaling", values: [false, false, false, true, true] },
-                { label: "Custom domain", values: [false, false, false, true, true] },
-                { label: "Full cloud save", values: [false, false, false, false, true] },
-                { label: "REST API access", values: [false, false, false, false, true] },
-                { label: "Business OS", values: [false, false, false, false, true] },
+                { label: "Templates", values: ["All", "All", "All", "All", "All"] },
+                { label: "Saved websites", values: ["1", "2", "4", "7", "30"] },
+                { label: "Visual editor", values: [true, true, true, true, true] },
                 { label: "ZIP export", values: [true, true, true, true, true] },
-                { label: "Bring your own API key", values: [false, false, false, true, true] },
               ].map((row, i) => (
                 <tr key={row.label} className={`border-b border-white/5 ${i % 2 === 0 ? "" : "bg-white/2"}`}>
                   <td className="px-4 py-3 text-muted-foreground">{row.label}</td>
@@ -587,7 +545,7 @@ export default function PricingPage() {
           <div className="w-5 h-5 rounded bg-primary/20 flex items-center justify-center">
             <Sparkles className="w-3 h-3 text-primary" />
           </div>
-          ScrollCraft — Built with Next.js & AI
+          ScrollCraft — Built with Next.js
         </div>
       </footer>
     </main>
