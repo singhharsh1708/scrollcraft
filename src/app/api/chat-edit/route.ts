@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/auth";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
+import { colorSchema, ctaHrefSchema, sectionIdSchema, sectionSchema, type Section as SharedSection } from "@/lib/siteSchema";
 import { logger } from "@/lib/logger";
 import { db } from "@/lib/db";
 import { PLANS } from "@/lib/plans";
@@ -15,42 +16,13 @@ const MAX_MODEL_UPDATES = 50;
 const chatEditSchema = z.object({
   message: z.string().min(1).max(2000),
   selectedSectionId: z.string().max(100),
-  sections: z.array(z.object({
-    id: z.string().max(100),
-    heading: z.string().max(500).optional(),
-    body: z.string().max(5000).optional(),
-    eyebrow: z.string().max(200).optional(),
-    ctaLabel: z.string().max(200).optional(),
-    ctaHref: z.string().max(2000).optional(),
-    accentColor: z.string().max(50).optional(),
-    headingColor: z.string().max(50).optional(),
-    bodyColor: z.string().max(50).optional(),
-    scrollHeight: z.number().optional(),
-    textAlign: z.string().max(20).optional(),
-  })).max(50),
+  sections: z.array(sectionSchema.extend({ id: sectionIdSchema })).max(50),
 });
 
-interface Section {
-  id: string;
-  heading?: string;
-  body?: string;
-  eyebrow?: string;
-  ctaLabel?: string;
-  ctaHref?: string;
-  accentColor?: string;
-  headingColor?: string;
-  bodyColor?: string;
-  scrollHeight?: number;
-  textAlign?: string;
-}
+type Section = SharedSection & { id: string };
 
 // The model's output is applied straight to the user's document, so it is
 // treated as untrusted input: only these fields, types and ranges get through.
-const sectionIdSchema = z.string().min(1).max(100);
-const colorSchema = z.string().max(50)
-  .regex(/^(?:#[0-9a-fA-F]{3,8}|(?:rgb|hsl)a?\([\d\s.,%/]+\)|[a-zA-Z]{3,20})$/);
-const ctaHrefSchema = z.string().max(2000)
-  .refine(v => v === "" || /^(?:#|\/|\.{1,2}\/|https?:\/\/|mailto:|tel:)/i.test(v));
 
 const modelUpdateSchema = z.discriminatedUnion("field", [
   z.object({ id: sectionIdSchema, field: z.literal("heading"), value: z.string().max(500) }),

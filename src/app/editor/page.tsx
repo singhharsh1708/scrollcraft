@@ -20,26 +20,12 @@ import { useScrollAudio } from "@/lib/useScrollAudio";
 import Link from "next/link";
 import { toast } from "sonner";
 import dynamic from "next/dynamic";
+import type { EditorSection } from "@/lib/siteSchema";
 
 const ScrollEngine = dynamic(() => import("@/components/ScrollEngine"), { ssr: false });
 const ScrollSection = dynamic(() => import("@/components/ScrollSection"), { ssr: false });
 
-interface Section {
-  id: string;
-  eyebrow: string;
-  heading: string;
-  body: string;
-  ctaLabel: string;
-  ctaHref: string;
-  accentColor: string;
-  headingColor: string;
-  bodyColor: string;
-  textAlign: "left" | "center" | "right";
-  align: string;
-  justify: string;
-  scrollHeight: number;
-  visible: boolean;
-}
+type Section = EditorSection;
 
 const defaultSection = (i: number): Section => ({
   id: `section-${Date.now()}-${i}`,

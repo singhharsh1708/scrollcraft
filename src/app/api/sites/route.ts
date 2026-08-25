@@ -3,6 +3,7 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
+import { parseSectionsJson } from "@/lib/siteSchema";
 
 // The schema alone admits ~11 MB per call; without a cap a client could stream far more
 // before Zod ever sees it.
@@ -85,6 +86,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid request", details: parsed.error.flatten().fieldErrors }, { status: 400 });
   }
   const { id, name, fps, frameCount, framesJson, sectionsJson, customHead, customCss, audioUrl } = parsed.data;
+
+  if (sectionsJson !== undefined) {
+    const sections = parseSectionsJson(sectionsJson);
+    if (!sections.ok) {
+      return NextResponse.json(
+        { error: "Invalid request", details: { sectionsJson: [sections.error] } },
+        { status: 400 }
+      );
+    }
+  }
 
   if (id) {
     // Update existing site — verify ownership
