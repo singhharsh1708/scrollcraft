@@ -39,9 +39,17 @@ model Site {
   frameCount   Int      @default(0)
   framesJson   String?  @db.Text
   sectionsJson String?  @db.Text
+  // Theme (fonts, type scale, palette) and background recipe (style + colours), stored as
+  // data so the published page and the exporter can recompile them instead of needing the
+  // multi-megabyte frame set that never reaches the server.
+  themeJson    String?  @db.Text
+  styleJson    String?
   customHead   String?  @db.Text
   customCss    String?  @db.Text
   audioUrl     String?
+  published    Boolean  @default(false)
+  publishSlug  String?  @unique
+  publishedAt  DateTime?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 

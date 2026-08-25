@@ -4,6 +4,8 @@ import { db } from "@/lib/db";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { REVEALS, type Section, visibleSections as onlyVisible } from "@/lib/siteSchema";
 import { layoutStyle } from "@/lib/layoutStyles";
+import { parseThemeJson } from "@/lib/siteSchema";
+import { compileTheme, varsToCss } from "@/lib/themeCss";
 
 function esc(s: unknown): string {
   return String(s ?? "")
@@ -71,6 +73,7 @@ export async function POST(req: NextRequest) {
       siteName,
       customHead = "",
       customCss = "",
+      themeJson = "",
       fps = 24,
     } = body;
 
@@ -103,6 +106,7 @@ export async function POST(req: NextRequest) {
           sectionsJson: true,
           customHead: true,
           customCss: true,
+          themeJson: true,
         },
       });
       if (!site) {
@@ -119,6 +123,7 @@ export async function POST(req: NextRequest) {
       siteName = site.name;
       customHead = site.customHead ?? "";
       customCss = site.customCss ?? "";
+      themeJson = site.themeJson ?? "";
       fps = site.fps;
       // frameCount, mobileFrameCount and the audio flags stay request-sourced: those
       // assets never reach the server and are written into the ZIP by the browser, so
@@ -149,6 +154,13 @@ export async function POST(req: NextRequest) {
     // Scripts are allowed in customHead — the exported ZIP runs on the user's own domain,
     // not on scrollcraft.app, so injected scripts (e.g. GA, Hotjar) pose no XSS risk to us.
     const safeCustomHead = typeof customHead === "string" ? customHead : "";
+    const parsedTheme = themeJson ? parseThemeJson(themeJson) : null;
+    const compiledTheme = compileTheme(parsedTheme && parsedTheme.ok ? parsedTheme.value : null);
+    const themeFontLinks = compiledTheme.fontHref
+      ? `<link rel="preconnect" href="https://fonts.googleapis.com" />\n  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />\n  <link rel="stylesheet" href="${compiledTheme.fontHref}" />`
+      : "";
+    const themeVarsCss = varsToCss(compiledTheme.vars);
+
     const safeCustomCss = typeof customCss === "string"
       ? customCss.replace(/url\s*\(\s*["']?\s*javascript:/gi, "url(#").replace(/expression\s*\(/gi, "(")
                  .replace(/<\/style/gi, "<\\/style")
@@ -216,12 +228,14 @@ export async function POST(req: NextRequest) {
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  ${themeFontLinks}
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>${esc(siteName || "My ScrollCraft Site")}</title>
   <style>
+    ${themeVarsCss}
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html { scroll-behavior: auto; }
-    body { background: #000; color: #fff; font-family: system-ui, sans-serif; overflow-x: hidden; }
+    body { background: var(--sc-ground, #000); color: var(--sc-ink, #fff); font-family: var(--sc-font-body, system-ui, sans-serif); overflow-x: hidden; }
     #scroll-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
     #scroll-container { position: relative; height: ${totalScrollHeight}px; z-index: 1; pointer-events: none; }
     .scroll-section { pointer-events: none; }

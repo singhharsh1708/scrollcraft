@@ -24,12 +24,14 @@ const PLANS = [
     features: [
       "Every template",
       "1 saved website",
+      "Publish to a hosted link, with a ScrollCraft badge",
       "Visual editor",
       "ZIP export",
       "Community support",
     ],
     missing: [
       "More than one saved website",
+      "Badge-free published pages",
       "Priority support",
     ],
   },
@@ -46,6 +48,7 @@ const PLANS = [
     features: [
       "Every template",
       "2 saved websites",
+      "Publish to a hosted link, badge-free",
       "Visual editor",
       "ZIP export",
       "Email support",
@@ -67,6 +70,7 @@ const PLANS = [
     features: [
       "Every template",
       "4 saved websites",
+      "Publish to a hosted link, badge-free",
       "Visual editor",
       "ZIP export",
       "Email support",
@@ -88,6 +92,7 @@ const PLANS = [
     features: [
       "Every template",
       "7 saved websites",
+      "Publish to a hosted link, badge-free",
       "Visual editor",
       "ZIP export",
       "Priority support",
@@ -107,6 +112,7 @@ const PLANS = [
     features: [
       "Every template",
       "30 saved websites",
+      "Publish to a hosted link, badge-free",
       "Visual editor",
       "ZIP export",
       "Priority support",
@@ -122,7 +128,7 @@ const FAQ = [
   },
   {
     q: "What do the paid plans actually add?",
-    a: "How many websites you can keep saved in your account, and how quickly we answer support. Nothing about the templates themselves is gated.",
+    a: "How many websites you can keep saved and published, badge-free published pages that search engines index, and how quickly we answer support. Nothing about the templates themselves is gated.",
   },
   {
     q: "Can I cancel anytime?",
@@ -479,6 +485,8 @@ export default function PricingPage() {
               {[
                 { label: "Templates", values: ["All", "All", "All", "All", "All"] },
                 { label: "Saved websites", values: ["1", "2", "4", "7", "30"] },
+                { label: "Published sites", values: ["1", "2", "4", "7", "30"] },
+                { label: "Badge-free pages", values: [false, true, true, true, true] },
                 { label: "Visual editor", values: [true, true, true, true, true] },
                 { label: "ZIP export", values: [true, true, true, true, true] },
               ].map((row, i) => (

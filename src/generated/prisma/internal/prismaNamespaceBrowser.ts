@@ -102,9 +102,14 @@ export const SiteScalarFieldEnum = {
   frameCount: 'frameCount',
   framesJson: 'framesJson',
   sectionsJson: 'sectionsJson',
+  themeJson: 'themeJson',
+  styleJson: 'styleJson',
   customHead: 'customHead',
   customCss: 'customCss',
   audioUrl: 'audioUrl',
+  published: 'published',
+  publishSlug: 'publishSlug',
+  publishedAt: 'publishedAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

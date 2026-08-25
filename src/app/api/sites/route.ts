@@ -3,7 +3,7 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
-import { parseSectionsJson } from "@/lib/siteSchema";
+import { parseSectionsJson, parseStyleJson, parseThemeJson } from "@/lib/siteSchema";
 import { planByKey } from "@/lib/plans";
 
 // The schema alone admits ~11 MB per call; without a cap a client could stream far more
@@ -20,6 +20,8 @@ const siteSchema = z.object({
   frameCount: z.number().int().min(0).optional(),
   framesJson: z.string().max(10_000_000).optional(),
   sectionsJson: z.string().max(1_000_000).optional(),
+  themeJson: z.string().max(5_000).optional(),
+  styleJson: z.string().max(500).optional(),
   customHead: z.string().max(50_000).optional(),
   customCss: z.string().max(50_000).optional(),
   audioUrl: z.string().url().max(2000).optional().or(z.literal("")),
@@ -41,7 +43,7 @@ export async function GET() {
   const sites = await db.site.findMany({
     where: { userId: user.id },
     orderBy: { updatedAt: "desc" },
-    select: { id: true, name: true, frameCount: true, fps: true, createdAt: true, updatedAt: true },
+    select: { id: true, name: true, frameCount: true, fps: true, published: true, publishSlug: true, createdAt: true, updatedAt: true },
   });
 
   return NextResponse.json({ sites });
@@ -87,13 +89,31 @@ export async function POST(req: NextRequest) {
   if (!parsed.success) {
     return NextResponse.json({ error: "Invalid request", details: parsed.error.flatten().fieldErrors }, { status: 400 });
   }
-  const { id, name, fps, frameCount, framesJson, sectionsJson, customHead, customCss, audioUrl } = parsed.data;
+  const { id, name, fps, frameCount, framesJson, sectionsJson, themeJson, styleJson, customHead, customCss, audioUrl } = parsed.data;
 
   if (sectionsJson !== undefined) {
     const sections = parseSectionsJson(sectionsJson);
     if (!sections.ok) {
       return NextResponse.json(
         { error: "Invalid request", details: { sectionsJson: [sections.error] } },
+        { status: 400 }
+      );
+    }
+  }
+  if (themeJson !== undefined) {
+    const theme = parseThemeJson(themeJson);
+    if (!theme.ok) {
+      return NextResponse.json(
+        { error: "Invalid request", details: { themeJson: [theme.error] } },
+        { status: 400 }
+      );
+    }
+  }
+  if (styleJson !== undefined) {
+    const style = parseStyleJson(styleJson);
+    if (!style.ok) {
+      return NextResponse.json(
+        { error: "Invalid request", details: { styleJson: [style.error] } },
         { status: 400 }
       );
     }
@@ -106,7 +126,7 @@ export async function POST(req: NextRequest) {
 
     const site = await db.site.update({
       where: { id },
-      data: { name, fps, frameCount, framesJson, sectionsJson, customHead, customCss, audioUrl },
+      data: { name, fps, frameCount, framesJson, sectionsJson, themeJson, styleJson, customHead, customCss, audioUrl },
     });
     return NextResponse.json({ site });
   }
@@ -126,7 +146,7 @@ export async function POST(req: NextRequest) {
   }
 
   const site = await db.site.create({
-    data: { userId: user.id, name, fps, frameCount, framesJson, sectionsJson, customHead, customCss, audioUrl },
+    data: { userId: user.id, name, fps, frameCount, framesJson, sectionsJson, themeJson, styleJson, customHead, customCss, audioUrl },
   });
   return NextResponse.json({ site });
 }

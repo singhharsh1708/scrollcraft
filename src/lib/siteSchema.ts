@@ -24,6 +24,65 @@ export const imageSrcSchema = z.string().max(2000)
     message: "image must be an http(s) URL or a relative path",
   });
 
+export const TYPE_SCALE_KEYS = ["compact", "editorial", "poster"] as const;
+
+export const BACKGROUND_STYLES = ["gradient", "geometric", "particles", "wave"] as const;
+
+// The family name is interpolated into a Google Fonts stylesheet URL, so the charset is
+// constrained rather than escaped.
+export const fontFamilySchema = z.string().min(1).max(60).regex(/^[A-Za-z0-9][A-Za-z0-9 ]*$/);
+
+export const themeSchema = z.object({
+  fontDisplay: fontFamilySchema.optional(),
+  fontBody: fontFamilySchema.optional(),
+  scale: z.enum(TYPE_SCALE_KEYS).optional(),
+  displayWeight: z.number().int().min(100).max(900).optional(),
+  displayCase: z.enum(["none", "upper"]).optional(),
+  displayTracking: z.number().min(-0.08).max(0.4).optional(),
+  ink: colorSchema.optional(),
+  muted: colorSchema.optional(),
+  accent: colorSchema.optional(),
+  accentText: colorSchema.optional(),
+  ground: colorSchema.optional(),
+  radius: z.number().min(0).max(64).optional(),
+}).strip();
+
+export type Theme = z.infer<typeof themeSchema>;
+
+export const siteStyleSchema = z.object({
+  style: z.enum(BACKGROUND_STYLES),
+  colors: z.tuple([colorSchema, colorSchema, colorSchema]),
+}).strip();
+
+export type SiteStyle = z.infer<typeof siteStyleSchema>;
+
+export type JsonParse<T> = { ok: true; value: T } | { ok: false; error: string };
+
+function parseJsonField<T>(raw: unknown, name: string, schema: z.ZodType<T>): JsonParse<T> {
+  if (typeof raw !== "string") return { ok: false, error: `${name} must be a string` };
+  let decoded: unknown;
+  try {
+    decoded = JSON.parse(raw);
+  } catch {
+    return { ok: false, error: `${name} is not valid JSON` };
+  }
+  const parsed = schema.safeParse(decoded);
+  if (!parsed.success) {
+    const issue = parsed.error.issues[0];
+    const where = issue?.path?.length ? issue.path.join(".") : name;
+    return { ok: false, error: `${where}: ${issue?.message ?? "invalid"}` };
+  }
+  return { ok: true, value: parsed.data };
+}
+
+export function parseThemeJson(raw: unknown): JsonParse<Theme> {
+  return parseJsonField(raw, "themeJson", themeSchema);
+}
+
+export function parseStyleJson(raw: unknown): JsonParse<SiteStyle> {
+  return parseJsonField(raw, "styleJson", siteStyleSchema);
+}
+
 export const sectionSchema = z.object({
   id: sectionIdSchema.optional(),
   layout: z.enum(SECTION_LAYOUTS).optional(),

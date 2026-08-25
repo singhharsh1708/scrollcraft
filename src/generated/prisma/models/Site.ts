@@ -44,9 +44,14 @@ export type SiteMinAggregateOutputType = {
   frameCount: number | null
   framesJson: string | null
   sectionsJson: string | null
+  themeJson: string | null
+  styleJson: string | null
   customHead: string | null
   customCss: string | null
   audioUrl: string | null
+  published: boolean | null
+  publishSlug: string | null
+  publishedAt: Date | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -59,9 +64,14 @@ export type SiteMaxAggregateOutputType = {
   frameCount: number | null
   framesJson: string | null
   sectionsJson: string | null
+  themeJson: string | null
+  styleJson: string | null
   customHead: string | null
   customCss: string | null
   audioUrl: string | null
+  published: boolean | null
+  publishSlug: string | null
+  publishedAt: Date | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -74,9 +84,14 @@ export type SiteCountAggregateOutputType = {
   frameCount: number
   framesJson: number
   sectionsJson: number
+  themeJson: number
+  styleJson: number
   customHead: number
   customCss: number
   audioUrl: number
+  published: number
+  publishSlug: number
+  publishedAt: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -101,9 +116,14 @@ export type SiteMinAggregateInputType = {
   frameCount?: true
   framesJson?: true
   sectionsJson?: true
+  themeJson?: true
+  styleJson?: true
   customHead?: true
   customCss?: true
   audioUrl?: true
+  published?: true
+  publishSlug?: true
+  publishedAt?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -116,9 +136,14 @@ export type SiteMaxAggregateInputType = {
   frameCount?: true
   framesJson?: true
   sectionsJson?: true
+  themeJson?: true
+  styleJson?: true
   customHead?: true
   customCss?: true
   audioUrl?: true
+  published?: true
+  publishSlug?: true
+  publishedAt?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -131,9 +156,14 @@ export type SiteCountAggregateInputType = {
   frameCount?: true
   framesJson?: true
   sectionsJson?: true
+  themeJson?: true
+  styleJson?: true
   customHead?: true
   customCss?: true
   audioUrl?: true
+  published?: true
+  publishSlug?: true
+  publishedAt?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -233,9 +263,14 @@ export type SiteGroupByOutputType = {
   frameCount: number
   framesJson: string | null
   sectionsJson: string | null
+  themeJson: string | null
+  styleJson: string | null
   customHead: string | null
   customCss: string | null
   audioUrl: string | null
+  published: boolean
+  publishSlug: string | null
+  publishedAt: Date | null
   createdAt: Date
   updatedAt: Date
   _count: SiteCountAggregateOutputType | null
@@ -271,9 +306,14 @@ export type SiteWhereInput = {
   frameCount?: Prisma.IntFilter<"Site"> | number
   framesJson?: Prisma.StringNullableFilter<"Site"> | string | null
   sectionsJson?: Prisma.StringNullableFilter<"Site"> | string | null
+  themeJson?: Prisma.StringNullableFilter<"Site"> | string | null
+  styleJson?: Prisma.StringNullableFilter<"Site"> | string | null
   customHead?: Prisma.StringNullableFilter<"Site"> | string | null
   customCss?: Prisma.StringNullableFilter<"Site"> | string | null
   audioUrl?: Prisma.StringNullableFilter<"Site"> | string | null
+  published?: Prisma.BoolFilter<"Site"> | boolean
+  publishSlug?: Prisma.StringNullableFilter<"Site"> | string | null
+  publishedAt?: Prisma.DateTimeNullableFilter<"Site"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"Site"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Site"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
@@ -288,9 +328,14 @@ export type SiteOrderByWithRelationInput = {
   frameCount?: Prisma.SortOrder
   framesJson?: Prisma.SortOrderInput | Prisma.SortOrder
   sectionsJson?: Prisma.SortOrderInput | Prisma.SortOrder
+  themeJson?: Prisma.SortOrderInput | Prisma.SortOrder
+  styleJson?: Prisma.SortOrderInput | Prisma.SortOrder
   customHead?: Prisma.SortOrderInput | Prisma.SortOrder
   customCss?: Prisma.SortOrderInput | Prisma.SortOrder
   audioUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  published?: Prisma.SortOrder
+  publishSlug?: Prisma.SortOrderInput | Prisma.SortOrder
+  publishedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   user?: Prisma.UserOrderByWithRelationInput
@@ -299,6 +344,7 @@ export type SiteOrderByWithRelationInput = {
 
 export type SiteWhereUniqueInput = Prisma.AtLeast<{
   id?: string
+  publishSlug?: string
   AND?: Prisma.SiteWhereInput | Prisma.SiteWhereInput[]
   OR?: Prisma.SiteWhereInput[]
   NOT?: Prisma.SiteWhereInput | Prisma.SiteWhereInput[]
@@ -308,14 +354,18 @@ export type SiteWhereUniqueInput = Prisma.AtLeast<{
   frameCount?: Prisma.IntFilter<"Site"> | number
   framesJson?: Prisma.StringNullableFilter<"Site"> | string | null
   sectionsJson?: Prisma.StringNullableFilter<"Site"> | string | null
+  themeJson?: Prisma.StringNullableFilter<"Site"> | string | null
+  styleJson?: Prisma.StringNullableFilter<"Site"> | string | null
   customHead?: Prisma.StringNullableFilter<"Site"> | string | null
   customCss?: Prisma.StringNullableFilter<"Site"> | string | null
   audioUrl?: Prisma.StringNullableFilter<"Site"> | string | null
+  published?: Prisma.BoolFilter<"Site"> | boolean
+  publishedAt?: Prisma.DateTimeNullableFilter<"Site"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"Site"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Site"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   exportPurchases?: Prisma.ExportPurchaseListRelationFilter
-}, "id">
+}, "id" | "publishSlug">
 
 export type SiteOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -325,9 +375,14 @@ export type SiteOrderByWithAggregationInput = {
   frameCount?: Prisma.SortOrder
   framesJson?: Prisma.SortOrderInput | Prisma.SortOrder
   sectionsJson?: Prisma.SortOrderInput | Prisma.SortOrder
+  themeJson?: Prisma.SortOrderInput | Prisma.SortOrder
+  styleJson?: Prisma.SortOrderInput | Prisma.SortOrder
   customHead?: Prisma.SortOrderInput | Prisma.SortOrder
   customCss?: Prisma.SortOrderInput | Prisma.SortOrder
   audioUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  published?: Prisma.SortOrder
+  publishSlug?: Prisma.SortOrderInput | Prisma.SortOrder
+  publishedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.SiteCountOrderByAggregateInput
@@ -348,9 +403,14 @@ export type SiteScalarWhereWithAggregatesInput = {
   frameCount?: Prisma.IntWithAggregatesFilter<"Site"> | number
   framesJson?: Prisma.StringNullableWithAggregatesFilter<"Site"> | string | null
   sectionsJson?: Prisma.StringNullableWithAggregatesFilter<"Site"> | string | null
+  themeJson?: Prisma.StringNullableWithAggregatesFilter<"Site"> | string | null
+  styleJson?: Prisma.StringNullableWithAggregatesFilter<"Site"> | string | null
   customHead?: Prisma.StringNullableWithAggregatesFilter<"Site"> | string | null
   customCss?: Prisma.StringNullableWithAggregatesFilter<"Site"> | string | null
   audioUrl?: Prisma.StringNullableWithAggregatesFilter<"Site"> | string | null
+  published?: Prisma.BoolWithAggregatesFilter<"Site"> | boolean
+  publishSlug?: Prisma.StringNullableWithAggregatesFilter<"Site"> | string | null
+  publishedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Site"> | Date | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Site"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Site"> | Date | string
 }
@@ -362,9 +422,14 @@ export type SiteCreateInput = {
   frameCount?: number
   framesJson?: string | null
   sectionsJson?: string | null
+  themeJson?: string | null
+  styleJson?: string | null
   customHead?: string | null
   customCss?: string | null
   audioUrl?: string | null
+  published?: boolean
+  publishSlug?: string | null
+  publishedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutSitesInput
@@ -379,9 +444,14 @@ export type SiteUncheckedCreateInput = {
   frameCount?: number
   framesJson?: string | null
   sectionsJson?: string | null
+  themeJson?: string | null
+  styleJson?: string | null
   customHead?: string | null
   customCss?: string | null
   audioUrl?: string | null
+  published?: boolean
+  publishSlug?: string | null
+  publishedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   exportPurchases?: Prisma.ExportPurchaseUncheckedCreateNestedManyWithoutSiteInput
@@ -394,9 +464,14 @@ export type SiteUpdateInput = {
   frameCount?: Prisma.IntFieldUpdateOperationsInput | number
   framesJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sectionsJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  themeJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  styleJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customHead?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customCss?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   audioUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  published?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  publishSlug?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutSitesNestedInput
@@ -411,9 +486,14 @@ export type SiteUncheckedUpdateInput = {
   frameCount?: Prisma.IntFieldUpdateOperationsInput | number
   framesJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sectionsJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  themeJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  styleJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customHead?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customCss?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   audioUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  published?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  publishSlug?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   exportPurchases?: Prisma.ExportPurchaseUncheckedUpdateManyWithoutSiteNestedInput
@@ -427,9 +507,14 @@ export type SiteCreateManyInput = {
   frameCount?: number
   framesJson?: string | null
   sectionsJson?: string | null
+  themeJson?: string | null
+  styleJson?: string | null
   customHead?: string | null
   customCss?: string | null
   audioUrl?: string | null
+  published?: boolean
+  publishSlug?: string | null
+  publishedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -441,9 +526,14 @@ export type SiteUpdateManyMutationInput = {
   frameCount?: Prisma.IntFieldUpdateOperationsInput | number
   framesJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sectionsJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  themeJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  styleJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customHead?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customCss?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   audioUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  published?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  publishSlug?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -456,9 +546,14 @@ export type SiteUncheckedUpdateManyInput = {
   frameCount?: Prisma.IntFieldUpdateOperationsInput | number
   framesJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sectionsJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  themeJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  styleJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customHead?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customCss?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   audioUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  published?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  publishSlug?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -481,9 +576,14 @@ export type SiteCountOrderByAggregateInput = {
   frameCount?: Prisma.SortOrder
   framesJson?: Prisma.SortOrder
   sectionsJson?: Prisma.SortOrder
+  themeJson?: Prisma.SortOrder
+  styleJson?: Prisma.SortOrder
   customHead?: Prisma.SortOrder
   customCss?: Prisma.SortOrder
   audioUrl?: Prisma.SortOrder
+  published?: Prisma.SortOrder
+  publishSlug?: Prisma.SortOrder
+  publishedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -501,9 +601,14 @@ export type SiteMaxOrderByAggregateInput = {
   frameCount?: Prisma.SortOrder
   framesJson?: Prisma.SortOrder
   sectionsJson?: Prisma.SortOrder
+  themeJson?: Prisma.SortOrder
+  styleJson?: Prisma.SortOrder
   customHead?: Prisma.SortOrder
   customCss?: Prisma.SortOrder
   audioUrl?: Prisma.SortOrder
+  published?: Prisma.SortOrder
+  publishSlug?: Prisma.SortOrder
+  publishedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -516,9 +621,14 @@ export type SiteMinOrderByAggregateInput = {
   frameCount?: Prisma.SortOrder
   framesJson?: Prisma.SortOrder
   sectionsJson?: Prisma.SortOrder
+  themeJson?: Prisma.SortOrder
+  styleJson?: Prisma.SortOrder
   customHead?: Prisma.SortOrder
   customCss?: Prisma.SortOrder
   audioUrl?: Prisma.SortOrder
+  published?: Prisma.SortOrder
+  publishSlug?: Prisma.SortOrder
+  publishedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -575,6 +685,10 @@ export type SiteUncheckedUpdateManyWithoutUserNestedInput = {
   deleteMany?: Prisma.SiteScalarWhereInput | Prisma.SiteScalarWhereInput[]
 }
 
+export type BoolFieldUpdateOperationsInput = {
+  set?: boolean
+}
+
 export type SiteCreateNestedOneWithoutExportPurchasesInput = {
   create?: Prisma.XOR<Prisma.SiteCreateWithoutExportPurchasesInput, Prisma.SiteUncheckedCreateWithoutExportPurchasesInput>
   connectOrCreate?: Prisma.SiteCreateOrConnectWithoutExportPurchasesInput
@@ -596,9 +710,14 @@ export type SiteCreateWithoutUserInput = {
   frameCount?: number
   framesJson?: string | null
   sectionsJson?: string | null
+  themeJson?: string | null
+  styleJson?: string | null
   customHead?: string | null
   customCss?: string | null
   audioUrl?: string | null
+  published?: boolean
+  publishSlug?: string | null
+  publishedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   exportPurchases?: Prisma.ExportPurchaseCreateNestedManyWithoutSiteInput
@@ -611,9 +730,14 @@ export type SiteUncheckedCreateWithoutUserInput = {
   frameCount?: number
   framesJson?: string | null
   sectionsJson?: string | null
+  themeJson?: string | null
+  styleJson?: string | null
   customHead?: string | null
   customCss?: string | null
   audioUrl?: string | null
+  published?: boolean
+  publishSlug?: string | null
+  publishedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   exportPurchases?: Prisma.ExportPurchaseUncheckedCreateNestedManyWithoutSiteInput
@@ -656,9 +780,14 @@ export type SiteScalarWhereInput = {
   frameCount?: Prisma.IntFilter<"Site"> | number
   framesJson?: Prisma.StringNullableFilter<"Site"> | string | null
   sectionsJson?: Prisma.StringNullableFilter<"Site"> | string | null
+  themeJson?: Prisma.StringNullableFilter<"Site"> | string | null
+  styleJson?: Prisma.StringNullableFilter<"Site"> | string | null
   customHead?: Prisma.StringNullableFilter<"Site"> | string | null
   customCss?: Prisma.StringNullableFilter<"Site"> | string | null
   audioUrl?: Prisma.StringNullableFilter<"Site"> | string | null
+  published?: Prisma.BoolFilter<"Site"> | boolean
+  publishSlug?: Prisma.StringNullableFilter<"Site"> | string | null
+  publishedAt?: Prisma.DateTimeNullableFilter<"Site"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"Site"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Site"> | Date | string
 }
@@ -670,9 +799,14 @@ export type SiteCreateWithoutExportPurchasesInput = {
   frameCount?: number
   framesJson?: string | null
   sectionsJson?: string | null
+  themeJson?: string | null
+  styleJson?: string | null
   customHead?: string | null
   customCss?: string | null
   audioUrl?: string | null
+  published?: boolean
+  publishSlug?: string | null
+  publishedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutSitesInput
@@ -686,9 +820,14 @@ export type SiteUncheckedCreateWithoutExportPurchasesInput = {
   frameCount?: number
   framesJson?: string | null
   sectionsJson?: string | null
+  themeJson?: string | null
+  styleJson?: string | null
   customHead?: string | null
   customCss?: string | null
   audioUrl?: string | null
+  published?: boolean
+  publishSlug?: string | null
+  publishedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -716,9 +855,14 @@ export type SiteUpdateWithoutExportPurchasesInput = {
   frameCount?: Prisma.IntFieldUpdateOperationsInput | number
   framesJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sectionsJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  themeJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  styleJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customHead?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customCss?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   audioUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  published?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  publishSlug?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutSitesNestedInput
@@ -732,9 +876,14 @@ export type SiteUncheckedUpdateWithoutExportPurchasesInput = {
   frameCount?: Prisma.IntFieldUpdateOperationsInput | number
   framesJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sectionsJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  themeJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  styleJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customHead?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customCss?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   audioUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  published?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  publishSlug?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -746,9 +895,14 @@ export type SiteCreateManyUserInput = {
   frameCount?: number
   framesJson?: string | null
   sectionsJson?: string | null
+  themeJson?: string | null
+  styleJson?: string | null
   customHead?: string | null
   customCss?: string | null
   audioUrl?: string | null
+  published?: boolean
+  publishSlug?: string | null
+  publishedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -760,9 +914,14 @@ export type SiteUpdateWithoutUserInput = {
   frameCount?: Prisma.IntFieldUpdateOperationsInput | number
   framesJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sectionsJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  themeJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  styleJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customHead?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customCss?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   audioUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  published?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  publishSlug?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   exportPurchases?: Prisma.ExportPurchaseUpdateManyWithoutSiteNestedInput
@@ -775,9 +934,14 @@ export type SiteUncheckedUpdateWithoutUserInput = {
   frameCount?: Prisma.IntFieldUpdateOperationsInput | number
   framesJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sectionsJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  themeJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  styleJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customHead?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customCss?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   audioUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  published?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  publishSlug?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   exportPurchases?: Prisma.ExportPurchaseUncheckedUpdateManyWithoutSiteNestedInput
@@ -790,9 +954,14 @@ export type SiteUncheckedUpdateManyWithoutUserInput = {
   frameCount?: Prisma.IntFieldUpdateOperationsInput | number
   framesJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sectionsJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  themeJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  styleJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customHead?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customCss?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   audioUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  published?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  publishSlug?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -836,9 +1005,14 @@ export type SiteSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   frameCount?: boolean
   framesJson?: boolean
   sectionsJson?: boolean
+  themeJson?: boolean
+  styleJson?: boolean
   customHead?: boolean
   customCss?: boolean
   audioUrl?: boolean
+  published?: boolean
+  publishSlug?: boolean
+  publishedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -854,9 +1028,14 @@ export type SiteSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   frameCount?: boolean
   framesJson?: boolean
   sectionsJson?: boolean
+  themeJson?: boolean
+  styleJson?: boolean
   customHead?: boolean
   customCss?: boolean
   audioUrl?: boolean
+  published?: boolean
+  publishSlug?: boolean
+  publishedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -870,9 +1049,14 @@ export type SiteSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   frameCount?: boolean
   framesJson?: boolean
   sectionsJson?: boolean
+  themeJson?: boolean
+  styleJson?: boolean
   customHead?: boolean
   customCss?: boolean
   audioUrl?: boolean
+  published?: boolean
+  publishSlug?: boolean
+  publishedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -886,14 +1070,19 @@ export type SiteSelectScalar = {
   frameCount?: boolean
   framesJson?: boolean
   sectionsJson?: boolean
+  themeJson?: boolean
+  styleJson?: boolean
   customHead?: boolean
   customCss?: boolean
   audioUrl?: boolean
+  published?: boolean
+  publishSlug?: boolean
+  publishedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type SiteOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "name" | "fps" | "frameCount" | "framesJson" | "sectionsJson" | "customHead" | "customCss" | "audioUrl" | "createdAt" | "updatedAt", ExtArgs["result"]["site"]>
+export type SiteOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "name" | "fps" | "frameCount" | "framesJson" | "sectionsJson" | "themeJson" | "styleJson" | "customHead" | "customCss" | "audioUrl" | "published" | "publishSlug" | "publishedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["site"]>
 export type SiteInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   exportPurchases?: boolean | Prisma.Site$exportPurchasesArgs<ExtArgs>
@@ -920,9 +1109,14 @@ export type $SitePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     frameCount: number
     framesJson: string | null
     sectionsJson: string | null
+    themeJson: string | null
+    styleJson: string | null
     customHead: string | null
     customCss: string | null
     audioUrl: string | null
+    published: boolean
+    publishSlug: string | null
+    publishedAt: Date | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["site"]>
@@ -1357,9 +1551,14 @@ export interface SiteFieldRefs {
   readonly frameCount: Prisma.FieldRef<"Site", 'Int'>
   readonly framesJson: Prisma.FieldRef<"Site", 'String'>
   readonly sectionsJson: Prisma.FieldRef<"Site", 'String'>
+  readonly themeJson: Prisma.FieldRef<"Site", 'String'>
+  readonly styleJson: Prisma.FieldRef<"Site", 'String'>
   readonly customHead: Prisma.FieldRef<"Site", 'String'>
   readonly customCss: Prisma.FieldRef<"Site", 'String'>
   readonly audioUrl: Prisma.FieldRef<"Site", 'String'>
+  readonly published: Prisma.FieldRef<"Site", 'Boolean'>
+  readonly publishSlug: Prisma.FieldRef<"Site", 'String'>
+  readonly publishedAt: Prisma.FieldRef<"Site", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"Site", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Site", 'DateTime'>
 }

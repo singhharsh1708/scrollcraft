@@ -20,8 +20,9 @@ import { useScrollAudio } from "@/lib/useScrollAudio";
 import Link from "next/link";
 import { toast } from "sonner";
 import dynamic from "next/dynamic";
-import type { EditorSection } from "@/lib/siteSchema";
+import { siteStyleSchema, themeSchema, type EditorSection, type SiteStyle, type Theme } from "@/lib/siteSchema";
 import { templateBySlug } from "@/lib/templates";
+import { generate2DFrames } from "@/lib/generate2DFrames";
 
 const ScrollEngine = dynamic(() => import("@/components/ScrollEngine"), { ssr: false });
 const ScrollSection = dynamic(() => import("@/components/ScrollSection"), { ssr: false });
@@ -73,6 +74,8 @@ function EditorInner() {
     : null;
 
   const framesKey = searchParams.get("framesKey");
+  const styleParam = searchParams.get("style");
+  const colorParams = [searchParams.get("c1"), searchParams.get("c2"), searchParams.get("c3")];
   const framesParam = searchParams.get("frames"); // legacy URL param
   const countParam = searchParams.get("frameCount");
   const fpsParam = searchParams.get("fps");
@@ -123,6 +126,16 @@ function EditorInner() {
   const [viewportMode, setViewportMode] = useState<"desktop" | "tablet" | "mobile">("desktop");
   const [audioSrc, setAudioSrc] = useState<string | null>(null);
   const [siteId, setSiteId] = useState<string | null>(searchParams.get("siteId"));
+  // Background recipe and theme travel with the site so the published page and the export
+  // can recompile them; frames themselves never reach the server.
+  const [styleSpec, setStyleSpec] = useState<SiteStyle | null>(() => {
+    if (pickedTemplate) return { style: pickedTemplate.style, colors: pickedTemplate.colors };
+    const parsedStyle = siteStyleSchema.safeParse({ style: styleParam, colors: colorParams });
+    return parsedStyle.success ? parsedStyle.data : null;
+  });
+  const [siteTheme, setSiteTheme] = useState<Theme | null>(() =>
+    pickedTemplate ? themeSchema.parse(pickedTemplate.theme) : null
+  );
   const [isSaving, setIsSaving] = useState(false);
   const [audioMuted, setAudioMuted] = useState(false);
 
@@ -139,6 +152,30 @@ function EditorInner() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const audioFileRef = useRef<HTMLInputElement>(null);
+
+  // "Use this template" arrives with sections but no frames; render the template's own
+  // background instead of leaving the demo one underneath it.
+  const templateGenStarted = useRef(false);
+  useEffect(() => {
+    if (!pickedTemplate || parsedFrames || framesKey || searchParams.get("siteId")) return;
+    if (templateGenStarted.current) return;
+    templateGenStarted.current = true;
+    const isMobileViewport = window.innerWidth < 768;
+    generate2DFrames({
+      style: pickedTemplate.style,
+      color1: pickedTemplate.colors[0],
+      color2: pickedTemplate.colors[1],
+      color3: pickedTemplate.colors[2],
+      frameCount: isMobileViewport ? 60 : 90,
+      width: isMobileViewport ? 640 : 1280,
+      height: isMobileViewport ? 360 : 720,
+    }, () => {}).then((generated) => {
+      setFrames(generated);
+      setFrameCount(generated.length);
+      setIsDemo(false);
+    }).catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // showPreview/viewportMode remount the preview container, replacing the element the
   // scroll listener is bound to.
@@ -183,6 +220,14 @@ function EditorInner() {
         if (typeof site.fps === "number") setFps(site.fps);
         if (site.name) setSiteName(site.name);
         if (site.customHead) setCustomHead(site.customHead);
+        if (site.themeJson) {
+          const parsedTheme = themeSchema.safeParse(JSON.parse(site.themeJson));
+          if (parsedTheme.success) setSiteTheme(parsedTheme.data);
+        }
+        if (site.styleJson) {
+          const parsedStyle = siteStyleSchema.safeParse(JSON.parse(site.styleJson));
+          if (parsedStyle.success) setStyleSpec(parsedStyle.data);
+        }
         if (site.customCss) setCustomCss(site.customCss);
         if (site.audioUrl) setAudioSrc(site.audioUrl);
         if (searchParams.get("purchased") === "1") {
@@ -495,6 +540,13 @@ function EditorInner() {
           fps,
           frameCount,
           sectionsJson: JSON.stringify(sections),
+          themeJson: siteTheme ? JSON.stringify(siteTheme) : undefined,
+          styleJson: styleSpec ? JSON.stringify(styleSpec) : undefined,
+          // Frame data never fits the request cap, but the video path's frames are blob
+          // URLs, which do — and they are what lets that site publish.
+          framesJson: frames.length && frames.every((f) => /^https?:\/\//i.test(f))
+            ? JSON.stringify(frames)
+            : undefined,
           customHead,
           customCss,
           // Uploaded audio is a multi-MB data: URI held on the client only — the API
