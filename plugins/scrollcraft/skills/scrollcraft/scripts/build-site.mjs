@@ -15,6 +15,8 @@ const AUDIO_EXT = {
 
 const EXT_OK = new Set(Object.values(AUDIO_EXT));
 
+const IMAGE_EXT = new Set(["png", "jpg", "jpeg", "webp", "avif", "gif", "svg"]);
+
 function fail(msg) {
   process.stderr.write("build-site: " + msg + "\n");
   process.exit(1);
@@ -80,10 +82,16 @@ function copyFrames(srcDir, outDir) {
   }
 }
 
-function renderSections(sections) {
-  return sections.map((s) => {
+function renderSections(sections, images) {
+  return sections.map((s, idx) => {
     const height = Number(s.scrollHeight) || 1000;
     const parts = [];
+    const img = images.get(idx);
+    if (img) {
+      const w = Number(s.imageWidth);
+      const cap = Number.isFinite(w) && w > 0 ? Math.min(w, 1600) : 480;
+      parts.push(`<img src="${esc(img)}" alt="${esc(s.imageAlt || "")}" style="display:block; max-width:min(100%, ${cap}px); height:auto; margin:0 auto 1.5rem;" />`);
+    }
     if (s.eyebrow) {
       parts.push(`<p class="eyebrow" style="font-size:0.875rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:${safeCss(s.accentColor || "#a78bfa")}; margin-bottom:0.75rem;">${esc(s.eyebrow)}</p>`);
     }
@@ -154,6 +162,24 @@ function main() {
     fs.copyFileSync(audioPath, path.join(outDir, audioOut));
   }
 
+  const images = new Map();
+  sections.forEach((s, idx) => {
+    if (!s.image) return;
+    const src = path.resolve(specDir, s.image);
+    if (!fs.existsSync(src)) fail(`section ${idx} image not found: ${src}`);
+    const ext = path.extname(src).slice(1).toLowerCase();
+    if (!IMAGE_EXT.has(ext)) {
+      fail(`section ${idx} image has unsupported extension ".${ext}" (allowed: ${[...IMAGE_EXT].join(", ")})`);
+    }
+    if (!s.imageAlt) {
+      process.stdout.write(`warning: section ${idx} has an image but no imageAlt, so screen readers get nothing\n`);
+    }
+    const name = `img_${String(idx).padStart(2, "0")}.${ext}`;
+    fs.mkdirSync(path.join(outDir, "assets"), { recursive: true });
+    fs.copyFileSync(src, path.join(outDir, "assets", name));
+    images.set(idx, `assets/${name}`);
+  });
+
   const css = fs.readFileSync(path.join(ENGINE, "scrollcraft.css"), "utf8");
   const runtime = fs
     .readFileSync(path.join(ENGINE, "scrollcraft.runtime.js"), "utf8")
@@ -165,6 +191,11 @@ function main() {
     .replace(/__FRAMES_MOBILE_DIR__/g, "frames-mobile")
     .replace(/__HAS_AUDIO__/g, audioOut ? "true" : "false")
     .replace(/__AUDIO_SRC__/g, audioOut);
+
+  const leftover = runtime.match(/__[A-Z][A-Z0-9_]*__/g);
+  if (leftover) {
+    fail(`engine placeholder(s) never substituted: ${[...new Set(leftover)].join(", ")}`);
+  }
 
   const title = esc(spec.name || "ScrollCraft Site");
   const description = esc(spec.description || "");
@@ -186,7 +217,7 @@ ${customCss ? `  <style>\n${customCss}\n  </style>\n` : ""}</head>
   <canvas id="scroll-canvas" role="img" aria-label="${esc(spec.canvasAlt || title)}"></canvas>
   <div id="scroll-container" style="height:${totalScrollHeight}px;">
     <div style="height:100vh;"></div>
-${renderSections(sections)}
+${renderSections(sections, images)}
   </div>
   <div id="scroll-hint" aria-hidden="true">
     <span>Scroll</span>

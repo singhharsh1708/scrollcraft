@@ -34,6 +34,9 @@ spec file, not the working directory.
 | `headingColor` | string | `#ffffff` | |
 | `bodyColor` | string | `rgba(255,255,255,0.7)` | |
 | `visible` | boolean | `true` | `false` excludes the section from both the output and the scroll-track total. |
+| `image` | string | none | Path to an image, resolved relative to the spec. Copied to `dist/assets/img_NN.<ext>`. Allowed: png, jpg, jpeg, webp, avif, gif, svg. A missing file fails the build. |
+| `imageAlt` | string | `""` | Alt text. Omitting it emits a build warning, because the image then carries nothing for a screen reader. |
+| `imageWidth` | number | `480` | Max rendered width in px, capped at 1600. The image never exceeds its container. |
 
 ## How pacing works
 
