@@ -152,6 +152,17 @@ prisma/
 Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for the workflow,
 coding standards, and how to pick up an issue.
 
+## Sponsor
+
+ScrollCraft is free and open source, and the hosted version costs real money to run
+(model calls, frame rendering, storage). If it saved you a studio invoice, you can
+[sponsor the project on GitHub](https://github.com/sponsors/singhharsh1708), one-off or
+monthly. Sponsoring is separate from the paid plans: it funds the open source work, not an
+account upgrade.
+
+Not in a position to pay? Starring the repo, filing a good bug report, or shipping a PR
+helps just as much.
+
 ## License
 
 [MIT](LICENSE) © ScrollCraft
