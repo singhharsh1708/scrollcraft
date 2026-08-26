@@ -1,10 +1,29 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 
 let rateLimit: typeof import("../lib/rateLimit").rateLimit;
 
+const savedEnv = {
+  url: process.env.UPSTASH_REDIS_REST_URL,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN,
+};
+
 beforeEach(async () => {
+  // This file covers the in-memory fallback specifically. With UPSTASH_* set in the
+  // environment the limiter takes the Redis path instead: the assertions below would
+  // either hit the network or quietly stop testing the fallback they name.
+  delete process.env.UPSTASH_REDIS_REST_URL;
+  delete process.env.UPSTASH_REDIS_REST_TOKEN;
+  vi.spyOn(console, "warn").mockImplementation(() => {});
   vi.resetModules();
   ({ rateLimit } = await import("../lib/rateLimit"));
+});
+
+afterEach(() => {
+  if (savedEnv.url === undefined) delete process.env.UPSTASH_REDIS_REST_URL;
+  else process.env.UPSTASH_REDIS_REST_URL = savedEnv.url;
+  if (savedEnv.token === undefined) delete process.env.UPSTASH_REDIS_REST_TOKEN;
+  else process.env.UPSTASH_REDIS_REST_TOKEN = savedEnv.token;
+  vi.restoreAllMocks();
 });
 
 describe("rateLimit (in-memory fallback)", () => {
