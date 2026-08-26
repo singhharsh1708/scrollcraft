@@ -144,6 +144,8 @@ function requestPinned(url: URL, pinned: LookupAddress): Promise<http.IncomingMe
       },
       resolve,
     );
+    // A stalling host would otherwise hold the invocation open until Vercel kills it.
+    request.setTimeout(30_000, () => request.destroy(new Error("videoUrl timed out")));
     request.on("error", reject);
     request.end();
   });
@@ -257,10 +259,15 @@ export async function POST(req: NextRequest) {
 
     if (contentType.includes("multipart/form-data")) {
       const formData = await req.formData();
-      const file = formData.get("video") as File;
+      const file = formData.get("video");
       fps = clampFps(formData.get("fps"));
       quality = clampQuality(formData.get("quality"));
-      if (!file) return NextResponse.json({ error: "No video file" }, { status: 400 });
+      if (!(file instanceof File) || file.size === 0) {
+        return NextResponse.json({ error: "No video file" }, { status: 400 });
+      }
+      if (file.size > MAX_VIDEO_BYTES) {
+        return NextResponse.json({ error: "Video file too large (max 500 MB)" }, { status: 413 });
+      }
 
       const buffer = Buffer.from(await file.arrayBuffer());
       videoPath = path.join(tmpDir, "input.mp4");
@@ -303,21 +310,26 @@ export async function POST(req: NextRequest) {
     // ffmpeg pull in remote or arbitrary local resources.
     const jpegQuality = Math.round((quality / 100) * 31); // ffmpeg qscale: 1(best)–31(worst)
     const ffmpegQuality = Math.max(1, 31 - jpegQuality);
+    // 3600 = 60fps x 60s. We only sample MAX_FRAMES from the result, so more than this is
+    // wasted disk; the cap keeps a long or high-fps input from writing tens of thousands.
+    const MAX_EXTRACT_FRAMES = 3600;
     await execFile("ffmpeg", [
       "-protocol_whitelist", "file,crypto,data",
       "-i", videoPath,
       "-vf", `fps=${fps}`,
+      "-frames:v", String(MAX_EXTRACT_FRAMES),
       "-q:v", String(ffmpegQuality),
-      path.join(framesDir, "frame_%04d.jpg"),
+      path.join(framesDir, "frame_%06d.jpg"),
       "-y",
     ]);
 
     // Read frames and convert to base64 data URLs
     // Cap at MAX_FRAMES to stay within Vercel's 4.5 MB response limit
     const MAX_FRAMES = 120;
+    const frameIndex = (name: string) => parseInt(name.match(/(\d+)/)?.[1] ?? "0", 10);
     const allFrameFiles = (await readdir(framesDir))
       .filter(f => f.endsWith(".jpg"))
-      .sort();
+      .sort((a, b) => frameIndex(a) - frameIndex(b));
 
     const step = allFrameFiles.length > MAX_FRAMES
       ? allFrameFiles.length / MAX_FRAMES
