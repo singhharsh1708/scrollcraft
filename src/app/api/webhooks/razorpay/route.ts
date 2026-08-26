@@ -4,7 +4,7 @@ import crypto from "crypto";
 import Razorpay from "razorpay";
 import { db } from "@/lib/db";
 import { consumePromoCode } from "@/lib/promo";
-import { PLANS, planPeriodEnd } from "@/lib/plans";
+import { planPeriodEnd } from "@/lib/plans";
 
 const PLAN_MAP: Record<string, "BASIC" | "BASIC_PLUS" | "PRO" | "PREMIUM"> = {
   Basic: "BASIC", "Basic Plus": "BASIC_PLUS", Pro: "PRO", Premium: "PREMIUM",
@@ -42,14 +42,12 @@ async function repriceUserPlan(userId: string) {
     select: { plan: true, billing: true, createdAt: true },
   });
   const nextPlan = (latest ? PLAN_MAP[latest.plan] : undefined) ?? "FREE";
-  // Reprice the credit allowance with the plan — otherwise a user refunded from
-  // Premium down to Basic Plus keeps Premium's 25,000 credits — and carry the period
-  // end forward from the payment that still stands (null when nothing is left → FREE).
+  // Carry the period end forward from the payment that still stands (null when nothing
+  // is left, which drops the user to FREE).
   await db.user.update({
     where: { id: userId },
     data: {
       plan: nextPlan,
-      credits: PLANS[nextPlan].credits,
       planExpiresAt: latest && nextPlan !== "FREE" ? planPeriodEnd(latest.billing, latest.createdAt) : null,
     },
   });
@@ -59,12 +57,9 @@ async function repriceUserPlan(userId: string) {
 async function applyPlan(userId: string, planName: string | null | undefined, billing: string | null | undefined) {
   const newPlan = planName ? PLAN_MAP[planName] : undefined;
   if (newPlan) {
-    // Grant credits alongside the plan — the webhook is the path that runs when the
-    // browser never returns from checkout, so omitting them here leaves exactly the
-    // same "paid but shows 100 credits left" state as the verify route did.
     await db.user.update({
       where: { id: userId },
-      data: { plan: newPlan, credits: PLANS[newPlan].credits, planExpiresAt: planPeriodEnd(billing) },
+      data: { plan: newPlan, planExpiresAt: planPeriodEnd(billing) },
     });
   }
 }

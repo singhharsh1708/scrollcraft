@@ -153,7 +153,7 @@ export default function DashboardPage() {
       <Navbar />
 
       <div className="max-w-6xl mx-auto px-6 py-10 space-y-10">
-        {/* Welcome + credits */}
+        {/* Welcome + plan */}
         <div className="grid md:grid-cols-3 gap-4">
           {/* Greeting */}
           <div className="md:col-span-2 p-6 rounded-2xl border border-white/8 bg-card">

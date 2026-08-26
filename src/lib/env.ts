@@ -1,10 +1,6 @@
 import { z } from "zod";
 
 const envSchema = z.object({
-  // AI video providers — at least one should be set for real generation
-
-  // AI chat editing
-
   // Database
   DATABASE_URL: z.string().url().optional(),
   DB_POOL_MAX: z.coerce.number().int().positive().optional(),

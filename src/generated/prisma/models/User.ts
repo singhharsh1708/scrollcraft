@@ -20,20 +20,8 @@ export type UserModel = runtime.Types.Result.DefaultSelection<Prisma.$UserPayloa
 
 export type AggregateUser = {
   _count: UserCountAggregateOutputType | null
-  _avg: UserAvgAggregateOutputType | null
-  _sum: UserSumAggregateOutputType | null
   _min: UserMinAggregateOutputType | null
   _max: UserMaxAggregateOutputType | null
-}
-
-export type UserAvgAggregateOutputType = {
-  credits: number | null
-  chatEditsUsed: number | null
-}
-
-export type UserSumAggregateOutputType = {
-  credits: number | null
-  chatEditsUsed: number | null
 }
 
 export type UserMinAggregateOutputType = {
@@ -44,9 +32,6 @@ export type UserMinAggregateOutputType = {
   image: string | null
   plan: $Enums.Plan | null
   planExpiresAt: Date | null
-  credits: number | null
-  chatEditsUsed: number | null
-  chatPeriodStart: Date | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -59,9 +44,6 @@ export type UserMaxAggregateOutputType = {
   image: string | null
   plan: $Enums.Plan | null
   planExpiresAt: Date | null
-  credits: number | null
-  chatEditsUsed: number | null
-  chatPeriodStart: Date | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -74,24 +56,11 @@ export type UserCountAggregateOutputType = {
   image: number
   plan: number
   planExpiresAt: number
-  credits: number
-  chatEditsUsed: number
-  chatPeriodStart: number
   createdAt: number
   updatedAt: number
   _all: number
 }
 
-
-export type UserAvgAggregateInputType = {
-  credits?: true
-  chatEditsUsed?: true
-}
-
-export type UserSumAggregateInputType = {
-  credits?: true
-  chatEditsUsed?: true
-}
 
 export type UserMinAggregateInputType = {
   id?: true
@@ -101,9 +70,6 @@ export type UserMinAggregateInputType = {
   image?: true
   plan?: true
   planExpiresAt?: true
-  credits?: true
-  chatEditsUsed?: true
-  chatPeriodStart?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -116,9 +82,6 @@ export type UserMaxAggregateInputType = {
   image?: true
   plan?: true
   planExpiresAt?: true
-  credits?: true
-  chatEditsUsed?: true
-  chatPeriodStart?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -131,9 +94,6 @@ export type UserCountAggregateInputType = {
   image?: true
   plan?: true
   planExpiresAt?: true
-  credits?: true
-  chatEditsUsed?: true
-  chatPeriodStart?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -177,18 +137,6 @@ export type UserAggregateArgs<ExtArgs extends runtime.Types.Extensions.InternalA
   /**
    * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
    * 
-   * Select which fields to average
-  **/
-  _avg?: UserAvgAggregateInputType
-  /**
-   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-   * 
-   * Select which fields to sum
-  **/
-  _sum?: UserSumAggregateInputType
-  /**
-   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-   * 
    * Select which fields to find the minimum value
   **/
   _min?: UserMinAggregateInputType
@@ -219,8 +167,6 @@ export type UserGroupByArgs<ExtArgs extends runtime.Types.Extensions.InternalArg
   take?: number
   skip?: number
   _count?: UserCountAggregateInputType | true
-  _avg?: UserAvgAggregateInputType
-  _sum?: UserSumAggregateInputType
   _min?: UserMinAggregateInputType
   _max?: UserMaxAggregateInputType
 }
@@ -233,14 +179,9 @@ export type UserGroupByOutputType = {
   image: string | null
   plan: $Enums.Plan
   planExpiresAt: Date | null
-  credits: number
-  chatEditsUsed: number
-  chatPeriodStart: Date
   createdAt: Date
   updatedAt: Date
   _count: UserCountAggregateOutputType | null
-  _avg: UserAvgAggregateOutputType | null
-  _sum: UserSumAggregateOutputType | null
   _min: UserMinAggregateOutputType | null
   _max: UserMaxAggregateOutputType | null
 }
@@ -271,9 +212,6 @@ export type UserWhereInput = {
   image?: Prisma.StringNullableFilter<"User"> | string | null
   plan?: Prisma.EnumPlanFilter<"User"> | $Enums.Plan
   planExpiresAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
-  credits?: Prisma.IntFilter<"User"> | number
-  chatEditsUsed?: Prisma.IntFilter<"User"> | number
-  chatPeriodStart?: Prisma.DateTimeFilter<"User"> | Date | string
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   sites?: Prisma.SiteListRelationFilter
@@ -291,9 +229,6 @@ export type UserOrderByWithRelationInput = {
   image?: Prisma.SortOrderInput | Prisma.SortOrder
   plan?: Prisma.SortOrder
   planExpiresAt?: Prisma.SortOrderInput | Prisma.SortOrder
-  credits?: Prisma.SortOrder
-  chatEditsUsed?: Prisma.SortOrder
-  chatPeriodStart?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   sites?: Prisma.SiteOrderByRelationAggregateInput
@@ -314,9 +249,6 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   image?: Prisma.StringNullableFilter<"User"> | string | null
   plan?: Prisma.EnumPlanFilter<"User"> | $Enums.Plan
   planExpiresAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
-  credits?: Prisma.IntFilter<"User"> | number
-  chatEditsUsed?: Prisma.IntFilter<"User"> | number
-  chatPeriodStart?: Prisma.DateTimeFilter<"User"> | Date | string
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   sites?: Prisma.SiteListRelationFilter
@@ -334,16 +266,11 @@ export type UserOrderByWithAggregationInput = {
   image?: Prisma.SortOrderInput | Prisma.SortOrder
   plan?: Prisma.SortOrder
   planExpiresAt?: Prisma.SortOrderInput | Prisma.SortOrder
-  credits?: Prisma.SortOrder
-  chatEditsUsed?: Prisma.SortOrder
-  chatPeriodStart?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.UserCountOrderByAggregateInput
-  _avg?: Prisma.UserAvgOrderByAggregateInput
   _max?: Prisma.UserMaxOrderByAggregateInput
   _min?: Prisma.UserMinOrderByAggregateInput
-  _sum?: Prisma.UserSumOrderByAggregateInput
 }
 
 export type UserScalarWhereWithAggregatesInput = {
@@ -357,9 +284,6 @@ export type UserScalarWhereWithAggregatesInput = {
   image?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   plan?: Prisma.EnumPlanWithAggregatesFilter<"User"> | $Enums.Plan
   planExpiresAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
-  credits?: Prisma.IntWithAggregatesFilter<"User"> | number
-  chatEditsUsed?: Prisma.IntWithAggregatesFilter<"User"> | number
-  chatPeriodStart?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
 }
@@ -372,9 +296,6 @@ export type UserCreateInput = {
   image?: string | null
   plan?: $Enums.Plan
   planExpiresAt?: Date | string | null
-  credits?: number
-  chatEditsUsed?: number
-  chatPeriodStart?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
   sites?: Prisma.SiteCreateNestedManyWithoutUserInput
@@ -392,9 +313,6 @@ export type UserUncheckedCreateInput = {
   image?: string | null
   plan?: $Enums.Plan
   planExpiresAt?: Date | string | null
-  credits?: number
-  chatEditsUsed?: number
-  chatPeriodStart?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
   sites?: Prisma.SiteUncheckedCreateNestedManyWithoutUserInput
@@ -412,9 +330,6 @@ export type UserUpdateInput = {
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   plan?: Prisma.EnumPlanFieldUpdateOperationsInput | $Enums.Plan
   planExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  credits?: Prisma.IntFieldUpdateOperationsInput | number
-  chatEditsUsed?: Prisma.IntFieldUpdateOperationsInput | number
-  chatPeriodStart?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sites?: Prisma.SiteUpdateManyWithoutUserNestedInput
@@ -432,9 +347,6 @@ export type UserUncheckedUpdateInput = {
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   plan?: Prisma.EnumPlanFieldUpdateOperationsInput | $Enums.Plan
   planExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  credits?: Prisma.IntFieldUpdateOperationsInput | number
-  chatEditsUsed?: Prisma.IntFieldUpdateOperationsInput | number
-  chatPeriodStart?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sites?: Prisma.SiteUncheckedUpdateManyWithoutUserNestedInput
@@ -452,9 +364,6 @@ export type UserCreateManyInput = {
   image?: string | null
   plan?: $Enums.Plan
   planExpiresAt?: Date | string | null
-  credits?: number
-  chatEditsUsed?: number
-  chatPeriodStart?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -467,9 +376,6 @@ export type UserUpdateManyMutationInput = {
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   plan?: Prisma.EnumPlanFieldUpdateOperationsInput | $Enums.Plan
   planExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  credits?: Prisma.IntFieldUpdateOperationsInput | number
-  chatEditsUsed?: Prisma.IntFieldUpdateOperationsInput | number
-  chatPeriodStart?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -482,9 +388,6 @@ export type UserUncheckedUpdateManyInput = {
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   plan?: Prisma.EnumPlanFieldUpdateOperationsInput | $Enums.Plan
   planExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  credits?: Prisma.IntFieldUpdateOperationsInput | number
-  chatEditsUsed?: Prisma.IntFieldUpdateOperationsInput | number
-  chatPeriodStart?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -497,16 +400,8 @@ export type UserCountOrderByAggregateInput = {
   image?: Prisma.SortOrder
   plan?: Prisma.SortOrder
   planExpiresAt?: Prisma.SortOrder
-  credits?: Prisma.SortOrder
-  chatEditsUsed?: Prisma.SortOrder
-  chatPeriodStart?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
-}
-
-export type UserAvgOrderByAggregateInput = {
-  credits?: Prisma.SortOrder
-  chatEditsUsed?: Prisma.SortOrder
 }
 
 export type UserMaxOrderByAggregateInput = {
@@ -517,9 +412,6 @@ export type UserMaxOrderByAggregateInput = {
   image?: Prisma.SortOrder
   plan?: Prisma.SortOrder
   planExpiresAt?: Prisma.SortOrder
-  credits?: Prisma.SortOrder
-  chatEditsUsed?: Prisma.SortOrder
-  chatPeriodStart?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -532,16 +424,8 @@ export type UserMinOrderByAggregateInput = {
   image?: Prisma.SortOrder
   plan?: Prisma.SortOrder
   planExpiresAt?: Prisma.SortOrder
-  credits?: Prisma.SortOrder
-  chatEditsUsed?: Prisma.SortOrder
-  chatPeriodStart?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
-}
-
-export type UserSumOrderByAggregateInput = {
-  credits?: Prisma.SortOrder
-  chatEditsUsed?: Prisma.SortOrder
 }
 
 export type UserScalarRelationFilter = {
@@ -563,14 +447,6 @@ export type NullableStringFieldUpdateOperationsInput = {
 
 export type EnumPlanFieldUpdateOperationsInput = {
   set?: $Enums.Plan
-}
-
-export type IntFieldUpdateOperationsInput = {
-  set?: number
-  increment?: number
-  decrement?: number
-  multiply?: number
-  divide?: number
 }
 
 export type DateTimeFieldUpdateOperationsInput = {
@@ -655,9 +531,6 @@ export type UserCreateWithoutSitesInput = {
   image?: string | null
   plan?: $Enums.Plan
   planExpiresAt?: Date | string | null
-  credits?: number
-  chatEditsUsed?: number
-  chatPeriodStart?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
   payments?: Prisma.PaymentCreateNestedManyWithoutUserInput
@@ -674,9 +547,6 @@ export type UserUncheckedCreateWithoutSitesInput = {
   image?: string | null
   plan?: $Enums.Plan
   planExpiresAt?: Date | string | null
-  credits?: number
-  chatEditsUsed?: number
-  chatPeriodStart?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
   payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutUserInput
@@ -709,9 +579,6 @@ export type UserUpdateWithoutSitesInput = {
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   plan?: Prisma.EnumPlanFieldUpdateOperationsInput | $Enums.Plan
   planExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  credits?: Prisma.IntFieldUpdateOperationsInput | number
-  chatEditsUsed?: Prisma.IntFieldUpdateOperationsInput | number
-  chatPeriodStart?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   payments?: Prisma.PaymentUpdateManyWithoutUserNestedInput
@@ -728,9 +595,6 @@ export type UserUncheckedUpdateWithoutSitesInput = {
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   plan?: Prisma.EnumPlanFieldUpdateOperationsInput | $Enums.Plan
   planExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  credits?: Prisma.IntFieldUpdateOperationsInput | number
-  chatEditsUsed?: Prisma.IntFieldUpdateOperationsInput | number
-  chatPeriodStart?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   payments?: Prisma.PaymentUncheckedUpdateManyWithoutUserNestedInput
@@ -747,9 +611,6 @@ export type UserCreateWithoutPaymentsInput = {
   image?: string | null
   plan?: $Enums.Plan
   planExpiresAt?: Date | string | null
-  credits?: number
-  chatEditsUsed?: number
-  chatPeriodStart?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
   sites?: Prisma.SiteCreateNestedManyWithoutUserInput
@@ -766,9 +627,6 @@ export type UserUncheckedCreateWithoutPaymentsInput = {
   image?: string | null
   plan?: $Enums.Plan
   planExpiresAt?: Date | string | null
-  credits?: number
-  chatEditsUsed?: number
-  chatPeriodStart?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
   sites?: Prisma.SiteUncheckedCreateNestedManyWithoutUserInput
@@ -801,9 +659,6 @@ export type UserUpdateWithoutPaymentsInput = {
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   plan?: Prisma.EnumPlanFieldUpdateOperationsInput | $Enums.Plan
   planExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  credits?: Prisma.IntFieldUpdateOperationsInput | number
-  chatEditsUsed?: Prisma.IntFieldUpdateOperationsInput | number
-  chatPeriodStart?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sites?: Prisma.SiteUpdateManyWithoutUserNestedInput
@@ -820,9 +675,6 @@ export type UserUncheckedUpdateWithoutPaymentsInput = {
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   plan?: Prisma.EnumPlanFieldUpdateOperationsInput | $Enums.Plan
   planExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  credits?: Prisma.IntFieldUpdateOperationsInput | number
-  chatEditsUsed?: Prisma.IntFieldUpdateOperationsInput | number
-  chatPeriodStart?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sites?: Prisma.SiteUncheckedUpdateManyWithoutUserNestedInput
@@ -839,9 +691,6 @@ export type UserCreateWithoutExportPurchasesInput = {
   image?: string | null
   plan?: $Enums.Plan
   planExpiresAt?: Date | string | null
-  credits?: number
-  chatEditsUsed?: number
-  chatPeriodStart?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
   sites?: Prisma.SiteCreateNestedManyWithoutUserInput
@@ -858,9 +707,6 @@ export type UserUncheckedCreateWithoutExportPurchasesInput = {
   image?: string | null
   plan?: $Enums.Plan
   planExpiresAt?: Date | string | null
-  credits?: number
-  chatEditsUsed?: number
-  chatPeriodStart?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
   sites?: Prisma.SiteUncheckedCreateNestedManyWithoutUserInput
@@ -893,9 +739,6 @@ export type UserUpdateWithoutExportPurchasesInput = {
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   plan?: Prisma.EnumPlanFieldUpdateOperationsInput | $Enums.Plan
   planExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  credits?: Prisma.IntFieldUpdateOperationsInput | number
-  chatEditsUsed?: Prisma.IntFieldUpdateOperationsInput | number
-  chatPeriodStart?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sites?: Prisma.SiteUpdateManyWithoutUserNestedInput
@@ -912,9 +755,6 @@ export type UserUncheckedUpdateWithoutExportPurchasesInput = {
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   plan?: Prisma.EnumPlanFieldUpdateOperationsInput | $Enums.Plan
   planExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  credits?: Prisma.IntFieldUpdateOperationsInput | number
-  chatEditsUsed?: Prisma.IntFieldUpdateOperationsInput | number
-  chatPeriodStart?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sites?: Prisma.SiteUncheckedUpdateManyWithoutUserNestedInput
@@ -931,9 +771,6 @@ export type UserCreateWithoutAccountsInput = {
   image?: string | null
   plan?: $Enums.Plan
   planExpiresAt?: Date | string | null
-  credits?: number
-  chatEditsUsed?: number
-  chatPeriodStart?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
   sites?: Prisma.SiteCreateNestedManyWithoutUserInput
@@ -950,9 +787,6 @@ export type UserUncheckedCreateWithoutAccountsInput = {
   image?: string | null
   plan?: $Enums.Plan
   planExpiresAt?: Date | string | null
-  credits?: number
-  chatEditsUsed?: number
-  chatPeriodStart?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
   sites?: Prisma.SiteUncheckedCreateNestedManyWithoutUserInput
@@ -985,9 +819,6 @@ export type UserUpdateWithoutAccountsInput = {
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   plan?: Prisma.EnumPlanFieldUpdateOperationsInput | $Enums.Plan
   planExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  credits?: Prisma.IntFieldUpdateOperationsInput | number
-  chatEditsUsed?: Prisma.IntFieldUpdateOperationsInput | number
-  chatPeriodStart?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sites?: Prisma.SiteUpdateManyWithoutUserNestedInput
@@ -1004,9 +835,6 @@ export type UserUncheckedUpdateWithoutAccountsInput = {
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   plan?: Prisma.EnumPlanFieldUpdateOperationsInput | $Enums.Plan
   planExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  credits?: Prisma.IntFieldUpdateOperationsInput | number
-  chatEditsUsed?: Prisma.IntFieldUpdateOperationsInput | number
-  chatPeriodStart?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sites?: Prisma.SiteUncheckedUpdateManyWithoutUserNestedInput
@@ -1023,9 +851,6 @@ export type UserCreateWithoutSessionsInput = {
   image?: string | null
   plan?: $Enums.Plan
   planExpiresAt?: Date | string | null
-  credits?: number
-  chatEditsUsed?: number
-  chatPeriodStart?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
   sites?: Prisma.SiteCreateNestedManyWithoutUserInput
@@ -1042,9 +867,6 @@ export type UserUncheckedCreateWithoutSessionsInput = {
   image?: string | null
   plan?: $Enums.Plan
   planExpiresAt?: Date | string | null
-  credits?: number
-  chatEditsUsed?: number
-  chatPeriodStart?: Date | string
   createdAt?: Date | string
   updatedAt?: Date | string
   sites?: Prisma.SiteUncheckedCreateNestedManyWithoutUserInput
@@ -1077,9 +899,6 @@ export type UserUpdateWithoutSessionsInput = {
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   plan?: Prisma.EnumPlanFieldUpdateOperationsInput | $Enums.Plan
   planExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  credits?: Prisma.IntFieldUpdateOperationsInput | number
-  chatEditsUsed?: Prisma.IntFieldUpdateOperationsInput | number
-  chatPeriodStart?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sites?: Prisma.SiteUpdateManyWithoutUserNestedInput
@@ -1096,9 +915,6 @@ export type UserUncheckedUpdateWithoutSessionsInput = {
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   plan?: Prisma.EnumPlanFieldUpdateOperationsInput | $Enums.Plan
   planExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  credits?: Prisma.IntFieldUpdateOperationsInput | number
-  chatEditsUsed?: Prisma.IntFieldUpdateOperationsInput | number
-  chatPeriodStart?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sites?: Prisma.SiteUncheckedUpdateManyWithoutUserNestedInput
@@ -1182,9 +998,6 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   image?: boolean
   plan?: boolean
   planExpiresAt?: boolean
-  credits?: boolean
-  chatEditsUsed?: boolean
-  chatPeriodStart?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   sites?: boolean | Prisma.User$sitesArgs<ExtArgs>
@@ -1203,9 +1016,6 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   image?: boolean
   plan?: boolean
   planExpiresAt?: boolean
-  credits?: boolean
-  chatEditsUsed?: boolean
-  chatPeriodStart?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["user"]>
@@ -1218,9 +1028,6 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   image?: boolean
   plan?: boolean
   planExpiresAt?: boolean
-  credits?: boolean
-  chatEditsUsed?: boolean
-  chatPeriodStart?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["user"]>
@@ -1233,14 +1040,11 @@ export type UserSelectScalar = {
   image?: boolean
   plan?: boolean
   planExpiresAt?: boolean
-  credits?: boolean
-  chatEditsUsed?: boolean
-  chatPeriodStart?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "emailVerified" | "name" | "image" | "plan" | "planExpiresAt" | "credits" | "chatEditsUsed" | "chatPeriodStart" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "emailVerified" | "name" | "image" | "plan" | "planExpiresAt" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   sites?: boolean | Prisma.User$sitesArgs<ExtArgs>
   payments?: boolean | Prisma.User$paymentsArgs<ExtArgs>
@@ -1269,9 +1073,6 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     image: string | null
     plan: $Enums.Plan
     planExpiresAt: Date | null
-    credits: number
-    chatEditsUsed: number
-    chatPeriodStart: Date
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["user"]>
@@ -1709,9 +1510,6 @@ export interface UserFieldRefs {
   readonly image: Prisma.FieldRef<"User", 'String'>
   readonly plan: Prisma.FieldRef<"User", 'Plan'>
   readonly planExpiresAt: Prisma.FieldRef<"User", 'DateTime'>
-  readonly credits: Prisma.FieldRef<"User", 'Int'>
-  readonly chatEditsUsed: Prisma.FieldRef<"User", 'Int'>
-  readonly chatPeriodStart: Prisma.FieldRef<"User", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"User", 'DateTime'>
 }
