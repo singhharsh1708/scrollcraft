@@ -161,3 +161,12 @@ describe("exported sections honour the scrim", () => {
     expect(html).toContain("rgba(0,0,0,1) 0%");
   });
 });
+
+describe("exported scroll hint", () => {
+  it("does not capture clicks over the copy beneath it", async () => {
+    const html = await exportHtml([{ heading: "A", ctaLabel: "Buy", ctaHref: "https://x.com", scrollHeight: 1000 }]);
+    const hint = /#scroll-hint\s*\{([^}]*)\}/.exec(html);
+    expect(hint).toBeTruthy();
+    expect(hint[1]).toContain("pointer-events: none");
+  });
+});
