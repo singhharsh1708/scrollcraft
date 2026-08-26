@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
   // Deliberately unauthenticated: visitors apply a code on /pricing before signing in,
   // and only checkout gates on auth. Enumeration is limited by rate and by the uniform
   // response below rather than by requiring an account.
-  const rl = await rateLimit(`promo:${getClientIp(req)}`, { limit: 10, windowMs: 60_000 });
+  const rl = await rateLimit(getClientIp(req), { bucket: "promo", limit: 10, windowMs: 60_000 });
   if (!rl.allowed) {
     return NextResponse.json({ error: "Too many requests" }, { status: 429 });
   }

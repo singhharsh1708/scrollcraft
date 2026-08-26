@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { rateLimit, getClientIp } from "@/lib/rateLimit";
+import { rateLimit } from "@/lib/rateLimit";
 import { REVEALS, type Section, visibleSections as onlyVisible } from "@/lib/siteSchema";
 import { layoutStyle } from "@/lib/layoutStyles";
 import { parseThemeJson } from "@/lib/siteSchema";
@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const rl = await rateLimit(getClientIp(req), { limit: 10, windowMs: 60_000 });
+  const rl = await rateLimit(`user:${session.user.id}`, { bucket: "export-site", limit: 10, windowMs: 60_000 });
   if (!rl.allowed) {
     return NextResponse.json({ error: "Too many requests. Try again in a minute." }, { status: 429 });
   }
