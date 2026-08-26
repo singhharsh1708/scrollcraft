@@ -19,11 +19,6 @@ model User {
   // When the current paid plan lapses. Null means no expiry (a legacy grant, or FREE);
   // a paid plan past this date is treated as FREE and lazily downgraded.
   planExpiresAt DateTime?
-  credits   Int      @default(100)
-  // AI design-change chats consumed in the current period, and when that period began.
-  // Metered separately from `credits`, which covers image/video generation.
-  chatEditsUsed   Int      @default(0)
-  chatPeriodStart DateTime @default(now())
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

@@ -276,7 +276,7 @@ describe("verify — the promo use is consumed exactly once, at capture", () => 
     expect(dbMock.$executeRaw).toHaveBeenCalledTimes(1);
     expect(dbMock.user.update).toHaveBeenCalledWith({
       where: { id: "user_1" },
-      data: expect.objectContaining({ plan: "PRO", credits: 6000, planExpiresAt: expect.any(Date) }),
+      data: expect.objectContaining({ plan: "PRO", planExpiresAt: expect.any(Date) }),
     });
   });
 

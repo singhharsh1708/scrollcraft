@@ -1213,9 +1213,6 @@ export const UserScalarFieldEnum = {
   image: 'image',
   plan: 'plan',
   planExpiresAt: 'planExpiresAt',
-  credits: 'credits',
-  chatEditsUsed: 'chatEditsUsed',
-  chatPeriodStart: 'chatPeriodStart',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

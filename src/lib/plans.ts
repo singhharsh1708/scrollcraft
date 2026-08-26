@@ -19,8 +19,6 @@ export interface Plan {
   monthlyPaise: number;
   /** Per-month rate when billed annually; the annual charge is 12x this. */
   annualPaise: number;
-  /** Credits granted for the billing period. */
-  credits: number;
   /** Saved websites the plan allows. Enforced by POST /api/sites. */
   sites: number;
   color: string;
@@ -29,27 +27,27 @@ export interface Plan {
 export const PLANS: Record<PlanKey, Plan> = {
   FREE: {
     key: "FREE", name: "Free Trial", label: "Free Trial",
-    monthlyPaise: 0, annualPaise: 0, credits: 100, sites: 1,
+    monthlyPaise: 0, annualPaise: 0, sites: 1,
     color: "text-muted-foreground",
   },
   BASIC: {
     key: "BASIC", name: "Basic", label: "Basic",
-    monthlyPaise: 199900, annualPaise: 159900, credits: 1500, sites: 2,
+    monthlyPaise: 199900, annualPaise: 159900, sites: 2,
     color: "text-blue-400",
   },
   BASIC_PLUS: {
     key: "BASIC_PLUS", name: "Basic Plus", label: "Basic Plus",
-    monthlyPaise: 299900, annualPaise: 239900, credits: 2500, sites: 4,
+    monthlyPaise: 299900, annualPaise: 239900, sites: 4,
     color: "text-cyan-400",
   },
   PRO: {
     key: "PRO", name: "Pro", label: "Pro",
-    monthlyPaise: 499900, annualPaise: 399900, credits: 6000, sites: 7,
+    monthlyPaise: 499900, annualPaise: 399900, sites: 7,
     color: "text-primary",
   },
   PREMIUM: {
     key: "PREMIUM", name: "Premium", label: "Premium",
-    monthlyPaise: 1499900, annualPaise: 1199900, credits: 25000, sites: 30,
+    monthlyPaise: 1499900, annualPaise: 1199900, sites: 30,
     color: "text-amber-400",
   },
 };

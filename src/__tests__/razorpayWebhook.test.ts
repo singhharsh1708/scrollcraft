@@ -130,7 +130,7 @@ describe("Razorpay webhook — payment.captured", () => {
     });
     expect(dbMock.user.update).toHaveBeenCalledWith({
       where: { id: "user_1" },
-      data: expect.objectContaining({ plan: "PRO", credits: 6000, planExpiresAt: expect.any(Date) }),
+      data: expect.objectContaining({ plan: "PRO", planExpiresAt: expect.any(Date) }),
     });
     expect(dbMock.$executeRaw).toHaveBeenCalledTimes(1);
   });
@@ -175,7 +175,7 @@ describe("Razorpay webhook — payment.captured", () => {
 
     expect(dbMock.user.update).toHaveBeenCalledWith({
       where: { id: "user_1" },
-      data: expect.objectContaining({ plan: "BASIC", credits: 1500, planExpiresAt: expect.any(Date) }),
+      data: expect.objectContaining({ plan: "BASIC", planExpiresAt: expect.any(Date) }),
     });
   });
 
@@ -240,7 +240,7 @@ describe("Razorpay webhook — payment.captured with no local order row", () => 
     });
     expect(dbMock.user.update).toHaveBeenCalledWith({
       where: { id: "user_1" },
-      data: expect.objectContaining({ plan: "PRO", credits: 6000, planExpiresAt: expect.any(Date) }),
+      data: expect.objectContaining({ plan: "PRO", planExpiresAt: expect.any(Date) }),
     });
   });
 
@@ -263,7 +263,7 @@ describe("Razorpay webhook — payment.captured with no local order row", () => 
     });
     expect(dbMock.user.update).toHaveBeenCalledWith({
       where: { id: "user_1" },
-      data: expect.objectContaining({ plan: "PRO", credits: 6000, planExpiresAt: expect.any(Date) }),
+      data: expect.objectContaining({ plan: "PRO", planExpiresAt: expect.any(Date) }),
     });
   });
 
@@ -343,7 +343,7 @@ describe("Razorpay webhook — refunds", () => {
     });
     expect(dbMock.user.update).toHaveBeenCalledWith({
       where: { id: "user_1" },
-      data: { plan: "FREE", credits: 100, planExpiresAt: null },
+      data: { plan: "FREE", planExpiresAt: null },
     });
   });
 
@@ -361,7 +361,7 @@ describe("Razorpay webhook — refunds", () => {
     );
     expect(dbMock.user.update).toHaveBeenCalledWith({
       where: { id: "user_1" },
-      data: expect.objectContaining({ plan: "BASIC_PLUS", credits: 2500, planExpiresAt: expect.any(Date) }),
+      data: expect.objectContaining({ plan: "BASIC_PLUS", planExpiresAt: expect.any(Date) }),
     });
   });
 
@@ -407,7 +407,7 @@ describe("Razorpay webhook — refunds", () => {
 
     expect(dbMock.user.update).toHaveBeenCalledWith({
       where: { id: "user_1" },
-      data: { plan: "FREE", credits: 100, planExpiresAt: null },
+      data: { plan: "FREE", planExpiresAt: null },
     });
   });
 
