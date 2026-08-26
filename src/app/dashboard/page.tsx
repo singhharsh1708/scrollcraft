@@ -247,7 +247,7 @@ export default function DashboardPage() {
                     <p className="text-xs text-muted-foreground">{site.frameCount} frames · {site.fps} fps · {new Date(site.updatedAt).toLocaleDateString("en-IN")}</p>
                   </div>
 
-                  <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="flex items-center gap-2 opacity-100 [@media(hover:hover)]:opacity-0 group-hover:[@media(hover:hover)]:opacity-100 group-focus-within:opacity-100 transition-opacity">
                     {site.published && site.publishSlug && (
                       <a href={`/s/${site.publishSlug}`} target="_blank" rel="noreferrer">
                         <Button size="sm" variant="outline" className="border-white/10 h-7 px-2 text-xs gap-1">

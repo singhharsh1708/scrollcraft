@@ -644,7 +644,7 @@ function EditorInner() {
   return (
     <div className="h-screen flex flex-col bg-background text-foreground overflow-hidden">
       {/* Top bar */}
-      <div className="flex items-center justify-between px-4 py-2 border-b border-white/5 bg-card/50 flex-shrink-0">
+      <div className="flex items-center justify-between gap-2 flex-wrap px-4 py-2 border-b border-white/5 bg-card/50 flex-shrink-0">
         <div className="flex items-center gap-3">
           <Link href="/create" className="flex items-center gap-1 text-muted-foreground hover:text-foreground text-sm transition-colors">
             <ArrowLeft className="w-3.5 h-3.5" /> Back
@@ -735,7 +735,7 @@ function EditorInner() {
         </div>
       </div>
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-x-auto md:overflow-hidden">
         {/* Left panel: sections list */}
         <div className="w-56 border-r border-white/5 flex flex-col bg-card/30 flex-shrink-0">
           <div className="p-3 border-b border-white/5 flex items-center justify-between">
