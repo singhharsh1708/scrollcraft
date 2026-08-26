@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Check, Sparkles, Zap, ChevronDown, Mail, Lock } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import { PLANS, siteAllowance } from "@/lib/plans";
+import { CONTACT_EMAIL } from "@/lib/links";
 import { TEMPLATES } from "@/lib/templates";
 import { PRESETS } from "@/lib/presets";
 import SiteFooter from "@/components/SiteFooter";
@@ -183,7 +184,7 @@ export default function PricingPage() {
             </Button>
           </Link>
           <p className="text-xs text-muted-foreground/70 text-center mt-3">
-            Or email hello@scrollcraft.app directly.
+            Or email {CONTACT_EMAIL} directly.
           </p>
         </div>
       </section>

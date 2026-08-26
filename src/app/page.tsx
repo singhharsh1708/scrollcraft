@@ -8,6 +8,8 @@ import Navbar from "@/components/Navbar";
 import StylePreview from "@/components/StylePreview";
 import { findPreset, PRESETS } from "@/lib/presets";
 import SponsorCard from "@/components/SponsorCard";
+import GitHubMark from "@/components/GitHubMark";
+import { AUTHOR_NAME, AUTHOR_SITE_URL, GITHUB_REPO_URL } from "@/lib/links";
 import SiteFooter from "@/components/SiteFooter";
 
 const DEMO_COUNT = 60;
@@ -48,13 +50,6 @@ const FEATURED_PRESETS = FEATURED_PRESET_NAMES
   .map((n) => findPreset(n))
   .filter((p): p is NonNullable<typeof p> => Boolean(p));
 
-const TESTIMONIALS = [
-  { name: "Isabella R.", location: "Italy", role: "E-commerce founder", quote: "Sales converted from day one. The animated scroll background made our product page feel like a luxury brand site overnight." },
-  { name: "Arjun M.", location: "India", role: "Startup founder", quote: "Replaced a $4,000 agency quote with a 15-minute session. The output was honestly better than what they proposed." },
-  { name: "Priya S.", location: "India", role: "Restaurant owner", quote: "Built my restaurant's full site in under 10 minutes. Customers keep asking who designed it." },
-  { name: "Lukas B.", location: "Germany", role: "Indie developer", quote: "Launched my SaaS landing page before the weekend was over. The scroll animation is unlike anything I could have hand-coded." },
-  { name: "Amara O.", location: "Ghana", role: "Consultant", quote: "My clients think I hired a design agency. I pick a template, change the copy, and export the ZIP." },
-];
 
 const FAQ = [
   { q: "Do I need to know how to code?", a: "Not at all. Pick a template, edit the copy and colours, and export. The result is pure HTML/CSS/JS you can deploy anywhere." },
@@ -116,22 +111,6 @@ export default function Home() {
       <section className="relative flex flex-col items-center justify-center min-h-screen text-center px-6 pt-20">
         <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] rounded-full bg-primary/8 blur-[140px] pointer-events-none" />
         <div className="absolute top-2/3 left-1/4 w-[300px] h-[300px] rounded-full bg-blue-500/6 blur-[100px] pointer-events-none" />
-
-        {/* Product Hunt badge */}
-        <a
-          href="https://www.producthunt.com/posts/scrollcraft"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-block mb-4"
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=scrollcraft&theme=dark"
-            alt="ScrollCraft on Product Hunt"
-            width={220}
-            height={48}
-          />
-        </a>
 
         <Badge variant="outline" className="mb-6 border-primary/40 text-primary bg-primary/10 px-4 py-1.5">
           <Sparkles className="w-3 h-3 mr-1.5" /> Ready-made templates · No code · Animated scroll
@@ -303,43 +282,30 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Testimonials */}
-      <section className="py-32 px-6 border-t border-white/5">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <Badge variant="outline" className="mb-4 border-white/10">From our users</Badge>
-            <h2 className="text-4xl md:text-5xl font-black tracking-tighter">
-              Real sites. Real results.
-            </h2>
-          </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {TESTIMONIALS.map((t) => (
-              <div key={t.name} className="p-6 rounded-2xl border border-white/8 bg-card flex flex-col gap-4">
-                <p className="text-sm text-muted-foreground leading-relaxed flex-1">
-                  &ldquo;{t.quote}&rdquo;
-                </p>
-                <div className="flex items-center gap-3 pt-3 border-t border-white/8">
-                  <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary text-sm font-bold">
-                    {t.name[0]}
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">{t.name}</p>
-                    <p className="text-xs text-muted-foreground">{t.role} · {t.location}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-            {/* Filler CTA card */}
-            <div className="p-6 rounded-2xl border border-dashed border-white/10 flex flex-col items-center justify-center text-center gap-3 bg-primary/3">
-              <div className="w-10 h-10 rounded-full bg-primary/15 flex items-center justify-center">
-                <Sparkles className="w-5 h-5 text-primary" />
-              </div>
-              <p className="font-semibold">Your site could be next</p>
-              <p className="text-xs text-muted-foreground">Build and launch in under 15 minutes</p>
-              <Link href="/create">
-                <Button size="sm" className="bg-primary text-white mt-1">Start free</Button>
-              </Link>
-            </div>
+      {/* Who builds this */}
+      <section className="py-28 px-6 border-t border-white/5">
+        <div className="max-w-4xl mx-auto text-center">
+          <Badge variant="outline" className="mb-4 border-white/10">Who builds this</Badge>
+          <h2 className="text-4xl md:text-5xl font-black tracking-tighter mb-5">
+            One engineer, in the open.
+          </h2>
+          <p className="text-muted-foreground text-lg leading-relaxed max-w-2xl mx-auto mb-8">
+            ScrollCraft is built and maintained by {AUTHOR_NAME}. There is no launch-day
+            testimonial wall here yet, because there are no customers to quote yet — what
+            there is instead is the whole source tree, the commit history, and an issue
+            tracker you can read before you trust any of it.
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <a href={GITHUB_REPO_URL} target="_blank" rel="noopener noreferrer">
+              <Button variant="outline" className="border-white/10 gap-2">
+                <GitHubMark className="w-4 h-4" /> Read the source
+              </Button>
+            </a>
+            <a href={AUTHOR_SITE_URL} target="_blank" rel="noopener noreferrer">
+              <Button variant="outline" className="border-white/10">
+                {AUTHOR_NAME}
+              </Button>
+            </a>
           </div>
         </div>
       </section>

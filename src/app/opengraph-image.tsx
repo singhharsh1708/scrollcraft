@@ -106,7 +106,7 @@ export default function OGImage() {
             fontSize: 18,
           }}
         >
-          scrollcraft.app
+          scrollcraft-gilt.vercel.app
         </div>
       </div>
     ),
