@@ -106,6 +106,48 @@ describe("procedural background export", () => {
 });
 
 describe("the inlined runtime is executable", () => {
+  it("draws using the recipe the page actually emits, not a hand-built one", async () => {
+    // The original version of this test built its own options object in the correct
+    // FrameOptions shape and ran the runtime against that. It passed while the export
+    // emitted { style, colors: [...] }, which drawFrame2D cannot read — so every
+    // procedurally exported site rendered a black screen and threw on first paint.
+    // Parse the recipe out of the page and use exactly what ships.
+    const html = await proceduralHtml();
+    const recipeMatch = html.match(/var recipe = (\{[\s\S]*?\});/);
+    expect(recipeMatch, "no recipe emitted").toBeTruthy();
+    const recipe = JSON.parse(recipeMatch![1]);
+
+    // The shape the drawing core requires.
+    expect(recipe.color1).toBe("#111111");
+    expect(recipe.color2).toBe("#222222");
+    expect(recipe.color3).toBe("#333333");
+    expect(recipe.style).toBe("gradient");
+    expect(recipe.colors, "the colours array is not what drawFrame2D reads").toBeUndefined();
+
+    const start = html.indexOf("function hexToRgb");
+    const end = html.indexOf("var recipe =");
+    const runtime = html.slice(start, end);
+
+    const calls: string[] = [];
+    const stub = new Proxy({} as Record<string, unknown>, {
+      get: (_t, prop: string) => {
+        if (prop === "createLinearGradient" || prop === "createRadialGradient") {
+          return () => ({ addColorStop: () => {} });
+        }
+        return (...args: unknown[]) => { calls.push(`${prop}(${args.length})`); };
+      },
+      set: () => true,
+    });
+
+    const run = new Function(`${runtime}; return drawFrame2D;`)() as (
+      ctx: unknown, w: number, h: number, p: number, opts: unknown
+    ) => void;
+
+    // Must not throw, and must actually paint.
+    expect(() => run(stub, 1280, 720, 0.5, recipe)).not.toThrow();
+    expect(calls.length).toBeGreaterThan(0);
+  });
+
   it("draws to a canvas context without throwing", async () => {
     const html = await proceduralHtml();
     // Pull the serialised functions out of the page and run them against a recording
