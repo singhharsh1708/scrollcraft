@@ -26,7 +26,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Export purchases not configured" }, { status: 503 });
   }
 
-  const parsed = schema.safeParse(await req.json());
+  let raw: unknown;
+  try {
+    raw = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+  const parsed = schema.safeParse(raw);
   if (!parsed.success) {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
