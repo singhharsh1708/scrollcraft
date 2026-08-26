@@ -14,7 +14,7 @@ const FEATURES = [
   {
     icon: Sparkles,
     title: "Ready-made scroll templates",
-    desc: "Describe a visual vibe — noir cityscape, golden gradient, neon particles — and get 400+ canvas frames in seconds.",
+    desc: "Pick a style and palette — noir cityscape, golden gradient, neon particles — and get up to 200 canvas frames in seconds.",
   },
   {
     icon: Zap,
@@ -140,7 +140,7 @@ export default function LaunchPage() {
           </div>
 
           <p className="mt-4 text-sm text-muted-foreground">
-            7-day free trial · No credit card required · Deploy anywhere
+            Free plan, no time limit · No credit card required · Deploy anywhere
           </p>
         </div>
       </section>

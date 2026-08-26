@@ -52,7 +52,7 @@ const ENTRIES = [
     tagColor: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
     changes: [
       { type: "new", text: "Initial public launch on Vercel" },
-      { type: "new", text: "Canvas-based ScrollEngine — 400+ frames, native browser scroll" },
+      { type: "new", text: "Canvas-based ScrollEngine — up to 200 frames, native browser scroll" },
       { type: "new", text: "/create — 3-step flow: prompt → configure → generate" },
       { type: "new", text: "/editor — full visual editor with sections, style, layout controls" },
       { type: "new", text: "AI video generation API — Luma AI + Runway ML with demo fallback" },

@@ -26,10 +26,10 @@ const PLANS = [
       "1 saved website",
       "Publish to a hosted link, with a ScrollCraft badge",
       "Visual editor",
-      "ZIP export",
       "Community support",
     ],
     missing: [
+      "ZIP export included (buy per site, or upgrade)",
       "More than one saved website",
       "Badge-free published pages",
       "Priority support",
@@ -124,15 +124,15 @@ const PLANS = [
 const FAQ = [
   {
     q: "Are the templates really free?",
-    a: "Yes. Every template is available on every plan, including the free one, and you can export any site you build to a ZIP you own outright.",
+    a: "Yes. Every template is available on every plan, including the free one. Exporting a site to a ZIP you own outright is included on the paid plans, or you can buy an export for a single site.",
   },
   {
     q: "What do the paid plans actually add?",
-    a: "How many websites you can keep saved and published, badge-free published pages that search engines index, and how quickly we answer support. Nothing about the templates themselves is gated.",
+    a: "ZIP export without buying it per site, how many websites you can keep saved and published, badge-free published pages that search engines index, and how quickly we answer support. Nothing about the templates themselves is gated.",
   },
   {
     q: "Can I cancel anytime?",
-    a: "Yes. Cancel from your dashboard at any time — you keep access until the end of your billing period.",
+    a: "Yes. Email hello@scrollcraft.app to cancel — you keep access until the end of your billing period.",
   },
   {
     q: "What's the difference between monthly and annual?",
@@ -303,7 +303,7 @@ export default function PricingPage() {
           </span>
         </h1>
         <p className="text-muted-foreground text-lg max-w-xl mx-auto mb-10">
-          Every plan includes our full animated scroll engine, ZIP export, and canvas generation.
+          Every plan includes the full animated scroll engine and visual editor. ZIP export is included on every paid plan, or buy it per site.
         </p>
 
         {/* Billing toggle */}
@@ -489,7 +489,7 @@ export default function PricingPage() {
                 { label: "Published sites", values: ["1", "2", "4", "7", "30"] },
                 { label: "Badge-free pages", values: [false, true, true, true, true] },
                 { label: "Visual editor", values: [true, true, true, true, true] },
-                { label: "ZIP export", values: [true, true, true, true, true] },
+                { label: "ZIP export", values: [false, true, true, true, true] },
               ].map((row, i) => (
                 <tr key={row.label} className={`border-b border-white/5 ${i % 2 === 0 ? "" : "bg-white/2"}`}>
                   <td className="px-4 py-3 text-muted-foreground">{row.label}</td>
@@ -538,9 +538,9 @@ export default function PricingPage() {
       {/* Bottom CTA */}
       <section className="pb-24 px-6 text-center border-t border-white/5 pt-20">
         <h2 className="text-4xl font-black tracking-tighter mb-4">
-          7 days free. No card required.
+          Start free. No card required.
         </h2>
-        <p className="text-muted-foreground mb-8">Try the full Pro experience — upgrade only when you love it.</p>
+        <p className="text-muted-foreground mb-8">Every template, one saved website, no time limit.</p>
         <Link href="/create">
           <Button size="lg" className="bg-primary hover:bg-primary/90 text-white px-10 py-6 text-base font-semibold shadow-xl shadow-primary/30">
             Start for free <Sparkles className="ml-2 w-4 h-4" />
