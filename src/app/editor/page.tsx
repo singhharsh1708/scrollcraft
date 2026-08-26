@@ -207,8 +207,14 @@ function EditorInner() {
         }
         const { site } = await res.json();
         if (cancelled || !site) return;
+        // A persisted site is never a demo, even if its frames can't be resolved on this
+        // device — the demo lock is only for browser-generated placeholder frames, and
+        // leaving it on here made a real site refuse to Save or Export.
+        setIsDemo(false);
         // Load frames from IndexedDB (primary). Fall back to DB framesJson for old sites.
-        const storedFrames = await loadFrames(`scrollcraft_frames_${sid}`);
+        // Guard the read: an IndexedDB rejection must not throw past the rest of the
+        // hydration, which would discard the sections, name, and theme already fetched.
+        const storedFrames = await loadFrames(`scrollcraft_frames_${sid}`).catch(() => null);
         const storedMobile = await loadFrames(`scrollcraft_mframes_${sid}`).catch(() => null);
         let framesResolved = false;
         if (storedFrames && storedFrames.length) {
@@ -293,6 +299,11 @@ function EditorInner() {
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
   const [dirty, setDirty] = useState(false);
+  // Bumped on every content edit. A save captures this at its start and only clears the
+  // dirty flag if it is unchanged when the request resolves — otherwise edits the user
+  // made while the save was in flight would be silently marked as saved.
+  const editGenRef = useRef(0);
+  useEffect(() => { editGenRef.current += 1; }, [sections, siteName, customHead, customCss]);
 
   const syncHistoryFlags = useCallback(() => {
     setCanUndo(undoStack.current.length > 0);
@@ -559,6 +570,7 @@ function EditorInner() {
       return null;
     }
     setIsSaving(true);
+    const genAtSave = editGenRef.current;
     try {
       // Frames are NOT sent to the server (would exceed Vercel's 4.5 MB limit).
       // They are stored in sessionStorage keyed by site ID after a successful save.
@@ -596,13 +608,18 @@ function EditorInner() {
       setSiteId(savedId);
 
       // Persist frames in IndexedDB so they survive navigation without hitting sessionStorage quota.
-      await storeFrames(`scrollcraft_frames_${savedId}`, frames).catch(() => {});
+      const framesCached = await storeFrames(`scrollcraft_frames_${savedId}`, frames).then(() => true, () => false);
       if (mobileFrames.length) {
         await storeFrames(`scrollcraft_mframes_${savedId}`, mobileFrames).catch(() => {});
       }
 
-      setDirty(false);
-      if (!opts?.silent) toast.success("Site saved!");
+      // Only clear dirty if nothing was edited while the request was in flight, so those
+      // in-flight edits aren't lost from the unsaved-changes tracking.
+      if (editGenRef.current === genAtSave) setDirty(false);
+      if (!opts?.silent) {
+        if (framesCached) toast.success("Site saved!");
+        else toast.warning("Site saved. Frames couldn't be cached on this device — reopen here to re-cache them.");
+      }
       return savedId;
     } catch {
       toast.error("Failed to save site");
