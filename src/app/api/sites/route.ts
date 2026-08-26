@@ -16,6 +16,7 @@ const MAX_SITES_PER_USER = 100;
 const siteSchema = z.object({
   id: z.string().optional(),
   name: z.string().max(255).optional(),
+  description: z.string().max(300).optional(),
   fps: z.number().int().min(1).max(120).optional(),
   frameCount: z.number().int().min(0).max(100_000).optional(),
   framesJson: z.string().max(10_000_000).optional(),
@@ -97,7 +98,7 @@ export async function POST(req: NextRequest) {
   if (!parsed.success) {
     return NextResponse.json({ error: "Invalid request", details: parsed.error.flatten().fieldErrors }, { status: 400 });
   }
-  const { id, name, fps, frameCount, framesJson, sectionsJson, themeJson, styleJson, customHead, customCss, audioUrl } = parsed.data;
+  const { id, name, description, fps, frameCount, framesJson, sectionsJson, themeJson, styleJson, customHead, customCss, audioUrl } = parsed.data;
 
   if (sectionsJson !== undefined) {
     const sections = parseSectionsJson(sectionsJson);
@@ -134,7 +135,7 @@ export async function POST(req: NextRequest) {
 
     const site = await db.site.update({
       where: { id },
-      data: { name, fps, frameCount, framesJson, sectionsJson, themeJson, styleJson, customHead, customCss, audioUrl },
+      data: { name, description, fps, frameCount, framesJson, sectionsJson, themeJson, styleJson, customHead, customCss, audioUrl },
     });
     return NextResponse.json({ site });
   }
@@ -154,7 +155,7 @@ export async function POST(req: NextRequest) {
   }
 
   const site = await db.site.create({
-    data: { userId: user.id, name, fps, frameCount, framesJson, sectionsJson, themeJson, styleJson, customHead, customCss, audioUrl },
+    data: { userId: user.id, name, description, fps, frameCount, framesJson, sectionsJson, themeJson, styleJson, customHead, customCss, audioUrl },
   });
   return NextResponse.json({ site });
 }

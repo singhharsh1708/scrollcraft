@@ -13,6 +13,8 @@ import { sanitizeHostedCss } from "@/lib/themeCss";
 
 export interface PublishedSite {
   name: string;
+  /** Meta and social description; null falls back to the page's own defaults. */
+  description: string | null;
   sections: Section[];
   theme: Theme | null;
   styleSpec: SiteStyle | null;
@@ -47,6 +49,7 @@ export async function getPublishedSite(slug: string): Promise<PublishedSite | nu
     where: { publishSlug: slug, published: true },
     select: {
       name: true,
+      description: true,
       sectionsJson: true,
       themeJson: true,
       styleJson: true,
@@ -71,6 +74,7 @@ export async function getPublishedSite(slug: string): Promise<PublishedSite | nu
 
   return {
     name: site.name,
+    description: site.description?.trim().slice(0, 300) || null,
     sections: sections.sections,
     theme: theme?.ok ? theme.value : null,
     styleSpec,

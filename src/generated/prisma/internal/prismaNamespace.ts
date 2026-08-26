@@ -1224,6 +1224,7 @@ export const SiteScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
   name: 'name',
+  description: 'description',
   fps: 'fps',
   frameCount: 'frameCount',
   framesJson: 'framesJson',

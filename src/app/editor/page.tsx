@@ -118,6 +118,7 @@ function EditorInner() {
   const [exportStage, setExportStage] = useState<string | null>(null);
   const [isDemo, setIsDemo] = useState(initialIsDemo);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [siteDescription, setSiteDescription] = useState("");
   const [customHead, setCustomHead] = useState("");
   const [customCss, setCustomCss] = useState("");
   const [mobileFrames, setMobileFrames] = useState<string[]>([]);
@@ -269,6 +270,7 @@ function EditorInner() {
         }
         if (typeof site.fps === "number") setFps(site.fps);
         if (site.name) setSiteName(site.name);
+        if (site.description) setSiteDescription(site.description);
         if (site.customHead) setCustomHead(site.customHead);
         if (site.themeJson) {
           const parsedTheme = themeSchema.safeParse(JSON.parse(site.themeJson));
@@ -321,7 +323,7 @@ function EditorInner() {
   // dirty flag if it is unchanged when the request resolves — otherwise edits the user
   // made while the save was in flight would be silently marked as saved.
   const editGenRef = useRef(0);
-  useEffect(() => { editGenRef.current += 1; }, [sections, siteName, customHead, customCss]);
+  useEffect(() => { editGenRef.current += 1; }, [sections, siteName, siteDescription, customHead, customCss]);
 
   const syncHistoryFlags = useCallback(() => {
     setCanUndo(undoStack.current.length > 0);
@@ -476,6 +478,7 @@ function EditorInner() {
         body: JSON.stringify({
           sections,
           siteName,
+          siteDescription,
           fps,
           customHead,
           customCss,
@@ -614,6 +617,7 @@ function EditorInner() {
         body: JSON.stringify({
           id: siteId ?? undefined,
           name: siteName,
+          description: siteDescription || undefined,
           fps,
           frameCount,
           sectionsJson: JSON.stringify(sections),
@@ -932,6 +936,19 @@ function EditorInner() {
                       }}>
                         <ScrollSection style={{ pointerEvents: "auto" }}>
                           <div style={{ textAlign: s.textAlign, padding: "2rem", maxWidth: "700px" }}>
+                            {s.image && /^https?:\/\//i.test(s.image) && (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={s.image}
+                                alt={s.imageAlt ?? ""}
+                                style={{
+                                  display: "block",
+                                  maxWidth: `min(100%, ${Math.min(s.imageWidth ?? 480, 1600)}px)`,
+                                  height: "auto",
+                                  marginBottom: "1rem",
+                                }}
+                              />
+                            )}
                             {s.eyebrow && (
                               <p style={{ fontSize: "0.75rem", fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: s.accentColor, marginBottom: "0.5rem" }}>
                                 {s.eyebrow}
@@ -1045,6 +1062,50 @@ function EditorInner() {
                     />
                   </div>
                 </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs text-muted-foreground">Image URL</label>
+                  <Input
+                    aria-label="Section image URL"
+                    value={selectedSectionData.image ?? ""}
+                    onChange={(e) => updateSection(selectedSectionData.id, { image: e.target.value })}
+                    placeholder="https://cdn.example.com/logo.png"
+                    className="h-7 bg-white/5 border-white/10 text-xs"
+                  />
+                  <p className="text-[11px] text-muted-foreground/70">
+                    Must be a public https URL — an exported ZIP cannot carry a local file.
+                  </p>
+                </div>
+                {selectedSectionData.image ? (
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1.5">
+                      <label className="text-xs text-muted-foreground">Image alt text</label>
+                      <Input
+                        aria-label="Section image alt text"
+                        value={selectedSectionData.imageAlt ?? ""}
+                        onChange={(e) => updateSection(selectedSectionData.id, { imageAlt: e.target.value })}
+                        placeholder="Describe the image"
+                        className="h-7 bg-white/5 border-white/10 text-xs"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs text-muted-foreground">Max width (px)</label>
+                      <Input
+                        aria-label="Section image maximum width in pixels"
+                        type="number"
+                        min={16}
+                        max={1600}
+                        value={selectedSectionData.imageWidth ?? 480}
+                        onChange={(e) => {
+                          const n = Number(e.target.value);
+                          updateSection(selectedSectionData.id, {
+                            imageWidth: Number.isFinite(n) ? Math.min(1600, Math.max(16, Math.trunc(n))) : 480,
+                          });
+                        }}
+                        className="h-7 bg-white/5 border-white/10 text-xs"
+                      />
+                    </div>
+                  </div>
+                ) : null}
               </TabsContent>
 
               <TabsContent value="style" className="p-3 space-y-3 mt-0">
@@ -1189,6 +1250,24 @@ function EditorInner() {
               </TabsContent>
 
               <TabsContent value="code" className="p-3 space-y-4 mt-0">
+                <div className="space-y-1.5">
+                  <label className="text-xs text-muted-foreground font-medium">Site description</label>
+                  <p className="text-xs text-muted-foreground/70">
+                    Used for the meta and social description on your published page and in the export.
+                    Without one, both just repeat the site name.
+                  </p>
+                  <Textarea
+                    aria-label="Site description"
+                    value={siteDescription}
+                    maxLength={300}
+                    onChange={(e) => { setSiteDescription(e.target.value); setDirty(true); }}
+                    placeholder="A one-sentence summary that shows up in search results and link previews."
+                    className="min-h-[60px] text-xs bg-black/30 border-white/10 resize-none"
+                  />
+                  <p className="text-[11px] text-muted-foreground/60 tabular-nums">
+                    {siteDescription.length}/300
+                  </p>
+                </div>
                 <div className="space-y-1.5">
                   <label className="text-xs text-muted-foreground font-medium">Custom &lt;head&gt; HTML</label>
                   <p className="text-xs text-muted-foreground/70">Inject analytics, fonts, or meta tags into &lt;head&gt;</p>

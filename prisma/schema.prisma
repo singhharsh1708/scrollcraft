@@ -33,6 +33,9 @@ model Site {
   id           String   @id @default(cuid())
   userId       String
   name         String   @default("My ScrollCraft Site")
+  // Meta and social description for the published page and the exported HTML. Without it
+  // both fell back to repeating the site name in every description tag.
+  description  String?
   fps          Int      @default(24)
   frameCount   Int      @default(0)
   framesJson   String?  @db.Text
