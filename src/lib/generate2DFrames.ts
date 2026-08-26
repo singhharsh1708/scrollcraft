@@ -203,6 +203,19 @@ export function drawFrame2D(
   }
 }
 
+/**
+ * The drawing core as plain JavaScript, for inlining into an exported site.
+ *
+ * The export has no bundler, so the runtime has to travel as source. Serialising the
+ * real functions rather than keeping a hand-written copy means the exported background
+ * and the in-app one cannot drift apart — there is still only one implementation.
+ */
+export function proceduralRuntimeSource(): string {
+  return [hexToRgb, lerp, drawGradient, drawGeometric, drawParticles, drawWave, drawFrame2D]
+    .map((fn) => fn.toString())
+    .join("\n\n");
+}
+
 export async function generate2DFrames(opts: FrameOptions, onProgress?: (pct: number) => void): Promise<string[]> {
   const w = opts.width ?? 1280;
   const h = opts.height ?? 720;

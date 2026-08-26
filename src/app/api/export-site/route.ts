@@ -5,7 +5,8 @@ import { db } from "@/lib/db";
 import { rateLimit } from "@/lib/rateLimit";
 import { REVEALS, type Section, visibleSections as onlyVisible } from "@/lib/siteSchema";
 import { layoutStyle } from "@/lib/layoutStyles";
-import { parseThemeJson } from "@/lib/siteSchema";
+import { parseThemeJson, parseStyleJson } from "@/lib/siteSchema";
+import { proceduralRuntimeSource } from "@/lib/generate2DFrames";
 import { compileTheme, varsToCss } from "@/lib/themeCss";
 
 function esc(s: unknown): string {
@@ -89,6 +90,7 @@ export async function POST(req: NextRequest) {
       sections,
       siteName,
       siteDescription = "",
+      styleJson = "",
       customHead = "",
       customCss = "",
       themeJson = "",
@@ -121,6 +123,7 @@ export async function POST(req: NextRequest) {
         select: {
           name: true,
           description: true,
+          styleJson: true,
           fps: true,
           sectionsJson: true,
           customHead: true,
@@ -141,6 +144,7 @@ export async function POST(req: NextRequest) {
       }
       siteName = site.name;
       siteDescription = site.description ?? "";
+      styleJson = site.styleJson ?? "";
       customHead = site.customHead ?? "";
       customCss = site.customCss ?? "";
       themeJson = site.themeJson ?? "";
@@ -160,10 +164,21 @@ export async function POST(req: NextRequest) {
     if (sections.length > 200 || JSON.stringify(sections).length > 1_000_000) {
       return NextResponse.json({ error: "sections payload is too large" }, { status: 400 });
     }
-    // Number.isInteger, not just "> 1": JSON.parse turns 1e999 into Infinity, which
-    // passed the old check and emitted `new Array(Infinity)` into the exported script —
-    // a RangeError that killed the whole IIFE, leaving a black page with no error.
-    if (!Number.isInteger(frameCount) || frameCount < 1 || frameCount > 2000) {
+    // A background recipe lets the exported page draw its own frames, so the ZIP carries
+    // no JPEGs at all. Frames are only required when there is no recipe to draw from.
+    const parsedStyle = styleJson ? parseStyleJson(styleJson) : null;
+    const styleSpec = parsedStyle?.ok ? parsedStyle.value : null;
+    // How many steps the procedural background is sampled over. Not files on disk, so
+    // this costs nothing but smoothness.
+    const PROCEDURAL_FRAMES = 240;
+    if (styleSpec) {
+      if (frameCount !== undefined && frameCount !== 0 && !Number.isInteger(frameCount)) {
+        return NextResponse.json({ error: "frameCount must be an integer" }, { status: 400 });
+      }
+    } else if (!Number.isInteger(frameCount) || frameCount < 1 || frameCount > 2000) {
+      // Number.isInteger, not just "> 1": JSON.parse turns 1e999 into Infinity, which
+      // passed the old check and emitted `new Array(Infinity)` into the exported script —
+      // a RangeError that killed the whole IIFE, leaving a black page with no error.
       return NextResponse.json({ error: "frameCount must be an integer between 1 and 2000" }, { status: 400 });
     }
 
@@ -343,9 +358,9 @@ export async function POST(req: NextRequest) {
     (function() {
       const canvas = document.getElementById('scroll-canvas');
       const ctx = canvas.getContext('2d');
-      const desktopCount = ${frameCount};
-      const mobileCount = ${validatedMobileFrameCount};
-      const hasMobile = ${hasMobileFrames ? "true" : "false"};
+      const desktopCount = ${styleSpec ? PROCEDURAL_FRAMES : frameCount};
+      const mobileCount = ${styleSpec ? 0 : validatedMobileFrameCount};
+      const hasMobile = ${styleSpec ? "false" : hasMobileFrames ? "true" : "false"};
       const totalScrollHeight = ${totalScrollHeight};
 
       let isMobile = hasMobile && window.matchMedia('(max-width: 767px)').matches;
@@ -371,6 +386,18 @@ export async function POST(req: NextRequest) {
         drawFrame(currentFrame);
       }
 
+      ${styleSpec ? `
+      // Procedural background: the ZIP ships no frames at all, the page draws each one
+      // on demand at the viewport's own resolution.
+      ${proceduralRuntimeSource()}
+
+      var recipe = ${JSON.stringify({ ...styleSpec, frameCount: PROCEDURAL_FRAMES })};
+      function drawFrame(index) {
+        var cssW = window.innerWidth, cssH = window.innerHeight;
+        var p = frameCount > 1 ? index / (frameCount - 1) : 0;
+        drawFrame2D(ctx, cssW, cssH, p, recipe);
+      }
+      ` : `
       function drawFrame(index) {
         var images = getImages();
         var img = images[index];
@@ -382,7 +409,9 @@ export async function POST(req: NextRequest) {
         ctx.clearRect(0, 0, cssW, cssH);
         ctx.drawImage(img, (cssW - w) / 2, (cssH - h) / 2, w, h);
       }
+      `}
 
+      ${styleSpec ? "" : `
       function preloadSet(count, folder, target, isPrimary) {
         var STEP = 5;
         var keyframes = [];
@@ -450,6 +479,7 @@ export async function POST(req: NextRequest) {
           onScroll();
         });
       }
+      `}
 
       var rafId;
       function onScroll() {
@@ -480,7 +510,7 @@ export async function POST(req: NextRequest) {
       }
       window.addEventListener('resize', resize);
       resize();
-      preload();
+      ${styleSpec ? "" : "preload();"}
       // Browsers restore scroll position on refresh without firing a scroll event, so
       // without this the opening frame sat behind whatever section the visitor was on.
       onScroll();
