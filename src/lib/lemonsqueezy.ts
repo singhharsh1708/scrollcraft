@@ -1,6 +1,6 @@
 import "server-only";
 import crypto from "crypto";
-import { env } from "@/lib/env";
+import { env, siteUrl} from "@/lib/env";
 
 const LS_API_BASE = "https://api.lemonsqueezy.com/v1";
 
@@ -36,7 +36,7 @@ export async function createExportCheckout(params: {
         product_options: {
           name: `ScrollCraft Export — ${siteName}`,
           description: "Download your scroll site as a pure HTML/CSS/JS ZIP",
-          redirect_url: `${process.env.NEXTAUTH_URL ?? "https://scrollcraft.app"}/editor?siteId=${siteId}&purchased=1`,
+          redirect_url: `${siteUrl}/editor?siteId=${siteId}&purchased=1`,
         },
         checkout_options: {
           embed: false,

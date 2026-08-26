@@ -61,7 +61,9 @@ export async function POST(req: NextRequest) {
 
     const status = String(attrs.status ?? "");
     // LS `total` is an integer in the smallest currency unit (e.g. cents)
-    const amount = Number(attrs.total);
+    // Pin against the pre-tax subtotal: `total` includes tax, so a taxed order would fail
+    // an exact-price check even when correct. Fall back to total when subtotal is absent.
+    const amount = Number(attrs.subtotal ?? attrs.total);
     const currency = typeof attrs.currency === "string" ? attrs.currency : "USD";
     const storeId = asId(attrs.store_id);
     const firstItem = (attrs.first_order_item ?? {}) as Record<string, unknown>;
