@@ -263,6 +263,7 @@ export async function POST(req: NextRequest) {
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html { scroll-behavior: auto; }
     body { background: var(--sc-ground, #000); color: var(--sc-ink, #fff); font-family: var(--sc-font-body, system-ui, sans-serif); overflow-x: hidden; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
     #scroll-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
     #scroll-container { position: relative; height: ${totalScrollHeight}px; z-index: 1; pointer-events: none; }
     .scroll-section { pointer-events: none; }
@@ -317,7 +318,7 @@ export async function POST(req: NextRequest) {
   <script src="lenis.min.js"></script>
 </head>
 <body>
-  <canvas id="scroll-canvas"></canvas>
+  <canvas id="scroll-canvas" role="img" aria-label="${esc(siteName ? `${siteName} animated scroll background` : "Animated scroll background")}"></canvas>
   <div id="scroll-container">
     <div style="height:100vh;"></div>
     ${sectionsHtml}
@@ -479,15 +480,35 @@ export async function POST(req: NextRequest) {
     (function() {
       var audio = new Audio('audio/track.${audioExt}');
       audio.loop = true;
-      audio.volume = 0;
       var lastScrollY = 0, lastScrollTime = 0, idleTimer = null, fadeRaf = null;
 
+      // iOS Safari ignores writes to HTMLMediaElement.volume — it is fixed at 1 — so the
+      // velocity ramp and the idle fade were silent no-ops there and the track played at
+      // full volume from the first scroll. Route gain through WebAudio where available.
+      var AC = window.AudioContext || window.webkitAudioContext;
+      var ctx = null, gain = null;
+      if (AC) {
+        try {
+          ctx = new AC();
+          gain = ctx.createGain();
+          ctx.createMediaElementSource(audio).connect(gain);
+          gain.connect(ctx.destination);
+        } catch (e) { ctx = null; gain = null; }
+      }
+      function setVol(v) {
+        if (gain) { gain.gain.value = v; } else { audio.volume = v; }
+      }
+      function getVol() {
+        return gain ? gain.gain.value : audio.volume;
+      }
+      setVol(0);
+
       function fadeVolume(target, duration) {
-        var start = audio.volume, startTime = performance.now();
+        var start = getVol(), startTime = performance.now();
         cancelAnimationFrame(fadeRaf);
         function tick(now) {
           var t = Math.min((now - startTime) / duration, 1);
-          audio.volume = start + (target - start) * t;
+          setVol(start + (target - start) * t);
           if (t < 1) { fadeRaf = requestAnimationFrame(tick); }
           else if (target === 0) { audio.pause(); }
         }
@@ -524,8 +545,13 @@ export async function POST(req: NextRequest) {
         var velocity = dt > 0 ? Math.abs(scrollY - lastScrollY) / dt : 0;
         lastScrollY = scrollY; lastScrollTime = now;
         var targetVol = Math.min(Math.max(velocity / 0.5, 0.08), 1);
-        if (audio.paused) { audio.volume = targetVol; audio.play().catch(function(){}); }
-        else { cancelAnimationFrame(fadeRaf); audio.volume = targetVol; }
+        if (audio.paused) {
+          setVol(targetVol);
+          // A context created before a gesture starts suspended; resume on first scroll.
+          if (ctx && ctx.state === 'suspended') { ctx.resume(); }
+          audio.play().catch(function(){});
+        }
+        else { cancelAnimationFrame(fadeRaf); setVol(targetVol); }
         clearTimeout(idleTimer);
         idleTimer = setTimeout(function() { fadeVolume(0, 600); }, 2000);
       }, { passive: true });
