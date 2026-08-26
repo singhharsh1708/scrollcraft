@@ -12,6 +12,7 @@ import { isIPv4, isIPv6 } from "net";
 import http from "http";
 import https from "https";
 import { randomUUID } from "crypto";
+import os from "os";
 import { pipeline } from "stream/promises";
 import { auth } from "@/auth";
 import { rateLimit } from "@/lib/rateLimit";
@@ -246,7 +247,7 @@ export async function POST(req: NextRequest) {
   }
 
   const contentType = req.headers.get("content-type") || "";
-  const tmpDir = path.join(process.cwd(), "tmp", `frames-${Date.now()}-${randomUUID()}`);
+  const tmpDir = path.join(os.tmpdir(), `frames-${Date.now()}-${randomUUID()}`);
 
   try {
     await mkdir(tmpDir, { recursive: true });
