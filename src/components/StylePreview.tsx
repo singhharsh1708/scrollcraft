@@ -73,7 +73,10 @@ export default function StylePreview({
     const tick = (ts: number) => {
       if (!start) start = ts;
       const elapsed = (ts - start) / 1000;
-      const p = (elapsed % durationSec) / durationSec; // 0..1 loop
+      // Ping-pong 0->1->0 instead of a 0..1 sawtooth: the draw functions are not periodic
+      // in p, so a sawtooth snaps at the wrap. A triangle wave is continuous at both ends.
+      const phase = (elapsed / durationSec) % 2;
+      const p = phase <= 1 ? phase : 2 - phase;
       const { w, h } = sizeRef.current;
       drawFrame2D(ctx, w, h, p, optsRef.current);
       rafId = requestAnimationFrame(tick);

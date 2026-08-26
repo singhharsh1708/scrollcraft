@@ -263,6 +263,7 @@ export async function POST(req: NextRequest) {
     }
     #scroll-hint {
       position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%);
+      pointer-events: none;
       display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
       color: rgba(255,255,255,0.4); font-size: 0.75rem; letter-spacing: 0.1em;
       text-transform: uppercase; z-index: 20; transition: opacity 0.5s;
