@@ -49,7 +49,7 @@ export default function CookiesPage() {
         <p>You can clear cookies through your browser settings at any time. Clearing the session cookie will sign you out. Disabling cookies will prevent sign-in from working.</p>
 
         <h2>Contact</h2>
-        <p>Questions? Email <a href="mailto:hello@scrollcraft.xyz" className="underline">hello@scrollcraft.xyz</a>. See also our <Link href="/privacy" className="underline">Privacy Policy</Link>.</p>
+        <p>Questions? Email <a href="mailto:hello@scrollcraft.app" className="underline">hello@scrollcraft.app</a>. See also our <Link href="/privacy" className="underline">Privacy Policy</Link>.</p>
       </article>
     </main>
   );

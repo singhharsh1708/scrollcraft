@@ -32,10 +32,10 @@ export default function PrivacyPage() {
         <p>We use a session cookie (HttpOnly, Secure) to keep you signed in. No advertising or tracking cookies are used. See our <Link href="/cookies" className="underline">Cookie Policy</Link> for details.</p>
 
         <h2>Your Rights</h2>
-        <p>You may request deletion of your account and associated data at any time by emailing <a href="mailto:hello@scrollcraft.xyz" className="underline">hello@scrollcraft.xyz</a>. We will process deletion within 30 days.</p>
+        <p>You may request deletion of your account and associated data at any time by emailing <a href="mailto:hello@scrollcraft.app" className="underline">hello@scrollcraft.app</a>. We will process deletion within 30 days.</p>
 
         <h2>Contact</h2>
-        <p>Questions? Email <a href="mailto:hello@scrollcraft.xyz" className="underline">hello@scrollcraft.xyz</a>.</p>
+        <p>Questions? Email <a href="mailto:hello@scrollcraft.app" className="underline">hello@scrollcraft.app</a>.</p>
       </article>
     </main>
   );
