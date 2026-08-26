@@ -190,4 +190,30 @@ describe("exported head and resilience", () => {
     expect(html).toContain("img.decode");
     expect(html).toContain("decoding = 'async'");
   });
+
+  it("excludes a hidden section from the HTML and the total scroll height", async () => {
+    const html = await exportHtml([
+      { heading: "Shown", scrollHeight: 1000 },
+      { heading: "Draft", visible: false, scrollHeight: 5000 },
+    ]);
+    expect(html).toContain("Shown");
+    expect(html).not.toContain("Draft");
+    // 1000 (the one visible section) + the 1000px trailing viewport; the hidden 5000 is
+    // never counted.
+    expect(html).toContain("height: 2000px");
+  });
+
+  it("refuses an export with no visible section", async () => {
+    const res = await POST(exportRequest({
+      sections: [{ heading: "Hidden", visible: false, scrollHeight: 1000 }],
+      siteName: "Parity", frameCount: 10, fps: 24,
+    }));
+    expect(res.status).toBe(400);
+  });
+
+  it("rejects a sections payload past the count cap", async () => {
+    const many = Array.from({ length: 201 }, (_, i) => ({ heading: `S${i}`, scrollHeight: 1000 }));
+    const res = await POST(exportRequest({ sections: many, siteName: "Big", frameCount: 10, fps: 24 }));
+    expect(res.status).toBe(400);
+  });
 });

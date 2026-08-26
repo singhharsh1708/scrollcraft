@@ -163,8 +163,11 @@ export default function ScrollEngine({ frames, mobileFrames, totalScrollHeight =
       // In simulator mode the canvas is pinned inside a scroll container, so its own
       // offset size is not the visible area — measure the container instead.
       const host = position === "absolute" ? scrollContainer?.current : null;
-      const cssW = host?.clientWidth || canvas.offsetWidth || window.innerWidth;
-      const cssH = host?.clientHeight || canvas.offsetHeight || window.innerHeight;
+      // In fixed mode the canvas fills the viewport. Measure the viewport directly, not
+      // canvas.offsetWidth — the inline width/height set below pin the canvas to its last
+      // size, so reading it back makes every subsequent resize a no-op.
+      const cssW = host?.clientWidth || window.innerWidth;
+      const cssH = host?.clientHeight || window.innerHeight;
       canvas.width = cssW * dpr;
       canvas.height = cssH * dpr;
       canvas.style.width = cssW + "px";

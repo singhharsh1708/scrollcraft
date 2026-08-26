@@ -54,8 +54,24 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    // Frames are assembled client-side — only metadata is sent to the server.
-    const body = await req.json();
+    // Frames are assembled client-side — only metadata is sent to the server. Every other
+    // input is capped below, but the body itself was not, so a caller could still ship
+    // megabytes of `sections`. Cap the raw body before parsing it.
+    const MAX_BODY = 12_000_000;
+    const declaredLen = Number(req.headers.get("content-length") ?? "");
+    if (Number.isFinite(declaredLen) && declaredLen > MAX_BODY) {
+      return NextResponse.json({ error: "Request body too large." }, { status: 413 });
+    }
+    const raw = await req.text();
+    if (raw.length > MAX_BODY) {
+      return NextResponse.json({ error: "Request body too large." }, { status: 413 });
+    }
+    let body;
+    try {
+      body = JSON.parse(raw);
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
+    }
     const {
       mobileFrameCount = 0,
       hasAudio = false,
@@ -135,6 +151,11 @@ export async function POST(req: NextRequest) {
 
     if (!Array.isArray(sections) || sections.length === 0) {
       return NextResponse.json({ error: "sections must be a non-empty array" }, { status: 400 });
+    }
+    // Cap the section payload to match the save-time limit. Sections loaded via siteId
+    // come from the DB (already bounded); this guards the request-sourced path.
+    if (sections.length > 200 || JSON.stringify(sections).length > 1_000_000) {
+      return NextResponse.json({ error: "sections payload is too large" }, { status: 400 });
     }
     // Number.isInteger, not just "> 1": JSON.parse turns 1e999 into Infinity, which
     // passed the old check and emitted `new Array(Infinity)` into the exported script —

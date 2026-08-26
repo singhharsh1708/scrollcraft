@@ -1,6 +1,5 @@
 "use client";
 import { useState, useEffect, useRef, useCallback, Suspense } from "react";
-import JSZip from "jszip";
 import { loadFrames, storeFrames } from "@/lib/frameStorage";
 import { useSearchParams } from "next/navigation";
 import RequireAuth from "@/components/RequireAuth";
@@ -500,8 +499,10 @@ function EditorInner() {
       }
       const { html, audioExt } = await res.json();
 
-      // Build ZIP entirely in the browser — no round-trip for large frame data.
+      // Build ZIP entirely in the browser — no round-trip for large frame data. Load
+      // JSZip on demand so it stays out of the editor's first-load bundle.
       toast.info("Building ZIP…");
+      const { default: JSZip } = await import("jszip");
       const zip = new JSZip();
       zip.file("index.html", html);
 
@@ -1113,6 +1114,12 @@ function EditorInner() {
                     onChange={(e) => {
                       const file = e.target.files?.[0];
                       if (!file) return;
+                      const MAX_AUDIO_BYTES = 8 * 1024 * 1024;
+                      if (file.size > MAX_AUDIO_BYTES) {
+                        toast.error("Audio file too large — please use a file under 8 MB.");
+                        if (audioFileRef.current) audioFileRef.current.value = "";
+                        return;
+                      }
                       const reader = new FileReader();
                       reader.onload = (ev) => setAudioSrc(ev.target?.result as string);
                       reader.readAsDataURL(file);
