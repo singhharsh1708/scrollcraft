@@ -6,6 +6,7 @@ import { logger } from "@/lib/logger";
 // Lazy-init Redis + per-config Ratelimit instances
 let redis: Redis | null = null;
 const limiters = new Map<string, Ratelimit>();
+let warnedNoUpstash = false;
 
 // Upstash is a network hop, so cap how long a request may wait on it, and stop
 // calling it for a cooldown after a failure: an outage then costs one timeout
@@ -15,7 +16,15 @@ const UPSTASH_COOLDOWN_MS = 30_000;
 let upstashDownUntil = 0;
 
 function getRedis(): Redis | null {
-  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) return null;
+  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+    if (!warnedNoUpstash) {
+      warnedNoUpstash = true;
+      // Without this the fallback is silent: limits still enforce, but only per
+      // instance, so the real ceiling is (limit × running instances).
+      logger.warn("UPSTASH_* unset — rate limiting uses the in-memory fallback; limits are per-instance, not shared across instances");
+    }
+    return null;
+  }
   if (!redis) {
     redis = new Redis({
       url: process.env.UPSTASH_REDIS_REST_URL,

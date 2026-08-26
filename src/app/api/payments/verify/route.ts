@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { logger } from "@/lib/logger";
 import crypto from "crypto";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
@@ -84,7 +85,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, paymentId });
   } catch (err) {
-    console.error("verify error:", err);
+    logger.error("payment verify failed", { err });
     return NextResponse.json({ error: "Verification failed" }, { status: 500 });
   }
 }

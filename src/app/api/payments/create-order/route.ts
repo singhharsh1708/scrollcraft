@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { logger } from "@/lib/logger";
 import { z } from "zod";
 import Razorpay from "razorpay";
 import { auth } from "@/auth";
@@ -133,7 +134,7 @@ export async function POST(req: NextRequest) {
       discountPct,
     });
   } catch (err) {
-    console.error("create-order error:", err);
+    logger.error("create-order failed", { err });
     return NextResponse.json({ error: "Failed to create order" }, { status: 500 });
   }
 }

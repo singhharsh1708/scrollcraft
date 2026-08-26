@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { logger } from "@/lib/logger";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { rateLimit } from "@/lib/rateLimit";
@@ -531,7 +532,7 @@ export async function POST(req: NextRequest) {
       fps: validatedFps,
     });
   } catch (err) {
-    console.error("export-site error:", err);
+    logger.error("export-site failed", { err });
     return NextResponse.json({ error: "Export failed" }, { status: 500 });
   }
 }

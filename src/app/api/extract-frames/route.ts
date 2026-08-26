@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { logger } from "@/lib/logger";
 import { writeFile, mkdir, rm } from "fs/promises";
 import { createWriteStream } from "fs";
 import path from "path";
@@ -357,7 +358,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ frames, frameCount: frames.length, stored: useBlobStorage });
   } catch (err) {
-    console.error("extract-frames error:", err);
+    logger.error("extract-frames failed", { err });
     return NextResponse.json({ error: "Frame extraction failed" }, { status: 500 });
   } finally {
     await rm(tmpDir, { recursive: true, force: true }).catch(() => {});
