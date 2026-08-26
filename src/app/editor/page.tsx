@@ -429,11 +429,9 @@ function EditorInner() {
     }
     setIsExporting(true);
     try {
-      // A purchase must be tied to a saved site, and a purchased export is rebuilt
-      // server-side from that site's stored content — so save first, or unsaved edits
-      // are silently dropped from the ZIP. A failed save is not fatal on its own:
-      // paid plans export straight from the editor's own content, so only fall back
-      // to the last known site id and warn.
+      // The export is rebuilt server-side from the saved site's stored content, so save
+      // first or unsaved edits are silently dropped from the ZIP. A failed save is not
+      // fatal: fall back to the last known site id and warn.
       const savedSiteId = await handleSave({ silent: true });
       const effectiveSiteId = savedSiteId ?? siteId;
       if (!effectiveSiteId) {
@@ -476,7 +474,7 @@ function EditorInner() {
         }
       }
 
-      // Ask the server to validate auth + purchase + generate the HTML template.
+      // Ask the server to validate auth and generate the HTML template.
       // Frames are NOT sent — they stay on the client to avoid Vercel's 4.5 MB limit.
       const res = await fetch("/api/export-site", {
         method: "POST",
@@ -498,32 +496,6 @@ function EditorInner() {
           audioMime,
         }),
       });
-
-      if (res.status === 402) {
-        const checkoutRes = await fetch("/api/payments/ls-checkout", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ siteId: effectiveSiteId }),
-        });
-        const checkoutData = await checkoutRes.json().catch(() => ({}));
-        if (checkoutData.alreadyPurchased) {
-          toast.info("Purchase confirmed — preparing your download…");
-          setIsExporting(false);
-      setExportStage(null);
-          return handleExport();
-        }
-        if (checkoutRes.status === 503) {
-          toast.error("Paid exports aren't available right now. Try again later.");
-          return;
-        }
-        if (!checkoutRes.ok || !checkoutData.checkoutUrl) {
-          toast.error("Could not start checkout. Please try again.");
-          return;
-        }
-        toast.info("Redirecting to secure checkout…");
-        window.location.assign(checkoutData.checkoutUrl);
-        return;
-      }
 
       if (!res.ok) {
         const msg = await res.json().then((d) => d?.error).catch(() => null);

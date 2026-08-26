@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import type { NextRequest } from "next/server";
-import { PLANS } from "@/lib/plans";
+import { PLANS, siteAllowance } from "@/lib/plans";
 
 const dbMock = vi.hoisted(() => ({
   user: { findUnique: vi.fn() },
@@ -54,28 +54,37 @@ describe("saved-website allowance", () => {
     expect(dbMock.site.create).not.toHaveBeenCalled();
   });
 
-  it("honours each plan's advertised allowance", async () => {
+  it("honours each plan's effective allowance", async () => {
     for (const plan of Object.values(PLANS)) {
+      const allowance = siteAllowance(plan.key);
       dbMock.site.create.mockClear();
       dbMock.user.findUnique.mockResolvedValue({ id: "u1", plan: plan.key });
 
-      dbMock.site.count.mockResolvedValue(plan.sites - 1);
+      dbMock.site.count.mockResolvedValue(allowance - 1);
       expect((await POST(req({ name: "under" }))).status).toBe(200);
 
       dbMock.site.create.mockClear();
-      dbMock.site.count.mockResolvedValue(plan.sites);
+      dbMock.site.count.mockResolvedValue(allowance);
       const res = await POST(req({ name: "at limit" }));
       expect(res.status).toBe(409);
-      expect((await res.json()).allowance).toBe(plan.sites);
+      expect((await res.json()).allowance).toBe(allowance);
       expect(dbMock.site.create).not.toHaveBeenCalled();
     }
   });
 
-  it("a higher plan allows strictly more than a lower one", () => {
-    const ladder = [PLANS.FREE, PLANS.BASIC, PLANS.BASIC_PLUS, PLANS.PRO, PLANS.PREMIUM];
-    for (let i = 1; i < ladder.length; i++) {
-      expect(ladder[i].sites).toBeGreaterThan(ladder[i - 1].sites);
+  it("never gives a legacy subscriber less than a new free account", () => {
+    // The free allowance grew when the paid tiers were retired, and BASIC's stored value
+    // is now below it. Nobody who paid may end up worse off than someone who did not.
+    for (const plan of Object.values(PLANS)) {
+      expect(siteAllowance(plan.key)).toBeGreaterThanOrEqual(PLANS.FREE.sites);
     }
+    expect(PLANS.BASIC.sites).toBeLessThan(PLANS.FREE.sites);
+    expect(siteAllowance("BASIC")).toBe(PLANS.FREE.sites);
+  });
+
+  it("treats an unknown plan as free rather than as no allowance", () => {
+    expect(siteAllowance("NOT_A_PLAN")).toBe(PLANS.FREE.sites);
+    expect(siteAllowance(null)).toBe(PLANS.FREE.sites);
   });
 
   it("updating an existing site is not blocked by the allowance", async () => {

@@ -97,27 +97,10 @@ export async function POST(req: NextRequest) {
       fps = 24,
     } = body;
 
-    // FREE users must purchase an export; paid subscribers export freely
-    const userPlan = session.user.plan ?? "FREE";
-    if (userPlan === "FREE") {
-      if (!siteId) {
-        return NextResponse.json(
-          { error: "Save your site before exporting.", code: "SAVE_REQUIRED" },
-          { status: 402 }
-        );
-      }
-      const purchase = await db.exportPurchase.findFirst({
-        where: { siteId, userId: session.user.id, status: "PAID" },
-      });
-      if (!purchase) {
-        return NextResponse.json(
-          { error: "Export purchase required", code: "PURCHASE_REQUIRED" },
-          { status: 402 }
-        );
-      }
-
-      // A purchase unlocks one site, so build the export from that site's stored
-      // content — body content would let a single purchase export anything.
+    // Export is free on every plan. A supplied siteId still makes the stored record
+    // authoritative and is scoped to the caller, so nobody can export a site they do
+    // not own by passing its id. Without a siteId the request body is exported as-is.
+    if (siteId) {
       const site = await db.site.findFirst({
         where: { id: siteId, userId: session.user.id },
         select: {
