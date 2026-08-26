@@ -179,8 +179,18 @@ export async function POST(req: NextRequest) {
     const safeCustomHead = typeof customHead === "string" ? customHead : "";
     const parsedTheme = themeJson ? parseThemeJson(themeJson) : null;
     const compiledTheme = compileTheme(parsedTheme && parsedTheme.ok ? parsedTheme.value : null);
+    // Load the webfont stylesheet without blocking first paint. A plain
+    // <link rel="stylesheet"> to Google Fonts is render-blocking on a third-party
+    // origin, which was holding first contentful paint at ~2.9s on a page whose own
+    // markup is a few kilobytes. The media/onload swap applies it as soon as it
+    // arrives, and the <noscript> copy keeps it working with scripting disabled.
     const themeFontLinks = compiledTheme.fontHref
-      ? `<link rel="preconnect" href="https://fonts.googleapis.com" />\n  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />\n  <link rel="stylesheet" href="${compiledTheme.fontHref}" />`
+      ? [
+          `<link rel="preconnect" href="https://fonts.googleapis.com" />`,
+          `<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />`,
+          `<link rel="stylesheet" href="${compiledTheme.fontHref}" media="print" onload="this.media='all';this.onload=null" />`,
+          `<noscript><link rel="stylesheet" href="${compiledTheme.fontHref}" /></noscript>`,
+        ].join("\n  ")
       : "";
     const themeVarsCss = varsToCss(compiledTheme.vars);
 
@@ -225,7 +235,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "At least one section must be visible to export" }, { status: 400 });
     }
 
-    const sectionsHtml = visibleSections.map((s: Section) => {
+    // The first heading on the page is the page's heading. Every section emitted an h2,
+    // so an exported site had no h1 at all — a document outline starting at level two,
+    // which assistive technology and search engines both read as a missing title.
+    const firstHeadingIndex = visibleSections.findIndex((s: Section) => s.heading);
+
+    const sectionsHtml = visibleSections.map((s: Section, sectionIndex: number) => {
       const L = layoutFor(s);
       const stack = L.textAlign === "center" ? "0 auto 1.5rem" : "0 0 1.5rem";
       const imgSrc = exportableImage(s.image);
@@ -235,6 +250,7 @@ export async function POST(req: NextRequest) {
     <section class="scroll-section" aria-hidden="true" style="height:${Number(s.scrollHeight) || 1000}px; position:relative; z-index:10;"></section>`;
       }
       const reveal = (REVEALS as readonly string[]).includes(s.reveal ?? "") ? s.reveal : "rise";
+      const hTag = sectionIndex === firstHeadingIndex ? "h1" : "h2";
       const scrim = Math.min(Math.max(Number(s.scrim ?? 0) || 0, 0), 1);
       return `
     <section class="scroll-section" style="height:${Number(s.scrollHeight) || 1000}px; position:relative; z-index:10;">
@@ -243,8 +259,8 @@ export async function POST(req: NextRequest) {
           ${imgSrc ? `<img src="${esc(imgSrc)}" alt="${esc(s.imageAlt || "")}" style="display:block; max-width:min(100%, ${imgWidth}px); height:auto; margin:${stack};" />` : ""}
           ${s.eyebrow ? `<p class="eyebrow" style="font-size:0.875rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:${safeCss(s.accentColor || "var(--sc-accent-text, #ede9fe)")}; margin-bottom:0.75rem;">${esc(s.eyebrow)}</p>` : ""}
           ${s.heading ? (s.kind === "statement"
-            ? `<h2 class="sc-display sc-statement" style="color:${safeCss(s.headingColor || "var(--sc-ink, #ffffff)")}; margin-bottom:1rem;">${esc(s.heading)}</h2>`
-            : `<h2 class="sc-display" style="font-size:var(--sc-heading-size, clamp(2rem,5vw,4rem)); font-weight:var(--sc-display-weight, 900); line-height:1; letter-spacing:var(--sc-display-tracking, -0.03em); text-transform:var(--sc-display-case, none); color:${safeCss(s.headingColor || "var(--sc-ink, #ffffff)")}; margin-bottom:1rem;">${esc(s.heading)}</h2>`) : ""}
+            ? `<${hTag} class="sc-display sc-statement" style="color:${safeCss(s.headingColor || "var(--sc-ink, #ffffff)")}; margin-bottom:1rem;">${esc(s.heading)}</${hTag}>`
+            : `<${hTag} class="sc-display" style="font-size:var(--sc-heading-size, clamp(2rem,5vw,4rem)); font-weight:var(--sc-display-weight, 900); line-height:1; letter-spacing:var(--sc-display-tracking, -0.03em); text-transform:var(--sc-display-case, none); color:${safeCss(s.headingColor || "var(--sc-ink, #ffffff)")}; margin-bottom:1rem;">${esc(s.heading)}</${hTag}>`) : ""}
           ${s.body ? `<p style="font-size:var(--sc-body-size, 1.125rem); line-height:1.7; color:${safeCss(s.bodyColor || "var(--sc-muted, rgba(255,255,255,0.72))")}; max-width:var(--sc-measure, 600px); margin:${stack};">${esc(s.body)}</p>` : ""}
           ${s.ctaLabel ? `<a href="${esc(safeHref(s.ctaHref || "#"))}" style="display:inline-block; background:${safeCss(s.accentColor || "var(--sc-accent, #7c3aed)")}; color:white; padding:0.875rem 2rem; border-radius:0.5rem; font-weight:600; text-decoration:none; font-size:1rem;">${esc(s.ctaLabel)}</a>` : ""}
         </div>
@@ -266,12 +282,23 @@ export async function POST(req: NextRequest) {
   <meta property="og:title" content="${esc(siteName || "My ScrollCraft Site")}" />
   <meta property="og:description" content="${esc(metaDescription)}" />
   <meta name="twitter:card" content="summary_large_image" />
+  <meta property="og:image" content="og-image.png" />
+  <meta name="twitter:image" content="og-image.png" />
+  <meta name="theme-color" content="${esc(compiledTheme.vars["--sc-ground"] ?? "#000000")}" />
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="og-image.png" />
   <style>
     ${themeVarsCss}
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html { scroll-behavior: auto; }
     body { background: var(--sc-ground, #000); color: var(--sc-ink, #fff); font-family: var(--sc-font-body, system-ui, sans-serif); overflow-x: hidden; }
     .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+    /* Off-screen until focused, so a keyboard user can jump the background canvas. */
+    .skip-link { position: absolute; left: -9999px; top: 0; z-index: 100; padding: 0.75rem 1.25rem; background: var(--sc-ink, #fff); color: var(--sc-ground, #000); border-radius: 0 0 0.5rem 0; font-weight: 600; text-decoration: none; }
+    .skip-link:focus { left: 0; }
+    main:focus { outline: none; }
+    /* The page sets its own colours, so the browser default ring can vanish against them. */
+    a:focus-visible, button:focus-visible, [tabindex]:focus-visible { outline: 3px solid var(--sc-accent-text, #ede9fe); outline-offset: 3px; border-radius: 2px; }
     #scroll-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
     #scroll-container { position: relative; height: ${totalScrollHeight}px; z-index: 1; pointer-events: none; }
     .scroll-section { pointer-events: none; }
@@ -326,11 +353,14 @@ export async function POST(req: NextRequest) {
   <script src="lenis.min.js"></script>
 </head>
 <body>
+  <a class="skip-link" href="#main">Skip to content</a>
   <canvas id="scroll-canvas" role="img" aria-label="${esc(siteName ? `${siteName} animated scroll background` : "Animated scroll background")}"></canvas>
-  <div id="scroll-container">
-    <div style="height:100vh;"></div>
-    ${sectionsHtml}
-  </div>
+  <main id="main" tabindex="-1">
+    <div id="scroll-container">
+      <div style="height:100vh;"></div>
+      ${sectionsHtml}
+    </div>
+  </main>
   <div id="scroll-hint">
     <span>Scroll</span>
     <div class="arrow"></div>
@@ -374,7 +404,17 @@ export async function POST(req: NextRequest) {
       // on demand at the viewport's own resolution.
       ${proceduralRuntimeSource()}
 
-      var recipe = ${JSON.stringify({ ...styleSpec, frameCount: PROCEDURAL_FRAMES })};
+      // drawFrame2D takes FrameOptions (color1/color2/color3) while a stored style
+      // recipe holds a colours array. Emitting the recipe verbatim left every colour
+      // undefined, so hexToRgb threw on the first frame and the exported page rendered a
+      // black screen with a console error.
+      var recipe = ${JSON.stringify({
+        style: styleSpec?.style,
+        color1: styleSpec?.colors[0],
+        color2: styleSpec?.colors[1],
+        color3: styleSpec?.colors[2],
+        frameCount: PROCEDURAL_FRAMES,
+      })};
       function drawFrame(index) {
         var cssW = window.innerWidth, cssH = window.innerHeight;
         var p = frameCount > 1 ? index / (frameCount - 1) : 0;
