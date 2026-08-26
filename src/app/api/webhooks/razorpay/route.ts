@@ -4,7 +4,7 @@ import crypto from "crypto";
 import Razorpay from "razorpay";
 import { db } from "@/lib/db";
 import { consumePromoCode } from "@/lib/promo";
-import { PLANS } from "@/lib/plans";
+import { PLANS, planPeriodEnd } from "@/lib/plans";
 
 const PLAN_MAP: Record<string, "BASIC" | "BASIC_PLUS" | "PRO" | "PREMIUM"> = {
   Basic: "BASIC", "Basic Plus": "BASIC_PLUS", Pro: "PRO", Premium: "PREMIUM",
@@ -39,19 +39,24 @@ async function repriceUserPlan(userId: string) {
   const latest = await db.payment.findFirst({
     where: { userId, status: "CAPTURED" },
     orderBy: { createdAt: "desc" },
-    select: { plan: true },
+    select: { plan: true, billing: true, createdAt: true },
   });
   const nextPlan = (latest ? PLAN_MAP[latest.plan] : undefined) ?? "FREE";
   // Reprice the credit allowance with the plan — otherwise a user refunded from
-  // Premium down to Basic Plus keeps Premium's 25,000 credits.
+  // Premium down to Basic Plus keeps Premium's 25,000 credits — and carry the period
+  // end forward from the payment that still stands (null when nothing is left → FREE).
   await db.user.update({
     where: { id: userId },
-    data: { plan: nextPlan, credits: PLANS[nextPlan].credits },
+    data: {
+      plan: nextPlan,
+      credits: PLANS[nextPlan].credits,
+      planExpiresAt: latest && nextPlan !== "FREE" ? planPeriodEnd(latest.billing, latest.createdAt) : null,
+    },
   });
 }
 
 // Conditional UPDATE so concurrent captures can never push uses past maxUses.
-async function applyPlan(userId: string, planName: string | null | undefined) {
+async function applyPlan(userId: string, planName: string | null | undefined, billing: string | null | undefined) {
   const newPlan = planName ? PLAN_MAP[planName] : undefined;
   if (newPlan) {
     // Grant credits alongside the plan — the webhook is the path that runs when the
@@ -59,7 +64,7 @@ async function applyPlan(userId: string, planName: string | null | undefined) {
     // same "paid but shows 100 credits left" state as the verify route did.
     await db.user.update({
       where: { id: userId },
-      data: { plan: newPlan, credits: PLANS[newPlan].credits },
+      data: { plan: newPlan, credits: PLANS[newPlan].credits, planExpiresAt: planPeriodEnd(billing) },
     });
   }
 }
@@ -126,7 +131,7 @@ export async function POST(req: NextRequest) {
             data: { razorpayPaymentId: entity.id, status: "CAPTURED" },
           });
           if (claimed.count > 0) {
-            await applyPlan(payment.userId, payment.plan);
+            await applyPlan(payment.userId, payment.plan, payment.billing);
             await consumePromoCode(payment.promoCode);
           }
         } else {
@@ -165,7 +170,7 @@ export async function POST(req: NextRequest) {
               status: "CAPTURED",
             },
           });
-          await applyPlan(userId, plan);
+          await applyPlan(userId, plan, notes.billing ?? "monthly");
           await consumePromoCode(notes.promoCode ?? null);
         }
       }
