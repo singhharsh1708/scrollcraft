@@ -1,6 +1,6 @@
 import Navbar from "@/components/Navbar";
 
-export const metadata = { title: "Terms of Service — ScrollCraft" };
+export const metadata = { title: "Terms of Service" };
 
 export default function TermsPage() {
   return (
