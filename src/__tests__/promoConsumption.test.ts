@@ -12,6 +12,7 @@ const dbMock = vi.hoisted(() => ({
   promoCode: { findUnique: vi.fn(), update: vi.fn(), updateMany: vi.fn() },
   payment: { count: vi.fn(), create: vi.fn(), findUnique: vi.fn(), updateMany: vi.fn() },
   $executeRaw: vi.fn(),
+  $transaction: vi.fn(),
 }));
 
 const ordersCreate = vi.hoisted(() => vi.fn());
@@ -74,6 +75,16 @@ beforeEach(async () => {
   dbMock.payment.findUnique.mockReset().mockResolvedValue(null);
   dbMock.payment.updateMany.mockReset().mockResolvedValue({ count: 0 });
   dbMock.$executeRaw.mockReset().mockResolvedValue(1);
+  // Fulfilment is one transaction now: run the callback against a tx that delegates to
+  // the same mocks, so these assertions keep describing the writes fulfilment makes.
+  dbMock.$transaction.mockReset().mockImplementation((fn: (tx: unknown) => unknown) =>
+    Promise.resolve(fn({
+      payment: dbMock.payment,
+      user: dbMock.user,
+      promoCode: dbMock.promoCode,
+      $executeRaw: dbMock.$executeRaw,
+    }))
+  );
   ordersCreate.mockReset().mockImplementation(async (args: { amount: number; currency: string }) => ({
     id: "order_1",
     amount: args.amount,
@@ -341,5 +352,37 @@ describe("verify — the promo use is consumed exactly once, at capture", () => 
 
     expect(res.status).toBe(404);
     expect(dbMock.user.update).not.toHaveBeenCalled();
+  });
+  it("fulfils the capture, the plan grant and the promo use in one transaction", async () => {
+    dbMock.payment.findUnique.mockResolvedValue({ ...pendingPayment, plan: "Pro" });
+    dbMock.payment.updateMany.mockResolvedValue({ count: 1 });
+
+    const res = await verify(verifyRequest("order_1", "pay_1"));
+
+    expect(res.status).toBe(200);
+    // All three writes must go through the transaction, not stand alone beside it.
+    expect(dbMock.$transaction).toHaveBeenCalledTimes(1);
+    expect(dbMock.payment.updateMany).toHaveBeenCalled();
+    expect(dbMock.user.update).toHaveBeenCalled();
+  });
+
+  it("does not leave a payment CAPTURED when the plan grant fails", async () => {
+    // The rollback itself belongs to the database; what this pins is that the grant runs
+    // inside the transaction, so its failure aborts the claim rather than escaping it.
+    // Before the fix the CAPTURED flip had already committed, and the idempotent
+    // early-return then treated that half-fulfilled row as complete forever.
+    dbMock.payment.findUnique.mockResolvedValue({ ...pendingPayment, plan: "Pro" });
+    dbMock.payment.updateMany.mockResolvedValue({ count: 1 });
+    dbMock.user.update.mockRejectedValue(new Error("grant failed"));
+
+    const res = await verify(verifyRequest("order_1", "pay_1"));
+
+    expect(res.status).toBe(500);
+    const txCall = dbMock.$transaction.mock.calls[0];
+    expect(txCall).toBeDefined();
+    await expect((txCall[0] as (tx: unknown) => Promise<unknown>)({
+      payment: dbMock.payment, user: dbMock.user,
+      promoCode: dbMock.promoCode, $executeRaw: dbMock.$executeRaw,
+    })).rejects.toThrow("grant failed");
   });
 });

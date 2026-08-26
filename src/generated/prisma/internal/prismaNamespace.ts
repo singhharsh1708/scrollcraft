@@ -405,6 +405,7 @@ export const ModelName = {
   Account: 'Account',
   Session: 'Session',
   VerificationToken: 'VerificationToken',
+  RevokedLsOrder: 'RevokedLsOrder',
   ContactMessage: 'ContactMessage'
 } as const
 
@@ -421,7 +422,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "site" | "payment" | "exportPurchase" | "promoCode" | "account" | "session" | "verificationToken" | "contactMessage"
+    modelProps: "user" | "site" | "payment" | "exportPurchase" | "promoCode" | "account" | "session" | "verificationToken" | "revokedLsOrder" | "contactMessage"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1017,6 +1018,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    RevokedLsOrder: {
+      payload: Prisma.$RevokedLsOrderPayload<ExtArgs>
+      fields: Prisma.RevokedLsOrderFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.RevokedLsOrderFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RevokedLsOrderPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.RevokedLsOrderFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RevokedLsOrderPayload>
+        }
+        findFirst: {
+          args: Prisma.RevokedLsOrderFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RevokedLsOrderPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.RevokedLsOrderFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RevokedLsOrderPayload>
+        }
+        findMany: {
+          args: Prisma.RevokedLsOrderFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RevokedLsOrderPayload>[]
+        }
+        create: {
+          args: Prisma.RevokedLsOrderCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RevokedLsOrderPayload>
+        }
+        createMany: {
+          args: Prisma.RevokedLsOrderCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.RevokedLsOrderCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RevokedLsOrderPayload>[]
+        }
+        delete: {
+          args: Prisma.RevokedLsOrderDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RevokedLsOrderPayload>
+        }
+        update: {
+          args: Prisma.RevokedLsOrderUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RevokedLsOrderPayload>
+        }
+        deleteMany: {
+          args: Prisma.RevokedLsOrderDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.RevokedLsOrderUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.RevokedLsOrderUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RevokedLsOrderPayload>[]
+        }
+        upsert: {
+          args: Prisma.RevokedLsOrderUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RevokedLsOrderPayload>
+        }
+        aggregate: {
+          args: Prisma.RevokedLsOrderAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateRevokedLsOrder>
+        }
+        groupBy: {
+          args: Prisma.RevokedLsOrderGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.RevokedLsOrderGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.RevokedLsOrderCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.RevokedLsOrderCountAggregateOutputType> | number
+        }
+      }
+    }
     ContactMessage: {
       payload: Prisma.$ContactMessagePayload<ExtArgs>
       fields: Prisma.ContactMessageFieldRefs
@@ -1253,6 +1328,15 @@ export const VerificationTokenScalarFieldEnum = {
 } as const
 
 export type VerificationTokenScalarFieldEnum = (typeof VerificationTokenScalarFieldEnum)[keyof typeof VerificationTokenScalarFieldEnum]
+
+
+export const RevokedLsOrderScalarFieldEnum = {
+  lsOrderId: 'lsOrderId',
+  eventName: 'eventName',
+  createdAt: 'createdAt'
+} as const
+
+export type RevokedLsOrderScalarFieldEnum = (typeof RevokedLsOrderScalarFieldEnum)[keyof typeof RevokedLsOrderScalarFieldEnum]
 
 
 export const ContactMessageScalarFieldEnum = {
@@ -1560,6 +1644,7 @@ export type GlobalOmitConfig = {
   account?: Prisma.AccountOmit
   session?: Prisma.SessionOmit
   verificationToken?: Prisma.VerificationTokenOmit
+  revokedLsOrder?: Prisma.RevokedLsOrderOmit
   contactMessage?: Prisma.ContactMessageOmit
 }
 

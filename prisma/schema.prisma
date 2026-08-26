@@ -173,6 +173,17 @@ enum ExportPurchaseStatus {
   REFUNDED
 }
 
+// A revocation can arrive before the order_created it revokes: Lemon Squeezy does not
+// guarantee delivery order, and a retry can reorder them further. ExportPurchase needs
+// userId/siteId foreign keys, which a refund payload does not carry, so the revocation
+// cannot create that row itself. This table records the revocation with no foreign keys
+// so a later order_created can be refused instead of granting access to a refunded order.
+model RevokedLsOrder {
+  lsOrderId String   @id
+  eventName String
+  createdAt DateTime @default(now())
+}
+
 model ContactMessage {
   id        String   @id @default(cuid())
   name      String

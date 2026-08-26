@@ -5,9 +5,10 @@ import Razorpay from "razorpay";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
+import { PAID_PLAN_NAMES, planByName } from "@/lib/plans";
 
 const orderSchema = z.object({
-  plan: z.enum(["Basic", "Basic Plus", "Pro", "Premium"]),
+  plan: z.enum(PAID_PLAN_NAMES),
   billing: z.enum(["monthly", "annual"]).default("monthly"),
   promoCode: z.string().max(50).optional(),
 });
@@ -15,14 +16,6 @@ const orderSchema = z.object({
 // How long an issued-but-unpaid order keeps holding a promo use. Past this the
 // checkout is treated as abandoned and the use is released to someone else.
 const PROMO_HOLD_MS = 30 * 60_000;
-
-// Prices in INR paise (1 INR = 100 paise)
-const PLAN_PRICES: Record<string, { monthly: number; annual: number }> = {
-  Basic:        { monthly: 199900, annual: 159900 },
-  "Basic Plus": { monthly: 299900, annual: 239900 },
-  Pro:          { monthly: 499900, annual: 399900 },
-  Premium:      { monthly: 1499900, annual: 1199900 },
-};
 
 export async function POST(req: NextRequest) {
   const session = await auth();
@@ -49,14 +42,16 @@ export async function POST(req: NextRequest) {
     }
     const { plan, billing, promoCode } = parsed.data;
 
-    const prices = PLAN_PRICES[plan];
-    if (!prices) return NextResponse.json({ error: "Unknown plan" }, { status: 400 });
+    const priced = planByName(plan);
+    if (!priced || priced.monthlyPaise === 0) {
+      return NextResponse.json({ error: "Unknown plan" }, { status: 400 });
+    }
 
     const user = await db.user.findUnique({ where: { email: session.user.email }, select: { id: true } });
     if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
 
     // Annual price is stored as the discounted per-month rate — multiply by 12 for the actual charge.
-    let baseAmount = billing === "annual" ? prices.annual * 12 : prices.monthly;
+    let baseAmount = billing === "annual" ? priced.annualPaise * 12 : priced.monthlyPaise;
     let discountPct = 0;
     let validPromo: string | null = null;
 
