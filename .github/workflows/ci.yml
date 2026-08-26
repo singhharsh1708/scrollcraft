@@ -1,0 +1,38 @@
+name: CI
+
+# Gates every pull request and every push to main on the same three checks the watchdog
+# runs against the codebase: typecheck, lint, and the test suite. The watchdog catches a
+# break after it lands; this stops it landing.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      # `prisma generate` runs on postinstall, so the generated client the typecheck
+      # needs is present without a separate step.
+      - name: Install
+        run: npm ci
+      - name: Typecheck
+        run: npx tsc --noEmit
+      - name: Lint
+        run: npx eslint
+      - name: Test
+        run: npm test
