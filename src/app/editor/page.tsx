@@ -760,7 +760,7 @@ function EditorInner() {
               >
                 <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${s.visible ? "bg-primary" : "bg-white/20"}`} />
                 <span className="text-xs flex-1 truncate">{s.heading || `Section ${i + 1}`}</span>
-                <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
                   <button onClick={(e) => { e.stopPropagation(); moveSection(s.id, "up"); }} className="p-0.5 hover:text-primary" title="Move up">
                     <ChevronUp className="w-3 h-3" />
                   </button>
@@ -988,6 +988,9 @@ function EditorInner() {
                 <div className="flex items-center justify-between">
                   <label className="text-xs text-muted-foreground">Visible</label>
                   <button
+                    role="switch"
+                    aria-checked={selectedSectionData.visible}
+                    aria-label="Toggle section visibility"
                     onClick={() => updateSection(selectedSectionData.id, { visible: !selectedSectionData.visible })}
                     className={`w-8 h-4 rounded-full transition-colors ${selectedSectionData.visible ? "bg-primary" : "bg-white/20"}`}
                   >
