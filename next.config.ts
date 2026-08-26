@@ -33,6 +33,10 @@ const nextConfig: NextConfig = {
       { source: "/showcase", destination: "/templates", permanent: true },
       { source: "/demos", destination: "/templates", permanent: true },
       { source: "/demos/:slug", destination: "/templates/:slug", permanent: true },
+      // A Product Hunt landing page that outlived its launch. It advertised a live
+      // campaign, 30% off plans that no longer exist, and invented testimonials.
+      // Redirected rather than 404'd so any inbound link still lands somewhere real.
+      { source: "/launch", destination: "/templates", permanent: false },
     ];
   },
   async headers() {

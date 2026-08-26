@@ -4,9 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Mail, MessageSquare, Zap, CheckCircle2 } from "lucide-react";
+import { Mail, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
+import { CONTACT_EMAIL, GITHUB_REPO_URL, LINKEDIN_URL } from "@/lib/links";
+import GitHubMark from "@/components/GitHubMark";
+import LinkedInMark from "@/components/LinkedInMark";
 import SiteFooter from "@/components/SiteFooter";
 
 const TOPICS = ["General question", "Bug report", "Feature request", "Enterprise inquiry", "Billing", "Partnership"];
@@ -48,7 +51,8 @@ export default function ContactPage() {
           <Badge variant="outline" className="mb-5 border-primary/40 text-primary bg-primary/10 px-4 py-1.5">Get in touch</Badge>
           <h1 className="text-5xl font-black tracking-tighter mb-4">How can we help?</h1>
           <p className="text-muted-foreground text-lg max-w-lg mx-auto">
-            We typically reply within a few hours. For urgent issues, tag us on Twitter.
+            Messages come straight to me. Bugs and feature requests are usually better as
+            a GitHub issue, where anyone hitting the same thing can follow along.
           </p>
         </div>
 
@@ -56,18 +60,23 @@ export default function ContactPage() {
           {/* Contact options */}
           <div className="space-y-4">
             {[
-              { icon: Mail, title: "Email us", desc: "hello@scrollcraft.app", sub: "For general inquiries" },
-              { icon: MessageSquare, title: "Live chat", desc: "Chat in the app", sub: "Mon–Fri, 9am–6pm IST" },
-              { icon: Zap, title: "Enterprise", desc: "enterprise@scrollcraft.app", sub: "Custom builds & white-label" },
+              { icon: Mail, title: "Email", desc: CONTACT_EMAIL, sub: "Anything at all, including enterprise work", href: `mailto:${CONTACT_EMAIL}` },
+              { icon: GitHubMark, title: "GitHub", desc: "singhharsh1708/scrollcraft", sub: "Bugs and feature requests, in the open", href: GITHUB_REPO_URL },
+              { icon: LinkedInMark, title: "LinkedIn", desc: "in/singhharsh1708", sub: "For anything more formal", href: LINKEDIN_URL },
             ].map(c => (
-              <div key={c.title} className="p-5 rounded-2xl border border-white/8 bg-card">
+              <a
+                key={c.title}
+                href={c.href}
+                {...(c.href.startsWith("http") ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+                className="block p-5 rounded-2xl border border-white/8 bg-card hover:border-white/15 transition-colors"
+              >
                 <div className="w-9 h-9 rounded-xl bg-primary/15 flex items-center justify-center mb-3">
                   <c.icon className="w-4 h-4 text-primary" />
                 </div>
                 <p className="font-semibold text-sm mb-0.5">{c.title}</p>
                 <p className="text-xs text-primary mb-0.5">{c.desc}</p>
                 <p className="text-xs text-muted-foreground">{c.sub}</p>
-              </div>
+              </a>
             ))}
           </div>
 

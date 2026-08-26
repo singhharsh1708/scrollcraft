@@ -6,11 +6,23 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowRight, Sparkles, Zap, Globe, Users } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import { PRESETS } from "@/lib/presets";
+import { AUTHOR_NAME, AUTHOR_SITE_URL, GITHUB_PROFILE_URL, LINKEDIN_URL } from "@/lib/links";
 import SiteFooter from "@/components/SiteFooter";
 
+// One real person, described accurately. "The team" was previously two cards, one of
+// which was the template library given a job title.
 const TEAM = [
-  { name: "Harsh Singh", role: "Founder & Engineer", avatar: "HS", bio: "Building the future of no-code web experiences." },
-  { name: "Templates", role: "The library", avatar: "TL", bio: "A growing catalogue of finished scroll sites, free on every plan." },
+  {
+    name: AUTHOR_NAME,
+    role: "Builds and maintains ScrollCraft",
+    avatar: "HS",
+    bio: "Open source engineer. Writes the scroll engine, the templates and the exporter, and answers the issues.",
+    links: [
+      { label: "GitHub", href: GITHUB_PROFILE_URL },
+      { label: "LinkedIn", href: LINKEDIN_URL },
+      { label: "singhharsh.in", href: AUTHOR_SITE_URL },
+    ],
+  },
 ];
 
 const VALUES = [
@@ -99,9 +111,9 @@ export default function AboutPage() {
         <div className="max-w-3xl mx-auto">
           <div className="text-center mb-12">
             <Badge variant="outline" className="mb-4 border-white/10">The team</Badge>
-            <h2 className="text-3xl font-black tracking-tighter">Built by builders</h2>
+            <h2 className="text-3xl font-black tracking-tighter">Built by one person</h2>
           </div>
-          <div className="grid md:grid-cols-2 gap-5">
+          <div className="grid gap-5 max-w-2xl mx-auto">
             {TEAM.map(m => (
               <div key={m.name} className="flex items-start gap-4 p-6 rounded-2xl border border-white/8 bg-card">
                 <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-sm flex-shrink-0">
@@ -110,7 +122,20 @@ export default function AboutPage() {
                 <div>
                   <p className="font-semibold">{m.name}</p>
                   <p className="text-xs text-primary mb-2">{m.role}</p>
-                  <p className="text-sm text-muted-foreground">{m.bio}</p>
+                  <p className="text-sm text-muted-foreground mb-3">{m.bio}</p>
+                  <div className="flex flex-wrap gap-3">
+                    {m.links.map((l) => (
+                      <a
+                        key={l.label}
+                        href={l.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-muted-foreground underline hover:text-foreground transition-colors"
+                      >
+                        {l.label}
+                      </a>
+                    ))}
+                  </div>
                 </div>
               </div>
             ))}

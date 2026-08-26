@@ -90,7 +90,9 @@ export const env = parseEnv();
 export const authSecret = env.AUTH_SECRET ?? env.NEXTAUTH_SECRET;
 export const authUrl = env.AUTH_URL ?? env.NEXTAUTH_URL;
 
-const CANONICAL_FALLBACK_URL = "https://scrollcraft.app";
+// scrollcraft.app belongs to an unrelated product. Falling back to it would publish
+// canonical URLs, sitemap entries and payment redirect_urls pointing at someone else.
+const CANONICAL_FALLBACK_URL = "https://scrollcraft-gilt.vercel.app";
 
 /**
  * Public origin for robots.txt and the sitemap. `.env.example` ships AUTH_URL pointed at

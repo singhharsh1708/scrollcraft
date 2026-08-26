@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { Sparkles, Heart } from "lucide-react";
 import GitHubMark from "@/components/GitHubMark";
-import { GITHUB_REPO_URL, GITHUB_SPONSORS_URL } from "@/lib/links";
+import LinkedInMark from "@/components/LinkedInMark";
+import { CONTACT_EMAIL, GITHUB_REPO_URL, GITHUB_SPONSORS_URL, LINKEDIN_URL } from "@/lib/links";
 
 // One footer for every page. Seven pages each carried their own copy, which is why the
 // GitHub and sponsor links had nowhere consistent to live.
@@ -72,6 +73,15 @@ export default function SiteFooter({ compact = false }: { compact?: boolean }) {
                 <GitHubMark className="w-4 h-4" />
               </a>
               <a
+                href={LINKEDIN_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Harsh Singh on LinkedIn"
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <LinkedInMark className="w-4 h-4" />
+              </a>
+              <a
                 href={GITHUB_SPONSORS_URL}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -81,6 +91,12 @@ export default function SiteFooter({ compact = false }: { compact?: boolean }) {
                 <Heart className="w-4 h-4" />
               </a>
             </div>
+            <a
+              href={`mailto:${CONTACT_EMAIL}`}
+              className="mt-4 inline-block text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {CONTACT_EMAIL}
+            </a>
           </div>
 
           {COLUMNS.map(([heading, links]) => (
