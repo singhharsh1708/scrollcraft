@@ -83,7 +83,10 @@ function EditorInner() {
   // Synchronous fast path: check legacy sessionStorage only (may be empty for new sessions)
   const parsedFrames: string[] | null = (() => {
     if (framesParam) {
-      try { return JSON.parse(framesParam) as string[]; } catch { return null; }
+      try {
+        const decoded = JSON.parse(framesParam);
+        return Array.isArray(decoded) && decoded.every((f) => typeof f === "string") ? decoded : null;
+      } catch { return null; }
     }
     return null;
   })();

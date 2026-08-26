@@ -17,7 +17,7 @@ const siteSchema = z.object({
   id: z.string().optional(),
   name: z.string().max(255).optional(),
   fps: z.number().int().min(1).max(120).optional(),
-  frameCount: z.number().int().min(0).optional(),
+  frameCount: z.number().int().min(0).max(100_000).optional(),
   framesJson: z.string().max(10_000_000).optional(),
   sectionsJson: z.string().max(1_000_000).optional(),
   themeJson: z.string().max(5_000).optional(),
