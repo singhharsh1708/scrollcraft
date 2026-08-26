@@ -3,7 +3,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Check, Sparkles, Zap, ChevronDown, Mail } from "lucide-react";
+import { Check, Sparkles, Zap, ChevronDown, Mail, Lock } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import { PLANS, siteAllowance } from "@/lib/plans";
 import { TEMPLATES } from "@/lib/templates";
@@ -13,8 +13,11 @@ import { PRESETS } from "@/lib/presets";
 // the note in lib/plans.ts — so there is no billing toggle, no promo field and no
 // checkout here any more. Revenue comes from enterprise work arranged by email.
 
+const FREE_TEMPLATES = TEMPLATES.filter((t) => !t.premium).length;
+const PREMIUM_TEMPLATES = TEMPLATES.filter((t) => t.premium).length;
+
 const FREE_FEATURES = [
-  `All ${TEMPLATES.length} templates`,
+  `${FREE_TEMPLATES} of the ${TEMPLATES.length} templates`,
   `All ${PRESETS.length} background presets`,
   "Visual editor with undo history",
   `${siteAllowance("FREE")} saved websites`,
@@ -26,7 +29,7 @@ const FREE_FEATURES = [
 const FAQ = [
   {
     q: "Is it really free?",
-    a: `Yes. Every one of the ${TEMPLATES.length} templates, the editor, publishing and ZIP export cost nothing, and there is no time limit. You keep ${siteAllowance("FREE")} saved websites on a free account.`,
+    a: `The editor, publishing, ZIP export and ${FREE_TEMPLATES} of the ${TEMPLATES.length} templates cost nothing, with no time limit and no card. You keep ${siteAllowance("FREE")} saved websites. The remaining ${PREMIUM_TEMPLATES} templates are bought individually.`,
   },
   {
     q: "What's the catch on ZIP export?",
@@ -39,6 +42,14 @@ const FAQ = [
   {
     q: "I subscribed before. What happens to my plan?",
     a: "Nothing you paid for is taken away. The old tiers are retired, but your account keeps its saved-website allowance, and the free allowance is a floor — you can never end up with less than a new free account.",
+  },
+  {
+    q: `If it's free, what are the ${PREMIUM_TEMPLATES} premium templates?`,
+    a: `The most involved builds in the library. You can scroll the opening section of each one before deciding, and buying is a one-off — no subscription, and the template then behaves exactly like the ${FREE_TEMPLATES} free ones. The other ${FREE_TEMPLATES} cover every category a first site needs.`,
+  },
+  {
+    q: "Do I keep a premium template forever?",
+    a: "Yes. It is a purchase, not a rental: it stays unlocked on your account, and anything you build with it exports to a ZIP you own outright.",
   },
   {
     q: "What does enterprise cover?",
@@ -66,13 +77,14 @@ export default function PricingPage() {
           </span>
         </h1>
         <p className="text-muted-foreground text-lg max-w-xl mx-auto">
-          Every template, the editor, publishing and ZIP export. No card, no trial clock,
-          no feature held back. Need something built for your brand? That part we charge for.
+          The editor, publishing and ZIP export are free, with {FREE_TEMPLATES} of the{" "}
+          {TEMPLATES.length} templates. Pay only for a premium template you actually want,
+          or talk to us about something built for your brand.
         </p>
       </section>
 
       {/* Free + Enterprise */}
-      <section className="px-6 pb-20 max-w-5xl mx-auto grid md:grid-cols-2 gap-6 items-start">
+      <section className="px-6 pb-20 max-w-6xl mx-auto grid md:grid-cols-3 gap-6 items-start">
         {/* Free */}
         <div className="relative rounded-2xl border border-primary/30 bg-card p-7 shadow-xl shadow-primary/5">
           <div className="absolute -top-3 left-7">
@@ -98,6 +110,44 @@ export default function PricingPage() {
           </Link>
           <p className="text-xs text-muted-foreground/70 text-center mt-3">
             No credit card. Sign in with GitHub or Google.
+          </p>
+        </div>
+
+        {/* Premium templates */}
+        <div className="rounded-2xl border border-amber-400/25 bg-card p-7">
+          <div className="flex items-center gap-2 mb-1">
+            <p className="font-semibold text-lg">Premium templates</p>
+            <Lock className="w-3.5 h-3.5 text-amber-400" />
+          </div>
+          <div className="flex items-end gap-1 mb-5">
+            <span className="text-3xl font-black tracking-tighter">Pay once</span>
+            <span className="text-muted-foreground text-sm mb-1">per template</span>
+          </div>
+          <p className="text-muted-foreground text-sm mb-5">
+            {PREMIUM_TEMPLATES} of the {TEMPLATES.length} templates are our most involved
+            builds. Buy one outright and it behaves like any other — no subscription.
+          </p>
+          <ul className="space-y-2.5 mb-7">
+            {[
+              "Yours permanently, not rented",
+              "Edit, publish and export like any template",
+              "Free ZIP export applies to it too",
+              "Preview the opening section before buying",
+              "Buy only the ones you actually want",
+            ].map((f) => (
+              <li key={f} className="flex items-start gap-2.5 text-sm">
+                <Check className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                <span>{f}</span>
+              </li>
+            ))}
+          </ul>
+          <Link href="/templates">
+            <Button variant="outline" className="w-full border-amber-400/30 hover:bg-amber-400/10 font-semibold">
+              See the premium ones
+            </Button>
+          </Link>
+          <p className="text-xs text-muted-foreground/70 text-center mt-3">
+            Price shown at checkout.
           </p>
         </div>
 
@@ -162,7 +212,7 @@ export default function PricingPage() {
 
       {/* Bottom CTA */}
       <section className="pb-24 px-6 text-center border-t border-white/5 pt-20">
-        <h2 className="text-4xl font-black tracking-tighter mb-4">Start free. Stay free.</h2>
+        <h2 className="text-4xl font-black tracking-tighter mb-4">Start free.</h2>
         <p className="text-muted-foreground mb-8">
           Nothing to cancel, because there is nothing to subscribe to.
         </p>

@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { verifyLSWebhookSignature } from "@/lib/lemonsqueezy";
 import { env } from "@/lib/env";
 import { logger } from "@/lib/logger";
+import { templateBySlug } from "@/lib/templates";
 
 // Events that take a previously granted export entitlement away again.
 const REVOCATION_EVENTS = new Set([
@@ -55,6 +56,12 @@ export async function POST(req: NextRequest) {
         where: { lsOrderId: orderId, status: { not: "REFUNDED" } },
         data: { status: "REFUNDED" },
       });
+      // The order id is unique across both products, so revoking both is safe and
+      // means a refunded template loses access the same way a refunded export does.
+      const { count: templatesRevoked } = await db.templatePurchase.updateMany({
+        where: { lsOrderId: orderId, status: { not: "REFUNDED" } },
+        data: { status: "REFUNDED" },
+      });
       // Record the revocation even when it matched no row. Delivery order is not
       // guaranteed, so the order_created this revokes may still be on its way, and the
       // purchase row cannot be created here — a refund payload has no user or site id.
@@ -63,7 +70,7 @@ export async function POST(req: NextRequest) {
         create: { lsOrderId: orderId, eventName },
         update: {},
       });
-      logger.info("LS export purchase revoked", { orderId, eventName, count });
+      logger.info("LS purchase revoked", { orderId, eventName, count, templatesRevoked });
       return NextResponse.json({ received: true });
     }
 
@@ -88,8 +95,11 @@ export async function POST(req: NextRequest) {
         : {};
     const siteId = typeof customData.site_id === "string" ? customData.site_id : "";
     const userId = typeof customData.user_id === "string" ? customData.user_id : "";
+    const templateSlug =
+      typeof customData.template_slug === "string" ? customData.template_slug : "";
 
-    if (!siteId || !userId) {
+    // Either an export (site_id) or a premium template (template_slug), never both.
+    if (!userId || (!siteId && !templateSlug)) {
       logger.warn("LS webhook: missing custom_data", { orderId });
       return NextResponse.json({ received: true });
     }
@@ -98,27 +108,45 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ received: true });
     }
 
-    // Without the store/variant config there is nothing to validate the order
-    // against — fail closed and let LS retry once the deployment is configured.
-    if (!env.LEMONSQUEEZY_STORE_ID || !env.LEMONSQUEEZY_VARIANT_ID) {
-      logger.error("LS webhook: store/variant not configured, refusing to grant", { orderId });
+    // Without the store config there is nothing to validate the order against — fail
+    // closed and let LS retry once the deployment is configured.
+    if (!env.LEMONSQUEEZY_STORE_ID) {
+      logger.error("LS webhook: store not configured, refusing to grant", { orderId });
       return NextResponse.json({ error: "Not configured" }, { status: 503 });
     }
-
-    // The order must come from our store and be for the export variant —
-    // otherwise any cheap product in the same store would unlock exports.
     if (storeId !== env.LEMONSQUEEZY_STORE_ID) {
       logger.warn("LS webhook: store_id mismatch", { orderId, storeId });
       return NextResponse.json({ received: true });
     }
-    if (variantId !== env.LEMONSQUEEZY_VARIANT_ID) {
-      logger.warn("LS webhook: variant mismatch", { orderId, variantId });
+
+    // What was bought is decided by the variant the store recorded, not by the
+    // custom_data the browser supplied — otherwise a cheap template order could carry
+    // a site_id and unlock an export, or the reverse.
+    const kind =
+      env.LEMONSQUEEZY_VARIANT_ID && variantId === env.LEMONSQUEEZY_VARIANT_ID
+        ? "export"
+        : env.LEMONSQUEEZY_TEMPLATE_VARIANT_ID && variantId === env.LEMONSQUEEZY_TEMPLATE_VARIANT_ID
+        ? "template"
+        : null;
+    if (!kind) {
+      logger.warn("LS webhook: variant matches no known product", { orderId, variantId });
+      return NextResponse.json({ received: true });
+    }
+    // The variant decides which identifier is required, so a mismatched pair is refused.
+    if (kind === "export" && !siteId) {
+      logger.warn("LS webhook: export order carries no site_id", { orderId });
+      return NextResponse.json({ received: true });
+    }
+    if (kind === "template" && !templateSlug) {
+      logger.warn("LS webhook: template order carries no template_slug", { orderId });
       return NextResponse.json({ received: true });
     }
 
-    // Amount sanity check. An exact expected price can be pinned via
-    // LEMONSQUEEZY_EXPORT_PRICE_CENTS; otherwise require a real, positive charge.
-    const expectedAmount = env.LEMONSQUEEZY_EXPORT_PRICE_CENTS;
+    // Amount sanity check, against the price pinned for whichever product this is.
+    const expectedAmount =
+      kind === "template"
+        ? env.LEMONSQUEEZY_TEMPLATE_PRICE_CENTS
+        : env.LEMONSQUEEZY_EXPORT_PRICE_CENTS;
     const hasExpectedAmount = expectedAmount !== undefined && expectedAmount > 0;
     if (!Number.isInteger(amount) || amount <= 0) {
       logger.warn("LS webhook: non-positive order total", { orderId, amount });
@@ -141,6 +169,55 @@ export async function POST(req: NextRequest) {
         currency,
         expectedCurrency,
       });
+      return NextResponse.json({ received: true });
+    }
+
+    if (kind === "template") {
+      // The slug must name a template that is actually sold, and the claimed user must
+      // exist — custom_data is attacker-supplied at checkout time.
+      const template = templateBySlug(templateSlug);
+      if (!template?.premium) {
+        logger.warn("LS webhook: template_slug is not a premium template", { orderId, templateSlug });
+        return NextResponse.json({ received: true });
+      }
+      const buyer = await db.user.findUnique({ where: { id: userId }, select: { id: true } });
+      if (!buyer) {
+        logger.warn("LS webhook: template order names an unknown user", { orderId, userId });
+        return NextResponse.json({ received: true });
+      }
+
+      // Same idempotency and tombstone discipline as the export grant.
+      const { count } = await db.templatePurchase.updateMany({
+        where: { lsOrderId: orderId, status: { not: "REFUNDED" } },
+        data: { status: "PAID", amount, currency },
+      });
+      if (count === 0) {
+        const existing = await db.templatePurchase.findUnique({
+          where: { lsOrderId: orderId },
+          select: { status: true },
+        });
+        if (existing) {
+          logger.warn("LS webhook: order_created for a revoked template purchase ignored", {
+            orderId, status: existing.status,
+          });
+          return NextResponse.json({ received: true });
+        }
+        const revoked = await db.revokedLsOrder.findUnique({ where: { lsOrderId: orderId } });
+        if (revoked) {
+          logger.warn("LS webhook: order_created for an already-revoked order ignored", {
+            orderId, eventName: revoked.eventName,
+          });
+          return NextResponse.json({ received: true });
+        }
+        await db.templatePurchase.create({
+          data: { userId, templateSlug, lsOrderId: orderId, amount, currency, status: "PAID" },
+        });
+      }
+
+      await db.templatePurchase.deleteMany({
+        where: { userId, templateSlug, status: "PENDING", lsOrderId: { not: orderId } },
+      });
+      logger.info("LS template purchase fulfilled", { orderId, templateSlug, userId });
       return NextResponse.json({ received: true });
     }
 

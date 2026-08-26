@@ -59,6 +59,7 @@ export const ModelName = {
   Account: 'Account',
   Session: 'Session',
   VerificationToken: 'VerificationToken',
+  TemplatePurchase: 'TemplatePurchase',
   RevokedLsOrder: 'RevokedLsOrder',
   ContactMessage: 'ContactMessage'
 } as const
@@ -200,6 +201,21 @@ export const VerificationTokenScalarFieldEnum = {
 } as const
 
 export type VerificationTokenScalarFieldEnum = (typeof VerificationTokenScalarFieldEnum)[keyof typeof VerificationTokenScalarFieldEnum]
+
+
+export const TemplatePurchaseScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  templateSlug: 'templateSlug',
+  lsOrderId: 'lsOrderId',
+  lsCheckoutId: 'lsCheckoutId',
+  amount: 'amount',
+  currency: 'currency',
+  status: 'status',
+  createdAt: 'createdAt'
+} as const
+
+export type TemplatePurchaseScalarFieldEnum = (typeof TemplatePurchaseScalarFieldEnum)[keyof typeof TemplatePurchaseScalarFieldEnum]
 
 
 export const RevokedLsOrderScalarFieldEnum = {

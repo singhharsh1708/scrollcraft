@@ -1,12 +1,18 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import crypto from "crypto";
 import type { NextRequest } from "next/server";
+import { TEMPLATES } from "@/lib/templates";
 
 // The Lemon Squeezy webhook is the only thing standing between a $1 order in some
 // unrelated store and a free export of any site. Every guard below is load-bearing.
 
 const dbMock = vi.hoisted(() => ({
   revokedLsOrder: { upsert: vi.fn(), findUnique: vi.fn() },
+  user: { findUnique: vi.fn() },
+  templatePurchase: {
+    findFirst: vi.fn(), findUnique: vi.fn(), create: vi.fn(),
+    updateMany: vi.fn(), deleteMany: vi.fn(),
+  },
   exportPurchase: {
     updateMany: vi.fn(),
     findUnique: vi.fn(),
@@ -22,6 +28,8 @@ const WEBHOOK_SECRET = "ls_whsec_test";
 const STORE_ID = "12345";
 const VARIANT_ID = "98765";
 const PRICE_CENTS = 1900;
+const TEMPLATE_VARIANT_ID = "55555";
+const TEMPLATE_PRICE_CENTS = 2900;
 
 type Handler = typeof import("../app/api/webhooks/lemonsqueezy/route").POST;
 let POST: Handler;
@@ -32,6 +40,8 @@ async function loadRoute(overrides: Record<string, string | undefined> = {}) {
   process.env.LEMONSQUEEZY_STORE_ID = STORE_ID;
   process.env.LEMONSQUEEZY_VARIANT_ID = VARIANT_ID;
   process.env.LEMONSQUEEZY_EXPORT_PRICE_CENTS = String(PRICE_CENTS);
+  process.env.LEMONSQUEEZY_TEMPLATE_VARIANT_ID = TEMPLATE_VARIANT_ID;
+  process.env.LEMONSQUEEZY_TEMPLATE_PRICE_CENTS = String(TEMPLATE_PRICE_CENTS);
   for (const [key, value] of Object.entries(overrides)) {
     if (value === undefined) delete process.env[key];
     else process.env[key] = value;
@@ -88,6 +98,12 @@ beforeEach(async () => {
   dbMock.exportPurchase.deleteMany.mockReset().mockResolvedValue({ count: 0 });
   dbMock.revokedLsOrder.upsert.mockReset().mockResolvedValue({ lsOrderId: "ls_order_1" });
   dbMock.revokedLsOrder.findUnique.mockReset().mockResolvedValue(null);
+  dbMock.user.findUnique.mockReset().mockResolvedValue({ id: "user_1" });
+  dbMock.templatePurchase.findFirst.mockReset().mockResolvedValue(null);
+  dbMock.templatePurchase.findUnique.mockReset().mockResolvedValue(null);
+  dbMock.templatePurchase.create.mockReset().mockResolvedValue({ id: "tp_1" });
+  dbMock.templatePurchase.updateMany.mockReset().mockResolvedValue({ count: 0 });
+  dbMock.templatePurchase.deleteMany.mockReset().mockResolvedValue({ count: 0 });
   dbMock.site.findFirst.mockReset().mockResolvedValue({ id: "site_1" });
   await loadRoute();
 });
@@ -437,5 +453,92 @@ describe("LS webhook — a refund delivered before its order_created", () => {
     await POST(signedRequest(refund("order_chargeback")));
 
     expect(dbMock.revokedLsOrder.upsert).toHaveBeenCalled();
+  });
+});
+
+describe("LS webhook — premium template purchases", () => {
+  const PREMIUM = TEMPLATES.find((t) => t.premium)!.slug;
+  const FREE = TEMPLATES.find((t) => !t.premium)!.slug;
+
+  function templateOrder(custom: Record<string, unknown> = { template_slug: PREMIUM, user_id: "user_1" }, attrs: Attrs = {}) {
+    return {
+      meta: { event_name: "order_created", custom_data: custom },
+      data: {
+        id: "ls_order_1",
+        attributes: {
+          status: "paid",
+          total: TEMPLATE_PRICE_CENTS,
+          currency: "USD",
+          refunded: false,
+          store_id: Number(STORE_ID),
+          first_order_item: { variant_id: Number(TEMPLATE_VARIANT_ID) },
+          ...attrs,
+        },
+      },
+    };
+  }
+
+  it("grants the template when the order is for the template variant", async () => {
+    const res = await POST(signedRequest(templateOrder()));
+
+    expect(res.status).toBe(200);
+    expect(dbMock.templatePurchase.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          userId: "user_1", templateSlug: PREMIUM, status: "PAID",
+        }),
+      })
+    );
+    // An export must never be granted by a template order.
+    expect(dbMock.exportPurchase.create).not.toHaveBeenCalled();
+  });
+
+  it("refuses a template order whose slug is not a premium template", async () => {
+    await POST(signedRequest(templateOrder({ template_slug: FREE, user_id: "user_1" })));
+    expect(dbMock.templatePurchase.create).not.toHaveBeenCalled();
+  });
+
+  it("refuses a template order naming an unknown user", async () => {
+    dbMock.user.findUnique.mockResolvedValue(null);
+    await POST(signedRequest(templateOrder()));
+    expect(dbMock.templatePurchase.create).not.toHaveBeenCalled();
+  });
+
+  it("refuses a template order whose total is not the template price", async () => {
+    await POST(signedRequest(templateOrder(undefined, { total: 100 })));
+    expect(dbMock.templatePurchase.create).not.toHaveBeenCalled();
+  });
+
+  it("will not unlock a template from an order for the export variant", async () => {
+    // The variant the store recorded decides what was bought, not the browser's
+    // custom_data — otherwise a cheaper product could unlock a template.
+    await POST(signedRequest(templateOrder(undefined, {
+      first_order_item: { variant_id: Number(VARIANT_ID) },
+      total: PRICE_CENTS,
+    })));
+    expect(dbMock.templatePurchase.create).not.toHaveBeenCalled();
+  });
+
+  it("will not unlock an export from an order for the template variant", async () => {
+    await POST(signedRequest(templateOrder({ site_id: "site_1", user_id: "user_1" })));
+    expect(dbMock.exportPurchase.create).not.toHaveBeenCalled();
+  });
+
+  it("refuses a variant that matches no known product", async () => {
+    await POST(signedRequest(templateOrder(undefined, {
+      first_order_item: { variant_id: 777777 },
+    })));
+    expect(dbMock.templatePurchase.create).not.toHaveBeenCalled();
+    expect(dbMock.exportPurchase.create).not.toHaveBeenCalled();
+  });
+
+  it("revokes a refunded template purchase", async () => {
+    await POST(signedRequest({
+      meta: { event_name: "order_refunded" },
+      data: { id: "ls_order_1", attributes: { status: "refunded", refunded: true } },
+    }));
+    expect(dbMock.templatePurchase.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { status: "REFUNDED" } })
+    );
   });
 });
