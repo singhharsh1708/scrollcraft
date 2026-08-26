@@ -231,6 +231,11 @@ export async function POST(req: NextRequest) {
   ${themeFontLinks}
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>${esc(siteName || "My ScrollCraft Site")}</title>
+  <meta name="description" content="${esc(siteName || "A cinematic scroll website")}" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="${esc(siteName || "My ScrollCraft Site")}" />
+  <meta property="og:description" content="${esc(siteName || "A cinematic scroll website")}" />
+  <meta name="twitter:card" content="summary_large_image" />
   <style>
     ${themeVarsCss}
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -279,6 +284,13 @@ export async function POST(req: NextRequest) {
     #audio-mute:hover { background: rgba(255,255,255,0.1); }
   </style>
   ${safeCustomCss ? `<style>\n${safeCustomCss}\n  </style>` : ""}
+  <noscript><style>
+    .section-content[data-reveal] { opacity: 1 !important; transform: none !important; clip-path: none !important; }
+    .section-content[data-reveal="stagger"] > * { opacity: 1 !important; transform: none !important; }
+    .section-sticky { position: static !important; height: auto !important; }
+    #scroll-container { height: auto !important; }
+    #scroll-hint, #scroll-canvas { display: none !important; }
+  </style></noscript>
   ${safeCustomHead || ""}
   <script src="lenis.min.js"></script>
 </head>
@@ -346,10 +358,15 @@ export async function POST(req: NextRequest) {
 
         function loadFrame(idx) {
           var img = new Image();
+          img.decoding = 'async';
           img.src = folder + '/frame_' + String(idx).padStart(4, '0') + '.jpg';
           img.onload = function() {
-            target[idx] = img;
-            if ((idx === 0 && isPrimary) || idx === currentFrame) drawFrame(idx);
+            var put = function() {
+              target[idx] = img;
+              if ((idx === 0 && isPrimary) || idx === currentFrame) drawFrame(idx);
+            };
+            // Decode off the scroll path so drawImage never pays a synchronous decode.
+            if (img.decode) { img.decode().then(put).catch(put); } else { put(); }
           };
           // onerror intentionally left empty — slot stays undefined, drawFrame skips it
         }
@@ -365,10 +382,14 @@ export async function POST(req: NextRequest) {
               }
             }
           }
+          img.decoding = 'async';
           img.onload = function() {
-            target[i] = img;
-            if (i === 0 && isPrimary) drawFrame(0);
-            if (i === currentFrame) drawFrame(i);
+            var put = function() {
+              target[i] = img;
+              if (i === 0 && isPrimary) drawFrame(0);
+              if (i === currentFrame) drawFrame(i);
+            };
+            if (img.decode) { img.decode().then(put).catch(put); } else { put(); }
             advance();
           };
           img.onerror = advance; // count failure so we don't hang

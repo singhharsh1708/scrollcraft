@@ -170,3 +170,24 @@ describe("exported scroll hint", () => {
     expect(hint![1]).toContain("pointer-events: none");
   });
 });
+
+describe("exported head and resilience", () => {
+  it("emits a meta description and social tags", async () => {
+    const html = await exportHtml([{ heading: "A", scrollHeight: 1000 }]);
+    expect(html).toContain('<meta name="description"');
+    expect(html).toContain('property="og:title"');
+    expect(html).toContain('name="twitter:card"');
+  });
+
+  it("carries a noscript fallback so a no-JS visitor sees content", async () => {
+    const html = await exportHtml([{ heading: "A", scrollHeight: 1000 }]);
+    expect(html).toContain("<noscript>");
+    expect(html).toMatch(/<noscript>[\s\S]*data-reveal\][\s\S]*opacity: 1 !important/);
+  });
+
+  it("decodes frames off the scroll path", async () => {
+    const html = await exportHtml([{ heading: "A", scrollHeight: 1000 }]);
+    expect(html).toContain("img.decode");
+    expect(html).toContain("decoding = 'async'");
+  });
+});
