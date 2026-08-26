@@ -20,7 +20,7 @@ const VALUES = [
 
 export default function AboutPage() {
   return (
-    <main className="min-h-screen bg-background text-foreground">
+    <main className="relative min-h-screen bg-background text-foreground overflow-x-hidden">
       <Navbar />
 
       {/* Hero */}

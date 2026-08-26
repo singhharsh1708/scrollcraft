@@ -286,7 +286,7 @@ export default function PricingPage() {
   };
 
   return (
-    <main className="min-h-screen bg-background text-foreground">
+    <main className="relative min-h-screen bg-background text-foreground overflow-x-hidden">
       {/* Nav */}
       <Navbar />
 

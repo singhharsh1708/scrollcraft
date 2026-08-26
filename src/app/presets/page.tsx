@@ -123,7 +123,7 @@ export default function PresetsPage() {
                     <p className="text-xs text-white/60">{preset.category}</p>
                   </div>
                   {/* Hover overlay — z-20 keeps it above the tags row (z-10) */}
-                  <div className="absolute inset-0 z-20 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 backdrop-blur-sm">
+                  <div className="absolute inset-0 z-20 flex items-center justify-center gap-2 opacity-100 [@media(hover:hover)]:opacity-0 group-hover:[@media(hover:hover)]:opacity-100 group-focus-within:opacity-100 transition-opacity bg-black/60 backdrop-blur-sm">
                     <Link href={`/create?template=${encodeURIComponent(preset.name)}`}>
                       <Button size="sm" className="bg-primary text-white shadow-lg shadow-primary/30 text-xs h-8 px-3">
                         Use preset <ArrowRight className="ml-1 w-3 h-3" />

@@ -94,7 +94,7 @@ function SignInForm() {
   };
 
   return (
-    <main className="min-h-screen bg-background text-foreground flex items-center justify-center px-6">
+    <main className="relative min-h-screen bg-background text-foreground overflow-x-hidden flex items-center justify-center px-6">
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-primary/8 blur-[120px] pointer-events-none" />
 
       <div className="relative w-full max-w-sm space-y-8">
