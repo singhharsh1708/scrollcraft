@@ -7,6 +7,8 @@ import { ArrowRight, Sparkles, Zap, Download, Play, Check } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import StylePreview from "@/components/StylePreview";
 import { findPreset, PRESETS } from "@/lib/presets";
+import SponsorCard from "@/components/SponsorCard";
+import SiteFooter from "@/components/SiteFooter";
 
 const DEMO_COUNT = 60;
 const demoFrames = Array.from({ length: DEMO_COUNT }, (_, i) => `/api/demo-frame?i=${i}&total=${DEMO_COUNT}`);
@@ -396,6 +398,11 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Open source */}
+      <section className="px-6 pb-4 max-w-5xl mx-auto">
+        <SponsorCard />
+      </section>
+
       {/* Final CTA */}
       <section className="py-32 px-6 text-center border-t border-white/5">
         <div className="relative max-w-3xl mx-auto">
@@ -423,50 +430,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="py-12 px-6 border-t border-white/5">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
-            <div>
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-6 h-6 rounded bg-primary/20 flex items-center justify-center">
-                  <Sparkles className="w-3 h-3 text-primary" />
-                </div>
-                <span className="font-semibold">ScrollCraft</span>
-              </div>
-              <p className="text-xs text-muted-foreground leading-relaxed">Ready-made cinematic scroll templates with animated canvas backgrounds. Ship a site in minutes.</p>
-            </div>
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-4">Product</p>
-              <div className="space-y-2.5">
-                {[["Features", "/#features"], ["Presets", "/presets"], ["Pricing", "/pricing"], ["Builder", "/create"]].map(([label, href]) => (
-                  <Link key={label} href={href} className="block text-sm text-muted-foreground hover:text-foreground transition-colors">{label}</Link>
-                ))}
-              </div>
-            </div>
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-4">Company</p>
-              <div className="space-y-2.5">
-                {[["About", "/about"], ["Blog", "/changelog"], ["Changelog", "/changelog"], ["Contact", "/contact"]].map(([label, href]) => (
-                  <Link key={label} href={href} className="block text-sm text-muted-foreground hover:text-foreground transition-colors">{label}</Link>
-                ))}
-              </div>
-            </div>
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-4">Legal</p>
-              <div className="space-y-2.5">
-                {[["Privacy Policy", "/privacy"], ["Terms of Service", "/terms"], ["Cookie Policy", "/cookies"]].map(([label, href]) => (
-                  <Link key={label} href={href} className="block text-sm text-muted-foreground hover:text-foreground transition-colors">{label}</Link>
-                ))}
-              </div>
-            </div>
-          </div>
-          <div className="flex flex-col md:flex-row items-center justify-between pt-8 border-t border-white/5 gap-4">
-            <p className="text-xs text-muted-foreground">© 2026 ScrollCraft. All rights reserved.</p>
-            <p className="text-xs text-muted-foreground">Built with Next.js</p>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter />
     </main>
   );
 }

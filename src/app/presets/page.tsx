@@ -9,6 +9,7 @@ import { ArrowRight, Search, Sparkles, Eye } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import StylePreview from "@/components/StylePreview";
 import { PRESETS } from "@/lib/presets";
+import SiteFooter from "@/components/SiteFooter";
 
 const CATEGORIES = [
   "All", "SaaS", "Agency", "E-commerce", "Mobile App", "Startup",
@@ -172,15 +173,7 @@ export default function PresetsPage() {
         </Link>
       </section>
 
-      {/* Footer */}
-      <footer className="py-8 px-6 border-t border-white/5 text-center text-sm text-muted-foreground">
-        <div className="flex items-center justify-center gap-2">
-          <div className="w-5 h-5 rounded bg-primary/20 flex items-center justify-center">
-            <Sparkles className="w-3 h-3 text-primary" />
-          </div>
-          ScrollCraft — Built with Next.js & AI
-        </div>
-      </footer>
+      <SiteFooter compact />
     </main>
   );
 }

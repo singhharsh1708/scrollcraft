@@ -1,5 +1,5 @@
 "use client";
-import { use, useCallback, useEffect, useState } from "react";
+import { use, useCallback, useEffect, useMemo, useState } from "react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -39,12 +39,21 @@ function Preview({
   sections: Section[];
   children: React.ReactNode;
 }) {
+  // SiteRenderer regenerates its frames whenever `styleSpec` changes identity, so this
+  // has to be a stable object. Passing a fresh literal restarted generation on every
+  // re-render, which left the premium preview stuck on "Rendering frames…" forever once
+  // the ownership check gave the component something to re-render for.
+  const styleSpec = useMemo(
+    () => ({ style: template.style, colors: template.colors }),
+    [template.style, template.colors]
+  );
+
   return (
     <SiteRenderer
       name={template.name}
       sections={sections}
       theme={template.theme}
-      styleSpec={{ style: template.style, colors: template.colors }}
+      styleSpec={styleSpec}
       cacheKey={`scrollcraft_template_${template.slug}`}
     >
       <div className="fixed top-4 left-4 right-4 z-40 flex items-center justify-between gap-3 pointer-events-none">
@@ -158,8 +167,9 @@ function PremiumPreview({ template }: { template: Template }) {
               You&apos;re seeing the opening section
             </p>
             <p className="text-xs text-white/70 mb-3">
-              {hidden} more {hidden === 1 ? "section is" : "sections are"} written and waiting.
-              Unlock once and it&apos;s yours to edit and export forever.
+              {hidden} more {hidden === 1 ? "section is" : "sections are"}{" "}
+              written and waiting. Unlock once and it&apos;s yours to edit and export
+              forever.
             </p>
             <Button
               size="sm"

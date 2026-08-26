@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowRight, Check, Copy, Sparkles, Zap, Download, Play, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
+import SiteFooter from "@/components/SiteFooter";
 
 const PROMO_CODE = "PHHUNT";
 const DISCOUNT = 30;
@@ -205,15 +206,7 @@ export default function LaunchPage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-white/5 py-8 text-center text-sm text-muted-foreground">
-        <p>© {new Date().getFullYear()} ScrollCraft. Made with ♥ for builders.</p>
-        <div className="flex justify-center gap-6 mt-3">
-          <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
-          <Link href="/terms" className="hover:text-foreground transition-colors">Terms</Link>
-          <Link href="mailto:hello@scrollcraft.app" className="hover:text-foreground transition-colors">Contact</Link>
-        </div>
-      </footer>
+      <SiteFooter compact />
     </main>
   );
 }
