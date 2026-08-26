@@ -5,7 +5,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { consumePromoCode } from "@/lib/promo";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
-import { PLANS } from "@/lib/plans";
+import { PLANS, planPeriodEnd } from "@/lib/plans";
 
 // Conditional UPDATE so concurrent captures can never push uses past maxUses.
 export async function POST(req: NextRequest) {
@@ -77,7 +77,7 @@ export async function POST(req: NextRequest) {
         // used" with 100 left.
         await db.user.update({
           where: { id: user.id },
-          data: { plan: newPlan, credits: PLANS[newPlan].credits },
+          data: { plan: newPlan, credits: PLANS[newPlan].credits, planExpiresAt: planPeriodEnd(payment.billing) },
         });
       }
       await consumePromoCode(payment.promoCode);

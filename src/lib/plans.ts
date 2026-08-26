@@ -67,3 +67,24 @@ export function planByKey(key: string | null | undefined): Plan {
 export function formatINR(paise: number): string {
   return `₹${Math.round(paise / 100).toLocaleString("en-IN")}`;
 }
+
+/** When a plan granted now on this billing cadence should lapse. */
+export function planPeriodEnd(billing: string | null | undefined, from: Date = new Date()): Date {
+  const end = new Date(from);
+  if ((billing ?? "").toLowerCase() === "annual" || (billing ?? "").toLowerCase() === "yearly") {
+    end.setFullYear(end.getFullYear() + 1);
+  } else {
+    end.setMonth(end.getMonth() + 1);
+  }
+  return end;
+}
+
+/**
+ * A paid plan lapses once `planExpiresAt` is in the past. A null expiry means no expiry:
+ * grants made before expiry tracking existed stay active — access someone paid for is
+ * never silently revoked — while every new grant sets an expiry going forward.
+ */
+export function isPlanActive(planExpiresAt: Date | null | undefined, now: Date = new Date()): boolean {
+  if (!planExpiresAt) return true;
+  return planExpiresAt.getTime() > now.getTime();
+}
