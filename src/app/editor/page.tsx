@@ -20,7 +20,7 @@ import Link from "next/link";
 import { toast } from "sonner";
 import dynamic from "next/dynamic";
 import { siteStyleSchema, themeSchema, type EditorSection, type SiteStyle, type Theme } from "@/lib/siteSchema";
-import { templateBySlug } from "@/lib/templates";
+import { templateBySlug, type Template } from "@/lib/templates";
 import { generate2DFrames } from "@/lib/generate2DFrames";
 
 const ScrollEngine = dynamic(() => import("@/components/ScrollEngine"), { ssr: false });
@@ -45,6 +45,31 @@ const defaultSection = (i: number): Section => ({
   visible: true,
 });
 
+/**
+ * Map a template's sections onto the editor's own shape, giving each the id the editor
+ * needs for selection and undo, and filling the theme-derived colour defaults.
+ *
+ * Module scope on purpose: declaring this inside the component put it in the component's
+ * reactive graph and stopped the React Compiler preserving the undo/redo memoization.
+ */
+function toEditorSections(t: Template, secs: Template["sections"]): Section[] {
+  return secs.map((s, i) => ({
+    ...defaultSection(i),
+    ...s,
+    id: `section-${i}-${t.slug}`,
+    heading: s.heading ?? "",
+    eyebrow: s.eyebrow ?? "",
+    body: s.body ?? "",
+    ctaLabel: s.ctaLabel ?? "",
+    ctaHref: s.ctaHref ?? "#",
+    accentColor: s.accentColor ?? t.theme.accentText ?? "#ede9fe",
+    headingColor: s.headingColor ?? t.theme.ink ?? "#ffffff",
+    bodyColor: s.bodyColor ?? t.theme.muted ?? "rgba(255,255,255,0.7)",
+    scrollHeight: s.scrollHeight ?? 1000,
+    visible: true,
+  }));
+}
+
 function EditorInner() {
   const searchParams = useSearchParams();
   const previewScrollRef = useRef<HTMLDivElement>(null);
@@ -55,22 +80,9 @@ function EditorInner() {
   // A template arrives as a finished site: its sections become the starting document,
   // with the ids the editor needs to track selection and undo.
   const templateSections = pickedTemplate
-    ? pickedTemplate.sections.map((s, i) => ({
-        ...defaultSection(i),
-        ...s,
-        id: `section-${i}-${pickedTemplate.slug}`,
-        heading: s.heading ?? "",
-        eyebrow: s.eyebrow ?? "",
-        body: s.body ?? "",
-        ctaLabel: s.ctaLabel ?? "",
-        ctaHref: s.ctaHref ?? "#",
-        accentColor: s.accentColor ?? pickedTemplate.theme.accentText ?? "#ede9fe",
-        headingColor: s.headingColor ?? pickedTemplate.theme.ink ?? "#ffffff",
-        bodyColor: s.bodyColor ?? pickedTemplate.theme.muted ?? "rgba(255,255,255,0.7)",
-        scrollHeight: s.scrollHeight ?? 1000,
-        visible: true,
-      }))
+    ? toEditorSections(pickedTemplate, pickedTemplate.sections)
     : null;
+
 
   const framesKey = searchParams.get("framesKey");
   const styleParam = searchParams.get("style");
@@ -174,6 +186,39 @@ function EditorInner() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const audioFileRef = useRef<HTMLInputElement>(null);
+
+  // A premium template ships only its opening section to the browser; the rest is served
+  // by the entitlement-checked route. Without this the editor would silently open a
+  // one-section stub of a template the user has paid for.
+  const premiumFetched = useRef(false);
+  useEffect(() => {
+    if (!pickedTemplate?.premium || premiumFetched.current) return;
+    if (searchParams.get("siteId")) return; // an existing site already carries its content
+    premiumFetched.current = true;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`/api/templates/${pickedTemplate.slug}`);
+        if (res.status === 402 || res.status === 401) {
+          if (!cancelled) {
+            toast.error("Unlock this template to edit it.");
+            window.location.assign(`/templates/${pickedTemplate.slug}`);
+          }
+          return;
+        }
+        if (!res.ok) throw new Error(String(res.status));
+        const data = await res.json();
+        if (cancelled || !Array.isArray(data.sections) || !data.sections.length) return;
+        const mapped = toEditorSections(pickedTemplate, data.sections);
+        setSections(mapped);
+        setSelectedSection(mapped[0].id);
+      } catch {
+        if (!cancelled) toast.error("Couldn't load this template. Please try again.");
+      }
+    })();
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // "Use this template" arrives with sections but no frames; render the template's own
   // background instead of leaving the demo one underneath it.

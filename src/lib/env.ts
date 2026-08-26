@@ -33,6 +33,10 @@ const envSchema = z.object({
   LEMONSQUEEZY_VARIANT_ID: z.string().optional(),
   LEMONSQUEEZY_WEBHOOK_SECRET: z.string().optional(),
   LEMONSQUEEZY_EXPORT_PRICE_CENTS: z.coerce.number().int().nonnegative().optional(),
+  // Premium templates are sold through their own Lemon Squeezy variant, so the price and
+  // the product page stay separate from the per-site export.
+  LEMONSQUEEZY_TEMPLATE_VARIANT_ID: z.string().optional(),
+  LEMONSQUEEZY_TEMPLATE_PRICE_CENTS: z.coerce.number().int().nonnegative().optional(),
   LEMONSQUEEZY_EXPORT_CURRENCY: z.string().length(3).toUpperCase().optional(),
 
   // Observability

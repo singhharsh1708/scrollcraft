@@ -217,6 +217,7 @@ export type UserWhereInput = {
   sites?: Prisma.SiteListRelationFilter
   payments?: Prisma.PaymentListRelationFilter
   exportPurchases?: Prisma.ExportPurchaseListRelationFilter
+  templatePurchases?: Prisma.TemplatePurchaseListRelationFilter
   accounts?: Prisma.AccountListRelationFilter
   sessions?: Prisma.SessionListRelationFilter
 }
@@ -234,6 +235,7 @@ export type UserOrderByWithRelationInput = {
   sites?: Prisma.SiteOrderByRelationAggregateInput
   payments?: Prisma.PaymentOrderByRelationAggregateInput
   exportPurchases?: Prisma.ExportPurchaseOrderByRelationAggregateInput
+  templatePurchases?: Prisma.TemplatePurchaseOrderByRelationAggregateInput
   accounts?: Prisma.AccountOrderByRelationAggregateInput
   sessions?: Prisma.SessionOrderByRelationAggregateInput
 }
@@ -254,6 +256,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   sites?: Prisma.SiteListRelationFilter
   payments?: Prisma.PaymentListRelationFilter
   exportPurchases?: Prisma.ExportPurchaseListRelationFilter
+  templatePurchases?: Prisma.TemplatePurchaseListRelationFilter
   accounts?: Prisma.AccountListRelationFilter
   sessions?: Prisma.SessionListRelationFilter
 }, "id" | "email">
@@ -301,6 +304,7 @@ export type UserCreateInput = {
   sites?: Prisma.SiteCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentCreateNestedManyWithoutUserInput
   exportPurchases?: Prisma.ExportPurchaseCreateNestedManyWithoutUserInput
+  templatePurchases?: Prisma.TemplatePurchaseCreateNestedManyWithoutUserInput
   accounts?: Prisma.AccountCreateNestedManyWithoutUserInput
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
 }
@@ -318,6 +322,7 @@ export type UserUncheckedCreateInput = {
   sites?: Prisma.SiteUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutUserInput
   exportPurchases?: Prisma.ExportPurchaseUncheckedCreateNestedManyWithoutUserInput
+  templatePurchases?: Prisma.TemplatePurchaseUncheckedCreateNestedManyWithoutUserInput
   accounts?: Prisma.AccountUncheckedCreateNestedManyWithoutUserInput
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
 }
@@ -335,6 +340,7 @@ export type UserUpdateInput = {
   sites?: Prisma.SiteUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentUpdateManyWithoutUserNestedInput
   exportPurchases?: Prisma.ExportPurchaseUpdateManyWithoutUserNestedInput
+  templatePurchases?: Prisma.TemplatePurchaseUpdateManyWithoutUserNestedInput
   accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
 }
@@ -352,6 +358,7 @@ export type UserUncheckedUpdateInput = {
   sites?: Prisma.SiteUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentUncheckedUpdateManyWithoutUserNestedInput
   exportPurchases?: Prisma.ExportPurchaseUncheckedUpdateManyWithoutUserNestedInput
+  templatePurchases?: Prisma.TemplatePurchaseUncheckedUpdateManyWithoutUserNestedInput
   accounts?: Prisma.AccountUncheckedUpdateManyWithoutUserNestedInput
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
 }
@@ -523,6 +530,20 @@ export type UserUpdateOneRequiredWithoutSessionsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutSessionsInput, Prisma.UserUpdateWithoutSessionsInput>, Prisma.UserUncheckedUpdateWithoutSessionsInput>
 }
 
+export type UserCreateNestedOneWithoutTemplatePurchasesInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutTemplatePurchasesInput, Prisma.UserUncheckedCreateWithoutTemplatePurchasesInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutTemplatePurchasesInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutTemplatePurchasesNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutTemplatePurchasesInput, Prisma.UserUncheckedCreateWithoutTemplatePurchasesInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutTemplatePurchasesInput
+  upsert?: Prisma.UserUpsertWithoutTemplatePurchasesInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutTemplatePurchasesInput, Prisma.UserUpdateWithoutTemplatePurchasesInput>, Prisma.UserUncheckedUpdateWithoutTemplatePurchasesInput>
+}
+
 export type UserCreateWithoutSitesInput = {
   id?: string
   email: string
@@ -535,6 +556,7 @@ export type UserCreateWithoutSitesInput = {
   updatedAt?: Date | string
   payments?: Prisma.PaymentCreateNestedManyWithoutUserInput
   exportPurchases?: Prisma.ExportPurchaseCreateNestedManyWithoutUserInput
+  templatePurchases?: Prisma.TemplatePurchaseCreateNestedManyWithoutUserInput
   accounts?: Prisma.AccountCreateNestedManyWithoutUserInput
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
 }
@@ -551,6 +573,7 @@ export type UserUncheckedCreateWithoutSitesInput = {
   updatedAt?: Date | string
   payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutUserInput
   exportPurchases?: Prisma.ExportPurchaseUncheckedCreateNestedManyWithoutUserInput
+  templatePurchases?: Prisma.TemplatePurchaseUncheckedCreateNestedManyWithoutUserInput
   accounts?: Prisma.AccountUncheckedCreateNestedManyWithoutUserInput
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
 }
@@ -583,6 +606,7 @@ export type UserUpdateWithoutSitesInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   payments?: Prisma.PaymentUpdateManyWithoutUserNestedInput
   exportPurchases?: Prisma.ExportPurchaseUpdateManyWithoutUserNestedInput
+  templatePurchases?: Prisma.TemplatePurchaseUpdateManyWithoutUserNestedInput
   accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
 }
@@ -599,6 +623,7 @@ export type UserUncheckedUpdateWithoutSitesInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   payments?: Prisma.PaymentUncheckedUpdateManyWithoutUserNestedInput
   exportPurchases?: Prisma.ExportPurchaseUncheckedUpdateManyWithoutUserNestedInput
+  templatePurchases?: Prisma.TemplatePurchaseUncheckedUpdateManyWithoutUserNestedInput
   accounts?: Prisma.AccountUncheckedUpdateManyWithoutUserNestedInput
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
 }
@@ -615,6 +640,7 @@ export type UserCreateWithoutPaymentsInput = {
   updatedAt?: Date | string
   sites?: Prisma.SiteCreateNestedManyWithoutUserInput
   exportPurchases?: Prisma.ExportPurchaseCreateNestedManyWithoutUserInput
+  templatePurchases?: Prisma.TemplatePurchaseCreateNestedManyWithoutUserInput
   accounts?: Prisma.AccountCreateNestedManyWithoutUserInput
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
 }
@@ -631,6 +657,7 @@ export type UserUncheckedCreateWithoutPaymentsInput = {
   updatedAt?: Date | string
   sites?: Prisma.SiteUncheckedCreateNestedManyWithoutUserInput
   exportPurchases?: Prisma.ExportPurchaseUncheckedCreateNestedManyWithoutUserInput
+  templatePurchases?: Prisma.TemplatePurchaseUncheckedCreateNestedManyWithoutUserInput
   accounts?: Prisma.AccountUncheckedCreateNestedManyWithoutUserInput
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
 }
@@ -663,6 +690,7 @@ export type UserUpdateWithoutPaymentsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sites?: Prisma.SiteUpdateManyWithoutUserNestedInput
   exportPurchases?: Prisma.ExportPurchaseUpdateManyWithoutUserNestedInput
+  templatePurchases?: Prisma.TemplatePurchaseUpdateManyWithoutUserNestedInput
   accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
 }
@@ -679,6 +707,7 @@ export type UserUncheckedUpdateWithoutPaymentsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sites?: Prisma.SiteUncheckedUpdateManyWithoutUserNestedInput
   exportPurchases?: Prisma.ExportPurchaseUncheckedUpdateManyWithoutUserNestedInput
+  templatePurchases?: Prisma.TemplatePurchaseUncheckedUpdateManyWithoutUserNestedInput
   accounts?: Prisma.AccountUncheckedUpdateManyWithoutUserNestedInput
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
 }
@@ -695,6 +724,7 @@ export type UserCreateWithoutExportPurchasesInput = {
   updatedAt?: Date | string
   sites?: Prisma.SiteCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentCreateNestedManyWithoutUserInput
+  templatePurchases?: Prisma.TemplatePurchaseCreateNestedManyWithoutUserInput
   accounts?: Prisma.AccountCreateNestedManyWithoutUserInput
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
 }
@@ -711,6 +741,7 @@ export type UserUncheckedCreateWithoutExportPurchasesInput = {
   updatedAt?: Date | string
   sites?: Prisma.SiteUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutUserInput
+  templatePurchases?: Prisma.TemplatePurchaseUncheckedCreateNestedManyWithoutUserInput
   accounts?: Prisma.AccountUncheckedCreateNestedManyWithoutUserInput
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
 }
@@ -743,6 +774,7 @@ export type UserUpdateWithoutExportPurchasesInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sites?: Prisma.SiteUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentUpdateManyWithoutUserNestedInput
+  templatePurchases?: Prisma.TemplatePurchaseUpdateManyWithoutUserNestedInput
   accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
 }
@@ -759,6 +791,7 @@ export type UserUncheckedUpdateWithoutExportPurchasesInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sites?: Prisma.SiteUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentUncheckedUpdateManyWithoutUserNestedInput
+  templatePurchases?: Prisma.TemplatePurchaseUncheckedUpdateManyWithoutUserNestedInput
   accounts?: Prisma.AccountUncheckedUpdateManyWithoutUserNestedInput
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
 }
@@ -776,6 +809,7 @@ export type UserCreateWithoutAccountsInput = {
   sites?: Prisma.SiteCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentCreateNestedManyWithoutUserInput
   exportPurchases?: Prisma.ExportPurchaseCreateNestedManyWithoutUserInput
+  templatePurchases?: Prisma.TemplatePurchaseCreateNestedManyWithoutUserInput
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
 }
 
@@ -792,6 +826,7 @@ export type UserUncheckedCreateWithoutAccountsInput = {
   sites?: Prisma.SiteUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutUserInput
   exportPurchases?: Prisma.ExportPurchaseUncheckedCreateNestedManyWithoutUserInput
+  templatePurchases?: Prisma.TemplatePurchaseUncheckedCreateNestedManyWithoutUserInput
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
 }
 
@@ -824,6 +859,7 @@ export type UserUpdateWithoutAccountsInput = {
   sites?: Prisma.SiteUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentUpdateManyWithoutUserNestedInput
   exportPurchases?: Prisma.ExportPurchaseUpdateManyWithoutUserNestedInput
+  templatePurchases?: Prisma.TemplatePurchaseUpdateManyWithoutUserNestedInput
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
 }
 
@@ -840,6 +876,7 @@ export type UserUncheckedUpdateWithoutAccountsInput = {
   sites?: Prisma.SiteUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentUncheckedUpdateManyWithoutUserNestedInput
   exportPurchases?: Prisma.ExportPurchaseUncheckedUpdateManyWithoutUserNestedInput
+  templatePurchases?: Prisma.TemplatePurchaseUncheckedUpdateManyWithoutUserNestedInput
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
 }
 
@@ -856,6 +893,7 @@ export type UserCreateWithoutSessionsInput = {
   sites?: Prisma.SiteCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentCreateNestedManyWithoutUserInput
   exportPurchases?: Prisma.ExportPurchaseCreateNestedManyWithoutUserInput
+  templatePurchases?: Prisma.TemplatePurchaseCreateNestedManyWithoutUserInput
   accounts?: Prisma.AccountCreateNestedManyWithoutUserInput
 }
 
@@ -872,6 +910,7 @@ export type UserUncheckedCreateWithoutSessionsInput = {
   sites?: Prisma.SiteUncheckedCreateNestedManyWithoutUserInput
   payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutUserInput
   exportPurchases?: Prisma.ExportPurchaseUncheckedCreateNestedManyWithoutUserInput
+  templatePurchases?: Prisma.TemplatePurchaseUncheckedCreateNestedManyWithoutUserInput
   accounts?: Prisma.AccountUncheckedCreateNestedManyWithoutUserInput
 }
 
@@ -904,6 +943,7 @@ export type UserUpdateWithoutSessionsInput = {
   sites?: Prisma.SiteUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentUpdateManyWithoutUserNestedInput
   exportPurchases?: Prisma.ExportPurchaseUpdateManyWithoutUserNestedInput
+  templatePurchases?: Prisma.TemplatePurchaseUpdateManyWithoutUserNestedInput
   accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput
 }
 
@@ -920,7 +960,92 @@ export type UserUncheckedUpdateWithoutSessionsInput = {
   sites?: Prisma.SiteUncheckedUpdateManyWithoutUserNestedInput
   payments?: Prisma.PaymentUncheckedUpdateManyWithoutUserNestedInput
   exportPurchases?: Prisma.ExportPurchaseUncheckedUpdateManyWithoutUserNestedInput
+  templatePurchases?: Prisma.TemplatePurchaseUncheckedUpdateManyWithoutUserNestedInput
   accounts?: Prisma.AccountUncheckedUpdateManyWithoutUserNestedInput
+}
+
+export type UserCreateWithoutTemplatePurchasesInput = {
+  id?: string
+  email: string
+  emailVerified?: Date | string | null
+  name?: string | null
+  image?: string | null
+  plan?: $Enums.Plan
+  planExpiresAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  sites?: Prisma.SiteCreateNestedManyWithoutUserInput
+  payments?: Prisma.PaymentCreateNestedManyWithoutUserInput
+  exportPurchases?: Prisma.ExportPurchaseCreateNestedManyWithoutUserInput
+  accounts?: Prisma.AccountCreateNestedManyWithoutUserInput
+  sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutTemplatePurchasesInput = {
+  id?: string
+  email: string
+  emailVerified?: Date | string | null
+  name?: string | null
+  image?: string | null
+  plan?: $Enums.Plan
+  planExpiresAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  sites?: Prisma.SiteUncheckedCreateNestedManyWithoutUserInput
+  payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutUserInput
+  exportPurchases?: Prisma.ExportPurchaseUncheckedCreateNestedManyWithoutUserInput
+  accounts?: Prisma.AccountUncheckedCreateNestedManyWithoutUserInput
+  sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutTemplatePurchasesInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutTemplatePurchasesInput, Prisma.UserUncheckedCreateWithoutTemplatePurchasesInput>
+}
+
+export type UserUpsertWithoutTemplatePurchasesInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutTemplatePurchasesInput, Prisma.UserUncheckedUpdateWithoutTemplatePurchasesInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutTemplatePurchasesInput, Prisma.UserUncheckedCreateWithoutTemplatePurchasesInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutTemplatePurchasesInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutTemplatePurchasesInput, Prisma.UserUncheckedUpdateWithoutTemplatePurchasesInput>
+}
+
+export type UserUpdateWithoutTemplatePurchasesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  emailVerified?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  plan?: Prisma.EnumPlanFieldUpdateOperationsInput | $Enums.Plan
+  planExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sites?: Prisma.SiteUpdateManyWithoutUserNestedInput
+  payments?: Prisma.PaymentUpdateManyWithoutUserNestedInput
+  exportPurchases?: Prisma.ExportPurchaseUpdateManyWithoutUserNestedInput
+  accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput
+  sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutTemplatePurchasesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  emailVerified?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  plan?: Prisma.EnumPlanFieldUpdateOperationsInput | $Enums.Plan
+  planExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sites?: Prisma.SiteUncheckedUpdateManyWithoutUserNestedInput
+  payments?: Prisma.PaymentUncheckedUpdateManyWithoutUserNestedInput
+  exportPurchases?: Prisma.ExportPurchaseUncheckedUpdateManyWithoutUserNestedInput
+  accounts?: Prisma.AccountUncheckedUpdateManyWithoutUserNestedInput
+  sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 
@@ -932,6 +1057,7 @@ export type UserCountOutputType = {
   sites: number
   payments: number
   exportPurchases: number
+  templatePurchases: number
   accounts: number
   sessions: number
 }
@@ -940,6 +1066,7 @@ export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.I
   sites?: boolean | UserCountOutputTypeCountSitesArgs
   payments?: boolean | UserCountOutputTypeCountPaymentsArgs
   exportPurchases?: boolean | UserCountOutputTypeCountExportPurchasesArgs
+  templatePurchases?: boolean | UserCountOutputTypeCountTemplatePurchasesArgs
   accounts?: boolean | UserCountOutputTypeCountAccountsArgs
   sessions?: boolean | UserCountOutputTypeCountSessionsArgs
 }
@@ -978,6 +1105,13 @@ export type UserCountOutputTypeCountExportPurchasesArgs<ExtArgs extends runtime.
 /**
  * UserCountOutputType without action
  */
+export type UserCountOutputTypeCountTemplatePurchasesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.TemplatePurchaseWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
 export type UserCountOutputTypeCountAccountsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.AccountWhereInput
 }
@@ -1003,6 +1137,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   sites?: boolean | Prisma.User$sitesArgs<ExtArgs>
   payments?: boolean | Prisma.User$paymentsArgs<ExtArgs>
   exportPurchases?: boolean | Prisma.User$exportPurchasesArgs<ExtArgs>
+  templatePurchases?: boolean | Prisma.User$templatePurchasesArgs<ExtArgs>
   accounts?: boolean | Prisma.User$accountsArgs<ExtArgs>
   sessions?: boolean | Prisma.User$sessionsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
@@ -1049,6 +1184,7 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   sites?: boolean | Prisma.User$sitesArgs<ExtArgs>
   payments?: boolean | Prisma.User$paymentsArgs<ExtArgs>
   exportPurchases?: boolean | Prisma.User$exportPurchasesArgs<ExtArgs>
+  templatePurchases?: boolean | Prisma.User$templatePurchasesArgs<ExtArgs>
   accounts?: boolean | Prisma.User$accountsArgs<ExtArgs>
   sessions?: boolean | Prisma.User$sessionsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
@@ -1062,6 +1198,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     sites: Prisma.$SitePayload<ExtArgs>[]
     payments: Prisma.$PaymentPayload<ExtArgs>[]
     exportPurchases: Prisma.$ExportPurchasePayload<ExtArgs>[]
+    templatePurchases: Prisma.$TemplatePurchasePayload<ExtArgs>[]
     accounts: Prisma.$AccountPayload<ExtArgs>[]
     sessions: Prisma.$SessionPayload<ExtArgs>[]
   }
@@ -1472,6 +1609,7 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   sites<T extends Prisma.User$sitesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$sitesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SitePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   payments<T extends Prisma.User$paymentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$paymentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PaymentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   exportPurchases<T extends Prisma.User$exportPurchasesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$exportPurchasesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ExportPurchasePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  templatePurchases<T extends Prisma.User$templatePurchasesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$templatePurchasesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TemplatePurchasePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   accounts<T extends Prisma.User$accountsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$accountsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AccountPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   sessions<T extends Prisma.User$sessionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$sessionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SessionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
@@ -1974,6 +2112,30 @@ export type User$exportPurchasesArgs<ExtArgs extends runtime.Types.Extensions.In
   take?: number
   skip?: number
   distinct?: Prisma.ExportPurchaseScalarFieldEnum | Prisma.ExportPurchaseScalarFieldEnum[]
+}
+
+/**
+ * User.templatePurchases
+ */
+export type User$templatePurchasesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the TemplatePurchase
+   */
+  select?: Prisma.TemplatePurchaseSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the TemplatePurchase
+   */
+  omit?: Prisma.TemplatePurchaseOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.TemplatePurchaseInclude<ExtArgs> | null
+  where?: Prisma.TemplatePurchaseWhereInput
+  orderBy?: Prisma.TemplatePurchaseOrderByWithRelationInput | Prisma.TemplatePurchaseOrderByWithRelationInput[]
+  cursor?: Prisma.TemplatePurchaseWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.TemplatePurchaseScalarFieldEnum | Prisma.TemplatePurchaseScalarFieldEnum[]
 }
 
 /**

@@ -26,14 +26,40 @@ export interface Template {
   /** Tailwind gradient for the gallery card, so a card reads before frames render. */
   gradient: string;
   theme: TemplateTheme;
+  /**
+   * The sections anyone may see.
+   *
+   * For a premium template this is the opening section only. The rest is the thing
+   * being sold, so it lives in `premiumTemplateSections.ts`, which is server-only.
+   * Gating it in the UI alone would be theatre: this module is imported by six client
+   * components, so whatever sits here ships to every visitor in the browser bundle.
+   */
   sections: Section[];
+  /** Charged for individually. Its remaining sections are served only after purchase. */
+  premium?: true;
+  /**
+   * What the gallery should say about a premium template, since `sections` holds only
+   * the teaser and counting it would understate the template. Numbers only — they
+   * describe the withheld content without revealing any of it.
+   */
+  fullSectionCount?: number;
+  fullScrollHeight?: number;
 }
 
 const INTRO_BUFFER = 1000;
 
-/** Matches the exporter and the skill: the leading spacer plus every section's own track. */
+/**
+ * Matches the exporter and the skill: the leading spacer plus every section's own track.
+ * A premium template carries the real total separately, because `sections` is its teaser.
+ */
 export function templateScrollHeight(t: Template): number {
+  if (t.fullScrollHeight) return t.fullScrollHeight + INTRO_BUFFER;
   return t.sections.reduce((acc, s) => acc + (s.scrollHeight ?? 1000), 0) + INTRO_BUFFER;
+}
+
+/** Content sections a visitor gets, counting the withheld ones for a premium template. */
+export function templateSectionCount(t: Template): number {
+  return t.fullSectionCount ?? t.sections.filter((s) => s.kind !== "spacer").length;
 }
 
 export function templateBySlug(slug: string): Template | undefined {
@@ -145,34 +171,15 @@ export const TEMPLATES: Template[] = [
       ink: "#f7efe6", muted: "rgba(247,239,230,0.7)",
       accent: "#a94b0d", accentText: "#f8c9aa", radius: 2,
     },
+    premium: true,
+    fullSectionCount: 4,
+    fullScrollHeight: 6400,
     sections: [
       {
         kind: "statement", layout: "center", reveal: "mask",
         eyebrow: "Meridian 01",
         heading: "Machined from one billet.",
         scrollHeight: 1500,
-      },
-      { kind: "spacer", scrollHeight: 800 },
-      {
-        layout: "left", reveal: "stagger",
-        eyebrow: "Movement",
-        heading: "Eleven parts. Each one load bearing.",
-        body: "No decoration, no filler plate, nothing added to look expensive. What you see holding the hands is what holds the hands.",
-        scrollHeight: 1600,
-      },
-      {
-        layout: "right", reveal: "fade",
-        eyebrow: "Case",
-        heading: "Brushed by hand, twice",
-        body: "Once to flatten the mill marks, once at a right angle so the light moves across it rather than glinting off it.",
-        scrollHeight: 1400,
-      },
-      {
-        layout: "center", reveal: "scale",
-        heading: "Four hundred made",
-        body: "Then the tooling is retired.",
-        ctaLabel: "Reserve one", ctaHref: "#reserve",
-        scrollHeight: 1100,
       },
     ],
   },
@@ -367,6 +374,9 @@ export const TEMPLATES: Template[] = [
       displayWeight: 700, ink: "#e8f5f1", muted: "rgba(232,245,241,0.7)",
       accent: "#0f5f55", accentText: "#93dccf", radius: 6,
     },
+    premium: true,
+    fullSectionCount: 4,
+    fullScrollHeight: 4600,
     sections: [
       {
         layout: "upper-third", reveal: "fade",
@@ -374,26 +384,6 @@ export const TEMPLATES: Template[] = [
         heading: "Close the month in four days, not fourteen",
         body: "Reconciliation that runs continuously instead of in a panic at quarter end.",
         scrollHeight: 1200,
-      },
-      {
-        layout: "upper-third", reveal: "fade",
-        eyebrow: "Coverage",
-        heading: "Every account, one ledger",
-        body: "Nineteen banks, six payment processors, and your own internal transfers, matched on the same rules engine.",
-        scrollHeight: 1200,
-      },
-      {
-        layout: "upper-third", reveal: "fade",
-        eyebrow: "Audit",
-        heading: "Every change has a name on it",
-        body: "Immutable history, exportable in the format your auditor asks for rather than the one we prefer.",
-        scrollHeight: 1200,
-      },
-      {
-        layout: "center", reveal: "rise",
-        heading: "See it against your own data",
-        ctaLabel: "Book a walkthrough", ctaHref: "#demo",
-        scrollHeight: 1000,
       },
     ],
   },
@@ -411,33 +401,15 @@ export const TEMPLATES: Template[] = [
       displayWeight: 700, displayTracking: -0.02, ink: "#f0f5f8",
       muted: "rgba(240,245,248,0.72)", accent: "#1a5d78", accentText: "#a6d7e8", radius: 10,
     },
+    premium: true,
+    fullSectionCount: 4,
+    fullScrollHeight: 6000,
     sections: [
       {
         kind: "statement", layout: "lower-third", reveal: "mask",
         eyebrow: "Harbour House",
         heading: "The water is forty metres away.",
         scrollHeight: 1500,
-      },
-      {
-        layout: "left", reveal: "stagger",
-        eyebrow: "The house",
-        heading: "Built in 1908, rewired in 2024",
-        body: "Original floors, original windows, none of the original plumbing. Four bedrooms, two of them facing the estuary.",
-        scrollHeight: 1400,
-      },
-      { kind: "spacer", scrollHeight: 800 },
-      {
-        layout: "right", reveal: "fade",
-        eyebrow: "The village",
-        heading: "A shop, a pub, and a train every hour",
-        body: "Fifty-one minutes to the city, which is close enough to commute and far enough to hear the tide.",
-        scrollHeight: 1300,
-      },
-      {
-        layout: "center", reveal: "scale",
-        heading: "Viewings from Saturday",
-        ctaLabel: "Arrange a viewing", ctaHref: "#viewing",
-        scrollHeight: 1000,
       },
     ],
   },
@@ -750,10 +722,11 @@ export const TEMPLATES: Template[] = [
     colors: ["#ec4899", "#f43f5e", "#1a0510"],
     gradient: "from-pink-700 via-rose-800 to-pink-900",
     theme: { fontDisplay: "Playfair Display", fontBody: "Lato", scale: "poster", displayWeight: 700, displayTracking: -0.025, ink: "#fdeef5", muted: "rgba(253,238,245,0.72)", accent: "#b33774", accentText: "#fdc7e2", radius: 18 },
+    premium: true,
+    fullSectionCount: 3,
+    fullScrollHeight: 3800,
     sections: [
       { kind: "statement", layout: "center", reveal: "mask", eyebrow: "New collection", heading: "Radiance, redefined.", ctaLabel: "Shop now", ctaHref: "#start", scrollHeight: 1400 },
-      { layout: "right", reveal: "stagger", eyebrow: "The science of glow", heading: "Backed by nature, proven by labs.", body: "We partner with climate-positive farms in France and Japan to source cold-pressed botanicals at their peak potency. Every batch is third-party tested before it reaches your skin.", scrollHeight: 1200 },
-      { layout: "center", reveal: "fade", eyebrow: "Over 180,000 happy customers", heading: "Your ritual starts here.", body: "Free shipping on orders over $60. Easy returns. And a personalised skin consultation with every first order — because you deserve to feel certain.", ctaLabel: "Build your ritual", ctaHref: "#start", scrollHeight: 1200 },
     ],
   },
   {
@@ -766,10 +739,11 @@ export const TEMPLATES: Template[] = [
     colors: ["#6d28d9", "#1e1b4b", "#030014"],
     gradient: "from-purple-800 via-indigo-900 to-purple-950",
     theme: { fontDisplay: "Oswald", fontBody: "Roboto", scale: "poster", displayWeight: 700, displayCase: "upper", displayTracking: 0.01, ink: "#eae7fb", muted: "rgba(234,231,251,0.7)", accent: "#6d28d9", accentText: "#e0cefd", radius: 2 },
+    premium: true,
+    fullSectionCount: 3,
+    fullScrollHeight: 3800,
     sections: [
       { kind: "statement", layout: "center", reveal: "mask", eyebrow: "Season III — The Veil War", heading: "Darkness has a name.", ctaLabel: "Play free", ctaHref: "#start", scrollHeight: 1400 },
-      { layout: "left", reveal: "stagger", eyebrow: "Forge your legend", heading: "Every warrior is different.", body: "Choose from 12 character archetypes, unlock 340+ skills, and craft legendary weapons from materials found nowhere else. No two playthroughs are ever the same.", scrollHeight: 1200 },
-      { layout: "center", reveal: "fade", eyebrow: "Join 8 million warriors", heading: "The Realm awaits.", body: "Free-to-play. Cross-platform. Available on PC, PS5, Xbox, and mobile. Your progress, your loot, your story — wherever you are.", ctaLabel: "Download now", ctaHref: "#start", scrollHeight: 1200 },
     ],
   },
   {
@@ -782,10 +756,11 @@ export const TEMPLATES: Template[] = [
     colors: ["#0284c7", "#0891b2", "#020c1a"],
     gradient: "from-sky-700 via-blue-800 to-indigo-900",
     theme: { fontDisplay: "Space Grotesk", fontBody: "Inter", scale: "editorial", displayWeight: 700, ink: "#e8f4fb", muted: "rgba(232,244,251,0.72)", accent: "#026ca3", accentText: "#abddf7", radius: 14 },
+    premium: true,
+    fullSectionCount: 3,
+    fullScrollHeight: 3800,
     sections: [
       { kind: "statement", layout: "center", reveal: "mask", eyebrow: "Travel smarter", heading: "Your whole trip in one tap.", ctaLabel: "Download TripVault", ctaHref: "#start", scrollHeight: 1400 },
-      { layout: "left", reveal: "stagger", eyebrow: "Trip planning", heading: "Built by travellers, not spreadsheets.", body: "Say where you are going and TripVault assembles a day-by-day itinerary from places people actually went back to, with local restaurant picks and real-time price alerts.", scrollHeight: 1200 },
-      { layout: "center", reveal: "fade", eyebrow: "4.9 stars · 2.1M downloads", heading: "Start your next chapter.", body: "Free for solo travellers. Pro plans for families and groups. Available on iOS and Android. Your passport never felt so organised.", ctaLabel: "Get it free", ctaHref: "#start", scrollHeight: 1200 },
     ],
   },
   {
@@ -798,10 +773,11 @@ export const TEMPLATES: Template[] = [
     colors: ["#059669", "#0d9488", "#021a10"],
     gradient: "from-green-700 via-lime-800 to-green-950",
     theme: { fontDisplay: "Archivo", fontBody: "IBM Plex Sans", scale: "editorial", displayWeight: 800, ink: "#e9f7f1", muted: "rgba(233,247,241,0.72)", accent: "#047653", accentText: "#91e7cc", radius: 10 },
+    premium: true,
+    fullSectionCount: 3,
+    fullScrollHeight: 3800,
     sections: [
       { kind: "statement", layout: "center", reveal: "mask", eyebrow: "Series B — $42M raised", heading: "Decarbonisation at enterprise scale.", ctaLabel: "Book a demo", ctaHref: "#start", scrollHeight: 1400 },
-      { layout: "right", reveal: "stagger", eyebrow: "Verified impact", heading: "Carbon removal you can actually trust.", body: "Every tonne removed on GreenShift is independently verified by Gold Standard and Verra. Satellite imagery, IoT sensor data, and third-party audits — all in one transparent dashboard.", scrollHeight: 1200 },
-      { layout: "center", reveal: "fade", eyebrow: "120+ enterprise partners", heading: "The net-zero future starts now.", body: "Microsoft, Shopify, and 118 other companies trust GreenShift to power their climate commitments. Join them — and mean it.", ctaLabel: "Get started", ctaHref: "#start", scrollHeight: 1200 },
     ],
   },
   {
@@ -814,10 +790,11 @@ export const TEMPLATES: Template[] = [
     colors: ["#ea580c", "#b91c1c", "#1a0500"],
     gradient: "from-orange-700 via-red-800 to-orange-950",
     theme: { fontDisplay: "Fraunces", fontBody: "Karla", scale: "poster", displayWeight: 700, displayTracking: -0.02, ink: "#fbeee6", muted: "rgba(251,238,230,0.72)", accent: "#b24309", accentText: "#fcccb4", radius: 6 },
+    premium: true,
+    fullSectionCount: 3,
+    fullScrollHeight: 3800,
     sections: [
       { kind: "statement", layout: "center", reveal: "mask", eyebrow: "Now taking reservations", heading: "Some things are better burnt.", ctaLabel: "Reserve a table", ctaHref: "#start", scrollHeight: 1400 },
-      { layout: "left", reveal: "stagger", eyebrow: "The craft", heading: "Fire is the only seasoning we need.", body: "We use a custom-built 900°C ceramic hearth to achieve a crust that no pan can replicate. Our menu changes with the season. Our commitment to quality never does.", scrollHeight: 1200 },
-      { layout: "center", reveal: "fade", eyebrow: "Downtown, Tuesday–Saturday", heading: "A meal worth the occasion.", body: "Dinner service from 6 pm. Tasting menu available Wednesday through Friday. Private dining for up to 14 guests. Sommelier-curated wine list included.", ctaLabel: "Make a reservation", ctaHref: "#start", scrollHeight: 1200 },
     ],
   },
 ];

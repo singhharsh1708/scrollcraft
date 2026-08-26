@@ -405,6 +405,7 @@ export const ModelName = {
   Account: 'Account',
   Session: 'Session',
   VerificationToken: 'VerificationToken',
+  TemplatePurchase: 'TemplatePurchase',
   RevokedLsOrder: 'RevokedLsOrder',
   ContactMessage: 'ContactMessage'
 } as const
@@ -422,7 +423,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "site" | "payment" | "exportPurchase" | "promoCode" | "account" | "session" | "verificationToken" | "revokedLsOrder" | "contactMessage"
+    modelProps: "user" | "site" | "payment" | "exportPurchase" | "promoCode" | "account" | "session" | "verificationToken" | "templatePurchase" | "revokedLsOrder" | "contactMessage"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1018,6 +1019,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    TemplatePurchase: {
+      payload: Prisma.$TemplatePurchasePayload<ExtArgs>
+      fields: Prisma.TemplatePurchaseFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.TemplatePurchaseFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TemplatePurchasePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.TemplatePurchaseFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TemplatePurchasePayload>
+        }
+        findFirst: {
+          args: Prisma.TemplatePurchaseFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TemplatePurchasePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.TemplatePurchaseFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TemplatePurchasePayload>
+        }
+        findMany: {
+          args: Prisma.TemplatePurchaseFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TemplatePurchasePayload>[]
+        }
+        create: {
+          args: Prisma.TemplatePurchaseCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TemplatePurchasePayload>
+        }
+        createMany: {
+          args: Prisma.TemplatePurchaseCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.TemplatePurchaseCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TemplatePurchasePayload>[]
+        }
+        delete: {
+          args: Prisma.TemplatePurchaseDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TemplatePurchasePayload>
+        }
+        update: {
+          args: Prisma.TemplatePurchaseUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TemplatePurchasePayload>
+        }
+        deleteMany: {
+          args: Prisma.TemplatePurchaseDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.TemplatePurchaseUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.TemplatePurchaseUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TemplatePurchasePayload>[]
+        }
+        upsert: {
+          args: Prisma.TemplatePurchaseUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TemplatePurchasePayload>
+        }
+        aggregate: {
+          args: Prisma.TemplatePurchaseAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateTemplatePurchase>
+        }
+        groupBy: {
+          args: Prisma.TemplatePurchaseGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TemplatePurchaseGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.TemplatePurchaseCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TemplatePurchaseCountAggregateOutputType> | number
+        }
+      }
+    }
     RevokedLsOrder: {
       payload: Prisma.$RevokedLsOrderPayload<ExtArgs>
       fields: Prisma.RevokedLsOrderFieldRefs
@@ -1326,6 +1401,21 @@ export const VerificationTokenScalarFieldEnum = {
 } as const
 
 export type VerificationTokenScalarFieldEnum = (typeof VerificationTokenScalarFieldEnum)[keyof typeof VerificationTokenScalarFieldEnum]
+
+
+export const TemplatePurchaseScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  templateSlug: 'templateSlug',
+  lsOrderId: 'lsOrderId',
+  lsCheckoutId: 'lsCheckoutId',
+  amount: 'amount',
+  currency: 'currency',
+  status: 'status',
+  createdAt: 'createdAt'
+} as const
+
+export type TemplatePurchaseScalarFieldEnum = (typeof TemplatePurchaseScalarFieldEnum)[keyof typeof TemplatePurchaseScalarFieldEnum]
 
 
 export const RevokedLsOrderScalarFieldEnum = {
@@ -1642,6 +1732,7 @@ export type GlobalOmitConfig = {
   account?: Prisma.AccountOmit
   session?: Prisma.SessionOmit
   verificationToken?: Prisma.VerificationTokenOmit
+  templatePurchase?: Prisma.TemplatePurchaseOmit
   revokedLsOrder?: Prisma.RevokedLsOrderOmit
   contactMessage?: Prisma.ContactMessageOmit
 }

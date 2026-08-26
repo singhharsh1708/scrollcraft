@@ -69,6 +69,53 @@ export async function createExportCheckout(params: {
   };
 }
 
+export async function createTemplateCheckout(params: {
+  templateSlug: string;
+  templateName: string;
+  userId: string;
+  userEmail: string;
+}): Promise<LSCheckoutResult> {
+  const { templateSlug, templateName, userId, userEmail } = params;
+
+  const body = {
+    data: {
+      type: "checkouts",
+      attributes: {
+        checkout_data: {
+          email: userEmail,
+          // template_slug is what the webhook keys the entitlement on. It is read back
+          // from the order the store recorded, never trusted from the browser.
+          custom: { template_slug: templateSlug, user_id: userId },
+        },
+        product_options: {
+          name: `ScrollCraft Template — ${templateName}`,
+          description: "Unlock this premium template, yours to edit and export forever",
+          redirect_url: `${siteUrl}/templates/${templateSlug}?purchased=1`,
+        },
+        checkout_options: { embed: false, media: false, logo: true },
+      },
+      relationships: {
+        store: { data: { type: "stores", id: env.LEMONSQUEEZY_STORE_ID } },
+        variant: { data: { type: "variants", id: env.LEMONSQUEEZY_TEMPLATE_VARIANT_ID } },
+      },
+    },
+  };
+
+  const res = await fetch(`${LS_API_BASE}/checkouts`, {
+    method: "POST",
+    headers: headers(),
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    throw new Error(`Lemon Squeezy template checkout failed: ${res.status} ${await res.text()}`);
+  }
+  const json = await res.json();
+  return {
+    checkoutUrl: json.data.attributes.url as string,
+    checkoutId: json.data.id as string,
+  };
+}
+
 /**
  * Look up an existing checkout so a user who already has one in flight is sent
  * back to the same payment page instead of being charged twice.

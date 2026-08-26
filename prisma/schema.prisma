@@ -24,7 +24,8 @@ model User {
 
   sites           Site[]
   payments        Payment[]
-  exportPurchases ExportPurchase[]
+  exportPurchases   ExportPurchase[]
+  templatePurchases TemplatePurchase[]
   accounts        Account[]
   sessions        Session[]
 }
@@ -176,6 +177,27 @@ enum ExportPurchaseStatus {
 // userId/siteId foreign keys, which a refund payload does not carry, so the revocation
 // cannot create that row itself. This table records the revocation with no foreign keys
 // so a later order_created can be refused instead of granting access to a refunded order.
+// A premium template bought outright. Keyed by slug rather than by a foreign key: the
+// catalogue lives in code, not in the database, and a purchase must survive a template
+// being renamed in the gallery or temporarily withdrawn.
+model TemplatePurchase {
+  id            String               @id @default(cuid())
+  userId        String
+  templateSlug  String
+  lsOrderId     String               @unique
+  lsCheckoutId  String?
+  amount        Int
+  currency      String               @default("USD")
+  status        ExportPurchaseStatus @default(PENDING)
+  createdAt     DateTime             @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, templateSlug, status])
+  @@index([userId])
+  @@index([templateSlug])
+}
+
 model RevokedLsOrder {
   lsOrderId String   @id
   eventName String

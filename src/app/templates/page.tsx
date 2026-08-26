@@ -4,10 +4,10 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { ArrowRight, Search, Layers, Eye } from "lucide-react";
+import { ArrowRight, Search, Layers, Eye, Lock } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import StylePreview from "@/components/StylePreview";
-import { TEMPLATES, templateCategories, templateScrollHeight } from "@/lib/templates";
+import { TEMPLATES, templateCategories, templateScrollHeight, templateSectionCount } from "@/lib/templates";
 
 export default function TemplatesPage() {
   const [search, setSearch] = useState("");
@@ -38,7 +38,7 @@ export default function TemplatesPage() {
 
       <section className="pt-16 pb-10 text-center px-6">
         <Badge variant="outline" className="mb-5 border-primary/40 text-primary bg-primary/10 px-4 py-1.5">
-          <Layers className="w-3 h-3 mr-1.5" /> {TEMPLATES.length} templates, all free
+          <Layers className="w-3 h-3 mr-1.5" /> {TEMPLATES.length} templates · {TEMPLATES.filter((t) => !t.premium).length} free
         </Badge>
         <h1 className="text-5xl md:text-6xl font-black tracking-tighter mb-4">
           Start from a finished site
@@ -117,6 +117,13 @@ export default function TemplatesPage() {
                     paused={hovered !== t.slug}
                     className="absolute inset-0 w-full h-full"
                   />
+                  {t.premium && (
+                    <div className="absolute top-3 right-3">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-amber-400/95 px-2 py-0.5 text-[10px] font-semibold text-black">
+                        <Lock className="w-2.5 h-2.5" /> Premium
+                      </span>
+                    </div>
+                  )}
                   <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/70 to-transparent">
                     <span className="text-[10px] uppercase tracking-widest text-white/70">{t.category}</span>
                   </div>
@@ -137,7 +144,7 @@ export default function TemplatesPage() {
                   </div>
 
                   <p className="text-[11px] text-muted-foreground mt-auto">
-                    {t.sections.filter((s) => s.kind !== "spacer").length} sections ·{" "}
+                    {templateSectionCount(t)} sections ·{" "}
                     {templateScrollHeight(t).toLocaleString()}px of scroll
                   </p>
 
@@ -147,9 +154,9 @@ export default function TemplatesPage() {
                         <Eye className="w-3.5 h-3.5" /> Preview
                       </Button>
                     </Link>
-                    <Link href={`/editor?template=${t.slug}`} className="flex-1">
+                    <Link href={t.premium ? `/templates/${t.slug}` : `/editor?template=${t.slug}`} className="flex-1">
                       <Button size="sm" className="w-full text-xs h-8 gap-1.5">
-                        Use <ArrowRight className="w-3.5 h-3.5" />
+                        {t.premium ? <>Unlock <Lock className="w-3.5 h-3.5" /></> : <>Use <ArrowRight className="w-3.5 h-3.5" /></>}
                       </Button>
                     </Link>
                   </div>

@@ -58,6 +58,11 @@ export type Session = Prisma.SessionModel
  */
 export type VerificationToken = Prisma.VerificationTokenModel
 /**
+ * Model TemplatePurchase
+ * 
+ */
+export type TemplatePurchase = Prisma.TemplatePurchaseModel
+/**
  * Model RevokedLsOrder
  * 
  */
