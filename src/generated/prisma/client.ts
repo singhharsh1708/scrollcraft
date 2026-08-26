@@ -82,6 +82,11 @@ export type Session = Prisma.SessionModel
  */
 export type VerificationToken = Prisma.VerificationTokenModel
 /**
+ * Model RevokedLsOrder
+ * 
+ */
+export type RevokedLsOrder = Prisma.RevokedLsOrderModel
+/**
  * Model ContactMessage
  * 
  */

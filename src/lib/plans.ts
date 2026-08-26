@@ -54,6 +54,11 @@ export const PLANS: Record<PlanKey, Plan> = {
   },
 };
 
+/** The names the checkout API accepts, i.e. every plan that is actually charged for. */
+export const PAID_PLAN_NAMES = Object.values(PLANS)
+  .filter((p) => p.monthlyPaise > 0)
+  .map((p) => p.name) as [string, ...string[]];
+
 /** Maps the display name used by the checkout API back to a plan. */
 export function planByName(name: string): Plan | undefined {
   return Object.values(PLANS).find((p) => p.name.toLowerCase() === name.trim().toLowerCase());

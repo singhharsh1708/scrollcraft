@@ -62,26 +62,26 @@ export async function POST(req: NextRequest) {
     };
     const newPlan = planMap[payment.plan];
 
-    // Claim the capture atomically — the webhook may be processing the same payment,
-    // and only the winner grants the plan and consumes the promo use. A refunded
-    // payment is never re-captured.
-    const claimed = await db.payment.updateMany({
-      where: { id: payment.id, status: { in: ["PENDING", "FAILED"] } },
-      data: { razorpayPaymentId: paymentId, status: "CAPTURED" },
-    });
-    if (claimed.count > 0) {
+    // Claim the capture and fulfil it in one transaction — the webhook may be processing
+    // the same payment, and only the winner grants the plan and consumes the promo use.
+    // A refunded payment is never re-captured. Fulfilment has to be atomic with the
+    // claim: a failure after the CAPTURED flip used to leave the payment marked captured
+    // with the plan never granted, and the idempotent early-return above then treated
+    // that half-fulfilled row as complete forever.
+    await db.$transaction(async (tx) => {
+      const claimed = await tx.payment.updateMany({
+        where: { id: payment.id, status: { in: ["PENDING", "FAILED"] } },
+        data: { razorpayPaymentId: paymentId, status: "CAPTURED" },
+      });
+      if (claimed.count === 0) return;
       if (newPlan) {
-        // Grant the plan's credit allowance. Nothing wrote `credits` anywhere, so it sat
-        // at the schema default of 100 forever — the dashboard computes used = max
-        // remaining, and a customer who had just paid for Pro was shown "5,900 / 6,000
-        // used" with 100 left.
-        await db.user.update({
+        await tx.user.update({
           where: { id: user.id },
           data: { plan: newPlan, credits: PLANS[newPlan].credits, planExpiresAt: planPeriodEnd(payment.billing) },
         });
       }
-      await consumePromoCode(payment.promoCode);
-    }
+      await consumePromoCode(payment.promoCode, tx);
+    });
 
     return NextResponse.json({ success: true, paymentId });
   } catch (err) {

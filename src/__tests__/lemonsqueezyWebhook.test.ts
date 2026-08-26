@@ -6,6 +6,7 @@ import type { NextRequest } from "next/server";
 // unrelated store and a free export of any site. Every guard below is load-bearing.
 
 const dbMock = vi.hoisted(() => ({
+  revokedLsOrder: { upsert: vi.fn(), findUnique: vi.fn() },
   exportPurchase: {
     updateMany: vi.fn(),
     findUnique: vi.fn(),
@@ -50,7 +51,7 @@ function signedRequest(payload: unknown, secret: string = WEBHOOK_SECRET): NextR
 
 type Attrs = Record<string, unknown>;
 
-function orderCreated(attrs: Attrs = {}, custom: Record<string, string> | null = { site_id: "site_1", user_id: "user_1" }) {
+function orderCreated(attrs: Attrs = {}, custom: Record<string, unknown> | null = { site_id: "site_1", user_id: "user_1" }) {
   return {
     meta: {
       event_name: "order_created",
@@ -85,6 +86,8 @@ beforeEach(async () => {
   dbMock.exportPurchase.findUnique.mockReset().mockResolvedValue(null);
   dbMock.exportPurchase.create.mockReset().mockResolvedValue({ id: "ep_1" });
   dbMock.exportPurchase.deleteMany.mockReset().mockResolvedValue({ count: 0 });
+  dbMock.revokedLsOrder.upsert.mockReset().mockResolvedValue({ lsOrderId: "ls_order_1" });
+  dbMock.revokedLsOrder.findUnique.mockReset().mockResolvedValue(null);
   dbMock.site.findFirst.mockReset().mockResolvedValue({ id: "site_1" });
   await loadRoute();
 });
@@ -137,6 +140,32 @@ describe("LS webhook — authentication", () => {
 });
 
 describe("LS webhook — order validation refuses to grant", () => {
+  it("refuses a custom_data whose site_id is a Prisma filter object, not a string", async () => {
+    // Prisma's generated `where` types accept a filter object, so an unvalidated
+    // `{ not: "" }` would widen the lookup to any row instead of identifying one.
+    await POST(signedRequest(orderCreated({}, { site_id: { not: "" }, user_id: "user_1" })));
+
+    expectNoGrant();
+  });
+
+  it("refuses a custom_data whose user_id is a filter object", async () => {
+    await POST(signedRequest(orderCreated({}, { site_id: "site_1", user_id: { not: "" } })));
+
+    expectNoGrant();
+  });
+
+  it("refuses a custom_data that is an array rather than an object", async () => {
+    await POST(signedRequest(orderCreated({}, ["site_1", "user_1"] as unknown as Record<string, unknown>)));
+
+    expectNoGrant();
+  });
+
+  it("refuses a non-string scalar site_id", async () => {
+    await POST(signedRequest(orderCreated({}, { site_id: 12345, user_id: "user_1" })));
+
+    expectNoGrant();
+  });
+
   it("refuses when the order came from a different store", async () => {
     const res = await POST(signedRequest(orderCreated({ store_id: 999999 })));
 
@@ -356,5 +385,57 @@ describe("LS webhook — idempotency and revocation", () => {
     expect(res.status).toBe(200);
     expect(dbMock.site.findFirst).not.toHaveBeenCalled();
     expectNoGrant();
+  });
+});
+
+describe("LS webhook — a refund delivered before its order_created", () => {
+  function refund(event = "order_refunded") {
+    return {
+      meta: { event_name: event },
+      data: { id: "ls_order_1", attributes: { status: "refunded", refunded: true } },
+    };
+  }
+
+  it("records a tombstone even when no purchase row exists yet", async () => {
+    dbMock.exportPurchase.updateMany.mockResolvedValue({ count: 0 });
+
+    const res = await POST(signedRequest(refund()));
+
+    expect(res.status).toBe(200);
+    expect(dbMock.revokedLsOrder.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { lsOrderId: "ls_order_1" } })
+    );
+  });
+
+  it("refuses the later order_created instead of granting a refunded order", async () => {
+    // Refund landed first, so only the tombstone is on record.
+    dbMock.exportPurchase.updateMany.mockResolvedValue({ count: 0 });
+    dbMock.exportPurchase.findUnique.mockResolvedValue(null);
+    dbMock.revokedLsOrder.findUnique.mockResolvedValue({
+      lsOrderId: "ls_order_1", eventName: "order_refunded",
+    });
+
+    const res = await POST(signedRequest(orderCreated()));
+
+    expect(res.status).toBe(200);
+    expect(dbMock.exportPurchase.create).not.toHaveBeenCalled();
+  });
+
+  it("still grants a normal order when no tombstone exists", async () => {
+    dbMock.exportPurchase.updateMany.mockResolvedValue({ count: 0 });
+    dbMock.exportPurchase.findUnique.mockResolvedValue(null);
+    dbMock.revokedLsOrder.findUnique.mockResolvedValue(null);
+
+    await POST(signedRequest(orderCreated()));
+
+    expect(dbMock.exportPurchase.create).toHaveBeenCalledTimes(1);
+  });
+
+  it("tombstones a chargeback the same way", async () => {
+    dbMock.exportPurchase.updateMany.mockResolvedValue({ count: 0 });
+
+    await POST(signedRequest(refund("order_chargeback")));
+
+    expect(dbMock.revokedLsOrder.upsert).toHaveBeenCalled();
   });
 });

@@ -55,6 +55,14 @@ export async function POST(req: NextRequest) {
         where: { lsOrderId: orderId, status: { not: "REFUNDED" } },
         data: { status: "REFUNDED" },
       });
+      // Record the revocation even when it matched no row. Delivery order is not
+      // guaranteed, so the order_created this revokes may still be on its way, and the
+      // purchase row cannot be created here — a refund payload has no user or site id.
+      await db.revokedLsOrder.upsert({
+        where: { lsOrderId: orderId },
+        create: { lsOrderId: orderId, eventName },
+        update: {},
+      });
       logger.info("LS export purchase revoked", { orderId, eventName, count });
       return NextResponse.json({ received: true });
     }
@@ -69,13 +77,17 @@ export async function POST(req: NextRequest) {
     const firstItem = (attrs.first_order_item ?? {}) as Record<string, unknown>;
     const variantId = asId(firstItem.variant_id ?? attrs.variant_id);
 
-    // custom_data may arrive nested under `first_order_item` meta or top-level attrs
+    // custom_data may arrive nested under `first_order_item` meta or top-level attrs.
+    // Take only string values out of it: these feed Prisma `where` clauses, whose
+    // generated types also accept a filter object, so an unvalidated `{"not":""}` would
+    // widen the lookup instead of identifying one row.
+    const rawCustom = (meta.custom_data as unknown) ?? (attrs.custom_data as unknown) ?? null;
     const customData =
-      (meta.custom_data as Record<string, string> | undefined) ??
-      (attrs.custom_data as Record<string, string> | undefined) ??
-      null;
-    const siteId = customData?.site_id;
-    const userId = customData?.user_id;
+      rawCustom && typeof rawCustom === "object" && !Array.isArray(rawCustom)
+        ? (rawCustom as Record<string, unknown>)
+        : {};
+    const siteId = typeof customData.site_id === "string" ? customData.site_id : "";
+    const userId = typeof customData.user_id === "string" ? customData.user_id : "";
 
     if (!siteId || !userId) {
       logger.warn("LS webhook: missing custom_data", { orderId });
@@ -160,6 +172,15 @@ export async function POST(req: NextRequest) {
         logger.warn("LS webhook: order_created for a revoked purchase ignored", {
           orderId,
           status: existing.status,
+        });
+        return NextResponse.json({ received: true });
+      }
+      // No purchase row, but the refund may have arrived first and left a tombstone.
+      const revoked = await db.revokedLsOrder.findUnique({ where: { lsOrderId: orderId } });
+      if (revoked) {
+        logger.warn("LS webhook: order_created for an already-revoked order ignored", {
+          orderId,
+          eventName: revoked.eventName,
         });
         return NextResponse.json({ received: true });
       }
