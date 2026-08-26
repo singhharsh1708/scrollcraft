@@ -29,7 +29,7 @@ vi.mock("@upstash/ratelimit", () => {
 type RateLimit = typeof import("../lib/rateLimit").rateLimit;
 let rateLimit: RateLimit;
 
-const OPTS = { limit: 3, windowMs: 60_000 };
+const OPTS = { bucket: "test", limit: 3, windowMs: 60_000 };
 
 beforeEach(async () => {
   vi.resetModules();
@@ -98,7 +98,7 @@ describe("rateLimit — in-memory fallback when Upstash rejects", () => {
 
   it("still enforces the limit while degraded", async () => {
     limitMock.mockRejectedValue(new Error("ECONNREFUSED"));
-    const opts = { limit: 2, windowMs: 60_000 };
+    const opts = { bucket: "test", limit: 2, windowMs: 60_000 };
 
     const first = await rateLimit("5.5.5.6", opts);
     const second = await rateLimit("5.5.5.6", opts);
@@ -139,10 +139,10 @@ describe("rateLimit — in-memory fallback when Upstash rejects", () => {
   it("keeps per-config buckets separate while degraded", async () => {
     limitMock.mockRejectedValue(new Error("boom"));
 
-    await rateLimit("5.5.5.9", { limit: 1, windowMs: 60_000 });
-    const blocked = await rateLimit("5.5.5.9", { limit: 1, windowMs: 60_000 });
+    await rateLimit("5.5.5.9", { bucket: "test", limit: 1, windowMs: 60_000 });
+    const blocked = await rateLimit("5.5.5.9", { bucket: "test", limit: 1, windowMs: 60_000 });
     // A different limit/window is a different bucket, so it must not inherit the count.
-    const otherBucket = await rateLimit("5.5.5.9", { limit: 1, windowMs: 3_600_000 });
+    const otherBucket = await rateLimit("5.5.5.9", { bucket: "test", limit: 1, windowMs: 3_600_000 });
 
     expect(blocked.allowed).toBe(false);
     expect(otherBucket.allowed).toBe(true);
@@ -154,7 +154,7 @@ describe("rateLimit — Upstash timeout", () => {
     // The Upstash SDK resolves a timed-out call as `success: true` without ever
     // reaching Redis, so trusting it would make an outage a free-for-all.
     limitMock.mockResolvedValue({ success: true, remaining: 500, reset: 1, reason: "timeout" });
-    const opts = { limit: 2, windowMs: 60_000 };
+    const opts = { bucket: "test", limit: 2, windowMs: 60_000 };
 
     const first = await rateLimit("7.7.7.7", opts);
     expect(first.remaining).toBe(1); // in-memory, not the 500 Upstash claimed

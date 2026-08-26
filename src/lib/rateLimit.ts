@@ -25,20 +25,21 @@ function getRedis(): Redis | null {
   return redis;
 }
 
-function getLimiter(limit: number, windowMs: number): Ratelimit | null {
+function getLimiter(bucket: string, limit: number, windowMs: number): Ratelimit | null {
   const r = getRedis();
   if (!r) return null;
-  const cacheKey = `${limit}:${windowMs}`;
+  const cacheKey = `${bucket}:${limit}:${windowMs}`;
   if (!limiters.has(cacheKey)) {
     // Convert ms to nearest whole seconds for Upstash duration string
     const windowSec = Math.ceil(windowMs / 1000);
     limiters.set(cacheKey, new Ratelimit({
       redis: r,
       limiter: Ratelimit.slidingWindow(limit, `${windowSec} s`),
-      // The Redis key is `<prefix>:<ip>:<window index>`, so the config has to be part
-      // of the prefix for the same reason it is part of the in-memory key — otherwise
-      // a 5/hour bucket and a 10/hour bucket share one counter.
-      prefix: `sc_rl:${limit}:${windowMs}`,
+      // The Redis key is `<prefix>:<ip>:<window index>`, so the bucket and config both
+      // have to be part of the prefix for the same reason they are part of the in-memory
+      // key — otherwise a 5/hour bucket and a 10/hour bucket, or two unrelated endpoints
+      // that happen to share a limit and window, collapse into one counter.
+      prefix: `sc_rl:${bucket}:${limit}:${windowMs}`,
       timeout: UPSTASH_TIMEOUT_MS,
     }));
   }
@@ -79,6 +80,7 @@ function evictOldest(count: number) {
 
 function rateLimitMemory(
   ip: string,
+  bucket: string,
   limit: number,
   windowMs: number
 ): { allowed: boolean; remaining: number; resetAt: number } {
@@ -88,9 +90,9 @@ function rateLimitMemory(
     // Still full means the entries are all live: drop the oldest to make room.
     if (store.size >= MAX_ENTRIES) evictOldest(store.size - MAX_ENTRIES + 1);
   }
-  // Endpoints pass different limits and windows, so the config is part of the key —
-  // otherwise a 5/hour bucket and a 10/minute bucket share one counter and resetAt.
-  const key = `${limit}:${windowMs}:${ip}`;
+  // The bucket and config are part of the key: distinct endpoints must not share a
+  // counter, and neither may a 5/hour bucket and a 10/minute one on the same endpoint.
+  const key = `${bucket}:${limit}:${windowMs}:${ip}`;
   const entry = store.get(key);
   if (!entry || entry.resetAt <= now) {
     store.set(key, { count: 1, resetAt: now + windowMs });
@@ -104,17 +106,21 @@ function rateLimitMemory(
 }
 
 export interface RateLimitOptions {
+  // Namespace for the counter, one per protected action. Two endpoints that share a
+  // limit and window still get separate buckets, so traffic to one never spends the
+  // other's allowance.
+  bucket: string;
   limit: number;
   windowMs: number;
 }
 
 export async function rateLimit(
   ip: string,
-  { limit, windowMs }: RateLimitOptions
+  { bucket, limit, windowMs }: RateLimitOptions
 ): Promise<{ allowed: boolean; remaining: number; resetAt: number }> {
   if (Date.now() >= upstashDownUntil) {
     try {
-      const limiter = getLimiter(limit, windowMs);
+      const limiter = getLimiter(bucket, limit, windowMs);
       if (limiter) {
         const result = await limiter.limit(ip);
         // A timed-out call resolves as allowed without ever reaching Redis, so
@@ -132,7 +138,7 @@ export async function rateLimit(
       markUpstashDown(err instanceof Error ? err.message : String(err));
     }
   }
-  return rateLimitMemory(ip, limit, windowMs);
+  return rateLimitMemory(ip, bucket, limit, windowMs);
 }
 
 // Vercel rewrites these at its edge on every request, so a client cannot forge them.

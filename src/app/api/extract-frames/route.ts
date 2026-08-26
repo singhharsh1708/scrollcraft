@@ -13,7 +13,7 @@ import https from "https";
 import { randomUUID } from "crypto";
 import { pipeline } from "stream/promises";
 import { auth } from "@/auth";
-import { rateLimit, getClientIp } from "@/lib/rateLimit";
+import { rateLimit } from "@/lib/rateLimit";
 import { put } from "@vercel/blob";
 
 const execFile = promisify(_execFile);
@@ -236,7 +236,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const rl = await rateLimit(getClientIp(req), { limit: 10, windowMs: 60_000 });
+  const rl = await rateLimit(`user:${session.user.id}`, { bucket: "extract-frames", limit: 10, windowMs: 60_000 });
   if (!rl.allowed) {
     return NextResponse.json({ error: "Too many requests. Try again in a minute." }, {
       status: 429,

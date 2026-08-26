@@ -12,7 +12,7 @@ const schema = z.object({ siteId: z.string().min(1).max(128) });
 const PENDING_CHECKOUT_TTL_MS = 30 * 60_000;
 
 export async function POST(req: NextRequest) {
-  const rl = await rateLimit(getClientIp(req), { limit: 10, windowMs: 60_000 });
+  const rl = await rateLimit(getClientIp(req), { bucket: "ls-checkout", limit: 10, windowMs: 60_000 });
   if (!rl.allowed) {
     return NextResponse.json({ error: "Too many requests" }, { status: 429 });
   }
