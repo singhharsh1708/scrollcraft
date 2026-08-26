@@ -24,7 +24,15 @@ const siteSchema = z.object({
   styleJson: z.string().max(500).optional(),
   customHead: z.string().max(50_000).optional(),
   customCss: z.string().max(50_000).optional(),
-  audioUrl: z.string().url().max(2000).optional().or(z.literal("")),
+  // z.url() accepts any scheme, javascript: and data: included. Nothing renders this
+  // into an href today, but it is persisted and handed back to the client, so pin it to
+  // the two schemes an audio track can actually be fetched over.
+  audioUrl: z
+    .string()
+    .max(2000)
+    .refine((v) => /^https?:\/\//i.test(v), { message: "audioUrl must be an http(s) URL" })
+    .optional()
+    .or(z.literal("")),
 });
 
 // GET /api/sites — list the current user's sites

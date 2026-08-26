@@ -217,3 +217,51 @@ describe("exported head and resilience", () => {
     expect(res.status).toBe(400);
   });
 });
+
+describe("exported page accessibility and audio", () => {
+  it("gives the background canvas an accessible name, like the in-app engine does", async () => {
+    const html = await exportHtml([{ heading: "A", scrollHeight: 1000 }]);
+    expect(html).toMatch(/<canvas id="scroll-canvas"[^>]*role="img"/);
+    expect(html).toMatch(/<canvas id="scroll-canvas"[^>]*aria-label="[^"]+"/);
+  });
+
+  it("names the canvas after the site when there is a site name", async () => {
+    const res = await POST(exportRequest({
+      sections: [{ heading: "A", scrollHeight: 1000 }],
+      siteName: "Orrery", frameCount: 10, fps: 24,
+    }));
+    const html = (await res.json()).html as string;
+    expect(html).toContain('aria-label="Orrery animated scroll background"');
+  });
+
+  it("escapes a hostile site name in the canvas label", async () => {
+    const res = await POST(exportRequest({
+      sections: [{ heading: "A", scrollHeight: 1000 }],
+      siteName: '"><script>alert(1)</script>', frameCount: 10, fps: 24,
+    }));
+    const html = (await res.json()).html as string;
+    expect(html).not.toContain("<script>alert(1)</script>");
+  });
+
+  it("routes audio gain through WebAudio so the ramp is not a no-op on iOS", async () => {
+    const res = await POST(exportRequest({
+      sections: [{ heading: "A", scrollHeight: 1000 }],
+      siteName: "A", frameCount: 10, fps: 24, hasAudio: true,
+    }));
+    const html = (await res.json()).html as string;
+    expect(html).toContain("createMediaElementSource");
+    expect(html).toContain("createGain");
+    // Every volume change must go through the helper, not the ignored element property.
+    expect(html).not.toMatch(/audio\.volume\s*=\s*targetVol/);
+    expect(html).toContain("setVol(targetVol)");
+  });
+
+  it("resumes a suspended AudioContext on the first scroll gesture", async () => {
+    const res = await POST(exportRequest({
+      sections: [{ heading: "A", scrollHeight: 1000 }],
+      siteName: "A", frameCount: 10, fps: 24, hasAudio: true,
+    }));
+    const html = (await res.json()).html as string;
+    expect(html).toContain("ctx.resume()");
+  });
+});
