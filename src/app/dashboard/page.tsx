@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import { planByKey } from "@/lib/plans";
+import { deleteFrames } from "@/lib/frameStorage";
 
 interface Site {
   id: string;
@@ -119,6 +120,12 @@ export default function DashboardPage() {
         return;
       }
       setSites(prev => prev.filter(s => s.id !== id));
+      // Reclaim the locally cached frames for this site so a delete doesn't leave its
+      // desktop and mobile frame sets orphaned in IndexedDB forever.
+      await Promise.all([
+        deleteFrames(`scrollcraft_frames_${id}`),
+        deleteFrames(`scrollcraft_mframes_${id}`),
+      ]).catch(() => {});
       toast.success("Site deleted");
     } catch {
       toast.error("Failed to delete site");
