@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowRight, Sparkles, Zap, Download, Play, Check } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import StylePreview from "@/components/StylePreview";
-import { findPreset } from "@/lib/presets";
+import { findPreset, PRESETS } from "@/lib/presets";
 
 const DEMO_COUNT = 60;
 const demoFrames = Array.from({ length: DEMO_COUNT }, (_, i) => `/api/demo-frame?i=${i}&total=${DEMO_COUNT}`);
@@ -23,7 +23,7 @@ const getMobileHeroSnapshot = () => window.matchMedia(MOBILE_HERO_QUERY).matches
 const getMobileHeroServerSnapshot = () => true;
 
 const PIPELINE = [
-  { step: "01", title: "Pick a preset", desc: "Choose from 12+ production-ready templates across SaaS, agency, e-commerce, and more." },
+  { step: "01", title: "Pick a preset", desc: `Choose from ${PRESETS.length} production-ready templates across SaaS, agency, e-commerce, and more.` },
   { step: "02", title: "Pick a template", desc: "Browse ready-made scroll sites by category and open the one closest to what you want." },
   { step: "03", title: "Frames render in your browser", desc: "The template's palette and style are drawn to canvas locally — instant, and nothing leaves your machine." },
   { step: "04", title: "Tune colors & sections", desc: "Adjust the palette, frame count, and section content live in the editor — no rerendering, no waiting." },
@@ -162,7 +162,7 @@ export default function Home() {
         </div>
 
         <div className="mt-6 flex items-center gap-6 text-sm text-muted-foreground">
-          {["7-day free trial", "No credit card", "Deploy anywhere"].map((t) => (
+          {["Free plan, no time limit", "No credit card", "Deploy anywhere"].map((t) => (
             <div key={t} className="flex items-center gap-1.5">
               <Check className="w-3.5 h-3.5 text-primary" /> {t}
             </div>
@@ -186,7 +186,7 @@ export default function Home() {
       {/* Social proof strip */}
       <section className="py-10 border-y border-white/5 bg-white/2">
         <div className="max-w-5xl mx-auto px-6 flex flex-wrap items-center justify-center gap-8 text-muted-foreground text-sm">
-          {["400+ frames per site", "Sub-2s load time", "10–40 FPS", "Works on every device", "No WebGL required", "Deploy anywhere"].map((t) => (
+          {["Up to 200 frames per site", "Sub-2s load time", "10–40 FPS", "Works on every device", "No WebGL required", "Deploy anywhere"].map((t) => (
             <div key={t} className="flex items-center gap-2">
               <div className="w-1.5 h-1.5 rounded-full bg-primary" />
               {t}
@@ -247,7 +247,7 @@ export default function Home() {
         <div className="max-w-6xl mx-auto">
           <div className="flex items-end justify-between mb-12">
             <div>
-              <Badge variant="outline" className="mb-4 border-white/10">12 presets & counting</Badge>
+              <Badge variant="outline" className="mb-4 border-white/10">{PRESETS.length} presets & counting</Badge>
               <h2 className="text-4xl md:text-5xl font-black tracking-tighter">Start from a preset</h2>
               <p className="text-muted-foreground mt-3 max-w-lg">
                 Production-tested starters with finished scroll layouts, copy structure, and palettes.

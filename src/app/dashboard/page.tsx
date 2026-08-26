@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import { planByKey } from "@/lib/plans";
+import { PRESETS } from "@/lib/presets";
 import { deleteFrames } from "@/lib/frameStorage";
 
 interface Site {
@@ -305,7 +306,7 @@ export default function DashboardPage() {
           <div className="grid md:grid-cols-3 gap-4">
             {[
               { icon: Plus, title: "Start from a template", desc: "Pick a ready-made scroll site", href: "/templates", color: "text-primary" },
-              { icon: Sparkles, title: "Browse presets", desc: "12 production-ready templates", href: "/presets", color: "text-violet-400" },
+              { icon: Sparkles, title: "Browse presets", desc: `${PRESETS.length} production-ready templates`, href: "/presets", color: "text-violet-400" },
               { icon: Zap, title: "Upgrade plan", desc: "Keep more websites saved", href: "/pricing", color: "text-amber-400" },
             ].map(action => (
               <Link key={action.title} href={action.href}>

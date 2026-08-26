@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight, Sparkles, Zap, Globe, Users } from "lucide-react";
 import Navbar from "@/components/Navbar";
+import { PRESETS } from "@/lib/presets";
 
 const TEAM = [
   { name: "Harsh Singh", role: "Founder & Engineer", avatar: "HS", bio: "Building the future of no-code web experiences." },
@@ -57,8 +58,8 @@ export default function AboutPage() {
           </div>
           <div className="grid grid-cols-2 gap-4">
             {[
-              { value: "400+", label: "Frames per site" },
-              { value: "12", label: "Presets & counting" },
+              { value: "200", label: "Frames per site" },
+              { value: String(PRESETS.length), label: "Presets & counting" },
               { value: "<2s", label: "Load time target" },
               { value: "100%", label: "Code ownership" },
             ].map(s => (
