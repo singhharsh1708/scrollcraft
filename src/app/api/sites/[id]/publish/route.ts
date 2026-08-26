@@ -3,7 +3,7 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
-import { planByKey } from "@/lib/plans";
+import { siteAllowance } from "@/lib/plans";
 import { parseSectionsJson, parseStyleJson, visibleSections } from "@/lib/siteSchema";
 
 const bodySchema = z.object({ action: z.enum(["publish", "unpublish"]) });
@@ -92,7 +92,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     return NextResponse.json({ published: true, slug: site.publishSlug });
   }
 
-  const allowance = planByKey(user.plan).sites;
+  const allowance = siteAllowance(user.plan);
 
   // Serialise this user's concurrent publishes. A plain count-then-update races under
   // READ COMMITTED: two transactions publishing DIFFERENT rows both read count=0 and both

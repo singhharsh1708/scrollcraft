@@ -12,7 +12,7 @@ import {
   Zap, Globe, Download, Loader2
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
-import { planByKey } from "@/lib/plans";
+import { planByKey, siteAllowance } from "@/lib/plans";
 import { PRESETS } from "@/lib/presets";
 import { deleteFrames } from "@/lib/frameStorage";
 
@@ -43,7 +43,7 @@ export default function DashboardPage() {
   const [exportCount, setExportCount] = useState(0);
   const userPlanKey = (session?.user?.plan ?? "FREE") as string;
   const plan = planByKey(userPlanKey);
-  const siteLimit = plan.sites;
+  const siteLimit = siteAllowance(userPlanKey);
 
   useEffect(() => {
     if (status === "unauthenticated") router.push("/auth/signin");
@@ -165,9 +165,9 @@ export default function DashboardPage() {
               <Badge className={`bg-primary/15 border-primary/30 px-3 ${plan.color}`}>
                 {plan.label}
               </Badge>
-              <Link href="/pricing">
+              <Link href="/templates">
                 <Button size="sm" variant="outline" className="border-white/10 text-xs h-7">
-                  <Zap className="w-3 h-3 mr-1" /> Upgrade
+                  <Zap className="w-3 h-3 mr-1" /> Browse templates
                 </Button>
               </Link>
             </div>
@@ -183,11 +183,13 @@ export default function DashboardPage() {
             <p className="text-xs text-muted-foreground">
               {Math.max(0, siteLimit - sites.length)} slot{siteLimit - sites.length === 1 ? "" : "s"} left on {plan.label}
             </p>
-            <Link href="/pricing">
-              <Button size="sm" className="w-full bg-primary/15 hover:bg-primary/25 text-primary border-0 text-xs h-7 mt-1">
-                Upgrade for more
-              </Button>
-            </Link>
+            <p className="text-xs text-muted-foreground/70">
+              Need more than this for a client project?{" "}
+              <Link href="/contact" className="underline hover:text-foreground">
+                Talk to us
+              </Link>
+              .
+            </p>
           </div>
         </div>
 
@@ -307,7 +309,7 @@ export default function DashboardPage() {
             {[
               { icon: Plus, title: "Start from a template", desc: "Pick a ready-made scroll site", href: "/templates", color: "text-primary" },
               { icon: Sparkles, title: "Browse presets", desc: `${PRESETS.length} production-ready templates`, href: "/presets", color: "text-violet-400" },
-              { icon: Zap, title: "Upgrade plan", desc: "Keep more websites saved", href: "/pricing", color: "text-amber-400" },
+              { icon: Zap, title: "Enterprise", desc: "A site built for your brand", href: "/contact", color: "text-amber-400" },
             ].map(action => (
               <Link key={action.title} href={action.href}>
                 <div className="p-5 rounded-2xl border border-white/8 bg-card hover:border-primary/30 transition-colors cursor-pointer group">

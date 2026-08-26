@@ -347,11 +347,11 @@ export default function Home() {
         <div className="max-w-4xl mx-auto text-center">
           <Badge variant="outline" className="mb-5 border-white/10">Pricing</Badge>
           <h2 className="text-4xl md:text-5xl font-black tracking-tighter mb-4">
-            Free to start.<br />
-            <span className="text-muted-foreground">Scales with you.</span>
+            Free.<br />
+            <span className="text-muted-foreground">Genuinely.</span>
           </h2>
           <p className="text-muted-foreground text-lg mb-10 max-w-xl mx-auto">
-            Every template is free on every plan. No card required. Upgrade only to keep more websites saved.
+            Every template, the editor, publishing and ZIP export cost nothing. No card, no trial clock.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link href="/create">

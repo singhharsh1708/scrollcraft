@@ -38,7 +38,7 @@ export default function TemplatesPage() {
 
       <section className="pt-16 pb-10 text-center px-6">
         <Badge variant="outline" className="mb-5 border-primary/40 text-primary bg-primary/10 px-4 py-1.5">
-          <Layers className="w-3 h-3 mr-1.5" /> {TEMPLATES.length} templates, free on every plan
+          <Layers className="w-3 h-3 mr-1.5" /> {TEMPLATES.length} templates, all free
         </Badge>
         <h1 className="text-5xl md:text-6xl font-black tracking-tighter mb-4">
           Start from a finished site

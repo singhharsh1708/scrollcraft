@@ -1,11 +1,13 @@
 /**
- * Single source of truth for plan pricing and the saved-website allowance.
+ * Single source of truth for the saved-website allowance and legacy plan pricing.
  *
- * These lived in three places that had already drifted apart: the pricing page
- * rendered dollar amounts while the order endpoint charged rupees, and the
- * dashboard's credit denominator for Basic Plus did not match the number the
- * pricing page advertised. Anything that shows a price or a credit allowance
- * reads it from here.
+ * ScrollCraft is free: every template, the editor, publishing and ZIP export cost
+ * nothing, and revenue comes from individually purchased premium templates and from
+ * enterprise work arranged by email.
+ *
+ * The four paid subscription tiers below are retired. They are kept because existing
+ * subscribers still carry those values in the database and must keep the allowance they
+ * paid for; `legacy: true` keeps them off the pricing page. Nothing new is sold on them.
  */
 
 export type PlanKey = "FREE" | "BASIC" | "BASIC_PLUS" | "PRO" | "PREMIUM";
@@ -21,36 +23,52 @@ export interface Plan {
   annualPaise: number;
   /** Saved websites the plan allows. Enforced by POST /api/sites. */
   sites: number;
+  /** A retired tier: honoured for existing subscribers, never offered to new ones. */
+  legacy?: boolean;
   color: string;
 }
 
 export const PLANS: Record<PlanKey, Plan> = {
   FREE: {
-    key: "FREE", name: "Free Trial", label: "Free Trial",
-    monthlyPaise: 0, annualPaise: 0, sites: 1,
+    key: "FREE", name: "Free", label: "Free",
+    monthlyPaise: 0, annualPaise: 0, sites: 3,
     color: "text-muted-foreground",
   },
   BASIC: {
     key: "BASIC", name: "Basic", label: "Basic",
     monthlyPaise: 199900, annualPaise: 159900, sites: 2,
+    legacy: true,
     color: "text-blue-400",
   },
   BASIC_PLUS: {
     key: "BASIC_PLUS", name: "Basic Plus", label: "Basic Plus",
     monthlyPaise: 299900, annualPaise: 239900, sites: 4,
+    legacy: true,
     color: "text-cyan-400",
   },
   PRO: {
     key: "PRO", name: "Pro", label: "Pro",
     monthlyPaise: 499900, annualPaise: 399900, sites: 7,
+    legacy: true,
     color: "text-primary",
   },
   PREMIUM: {
     key: "PREMIUM", name: "Premium", label: "Premium",
     monthlyPaise: 1499900, annualPaise: 1199900, sites: 30,
+    legacy: true,
     color: "text-amber-400",
   },
 };
+
+/**
+ * Saved websites a plan actually allows.
+ *
+ * Floored at the free allowance: the free tier grew when the subscription tiers were
+ * retired, and a legacy subscriber must never end up with less than a new free account.
+ */
+export function siteAllowance(key: string | null | undefined): number {
+  return Math.max(planByKey(key).sites, PLANS.FREE.sites);
+}
 
 /** The names the checkout API accepts, i.e. every plan that is actually charged for. */
 export const PAID_PLAN_NAMES = Object.values(PLANS)

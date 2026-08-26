@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { auth } from "@/auth";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { parseSectionsJson, parseStyleJson, parseThemeJson } from "@/lib/siteSchema";
-import { planByKey } from "@/lib/plans";
+import { siteAllowance } from "@/lib/plans";
 
 // The schema alone admits ~11 MB per call; without a cap a client could stream far more
 // before Zod ever sees it.
@@ -142,7 +142,7 @@ export async function POST(req: NextRequest) {
 
   // Create new site
   const siteCount = await db.site.count({ where: { userId: user.id } });
-  const allowance = Math.min(planByKey(user.plan).sites, MAX_SITES_PER_USER);
+  const allowance = Math.min(siteAllowance(user.plan), MAX_SITES_PER_USER);
   if (siteCount >= allowance) {
     return NextResponse.json(
       {
