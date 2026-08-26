@@ -83,6 +83,21 @@ describe("rateLimit — Upstash path", () => {
     expect(result.allowed).toBe(true);
     expect(result.remaining).toBe(OPTS.limit - 1);
   });
+
+  it("warns once, not per request, that the fallback is per-instance", async () => {
+    delete process.env.UPSTASH_REDIS_REST_URL;
+    delete process.env.UPSTASH_REDIS_REST_TOKEN;
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    vi.resetModules();
+    ({ rateLimit } = await import("../lib/rateLimit"));
+
+    await rateLimit("8.8.8.8", OPTS);
+    await rateLimit("8.8.8.8", OPTS);
+    await rateLimit("9.9.9.9", OPTS);
+
+    const upstashWarns = warn.mock.calls.filter((c) => String(c[0]).includes("UPSTASH_"));
+    expect(upstashWarns).toHaveLength(1);
+  });
 });
 
 describe("rateLimit — in-memory fallback when Upstash rejects", () => {

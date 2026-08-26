@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { logger } from "@/lib/logger";
 import { z } from "zod";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
@@ -105,7 +106,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ checkoutUrl });
   } catch (err) {
-    console.error("LS checkout error:", err);
+    logger.error("lemonsqueezy checkout failed", { err });
     return NextResponse.json({ error: "Failed to create checkout" }, { status: 500 });
   }
 }

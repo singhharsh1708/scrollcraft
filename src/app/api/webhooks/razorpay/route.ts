@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { logger } from "@/lib/logger";
 import crypto from "crypto";
 import Razorpay from "razorpay";
 import { db } from "@/lib/db";
@@ -206,7 +207,7 @@ export async function POST(req: NextRequest) {
       break;
   }
   } catch (err) {
-    console.error("Webhook processing failed:", err);
+    logger.error("razorpay webhook processing failed", { err });
     return NextResponse.json({ error: "Webhook processing failed" }, { status: 500 });
   }
 
