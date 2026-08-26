@@ -341,7 +341,10 @@ export async function POST(req: NextRequest) {
 
     const useBlobStorage = !!process.env.BLOB_READ_WRITE_TOKEN;
     const frames: string[] = [];
-    const sessionId = `scrollcraft/${Date.now()}`;
+    // Scope the prefix by user and a random id, not a bare timestamp: frames are public,
+    // so a shared timestamp prefix plus fixed frame_NNNNNN names let one user enumerate
+    // another's, and two same-millisecond extractions collide.
+    const sessionId = `scrollcraft/${session.user.id}/${randomUUID()}`;
 
     for (const file of frameFiles) {
       const buf = await readFile(path.join(framesDir, file));
@@ -349,6 +352,7 @@ export async function POST(req: NextRequest) {
         const { url } = await put(`${sessionId}/${file}`, buf, {
           access: "public",
           contentType: "image/jpeg",
+          addRandomSuffix: true,
         });
         frames.push(url);
       } else {
