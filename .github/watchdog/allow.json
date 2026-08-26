@@ -1,0 +1,4 @@
+{
+  "_comment": "Check keys the watchdog must never open or manage issues for — failures the maintainer has accepted. Remove a key to let the watchdog report it again.",
+  "allow": []
+}
