@@ -735,6 +735,7 @@ function EditorInner() {
           <Button
             variant="outline"
             size="sm"
+            aria-label={showPreview ? "Hide preview" : "Show preview"}
             onClick={() => setShowPreview(p => !p)}
             className="border-white/10 h-7 px-2 text-xs"
           >
@@ -777,8 +778,12 @@ function EditorInner() {
             {sections.map((s, i) => (
               <div
                 key={s.id}
+                role="button"
+                tabIndex={0}
+                aria-pressed={selectedSection === s.id}
                 onClick={() => setSelectedSection(s.id)}
-                className={`group flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-colors ${
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setSelectedSection(s.id); } }}
+                className={`group flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary ${
                   selectedSection === s.id ? "bg-primary/15 border border-primary/30" : "hover:bg-white/5"
                 }`}
               >
@@ -843,7 +848,12 @@ function EditorInner() {
                   {sections.filter(s => s.visible).map((s) => (
                     <div
                       key={s.id}
+                      role="button"
+                      tabIndex={0}
+                      aria-pressed={selectedSection === s.id}
+                      aria-label={`Select section ${s.heading || ""}`.trim()}
                       onClick={() => setSelectedSection(s.id)}
+                      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setSelectedSection(s.id); } }}
                       style={{
                         position: "relative",
                         height: s.scrollHeight,
@@ -929,6 +939,7 @@ function EditorInner() {
                 <div className="space-y-1.5">
                   <label className="text-xs text-muted-foreground">Eyebrow text</label>
                   <Input
+                    aria-label="Eyebrow text"
                     value={selectedSectionData.eyebrow}
                     onChange={(e) => updateSection(selectedSectionData.id, { eyebrow: e.target.value })}
                     placeholder="NEW FEATURE"
@@ -938,6 +949,7 @@ function EditorInner() {
                 <div className="space-y-1.5">
                   <label className="text-xs text-muted-foreground">Heading</label>
                   <Textarea
+                    aria-label="Heading"
                     value={selectedSectionData.heading}
                     onChange={(e) => updateSection(selectedSectionData.id, { heading: e.target.value })}
                     placeholder="Your powerful headline"
@@ -947,6 +959,7 @@ function EditorInner() {
                 <div className="space-y-1.5">
                   <label className="text-xs text-muted-foreground">Body text</label>
                   <Textarea
+                    aria-label="Body text"
                     value={selectedSectionData.body}
                     onChange={(e) => updateSection(selectedSectionData.id, { body: e.target.value })}
                     placeholder="Supporting description..."
@@ -957,6 +970,7 @@ function EditorInner() {
                   <div className="space-y-1.5">
                     <label className="text-xs text-muted-foreground">CTA label</label>
                     <Input
+                      aria-label="CTA label"
                       value={selectedSectionData.ctaLabel}
                       onChange={(e) => updateSection(selectedSectionData.id, { ctaLabel: e.target.value })}
                       placeholder="Get started"
@@ -966,6 +980,7 @@ function EditorInner() {
                   <div className="space-y-1.5">
                     <label className="text-xs text-muted-foreground">CTA link</label>
                     <Input
+                      aria-label="CTA link"
                       value={selectedSectionData.ctaHref}
                       onChange={(e) => updateSection(selectedSectionData.id, { ctaHref: e.target.value })}
                       placeholder="#"
@@ -979,22 +994,22 @@ function EditorInner() {
                 <div className="space-y-1.5">
                   <label className="text-xs text-muted-foreground">Accent color</label>
                   <div className="flex items-center gap-2">
-                    <input type="color" value={selectedSectionData.accentColor} onChange={(e) => updateSection(selectedSectionData.id, { accentColor: e.target.value })} className="w-8 h-8 rounded cursor-pointer border-0 bg-transparent" />
-                    <Input value={selectedSectionData.accentColor} onChange={(e) => updateSection(selectedSectionData.id, { accentColor: e.target.value })} className="flex-1 h-7 bg-white/5 border-white/10 text-xs font-mono" />
+                    <input aria-label="Accent color" type="color" value={selectedSectionData.accentColor} onChange={(e) => updateSection(selectedSectionData.id, { accentColor: e.target.value })} className="w-8 h-8 rounded cursor-pointer border-0 bg-transparent" />
+                    <Input aria-label="Accent color hex value" value={selectedSectionData.accentColor} onChange={(e) => updateSection(selectedSectionData.id, { accentColor: e.target.value })} className="flex-1 h-7 bg-white/5 border-white/10 text-xs font-mono" />
                   </div>
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-xs text-muted-foreground">Heading color</label>
                   <div className="flex items-center gap-2">
-                    <input type="color" value={selectedSectionData.headingColor} onChange={(e) => updateSection(selectedSectionData.id, { headingColor: e.target.value })} className="w-8 h-8 rounded cursor-pointer border-0 bg-transparent" />
-                    <Input value={selectedSectionData.headingColor} onChange={(e) => updateSection(selectedSectionData.id, { headingColor: e.target.value })} className="flex-1 h-7 bg-white/5 border-white/10 text-xs font-mono" />
+                    <input aria-label="Heading color" type="color" value={selectedSectionData.headingColor} onChange={(e) => updateSection(selectedSectionData.id, { headingColor: e.target.value })} className="w-8 h-8 rounded cursor-pointer border-0 bg-transparent" />
+                    <Input aria-label="Heading color hex value" value={selectedSectionData.headingColor} onChange={(e) => updateSection(selectedSectionData.id, { headingColor: e.target.value })} className="flex-1 h-7 bg-white/5 border-white/10 text-xs font-mono" />
                   </div>
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-xs text-muted-foreground">Body color</label>
                   <div className="flex items-center gap-2">
-                    <input type="color" value={selectedSectionData.bodyColor.startsWith("rgba") ? "#b3b3b3" : selectedSectionData.bodyColor} onChange={(e) => updateSection(selectedSectionData.id, { bodyColor: e.target.value })} className="w-8 h-8 rounded cursor-pointer border-0 bg-transparent" />
-                    <Input value={selectedSectionData.bodyColor} onChange={(e) => updateSection(selectedSectionData.id, { bodyColor: e.target.value })} className="flex-1 h-7 bg-white/5 border-white/10 text-xs font-mono" />
+                    <input aria-label="Body color" type="color" value={selectedSectionData.bodyColor.startsWith("rgba") ? "#b3b3b3" : selectedSectionData.bodyColor} onChange={(e) => updateSection(selectedSectionData.id, { bodyColor: e.target.value })} className="w-8 h-8 rounded cursor-pointer border-0 bg-transparent" />
+                    <Input aria-label="Body color hex value" value={selectedSectionData.bodyColor} onChange={(e) => updateSection(selectedSectionData.id, { bodyColor: e.target.value })} className="flex-1 h-7 bg-white/5 border-white/10 text-xs font-mono" />
                   </div>
                 </div>
                 <div className="space-y-1.5">
@@ -1030,6 +1045,7 @@ function EditorInner() {
                     <Badge variant="outline" className="text-xs border-primary/30 text-primary">{selectedSectionData.scrollHeight}px</Badge>
                   </div>
                   <Slider
+                    aria-label="Section height in pixels"
                     value={[selectedSectionData.scrollHeight]}
                     onValueChange={(v) => updateSection(selectedSectionData.id, { scrollHeight: Array.isArray(v) ? (v as number[])[0] : v as number })}
                     min={300} max={3000} step={100}
