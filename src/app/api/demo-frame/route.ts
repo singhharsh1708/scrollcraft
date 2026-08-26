@@ -5,6 +5,9 @@ export async function GET(req: NextRequest) {
   // Unvalidated params reached the SVG as NaN ("hsl(NaN,65%,15%)", cx="NaN"), producing an
   // unrenderable image that was then cached for an hour.
   const clamp = (raw: string | null, fallback: number, min: number, max: number) => {
+    // Number(null) and Number("") are both 0, which is finite — so without this guard an
+    // absent or empty param silently became 0 instead of taking the documented fallback.
+    if (raw === null || raw.trim() === "") return fallback;
     const n = Number(raw);
     return Number.isFinite(n) ? Math.min(Math.max(Math.trunc(n), min), max) : fallback;
   };

@@ -151,6 +151,10 @@ export default function ScrollEngine({ frames, mobileFrames, totalScrollHeight =
     };
 
     el.addEventListener("scroll", handleScroll, { passive: true });
+    // Sync to the offset the page already has. Without this the canvas paints frame 0 on
+    // mount, so a restored scroll position, a #hash landing, or a back-navigation shows a
+    // background that does not match where the reader actually is.
+    handleScroll();
     return () => el.removeEventListener("scroll", handleScroll);
   }, [activeFrames.length, totalScrollHeight, drawFrame, onFrameChange, scrollContainer]);
 
