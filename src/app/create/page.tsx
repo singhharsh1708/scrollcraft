@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { TEMPLATES } from "@/lib/templates";
 import { findPreset } from "@/lib/presets";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { ArrowLeft, ArrowRight, Sparkles, Upload, CheckCircle2, Loader2, Layers, Zap, Waves, Circle } from "lucide-react";
@@ -58,6 +59,7 @@ function CreatePageInner() {
     templateColors ?? ["#7c3aed", "#2563eb", "#0f172a"]
   );
   const [frameCount, setFrameCount] = useState(120);
+  const [videoUrl, setVideoUrl] = useState("");
   const [generateMobile, setGenerateMobile] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -149,6 +151,46 @@ function CreatePageInner() {
       router.push(`/editor?${params.toString()}`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Upload failed");
+      setStep(1);
+      setIsGenerating(false);
+    }
+  };
+
+  const handleUrlSubmit = async () => {
+    const url = videoUrl.trim();
+    if (!url) return;
+    try {
+      new URL(url);
+    } catch {
+      toast.error("That does not look like a valid URL.");
+      return;
+    }
+    setStep(2);
+    setIsGenerating(true);
+    setProgress(20);
+    try {
+      const res = await fetch("/api/extract-frames", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ videoUrl: url, fps: 24, quality: 80 }),
+      });
+      const raw = await res.text();
+      let data: { error?: string; frames?: string[]; frameCount?: number } = {};
+      try { data = raw ? JSON.parse(raw) : {}; } catch { /* handled below */ }
+      if (!res.ok) throw new Error(data.error || `Extraction failed (${res.status})`);
+      if (!data.frames?.length) throw new Error("Extraction failed — no frames were returned.");
+      setProgress(100);
+      await storeFrames("scrollcraft_desktop_frames", data.frames);
+
+      const params = new URLSearchParams({
+        framesKey: "scrollcraft_desktop_frames",
+        frameCount: String(data.frameCount),
+        fps: "24",
+        name: url.split("/").pop()?.replace(/\.[^.]+$/, "") || "Video import",
+      });
+      router.push(`/editor?${params.toString()}`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Import failed");
       setStep(1);
       setIsGenerating(false);
     }
@@ -374,6 +416,25 @@ function CreatePageInner() {
                 <p className="text-xs">MP4, MOV, WebM — max 500MB</p>
               </button>
               <input ref={fileRef} type="file" accept="video/*" className="hidden" onChange={(e) => e.target.files?.[0] && handleUpload(e.target.files[0])} />
+
+              <div className="flex gap-2">
+                <Input
+                  aria-label="Video URL"
+                  value={videoUrl}
+                  onChange={(e) => setVideoUrl(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleUrlSubmit(); } }}
+                  placeholder="…or paste a public video URL"
+                  className="h-9 bg-white/5 border-white/10 text-sm"
+                />
+                <Button
+                  variant="outline"
+                  onClick={handleUrlSubmit}
+                  disabled={!videoUrl.trim()}
+                  className="border-white/10 h-9 shrink-0"
+                >
+                  Import
+                </Button>
+              </div>
             </div>
 
             <div className="flex gap-3">

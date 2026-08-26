@@ -40,6 +40,7 @@ export type SiteMinAggregateOutputType = {
   id: string | null
   userId: string | null
   name: string | null
+  description: string | null
   fps: number | null
   frameCount: number | null
   framesJson: string | null
@@ -60,6 +61,7 @@ export type SiteMaxAggregateOutputType = {
   id: string | null
   userId: string | null
   name: string | null
+  description: string | null
   fps: number | null
   frameCount: number | null
   framesJson: string | null
@@ -80,6 +82,7 @@ export type SiteCountAggregateOutputType = {
   id: number
   userId: number
   name: number
+  description: number
   fps: number
   frameCount: number
   framesJson: number
@@ -112,6 +115,7 @@ export type SiteMinAggregateInputType = {
   id?: true
   userId?: true
   name?: true
+  description?: true
   fps?: true
   frameCount?: true
   framesJson?: true
@@ -132,6 +136,7 @@ export type SiteMaxAggregateInputType = {
   id?: true
   userId?: true
   name?: true
+  description?: true
   fps?: true
   frameCount?: true
   framesJson?: true
@@ -152,6 +157,7 @@ export type SiteCountAggregateInputType = {
   id?: true
   userId?: true
   name?: true
+  description?: true
   fps?: true
   frameCount?: true
   framesJson?: true
@@ -259,6 +265,7 @@ export type SiteGroupByOutputType = {
   id: string
   userId: string
   name: string
+  description: string | null
   fps: number
   frameCount: number
   framesJson: string | null
@@ -302,6 +309,7 @@ export type SiteWhereInput = {
   id?: Prisma.StringFilter<"Site"> | string
   userId?: Prisma.StringFilter<"Site"> | string
   name?: Prisma.StringFilter<"Site"> | string
+  description?: Prisma.StringNullableFilter<"Site"> | string | null
   fps?: Prisma.IntFilter<"Site"> | number
   frameCount?: Prisma.IntFilter<"Site"> | number
   framesJson?: Prisma.StringNullableFilter<"Site"> | string | null
@@ -324,6 +332,7 @@ export type SiteOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  description?: Prisma.SortOrderInput | Prisma.SortOrder
   fps?: Prisma.SortOrder
   frameCount?: Prisma.SortOrder
   framesJson?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -350,6 +359,7 @@ export type SiteWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.SiteWhereInput | Prisma.SiteWhereInput[]
   userId?: Prisma.StringFilter<"Site"> | string
   name?: Prisma.StringFilter<"Site"> | string
+  description?: Prisma.StringNullableFilter<"Site"> | string | null
   fps?: Prisma.IntFilter<"Site"> | number
   frameCount?: Prisma.IntFilter<"Site"> | number
   framesJson?: Prisma.StringNullableFilter<"Site"> | string | null
@@ -371,6 +381,7 @@ export type SiteOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  description?: Prisma.SortOrderInput | Prisma.SortOrder
   fps?: Prisma.SortOrder
   frameCount?: Prisma.SortOrder
   framesJson?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -399,6 +410,7 @@ export type SiteScalarWhereWithAggregatesInput = {
   id?: Prisma.StringWithAggregatesFilter<"Site"> | string
   userId?: Prisma.StringWithAggregatesFilter<"Site"> | string
   name?: Prisma.StringWithAggregatesFilter<"Site"> | string
+  description?: Prisma.StringNullableWithAggregatesFilter<"Site"> | string | null
   fps?: Prisma.IntWithAggregatesFilter<"Site"> | number
   frameCount?: Prisma.IntWithAggregatesFilter<"Site"> | number
   framesJson?: Prisma.StringNullableWithAggregatesFilter<"Site"> | string | null
@@ -418,6 +430,7 @@ export type SiteScalarWhereWithAggregatesInput = {
 export type SiteCreateInput = {
   id?: string
   name?: string
+  description?: string | null
   fps?: number
   frameCount?: number
   framesJson?: string | null
@@ -440,6 +453,7 @@ export type SiteUncheckedCreateInput = {
   id?: string
   userId: string
   name?: string
+  description?: string | null
   fps?: number
   frameCount?: number
   framesJson?: string | null
@@ -460,6 +474,7 @@ export type SiteUncheckedCreateInput = {
 export type SiteUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fps?: Prisma.IntFieldUpdateOperationsInput | number
   frameCount?: Prisma.IntFieldUpdateOperationsInput | number
   framesJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -482,6 +497,7 @@ export type SiteUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fps?: Prisma.IntFieldUpdateOperationsInput | number
   frameCount?: Prisma.IntFieldUpdateOperationsInput | number
   framesJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -503,6 +519,7 @@ export type SiteCreateManyInput = {
   id?: string
   userId: string
   name?: string
+  description?: string | null
   fps?: number
   frameCount?: number
   framesJson?: string | null
@@ -522,6 +539,7 @@ export type SiteCreateManyInput = {
 export type SiteUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fps?: Prisma.IntFieldUpdateOperationsInput | number
   frameCount?: Prisma.IntFieldUpdateOperationsInput | number
   framesJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -542,6 +560,7 @@ export type SiteUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fps?: Prisma.IntFieldUpdateOperationsInput | number
   frameCount?: Prisma.IntFieldUpdateOperationsInput | number
   framesJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -572,6 +591,7 @@ export type SiteCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  description?: Prisma.SortOrder
   fps?: Prisma.SortOrder
   frameCount?: Prisma.SortOrder
   framesJson?: Prisma.SortOrder
@@ -597,6 +617,7 @@ export type SiteMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  description?: Prisma.SortOrder
   fps?: Prisma.SortOrder
   frameCount?: Prisma.SortOrder
   framesJson?: Prisma.SortOrder
@@ -617,6 +638,7 @@ export type SiteMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  description?: Prisma.SortOrder
   fps?: Prisma.SortOrder
   frameCount?: Prisma.SortOrder
   framesJson?: Prisma.SortOrder
@@ -714,6 +736,7 @@ export type SiteUpdateOneRequiredWithoutExportPurchasesNestedInput = {
 export type SiteCreateWithoutUserInput = {
   id?: string
   name?: string
+  description?: string | null
   fps?: number
   frameCount?: number
   framesJson?: string | null
@@ -734,6 +757,7 @@ export type SiteCreateWithoutUserInput = {
 export type SiteUncheckedCreateWithoutUserInput = {
   id?: string
   name?: string
+  description?: string | null
   fps?: number
   frameCount?: number
   framesJson?: string | null
@@ -784,6 +808,7 @@ export type SiteScalarWhereInput = {
   id?: Prisma.StringFilter<"Site"> | string
   userId?: Prisma.StringFilter<"Site"> | string
   name?: Prisma.StringFilter<"Site"> | string
+  description?: Prisma.StringNullableFilter<"Site"> | string | null
   fps?: Prisma.IntFilter<"Site"> | number
   frameCount?: Prisma.IntFilter<"Site"> | number
   framesJson?: Prisma.StringNullableFilter<"Site"> | string | null
@@ -803,6 +828,7 @@ export type SiteScalarWhereInput = {
 export type SiteCreateWithoutExportPurchasesInput = {
   id?: string
   name?: string
+  description?: string | null
   fps?: number
   frameCount?: number
   framesJson?: string | null
@@ -824,6 +850,7 @@ export type SiteUncheckedCreateWithoutExportPurchasesInput = {
   id?: string
   userId: string
   name?: string
+  description?: string | null
   fps?: number
   frameCount?: number
   framesJson?: string | null
@@ -859,6 +886,7 @@ export type SiteUpdateToOneWithWhereWithoutExportPurchasesInput = {
 export type SiteUpdateWithoutExportPurchasesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fps?: Prisma.IntFieldUpdateOperationsInput | number
   frameCount?: Prisma.IntFieldUpdateOperationsInput | number
   framesJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -880,6 +908,7 @@ export type SiteUncheckedUpdateWithoutExportPurchasesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fps?: Prisma.IntFieldUpdateOperationsInput | number
   frameCount?: Prisma.IntFieldUpdateOperationsInput | number
   framesJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -899,6 +928,7 @@ export type SiteUncheckedUpdateWithoutExportPurchasesInput = {
 export type SiteCreateManyUserInput = {
   id?: string
   name?: string
+  description?: string | null
   fps?: number
   frameCount?: number
   framesJson?: string | null
@@ -918,6 +948,7 @@ export type SiteCreateManyUserInput = {
 export type SiteUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fps?: Prisma.IntFieldUpdateOperationsInput | number
   frameCount?: Prisma.IntFieldUpdateOperationsInput | number
   framesJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -938,6 +969,7 @@ export type SiteUpdateWithoutUserInput = {
 export type SiteUncheckedUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fps?: Prisma.IntFieldUpdateOperationsInput | number
   frameCount?: Prisma.IntFieldUpdateOperationsInput | number
   framesJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -958,6 +990,7 @@ export type SiteUncheckedUpdateWithoutUserInput = {
 export type SiteUncheckedUpdateManyWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   fps?: Prisma.IntFieldUpdateOperationsInput | number
   frameCount?: Prisma.IntFieldUpdateOperationsInput | number
   framesJson?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1009,6 +1042,7 @@ export type SiteSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   id?: boolean
   userId?: boolean
   name?: boolean
+  description?: boolean
   fps?: boolean
   frameCount?: boolean
   framesJson?: boolean
@@ -1032,6 +1066,7 @@ export type SiteSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   id?: boolean
   userId?: boolean
   name?: boolean
+  description?: boolean
   fps?: boolean
   frameCount?: boolean
   framesJson?: boolean
@@ -1053,6 +1088,7 @@ export type SiteSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   id?: boolean
   userId?: boolean
   name?: boolean
+  description?: boolean
   fps?: boolean
   frameCount?: boolean
   framesJson?: boolean
@@ -1074,6 +1110,7 @@ export type SiteSelectScalar = {
   id?: boolean
   userId?: boolean
   name?: boolean
+  description?: boolean
   fps?: boolean
   frameCount?: boolean
   framesJson?: boolean
@@ -1090,7 +1127,7 @@ export type SiteSelectScalar = {
   updatedAt?: boolean
 }
 
-export type SiteOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "name" | "fps" | "frameCount" | "framesJson" | "sectionsJson" | "themeJson" | "styleJson" | "customHead" | "customCss" | "audioUrl" | "published" | "publishSlug" | "publishedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["site"]>
+export type SiteOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "name" | "description" | "fps" | "frameCount" | "framesJson" | "sectionsJson" | "themeJson" | "styleJson" | "customHead" | "customCss" | "audioUrl" | "published" | "publishSlug" | "publishedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["site"]>
 export type SiteInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   exportPurchases?: boolean | Prisma.Site$exportPurchasesArgs<ExtArgs>
@@ -1113,6 +1150,7 @@ export type $SitePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     id: string
     userId: string
     name: string
+    description: string | null
     fps: number
     frameCount: number
     framesJson: string | null
@@ -1555,6 +1593,7 @@ export interface SiteFieldRefs {
   readonly id: Prisma.FieldRef<"Site", 'String'>
   readonly userId: Prisma.FieldRef<"Site", 'String'>
   readonly name: Prisma.FieldRef<"Site", 'String'>
+  readonly description: Prisma.FieldRef<"Site", 'String'>
   readonly fps: Prisma.FieldRef<"Site", 'Int'>
   readonly frameCount: Prisma.FieldRef<"Site", 'Int'>
   readonly framesJson: Prisma.FieldRef<"Site", 'String'>

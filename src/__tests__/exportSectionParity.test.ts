@@ -265,3 +265,36 @@ describe("exported page accessibility and audio", () => {
     expect(html).toContain("ctx.resume()");
   });
 });
+
+describe("exported site description", () => {
+  async function exportWith(body: Record<string, unknown>): Promise<string> {
+    const res = await POST(exportRequest({
+      sections: [{ heading: "A", scrollHeight: 1000 }],
+      siteName: "Orrery", frameCount: 10, fps: 24, ...body,
+    }));
+    expect(res.status).toBe(200);
+    return (await res.json()).html as string;
+  }
+
+  it("uses the supplied description for both description tags", async () => {
+    const html = await exportWith({ siteDescription: "A scroll-driven product tour." });
+    expect(html).toContain('<meta name="description" content="A scroll-driven product tour." />');
+    expect(html).toContain('<meta property="og:description" content="A scroll-driven product tour." />');
+  });
+
+  it("falls back to the site name when no description is set", async () => {
+    const html = await exportWith({});
+    expect(html).toContain('<meta name="description" content="Orrery" />');
+  });
+
+  it("escapes a hostile description", async () => {
+    const html = await exportWith({ siteDescription: '"><script>alert(1)</script>' });
+    expect(html).not.toContain("<script>alert(1)</script>");
+  });
+
+  it("caps an overlong description", async () => {
+    const html = await exportWith({ siteDescription: "x".repeat(500) });
+    const match = html.match(/<meta name="description" content="(x+)"/);
+    expect(match?.[1].length).toBe(300);
+  });
+});

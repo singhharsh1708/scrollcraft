@@ -88,6 +88,7 @@ export async function POST(req: NextRequest) {
     let {
       sections,
       siteName,
+      siteDescription = "",
       customHead = "",
       customCss = "",
       themeJson = "",
@@ -119,6 +120,7 @@ export async function POST(req: NextRequest) {
         where: { id: siteId, userId: session.user.id },
         select: {
           name: true,
+          description: true,
           fps: true,
           sectionsJson: true,
           customHead: true,
@@ -138,6 +140,7 @@ export async function POST(req: NextRequest) {
         );
       }
       siteName = site.name;
+      siteDescription = site.description ?? "";
       customHead = site.customHead ?? "";
       customCss = site.customCss ?? "";
       themeJson = site.themeJson ?? "";
@@ -212,6 +215,13 @@ export async function POST(req: NextRequest) {
     // The editor hides sections with visible === false in both its preview and its own
     // scroll-height total, but POSTs the unfiltered array. Exporting them shipped draft
     // copy verbatim and inflated the scroll track, desynchronizing every frame.
+    // Falls back to the old behaviour (the site name) when no description is set, so an
+    // export never ships an empty description tag.
+    const metaDescription =
+      String(siteDescription ?? "").trim().slice(0, 300) ||
+      siteName ||
+      "A cinematic scroll website";
+
     const visibleSections = onlyVisible(sections as Section[]);
     if (visibleSections.length === 0) {
       return NextResponse.json({ error: "At least one section must be visible to export" }, { status: 400 });
@@ -253,10 +263,10 @@ export async function POST(req: NextRequest) {
   ${themeFontLinks}
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>${esc(siteName || "My ScrollCraft Site")}</title>
-  <meta name="description" content="${esc(siteName || "A cinematic scroll website")}" />
+  <meta name="description" content="${esc(metaDescription)}" />
   <meta property="og:type" content="website" />
   <meta property="og:title" content="${esc(siteName || "My ScrollCraft Site")}" />
-  <meta property="og:description" content="${esc(siteName || "A cinematic scroll website")}" />
+  <meta property="og:description" content="${esc(metaDescription)}" />
   <meta name="twitter:card" content="summary_large_image" />
   <style>
     ${themeVarsCss}

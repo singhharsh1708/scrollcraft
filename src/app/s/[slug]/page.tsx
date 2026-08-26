@@ -15,6 +15,12 @@ export async function generateMetadata(
   if (!site) return { title: "Not found" };
   return {
     title: site.name,
+    ...(site.description
+      ? {
+          description: site.description,
+          openGraph: { title: site.name, description: site.description },
+        }
+      : {}),
     robots: site.badge ? { index: false, follow: false } : undefined,
   };
 }
