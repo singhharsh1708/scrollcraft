@@ -1,0 +1,73 @@
+name: Watchdog
+
+# Diagnostic watchdog. Probes production and (on the slower cadence) the codebase, then opens,
+# updates, or closes GitHub issues under the rules in .github/watchdog/report.mjs. It never
+# opens a duplicate, closes its own issues on recovery, and stops managing any issue whose
+# `watchdog` label a human removes. See docs/WATCHDOG.md.
+
+on:
+  schedule:
+    - cron: "17 */6 * * *"   # production probe, every 6 hours
+    - cron: "17 7 * * *"     # full sweep (code + production), daily
+  push:
+    branches: [main]
+    paths:
+      - "src/**"
+      - "prisma/**"
+      - "package.json"
+      - ".github/watchdog/**"
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Which checks to run"
+        type: choice
+        options: [production, code, all]
+        default: all
+
+concurrency:
+  group: watchdog
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  watchdog:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Decide mode
+        id: mode
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "mode=${{ github.event.inputs.mode }}" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.event.schedule }}" = "17 */6 * * *" ]; then
+            echo "mode=production" >> "$GITHUB_OUTPUT"
+          else
+            echo "mode=all" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        if: steps.mode.outputs.mode != 'production'
+        run: npm ci
+
+      - name: Run checks
+        env:
+          WATCHDOG_BASE_URL: ${{ vars.WATCHDOG_BASE_URL || 'https://scrollcraft-gilt.vercel.app' }}
+          # A placeholder so `next build` in the code checks does not fail env validation;
+          # the build never connects, and production checks probe the real deployment.
+          DATABASE_URL: "postgresql://placeholder:placeholder@localhost:5432/placeholder"
+          AUTH_SECRET: "placeholder-build-only-secret"
+        run: node .github/watchdog/run.mjs "${{ steps.mode.outputs.mode }}" > results.json
+
+      - name: Reconcile issues
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          WATCHDOG_RESULTS: results.json
+        run: node .github/watchdog/report.mjs
