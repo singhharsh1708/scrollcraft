@@ -309,6 +309,7 @@ function CreatePageInner() {
                   <Badge variant="outline" className="border-primary/30 text-primary">{frameCount} frames</Badge>
                 </div>
                 <input
+                  aria-label="Frame count"
                   type="range"
                   min={60} max={200} step={20}
                   value={frameCount}
