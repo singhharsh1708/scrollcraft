@@ -294,14 +294,19 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const hasFFmpeg = await ffmpegAvailable();
-    if (!hasFFmpeg) {
-      // Demo fallback — return placeholder frame URLs
-      const frameCount = fps * 8;
-      const frames = Array.from({ length: frameCount }, (_, i) =>
-        `/api/demo-frame?i=${i}&total=${frameCount}`
+    // Fail loudly rather than substituting placeholders. This used to return 200 with
+    // synthetic /api/demo-frame URLs, so an uploaded video was silently replaced by a
+    // generic gradient — the user reached the editor believing their footage had been
+    // processed, and only discovered otherwise on export.
+    if (!(await ffmpegAvailable())) {
+      logger.error("extract-frames: ffmpeg unavailable, refusing to substitute placeholders");
+      return NextResponse.json(
+        {
+          error: "Video processing is unavailable on this server. Generate a background from a style instead.",
+          code: "FFMPEG_UNAVAILABLE",
+        },
+        { status: 503 }
       );
-      return NextResponse.json({ frames, frameCount, demo: true });
     }
 
     const framesDir = path.join(tmpDir, "frames");

@@ -122,8 +122,21 @@ function CreatePageInner() {
       formData.append("fps", "24");
       formData.append("quality", "80");
       const res = await fetch("/api/extract-frames", { method: "POST", body: formData });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Extraction failed");
+      // A failed upload does not always carry a JSON body: a 413 from the platform or a
+      // 502 from the proxy is an HTML page, and res.json() then threw a SyntaxError that
+      // was shown to the user verbatim in place of the real reason.
+      const raw = await res.text();
+      let data: { error?: string; frames?: string[]; frameCount?: number } = {};
+      try { data = raw ? JSON.parse(raw) : {}; } catch { /* handled below */ }
+      if (!res.ok) {
+        throw new Error(
+          data.error ||
+          (res.status === 413
+            ? "That video is too large — try a shorter or smaller file."
+            : `Extraction failed (${res.status})`)
+        );
+      }
+      if (!data.frames?.length) throw new Error("Extraction failed — no frames were returned.");
       setProgress(100);
       await storeFrames("scrollcraft_desktop_frames", data.frames);
 
@@ -141,6 +154,11 @@ function CreatePageInner() {
     }
   };
 
+  // Always points at the current render's handleGenerate, so the key listener below can
+  // stay bound to step/isGenerating without capturing stale generation options.
+  const generateRef = useRef(handleGenerate);
+  useEffect(() => { generateRef.current = handleGenerate; });
+
   // Enter advances Style → Configure → Generate (ignored while typing in a field)
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -148,11 +166,13 @@ function CreatePageInner() {
       const tag = (e.target as HTMLElement)?.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA") return;
       if (step === 0) { e.preventDefault(); setStep(1); }
-      else if (step === 1) { e.preventDefault(); handleGenerate(); }
+      // Through a ref: the listener is only rebound when step/isGenerating change, so
+      // calling handleGenerate directly ran the closure captured back then — generating
+      // with whatever palette, frame count and mobile toggle were set at that moment.
+      else if (step === 1) { e.preventDefault(); generateRef.current(); }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step, isGenerating]);
 
   const VIDEO_RE = /^video\//;

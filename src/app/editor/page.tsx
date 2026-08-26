@@ -112,6 +112,10 @@ function EditorInner() {
   }, [frameCount]);
   const [showPreview, setShowPreview] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
+  // A ZIP export runs for tens of seconds — a template fetch, a sequential fetch per
+  // frame, then compression — behind a single spinner. Name the current stage so the
+  // wait reads as progress rather than a hang.
+  const [exportStage, setExportStage] = useState<string | null>(null);
   const [isDemo, setIsDemo] = useState(initialIsDemo);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [customHead, setCustomHead] = useState("");
@@ -126,6 +130,11 @@ function EditorInner() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const [viewportMode, setViewportMode] = useState<"desktop" | "tablet" | "mobile">("desktop");
+  // The device simulator sizes its scroll port to the emulated device, but the overlays
+  // inside it were pinned to 100vh — the browser window — so in mobile/tablet every
+  // section was taller than the frame it sat in and the preview drifted out of step with
+  // the published result. Measure the port instead.
+  const [previewViewportH, setPreviewViewportH] = useState(0);
   const [audioSrc, setAudioSrc] = useState<string | null>(null);
   const [siteId, setSiteId] = useState<string | null>(searchParams.get("siteId"));
   // Background recipe and theme travel with the site so the published page and the export
@@ -140,6 +149,16 @@ function EditorInner() {
   );
   const [isSaving, setIsSaving] = useState(false);
   const [audioMuted, setAudioMuted] = useState(false);
+
+  useEffect(() => {
+    const el = previewScrollRef.current;
+    if (!el) return;
+    const measure = () => setPreviewViewportH(el.clientHeight);
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [showPreview, viewportMode]);
 
   // Load desktop frames from IndexedDB (primary store; sessionStorage was too small at 5 MB)
   useEffect(() => {
@@ -478,6 +497,7 @@ function EditorInner() {
         if (checkoutData.alreadyPurchased) {
           toast.info("Purchase confirmed — preparing your download…");
           setIsExporting(false);
+      setExportStage(null);
           return handleExport();
         }
         if (checkoutRes.status === 503) {
@@ -501,6 +521,7 @@ function EditorInner() {
 
       // Build ZIP entirely in the browser — no round-trip for large frame data. Load
       // JSZip on demand so it stays out of the editor's first-load bundle.
+      setExportStage("Building ZIP…");
       toast.info("Building ZIP…");
       const { default: JSZip } = await import("jszip");
       const zip = new JSZip();
@@ -522,6 +543,11 @@ function EditorInner() {
 
       const framesFolder = zip.folder("frames")!;
       for (let i = 0; i < frames.length; i++) {
+        if (i % 10 === 0) {
+          setExportStage(`Packing frames ${i + 1}/${frames.length}…`);
+          // Yield so React can paint the updated label between fetches.
+          await new Promise((r) => setTimeout(r, 0));
+        }
         const src = frames[i];
         const name = `frame_${String(i).padStart(4, "0")}.jpg`;
         if (src.startsWith("data:image/")) {
@@ -535,6 +561,10 @@ function EditorInner() {
       if (mobileFrames.length) {
         const mobileFolder = zip.folder("frames-mobile")!;
         for (let i = 0; i < mobileFrames.length; i++) {
+          if (i % 10 === 0) {
+            setExportStage(`Packing mobile frames ${i + 1}/${mobileFrames.length}…`);
+            await new Promise((r) => setTimeout(r, 0));
+          }
           const src = mobileFrames[i];
           const name = `frame_${String(i).padStart(4, "0")}.jpg`;
           if (src.startsWith("data:image/")) {
@@ -550,7 +580,9 @@ function EditorInner() {
         zip.file(`audio/track.${audioExt}`, audioBase64, { base64: true });
       }
 
-      const blob = await zip.generateAsync({ type: "blob", compression: "STORE" });
+      const blob = await zip.generateAsync({ type: "blob", compression: "STORE" }, (m) => {
+        setExportStage(`Compressing ${Math.round(m.percent)}%…`);
+      });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -562,6 +594,7 @@ function EditorInner() {
       toast.error(String(err));
     } finally {
       setIsExporting(false);
+      setExportStage(null);
     }
   };
 
@@ -773,11 +806,17 @@ function EditorInner() {
             size="sm"
             onClick={handleExport}
             disabled={isExporting}
+            title={exportStage ?? undefined}
             className="bg-primary hover:bg-primary/90 text-white h-7 px-3 text-xs font-semibold"
           >
             {isExporting ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : <Download className="w-3.5 h-3.5 mr-1" />}
             Export
           </Button>
+          {isExporting && exportStage && (
+            <span role="status" aria-live="polite" className="text-xs text-muted-foreground tabular-nums whitespace-nowrap">
+              {exportStage}
+            </span>
+          )}
         </div>
       </div>
 
@@ -862,7 +901,7 @@ function EditorInner() {
                 />
                 {/* Section overlays */}
                 <div className="relative z-10" style={{ height: totalScrollHeight }}>
-                  <div style={{ height: "100vh" }} />
+                  <div style={{ height: previewViewportH || "100vh" }} />
                   {sections.filter(s => s.visible).map((s) => (
                     <div
                       key={s.id}
@@ -884,7 +923,7 @@ function EditorInner() {
                       <div style={{
                         position: "sticky",
                         top: 0,
-                        height: "100vh",
+                        height: previewViewportH || "100vh",
                         display: "flex",
                         alignItems: s.align || "center",
                         justifyContent: s.justify || "center",
