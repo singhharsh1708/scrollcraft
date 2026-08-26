@@ -140,10 +140,6 @@ function main() {
   const style = STYLES[name];
   if (!style) fail(`unknown style "${name}". Run with --list to see the styles.`);
 
-  if (!haveFfmpeg()) {
-    fail("ffmpeg not found on PATH. Install it (macOS: brew install ffmpeg, Debian: apt install ffmpeg) and retry.");
-  }
-
   const outDir = typeof args.out === "string" ? args.out : "frames";
   const count = intArg(args.count, 180, 2, 9999, "--count");
   const width = intArg(args.width, 1920, 320, 3840, "--width");
@@ -161,6 +157,12 @@ function main() {
     const list = args.colors.split(",").map((s) => s.trim()).filter(Boolean);
     if (list.length < 2 || list.length > 8) fail("--colors needs between 2 and 8 comma-separated hex colours");
     colors = list.map(normalizeColor);
+  }
+
+  // Checked after argument validation, so a bad flag is reported the same way whether or not
+  // ffmpeg is installed — otherwise a machine without it (like CI) masks every input error.
+  if (!haveFfmpeg()) {
+    fail("ffmpeg not found on PATH. Install it (macOS: brew install ffmpeg, Debian: apt install ffmpeg) and retry.");
   }
 
   const height = Math.round(width * 9 / 16 / 2) * 2;
