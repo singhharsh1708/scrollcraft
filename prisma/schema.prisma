@@ -172,3 +172,14 @@ enum ExportPurchaseStatus {
   FAILED
   REFUNDED
 }
+
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  topic     String
+  message   String
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}

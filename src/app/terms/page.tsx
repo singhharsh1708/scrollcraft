@@ -32,7 +32,7 @@ export default function TermsPage() {
         <p>These terms are governed by the laws of India. Disputes shall be resolved in courts of competent jurisdiction in India.</p>
 
         <h2>Contact</h2>
-        <p>Questions? Email <a href="mailto:hello@scrollcraft.xyz" className="underline">hello@scrollcraft.xyz</a>.</p>
+        <p>Questions? Email <a href="mailto:hello@scrollcraft.app" className="underline">hello@scrollcraft.app</a>.</p>
       </article>
     </main>
   );

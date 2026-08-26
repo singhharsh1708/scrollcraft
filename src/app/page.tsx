@@ -26,8 +26,8 @@ const PIPELINE = [
   { step: "01", title: "Pick a preset", desc: "Choose from 12+ production-ready templates across SaaS, agency, e-commerce, and more." },
   { step: "02", title: "Pick a template", desc: "Browse ready-made scroll sites by category and open the one closest to what you want." },
   { step: "03", title: "Frames render in your browser", desc: "The template's palette and style are drawn to canvas locally — instant, and nothing leaves your machine." },
-  { step: "04", title: "Image animates to video", desc: "The keyframe comes to life as an 8-second cinematic video with subtle camera movement." },
-  { step: "05", title: "Frames extracted for scroll", desc: "400+ optimized frames are extracted and mapped to your scroll position automatically." },
+  { step: "04", title: "Tune colors & sections", desc: "Adjust the palette, frame count, and section content live in the editor — no rerendering, no waiting." },
+  { step: "05", title: "Scroll engine maps frames", desc: "The rendered frames are mapped to scroll position automatically — 10–40 FPS, no WebGL." },
   { step: "06", title: "Deploy as HTML/CSS/JS", desc: "Download a production-ready ZIP and deploy to Vercel, Netlify, or any static host instantly." },
 ];
 
@@ -62,18 +62,14 @@ const FAQ = [
   { q: "How are the frames generated?", a: "Frames are rendered in your browser on canvas from the style and palette the template carries. Nothing is sent to a server, so it is instant and works offline." },
 ];
 
-export default function Home() {
-  const [openFaq, setOpenFaq] = useState<number | null>(null);
-  // Only the hovered featured card animates.
-  const [hoveredPreset, setHoveredPreset] = useState<string | null>(null);
+function HeroPreview() {
   const isMobileHero = useSyncExternalStore(
     subscribeMobileHero,
     getMobileHeroSnapshot,
     getMobileHeroServerSnapshot
   );
-  // Autoplay: track current frame index for the hero canvas loop
   const [heroFrameIdx, setHeroFrameIdx] = useState(0);
-  // Cycle through demo frames automatically at ~10fps (no user scroll required)
+  // Cycle through demo frames automatically at ~10fps (no user scroll required).
   useEffect(() => {
     if (isMobileHero) return;
     let frame = 0;
@@ -91,6 +87,23 @@ export default function Home() {
     rafId = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(rafId);
   }, [isMobileHero]);
+
+  return (
+    <>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={demoFrames[heroFrameIdx]}
+        alt="ScrollCraft scroll animation preview"
+        className="w-full aspect-video object-cover"
+      />
+    </>
+  );
+}
+
+export default function Home() {
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
+  // Only the hovered featured card animates.
+  const [hoveredPreset, setHoveredPreset] = useState<string | null>(null);
 
   return (
     <main className="min-h-screen bg-background text-foreground overflow-x-hidden">
@@ -158,13 +171,9 @@ export default function Home() {
 
         {/* Hero visual — live scroll demo (desktop only; mobile skips 60 concurrent requests) */}
         <div className="relative mt-16 w-full max-w-5xl mx-auto rounded-2xl overflow-hidden border border-white/10 shadow-2xl shadow-black/60">
-          {/* Autoplay animation — cycles through demo frames at ~10fps */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={demoFrames[heroFrameIdx]}
-            alt="ScrollCraft scroll animation preview"
-            className="w-full aspect-video object-cover"
-          />
+          {/* Autoplay animation — owns its own frame state so the ~10fps loop re-renders
+              only this image, not the whole landing page. */}
+          <HeroPreview />
           {/* Fade-out at bottom */}
           <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent pointer-events-none" style={{ zIndex: 2 }} />
           {/* Label */}
@@ -396,7 +405,7 @@ export default function Home() {
               Ready to build?
             </h2>
             <p className="text-xl text-muted-foreground mb-10">
-              No design skills. No code. Just describe what you see in your head.
+              No design skills. No code. Just pick a template and make it yours.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link href="/create">

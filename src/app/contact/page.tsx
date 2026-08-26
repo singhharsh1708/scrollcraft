@@ -19,9 +19,23 @@ export default function ContactPage() {
     e.preventDefault();
     if (!form.name || !form.email || !form.message) { toast.error("Please fill all fields"); return; }
     setLoading(true);
-    await new Promise(r => setTimeout(r, 1000));
-    setSent(true);
-    setLoading(false);
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        toast.error(data.error || "Couldn't send your message. Please try again.");
+        return;
+      }
+      setSent(true);
+    } catch {
+      toast.error("Couldn't send your message. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
