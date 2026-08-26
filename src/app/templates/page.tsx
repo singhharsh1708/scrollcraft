@@ -8,6 +8,7 @@ import { ArrowRight, Search, Layers, Eye, Lock } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import StylePreview from "@/components/StylePreview";
 import { TEMPLATES, templateCategories, templateScrollHeight, templateSectionCount } from "@/lib/templates";
+import SiteFooter from "@/components/SiteFooter";
 
 export default function TemplatesPage() {
   const [search, setSearch] = useState("");
@@ -166,6 +167,7 @@ export default function TemplatesPage() {
           </div>
         )}
       </section>
+      <SiteFooter compact />
     </main>
   );
 }

@@ -1,6 +1,7 @@
 import { Badge } from "@/components/ui/badge";
-import { Sparkles } from "lucide-react";
+import {  } from "lucide-react";
 import Navbar from "@/components/Navbar";
+import SiteFooter from "@/components/SiteFooter";
 
 const ENTRIES = [
   {
@@ -131,14 +132,7 @@ export default function ChangelogPage() {
         </div>
       </section>
 
-      <footer className="py-8 px-6 border-t border-white/5 text-center text-sm text-muted-foreground">
-        <div className="flex items-center justify-center gap-2">
-          <div className="w-5 h-5 rounded bg-primary/20 flex items-center justify-center">
-            <Sparkles className="w-3 h-3 text-primary" />
-          </div>
-          ScrollCraft — Built with Next.js
-        </div>
-      </footer>
+      <SiteFooter compact />
     </main>
   );
 }

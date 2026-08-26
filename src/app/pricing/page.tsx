@@ -8,6 +8,8 @@ import Navbar from "@/components/Navbar";
 import { PLANS, siteAllowance } from "@/lib/plans";
 import { TEMPLATES } from "@/lib/templates";
 import { PRESETS } from "@/lib/presets";
+import SiteFooter from "@/components/SiteFooter";
+import SponsorCard from "@/components/SponsorCard";
 
 // ScrollCraft is free. The subscription tiers this page used to sell are retired — see
 // the note in lib/plans.ts — so there is no billing toggle, no promo field and no
@@ -186,6 +188,11 @@ export default function PricingPage() {
         </div>
       </section>
 
+      {/* Open source */}
+      <section className="px-6 pb-16 max-w-6xl mx-auto">
+        <SponsorCard />
+      </section>
+
       {/* FAQ */}
       <section className="px-6 pb-24 max-w-3xl mx-auto">
         <h2 className="text-2xl font-black tracking-tighter text-center mb-8">Questions</h2>
@@ -223,15 +230,7 @@ export default function PricingPage() {
         </Link>
       </section>
 
-      {/* Footer */}
-      <footer className="py-8 px-6 border-t border-white/5 text-center text-sm text-muted-foreground">
-        <div className="flex items-center justify-center gap-2">
-          <div className="w-5 h-5 rounded bg-primary/20 flex items-center justify-center">
-            <Sparkles className="w-3 h-3 text-primary" />
-          </div>
-          ScrollCraft — Built with Next.js
-        </div>
-      </footer>
+      <SiteFooter compact />
     </main>
   );
 }

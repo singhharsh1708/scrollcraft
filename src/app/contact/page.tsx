@@ -4,9 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Sparkles, Mail, MessageSquare, Zap, CheckCircle2 } from "lucide-react";
+import { Mail, MessageSquare, Zap, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
+import SiteFooter from "@/components/SiteFooter";
 
 const TOPICS = ["General question", "Bug report", "Feature request", "Enterprise inquiry", "Billing", "Partnership"];
 
@@ -118,14 +119,7 @@ export default function ContactPage() {
         </div>
       </section>
 
-      <footer className="py-8 px-6 border-t border-white/5 text-center text-sm text-muted-foreground">
-        <div className="flex items-center justify-center gap-2">
-          <div className="w-5 h-5 rounded bg-primary/20 flex items-center justify-center">
-            <Sparkles className="w-3 h-3 text-primary" />
-          </div>
-          ScrollCraft — Built with Next.js & AI
-        </div>
-      </footer>
+      <SiteFooter compact />
     </main>
   );
 }

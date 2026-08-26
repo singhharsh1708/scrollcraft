@@ -1,4 +1,5 @@
 import Navbar from "@/components/Navbar";
+import SiteFooter from "@/components/SiteFooter";
 
 export const metadata = { title: "Terms of Service" };
 
@@ -34,6 +35,7 @@ export default function TermsPage() {
         <h2>Contact</h2>
         <p>Questions? Email <a href="mailto:hello@scrollcraft.app" className="underline">hello@scrollcraft.app</a>.</p>
       </article>
+      <SiteFooter compact />
     </main>
   );
 }

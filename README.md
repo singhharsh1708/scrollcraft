@@ -5,7 +5,8 @@
 **Ready-made cinematic scroll websites — no code, pure HTML.**
 
 Pick a template, change the words, and export a production‑ready HTML/CSS/JS ZIP you can
-deploy anywhere. Every template is free on every plan.
+deploy anywhere. The editor, publishing and ZIP export are free, along with 13 of the 21
+templates. The other 8 are bought once, outright.
 
 [Live demo](https://scrollcraft-gilt.vercel.app) · [Report a bug](https://github.com/singhharsh1708/scrollcraft/issues) · [Request a feature](https://github.com/singhharsh1708/scrollcraft/issues)
 
@@ -250,10 +251,10 @@ coding standards, and how to pick up an issue.
 ## Sponsor
 
 ScrollCraft is free and open source, and the hosted version costs real money to run
-(model calls, frame rendering, storage). If it saved you a studio invoice, you can
+(frame rendering, blob storage, a database). If it saved you a studio invoice, you can
 [sponsor the project on GitHub](https://github.com/sponsors/singhharsh1708), one-off or
-monthly. Sponsoring is separate from the paid plans: it funds the open source work, not an
-account upgrade.
+monthly. Sponsoring funds the open source work — it is not a purchase and unlocks
+nothing, which is deliberate.
 
 Not in a position to pay? Starring the repo, filing a good bug report, or shipping a PR
 helps just as much.

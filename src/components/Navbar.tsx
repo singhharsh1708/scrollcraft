@@ -4,7 +4,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Menu, X } from "lucide-react";
+import { Sparkles, Menu, X, Heart } from "lucide-react";
+import GitHubMark from "@/components/GitHubMark";
+import { GITHUB_REPO_URL, GITHUB_SPONSORS_URL } from "@/lib/links";
 
 const NAV_LINKS = [
   { href: "/templates", label: "Templates" },
@@ -49,6 +51,16 @@ export default function Navbar({ position = "sticky" }: { position?: "fixed" | "
 
         {/* Desktop CTAs */}
         <div className="hidden md:flex items-center gap-3">
+          <a
+            href={GITHUB_REPO_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="ScrollCraft on GitHub"
+            title="ScrollCraft on GitHub"
+            className="text-muted-foreground hover:text-foreground transition-colors p-1"
+          >
+            <GitHubMark className="w-[18px] h-[18px]" />
+          </a>
           {session ? (
             <>
               <Link href="/dashboard" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
@@ -99,6 +111,24 @@ export default function Navbar({ position = "sticky" }: { position?: "fixed" | "
               {label}
             </Link>
           ))}
+          <a
+            href={GITHUB_REPO_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-2 text-sm py-1.5 text-muted-foreground"
+          >
+            <GitHubMark className="w-4 h-4" /> GitHub
+          </a>
+          <a
+            href={GITHUB_SPONSORS_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-2 text-sm py-1.5 text-muted-foreground"
+          >
+            <Heart className="w-4 h-4" /> Sponsor
+          </a>
           <div className="border-t border-white/5 pt-3 mt-1 flex flex-col gap-2">
             {session ? (
               <>

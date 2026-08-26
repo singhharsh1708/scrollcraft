@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
+import SiteFooter from "@/components/SiteFooter";
 
 export const metadata = { title: "Cookie Policy" };
 
@@ -51,6 +52,7 @@ export default function CookiesPage() {
         <h2>Contact</h2>
         <p>Questions? Email <a href="mailto:hello@scrollcraft.app" className="underline">hello@scrollcraft.app</a>. See also our <Link href="/privacy" className="underline">Privacy Policy</Link>.</p>
       </article>
+      <SiteFooter compact />
     </main>
   );
 }
