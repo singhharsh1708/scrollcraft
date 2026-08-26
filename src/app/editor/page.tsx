@@ -193,6 +193,7 @@ function EditorInner() {
   // Hydrate a saved site from the DB when opened with ?siteId= and no frames in the URL.
   // This makes saved sites re-editable and lets users return after a Lemon Squeezy
   // export purchase (they land back here via the checkout redirect).
+  const [hydrating, setHydrating] = useState(() => !!searchParams.get("siteId") && !parsedFrames);
   useEffect(() => {
     const sid = searchParams.get("siteId");
     if (!sid || parsedFrames) return; // fresh-from-generation flow already has frames
@@ -200,7 +201,10 @@ function EditorInner() {
     (async () => {
       try {
         const res = await fetch(`/api/sites/${sid}`);
-        if (!res.ok) return;
+        if (!res.ok) {
+          if (!cancelled) toast.error("Couldn't load that site. It may have been deleted.");
+          return;
+        }
         const { site } = await res.json();
         if (cancelled || !site) return;
         // Load frames from IndexedDB (primary). Fall back to DB framesJson for old sites.
@@ -256,7 +260,9 @@ function EditorInner() {
           toast.success("Export unlocked! Click Export to download your ZIP.");
         }
       } catch {
-        /* leave editor in its default state on load failure */
+        if (!cancelled) toast.error("Couldn't load that site. Please try again.");
+      } finally {
+        if (!cancelled) setHydrating(false);
       }
     })();
     return () => { cancelled = true; };
@@ -477,7 +483,10 @@ function EditorInner() {
         return;
       }
 
-      if (!res.ok) throw new Error(await res.text());
+      if (!res.ok) {
+        const msg = await res.json().then((d) => d?.error).catch(() => null);
+        throw new Error(msg || "Export failed. Please try again.");
+      }
       const { html, audioExt } = await res.json();
 
       // Build ZIP entirely in the browser — no round-trip for large frame data.
@@ -578,7 +587,10 @@ function EditorInner() {
         }),
       });
       if (res.status === 401) { toast.error("Sign in to save your site"); return null; }
-      if (!res.ok) throw new Error(await res.text());
+      if (!res.ok) {
+        const msg = await res.json().then((d) => d?.error).catch(() => null);
+        throw new Error(msg || "Export failed. Please try again.");
+      }
       const data = await res.json();
       const savedId = data.site.id as string;
       setSiteId(savedId);
@@ -616,6 +628,9 @@ function EditorInner() {
     const onKey = (e: KeyboardEvent) => {
       const mod = e.metaKey || e.ctrlKey;
       if (!mod) return;
+      const el = e.target as HTMLElement | null;
+      const editing = !!el && (el.isContentEditable || el.tagName === "INPUT" || el.tagName === "TEXTAREA");
+      if (editing) return; // let the browser's own undo/redo run in text fields
       const s = shortcutsRef.current;
       const key = e.key.toLowerCase();
       if (key === "z") {
@@ -646,10 +661,19 @@ function EditorInner() {
 
   return (
     <div className="h-screen flex flex-col bg-background text-foreground overflow-hidden">
+      {hydrating && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center gap-3 bg-background/80 backdrop-blur-sm text-sm text-muted-foreground">
+          <Loader2 className="w-4 h-4 animate-spin" /> Loading your site…
+        </div>
+      )}
       {/* Top bar */}
       <div className="flex items-center justify-between gap-2 flex-wrap px-4 py-2 border-b border-white/5 bg-card/50 flex-shrink-0">
         <div className="flex items-center gap-3">
-          <Link href="/create" className="flex items-center gap-1 text-muted-foreground hover:text-foreground text-sm transition-colors">
+          <Link
+            href="/create"
+            onClick={(e) => { if (dirty && !window.confirm("Discard unsaved changes and leave?")) e.preventDefault(); }}
+            className="flex items-center gap-1 text-muted-foreground hover:text-foreground text-sm transition-colors"
+          >
             <ArrowLeft className="w-3.5 h-3.5" /> Back
           </Link>
           <div className="w-px h-4 bg-white/10" />
@@ -773,7 +797,7 @@ function EditorInner() {
                   <button
                     onClick={(e) => { e.stopPropagation(); removeSection(s.id); }}
                     onBlur={() => setPendingDeleteId(null)}
-                    className={`p-0.5 transition-colors ${pendingDeleteId === s.id ? "text-destructive font-bold" : "hover:text-destructive"}`}
+                    className={`p-0.5 rounded transition-colors ${pendingDeleteId === s.id ? "bg-destructive text-white ring-1 ring-destructive" : "hover:text-destructive"}`}
                     title={pendingDeleteId === s.id ? "Click again to confirm delete" : "Delete section"}
                   >
                     <Trash2 className="w-3 h-3" />
