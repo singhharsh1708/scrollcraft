@@ -1,4 +1,8 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+
+// These suites spawn ffmpeg, next build, and headless Chrome; the 5s default is exceeded
+// under parallel load, causing flaky timeouts. Give them room.
+vi.setConfig({ testTimeout: 60000, hookTimeout: 60000 });
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
