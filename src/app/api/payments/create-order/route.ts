@@ -65,7 +65,8 @@ export async function POST(req: NextRequest) {
       const promo = await db.promoCode.findUnique({
         where: { code: promoCode.toUpperCase() },
       });
-      if (promo && promo.active && (!promo.expiresAt || promo.expiresAt > new Date())) {
+      const usable = promo && promo.active && (!promo.expiresAt || promo.expiresAt > new Date());
+      if (usable) {
         const { maxUses } = promo;
         let withinCap = maxUses === null;
         if (maxUses !== null) {
@@ -86,6 +87,14 @@ export async function POST(req: NextRequest) {
           validPromo = promo.code;
           baseAmount = Math.round(baseAmount * (1 - discountPct / 100));
         }
+      }
+      // A code was entered but could not be applied (unknown, inactive, expired, or fully
+      // used). Say so rather than silently charging full price against a shown discount.
+      if (!validPromo) {
+        return NextResponse.json(
+          { error: "That promo code isn't valid. Remove it or try another.", code: "PROMO_INVALID" },
+          { status: 400 }
+        );
       }
     }
 

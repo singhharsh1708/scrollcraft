@@ -139,18 +139,14 @@ describe("create-order — a promo use is held, not consumed", () => {
     });
   });
 
-  it("counts in-flight orders as held uses so concurrent checkouts cannot all discount", async () => {
+  it("rejects a checkout whose promo is already fully held by in-flight orders", async () => {
     dbMock.promoCode.findUnique.mockResolvedValue(activePromo({ maxUses: 1, uses: 0 }));
     dbMock.payment.count.mockResolvedValue(1); // one checkout already issued
 
     const res = await createOrder(jsonRequest({ plan: "Basic", promoCode: "LAUNCH50" }));
-    const body = await res.json();
-
-    expect(body.discountPct).toBe(0);
-    expect(ordersCreate).toHaveBeenCalledWith(expect.objectContaining({ amount: BASIC_MONTHLY }));
-    expect(dbMock.payment.create).toHaveBeenCalledWith({
-      data: expect.objectContaining({ promoCode: null, discountPct: null }),
-    });
+    expect(res.status).toBe(400);
+    expect((await res.json()).code).toBe("PROMO_INVALID");
+    expect(dbMock.payment.create).not.toHaveBeenCalled();
   });
 
   it("only counts recent PENDING orders as holds, so an abandoned checkout releases its use", async () => {
@@ -167,13 +163,12 @@ describe("create-order — a promo use is held, not consumed", () => {
     expect(Math.abs(cutoff - expected)).toBeLessThan(5_000);
   });
 
-  it("refuses the discount once uses have reached maxUses", async () => {
+  it("rejects the checkout once uses have reached maxUses", async () => {
     dbMock.promoCode.findUnique.mockResolvedValue(activePromo({ maxUses: 5, uses: 5 }));
 
-    const body = await (await createOrder(jsonRequest({ plan: "Basic", promoCode: "LAUNCH50" }))).json();
-
-    expect(body.discountPct).toBe(0);
-    expect(ordersCreate).toHaveBeenCalledWith(expect.objectContaining({ amount: BASIC_MONTHLY }));
+    const res = await createOrder(jsonRequest({ plan: "Basic", promoCode: "LAUNCH50" }));
+    expect(res.status).toBe(400);
+    expect((await res.json()).code).toBe("PROMO_INVALID");
   });
 
   it("allows an unlimited promo regardless of how many orders are in flight", async () => {
@@ -186,31 +181,31 @@ describe("create-order — a promo use is held, not consumed", () => {
     expect(dbMock.payment.count).not.toHaveBeenCalled();
   });
 
-  it("ignores an inactive promo", async () => {
+  it("rejects an inactive promo", async () => {
     dbMock.promoCode.findUnique.mockResolvedValue(activePromo({ active: false }));
 
-    const body = await (await createOrder(jsonRequest({ plan: "Basic", promoCode: "LAUNCH50" }))).json();
-
-    expect(body.discountPct).toBe(0);
+    const res = await createOrder(jsonRequest({ plan: "Basic", promoCode: "LAUNCH50" }));
+    expect(res.status).toBe(400);
+    expect((await res.json()).code).toBe("PROMO_INVALID");
   });
 
-  it("ignores an expired promo", async () => {
+  it("rejects an expired promo", async () => {
     dbMock.promoCode.findUnique.mockResolvedValue(
       activePromo({ expiresAt: new Date(Date.now() - 1_000) })
     );
 
-    const body = await (await createOrder(jsonRequest({ plan: "Basic", promoCode: "LAUNCH50" }))).json();
-
-    expect(body.discountPct).toBe(0);
+    const res = await createOrder(jsonRequest({ plan: "Basic", promoCode: "LAUNCH50" }));
+    expect(res.status).toBe(400);
+    expect((await res.json()).code).toBe("PROMO_INVALID");
   });
 
-  it("ignores an unknown promo code", async () => {
+  it("rejects an unknown promo code", async () => {
     dbMock.promoCode.findUnique.mockResolvedValue(null);
 
-    const body = await (await createOrder(jsonRequest({ plan: "Basic", promoCode: "NOPE" }))).json();
-
-    expect(body.discountPct).toBe(0);
-    expect(ordersCreate).toHaveBeenCalledWith(expect.objectContaining({ amount: BASIC_MONTHLY }));
+    const res = await createOrder(jsonRequest({ plan: "Basic", promoCode: "NOPE" }));
+    expect(res.status).toBe(400);
+    expect((await res.json()).code).toBe("PROMO_INVALID");
+    expect(dbMock.payment.create).not.toHaveBeenCalled();
   });
 
   it("charges twelve months up front for annual billing", async () => {
