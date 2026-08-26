@@ -156,3 +156,36 @@ describe("the ZIP ships what a site needs to go online", () => {
     expect(exportReadme("X", false)).toContain("| `frames/` |");
   });
 });
+
+describe("published sites get the same treatment as exported ones", () => {
+  it("renders the first heading as an h1 and the rest as h2", async () => {
+    // Parity with the exporter: a published page previously had no h1 at all.
+    const src = await import("node:fs").then((fs) =>
+      fs.readFileSync("src/components/SiteRenderer.tsx", "utf8")
+    );
+    expect(src).toContain("const firstHeadingIndex = visible.findIndex((s) => s.heading)");
+    expect(src).toContain('const Heading = i === firstHeadingIndex ? "h1" : "h2"');
+  });
+
+  it("wraps content in a main landmark and offers a skip link", async () => {
+    const src = await import("node:fs").then((fs) =>
+      fs.readFileSync("src/components/SiteRenderer.tsx", "utf8")
+    );
+    expect(src).toContain('<main id="sc-main"');
+    expect(src).toContain('<a className="sc-skip" href="#sc-main">');
+    expect(src).toContain(".sc-skip:focus");
+  });
+
+  it("defines a focus ring, since a published page sets its own palette", async () => {
+    const src = await import("node:fs").then((fs) =>
+      fs.readFileSync("src/components/SiteRenderer.tsx", "utf8")
+    );
+    expect(src).toContain(".sc-site a:focus-visible");
+  });
+
+  it("ships a per-site social card route", async () => {
+    const { size, contentType } = await import("../app/s/[slug]/opengraph-image");
+    expect(size).toEqual({ width: 1200, height: 630 });
+    expect(contentType).toBe("image/png");
+  });
+});

@@ -21,6 +21,12 @@ const REVEAL_CSS = `
 .sc-reveal[data-reveal="stagger"].sc-visible>*:nth-child(3){transition-delay:180ms}
 .sc-reveal[data-reveal="stagger"].sc-visible>*:nth-child(n+4){transition-delay:270ms}
 @media (prefers-reduced-motion:reduce){.sc-reveal,.sc-reveal[data-reveal="stagger"]>*{opacity:1!important;transform:none!important;clip-path:none!important;transition:none!important}}
+/* Off-screen until focused, so a keyboard user can get past the background canvas. */
+.sc-skip{position:absolute;left:-9999px;top:0;z-index:100;padding:.75rem 1.25rem;background:var(--sc-ink,#fff);color:var(--sc-ground,#000);border-radius:0 0 .5rem 0;font-weight:600;text-decoration:none}
+.sc-skip:focus{left:0}
+#sc-main:focus{outline:none}
+/* A published page sets its own palette, so the browser default ring can disappear. */
+.sc-site a:focus-visible,.sc-site button:focus-visible{outline:3px solid var(--sc-accent-text,#ede9fe);outline-offset:3px;border-radius:2px}
 `;
 
 function ctaHrefOk(href: string | undefined): string {
@@ -85,6 +91,7 @@ export default function SiteRenderer({
 
   const compiled = compileTheme(theme);
   const visible = sections.filter((s) => s.visible !== false);
+  const firstHeadingIndex = visible.findIndex((s) => s.heading);
   const totalScrollHeight =
     visible.reduce((acc, s) => acc + (s.scrollHeight ?? 1000), 0) + INTRO_BUFFER;
 
@@ -138,7 +145,7 @@ export default function SiteRenderer({
 
   return (
     <div
-      className="relative"
+      className="sc-site relative"
       style={{
         background: compiled.vars["--sc-ground"] ?? "#000",
         overflowX: "clip",
@@ -157,6 +164,7 @@ export default function SiteRenderer({
         </>
       )}
       <style dangerouslySetInnerHTML={{ __html: REVEAL_CSS }} />
+      <a className="sc-skip" href="#sc-main">Skip to content</a>
       {customCss ? <style dangerouslySetInnerHTML={{ __html: customCss }} /> : null}
 
       {!ready && (
@@ -203,9 +211,13 @@ export default function SiteRenderer({
 
       {children}
 
-      <div ref={stageRef} className="relative z-10 pointer-events-none" style={{ height: totalScrollHeight }}>
+      <main id="sc-main" tabIndex={-1} ref={stageRef} className="relative z-10 pointer-events-none" style={{ height: totalScrollHeight }}>
         <div style={{ height: "100vh" }} />
         {visible.map((s, i) => {
+          // The first section with a heading is the page's heading. Every section
+          // rendered an h2, so a published site had no h1 and its outline began at
+          // level two — the same defect the exporter had.
+          const Heading = i === firstHeadingIndex ? "h1" : "h2";
           const L = layoutStyle(s.layout);
           const align = (s.textAlign ?? L.textAlign) as "left" | "center" | "right";
           const stack = align === "center" ? "0 auto 1.5rem" : "0 0 1.5rem";
@@ -257,7 +269,7 @@ export default function SiteRenderer({
                     }}>{s.eyebrow}</p>
                   )}
                   {s.heading && (
-                    <h2 style={{
+                    <Heading style={{
                       fontFamily: "var(--sc-font-display, var(--sc-font-body, inherit))",
                       fontSize: s.kind === "statement"
                         ? "clamp(2.75rem,11vw,9rem)"
@@ -268,7 +280,7 @@ export default function SiteRenderer({
                       textTransform: "var(--sc-display-case, none)" as "none" | "uppercase",
                       color: s.headingColor ?? "var(--sc-ink, #fff)",
                       marginBottom: "1rem",
-                    }}>{s.heading}</h2>
+                    }}>{s.heading}</Heading>
                   )}
                   {s.body && (
                     <p style={{
@@ -292,7 +304,7 @@ export default function SiteRenderer({
             </section>
           );
         })}
-      </div>
+      </main>
 
       {badge && (
         <Link
