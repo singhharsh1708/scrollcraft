@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 
-export const metadata = { title: "Privacy Policy — ScrollCraft" };
+export const metadata = { title: "Privacy Policy" };
 
 export default function PrivacyPage() {
   return (

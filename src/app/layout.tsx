@@ -5,26 +5,25 @@ import { Toaster } from "@/components/ui/sonner";
 import SessionProvider from "@/components/SessionProvider";
 import SmoothScroll from "@/components/SmoothScroll";
 import { Analytics } from "@vercel/analytics/next";
+import { siteUrl } from "@/lib/env";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
-const BASE_URL = "https://scrollcraft.app";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(BASE_URL),
+  metadataBase: new URL(siteUrl),
   title: {
-    default: "ScrollCraft — AI Scroll Sites",
+    default: "ScrollCraft — Cinematic Scroll Sites",
     template: "%s | ScrollCraft",
   },
   description: "Build immersive 2D scroll websites with animated canvas backgrounds. Pick a style, customise sections, export as pure HTML. No code needed.",
-  keywords: ["scroll website builder", "animated canvas", "scrollytelling", "no-code", "AI website", "scroll animation"],
+  keywords: ["scroll website builder", "animated canvas", "scrollytelling", "no-code", "scroll animation"],
   authors: [{ name: "ScrollCraft" }],
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: BASE_URL,
     siteName: "ScrollCraft",
-    title: "ScrollCraft — AI Scroll Sites",
+    title: "ScrollCraft — Cinematic Scroll Sites",
     description: "Build immersive 2D scroll websites with animated canvas backgrounds. No code needed.",
     // No images key: src/app/opengraph-image.tsx generates the real 1200x630 card and
     // Next wires it up automatically. The hardcoded /og-image.png overrode that with a
@@ -32,7 +31,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "ScrollCraft — AI Scroll Sites",
+    title: "ScrollCraft — Cinematic Scroll Sites",
     description: "Build immersive 2D scroll websites with animated canvas backgrounds. No code needed.",
   },
   robots: { index: true, follow: true },
