@@ -5,7 +5,7 @@ import { TEMPLATES } from "@/lib/templates";
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
 
-  // /create, /editor and /dashboard are intentionally absent: they require a session and
+  // /create and /editor are intentionally absent: they are the tool itself and
   // are disallowed in robots.ts. Listing /create here as well produced "Indexed, though
   // blocked by robots.txt" in Search Console.
   return [
@@ -18,7 +18,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.7,
     })),
     { url: `${siteUrl}/presets`, lastModified: now, changeFrequency: "weekly",  priority: 0.6 },
-    { url: `${siteUrl}/pricing`, lastModified: now, changeFrequency: "monthly", priority: 0.8 },
     { url: `${siteUrl}/about`,   lastModified: now, changeFrequency: "monthly", priority: 0.5 },
     { url: `${siteUrl}/contact`, lastModified: now, changeFrequency: "monthly", priority: 0.4 },
     { url: `${siteUrl}/privacy`, lastModified: now, changeFrequency: "yearly",  priority: 0.3 },

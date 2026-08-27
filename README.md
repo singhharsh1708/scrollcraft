@@ -25,25 +25,22 @@ ScrollCraft removes all of that. You:
 1. **Pick a template** — a finished scroll site with its own palette, typography, pacing and copy. Or upload your own video.
 2. **Get frames** — the engine renders a sequence of canvas frames mapped to scroll position, in your browser.
 3. **Edit visually** — change sections, copy, CTAs, audio and custom CSS.
-4. **Publish** — one click gives the site a hosted link at `/s/your-site` you can send to anyone. No hosting account, no build step.
-5. **Or export** — download a self‑contained ZIP (`index.html`, frames, audio). No runtime dependencies, deploys to any static host in under a minute.
+4. **Export** — download a self‑contained ZIP and put it anywhere. It carries its own 404 page, favicon, social card, `robots.txt`, and config for Netlify, Vercel, GitHub Pages and Cloudflare, so deploying is dragging a folder.
 
 ## Features
 
 - 🎨 **Generated scroll frames** — pick a style (gradient, geometric, particles, wave) and a palette; the frame sequence is rendered in-browser on canvas, no API key required.
 - 🎬 **Scroll‑linked animation engine** — smooth canvas scrubbing, desktop + mobile frame sets.
-- 🧩 **Template library** — 21 finished scroll sites across 11 categories, free on every plan, each with its own Google Fonts pairing and palette.
-- 🌐 **One‑click publish** — every site gets a hosted link at `/s/your-site`; the background is regenerated in the visitor's browser, so a published site costs a database row, not megabytes.
-- 📦 **Pure HTML export** — zero dependencies, zero lock‑in, deploy anywhere.
-- 🎞️ **Bring your own video** — upload an MP4 or paste a URL; frames are extracted automatically.
+- 🧩 **Template library** — 21 finished scroll sites across 11 categories, all free, each with its own Google Fonts pairing and palette.
+- 📦 **Pure HTML export** — zero dependencies, zero lock‑in, deploy anywhere. The ZIP ships a 404 page, favicon, social card, `robots.txt` and host configs, and scores 100 across Lighthouse.
+- 🎞️ **Bring your own video** — frames are extracted in your browser; the file never leaves your device.
 - 🔊 **Scroll‑synced audio** — attach a soundtrack that responds to scroll position.
-- 💳 **Payments** — Razorpay subscriptions (INR) + Lemon Squeezy one‑time purchases (global). Paid plans change how many websites you keep saved, not which templates you can use.
-- 🔒 **Production‑grade** — rate limiting, structured logging, security headers, Sentry, Zod‑validated APIs.
+- 🔓 **No account, no database, no payment** — clone it and run it. Nothing to sign up for, nothing to configure, nothing to pay.
 
 ## Two ways to use ScrollCraft
 
-**Hosted app** — pick a template, edit it visually, then publish to a link or export a ZIP.
-An account, a dashboard, and saved sites. See [Getting started](#getting-started) to run it.
+**Hosted app** — pick a template, edit it visually, export a ZIP. No sign-in.
+See [Getting started](#getting-started) to run it yourself.
 
 **Claude Code skill** — build the same kind of site on your machine, in version control, with
 generated backgrounds or your own footage. No account, no server, no payment.
@@ -126,74 +123,60 @@ halves rely on are written down in
 |-------|------------|
 | Framework | [Next.js 16](https://nextjs.org) (App Router) · React · TypeScript |
 | Styling | Tailwind CSS v4 · [shadcn/ui](https://ui.shadcn.com) |
-| Auth | [Auth.js (NextAuth v5)](https://authjs.dev) — GitHub & Google, database sessions |
-| Database | PostgreSQL · [Prisma 7](https://www.prisma.io) (`@prisma/adapter-pg`) |
-| Payments | [Razorpay](https://razorpay.com) (subscriptions) · [Lemon Squeezy](https://lemonsqueezy.com) (one‑time) |
-| Rate limiting | [Upstash Redis](https://upstash.com) with in‑memory fallback |
-| Storage | [Vercel Blob](https://vercel.com/storage/blob) |
-| Monitoring | [Sentry](https://sentry.io) |
+| Rendering | HTML5 Canvas — no WebGL, no animation library |
+| Rate limiting | [Upstash Redis](https://upstash.com), optional, with in-memory fallback |
+| Monitoring | [Sentry](https://sentry.io), optional |
 | Testing | [Vitest](https://vitest.dev) |
-| Hosting | [Vercel](https://vercel.com) |
+
+There is no database, no authentication and no payment provider. There is nothing
+to sign up for and nothing to configure.
 
 ## Getting started
 
 ### Prerequisites
 
-- Node.js 20+
-- A PostgreSQL database (local or hosted — e.g. [Neon](https://neon.tech), [Supabase](https://supabase.com))
-
-### Setup
+Node.js 20 or newer. That is the whole list.
 
 ```bash
-# 1. Clone and install
 git clone https://github.com/singhharsh1708/scrollcraft.git
 cd scrollcraft
 npm install
-
-# 2. Configure environment
-cp .env.example .env
-# → fill in DATABASE_URL, AUTH_SECRET, and any providers you want
-
-# 3. Apply the database schema
-npx prisma migrate deploy
-npm run seed          # optional — seeds promo codes
-
-# 4. Run the dev server
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Open [http://localhost:3000](http://localhost:3000). No `.env`, no database, no keys.
 
 ## Environment variables
 
-See [`.env.example`](.env.example) for the full list. The essentials:
+Every variable is optional — see [`.env.example`](.env.example).
 
-| Variable | Required | Purpose |
-|----------|----------|---------|
-| `DATABASE_URL` | ✅ | PostgreSQL connection string |
-| `AUTH_SECRET` | ✅ (prod) | Session encryption secret (`NEXTAUTH_SECRET` is accepted as a v4 alias) |
-| `AUTH_URL` | ✅ (prod) | Canonical app URL (`NEXTAUTH_URL` is accepted as a v4 alias) |
-| `AUTH_GITHUB_ID` / `AUTH_GITHUB_SECRET` | – | GitHub OAuth |
-| `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET` | – | Google OAuth |
-| `RAZORPAY_*` | – | Subscription payments |
-| `LEMONSQUEEZY_*` | – | One‑time export purchases |
-| `UPSTASH_REDIS_REST_*` | – | Distributed rate limiting |
-| `BLOB_READ_WRITE_TOKEN` | – | Asset storage |
-| `NEXT_PUBLIC_SENTRY_DSN` | – | Error monitoring |
+| Variable | Purpose |
+|----------|---------|
+| `SITE_URL` | Public origin for `robots.txt`, the sitemap and canonical URLs |
+| `UPSTASH_REDIS_REST_*` | Shared rate limiting across instances; falls back to in-memory |
+| `NEXT_PUBLIC_SENTRY_DSN` | Error reporting; leave empty to disable |
+| `SENTRY_*` | Source map upload for readable stack traces |
+
+## Where your work lives
+
+Nowhere but your own browser, and then in the ZIP you download.
+
+Sites are held in IndexedDB on your device while you edit. Nothing is uploaded, no
+account exists to attach it to, and closing the tab does not send anything anywhere.
+The trade-off is deliberate and worth stating plainly: **clear your browser data and
+unexported work is gone.** Export early.
 
 ## Available scripts
 
 | Script | Description |
 |--------|-------------|
 | `npm run dev` | Start the dev server |
-| `npm run build` | Generate Prisma client + production build |
+| `npm run build` | Production build |
 | `npm start` | Run the production build |
 | `npm run lint` | Lint with ESLint |
 | `npm test` | Run the Vitest suite |
 | `npm run test:watch` | Vitest in watch mode |
 | `npm run test:coverage` | Tests with coverage report |
-| `npm run deploy` | Apply pending Prisma migrations (`prisma migrate deploy`) |
-| `npm run seed` | Seed the database (promo codes) |
 
 ## Project structure
 
@@ -202,46 +185,23 @@ src/
 ├── app/
 │   ├── api/              # Route handlers (sites, payments, webhooks, export, …)
 │   ├── templates/        # Template gallery + preview (/templates, /templates/[slug])
-│   ├── s/                # Public published pages (/s/[slug])
 │   ├── editor/           # The visual scroll-site editor
-│   ├── create/           # Style + upload → editor flow
-│   ├── dashboard/        # User dashboard: publish, edit, delete
-│   └── pricing/          # Plans
+│   └── create/           # Style + upload → editor flow
 ├── components/           # UI + scroll engine (ScrollEngine, ScrollSection)
-├── lib/                  # db, auth env, rate limiting, logger, payments clients
-├── generated/prisma/     # Generated Prisma client
-└── proxy.ts              # Edge route guard (Next 16 renamed middleware → proxy)
-prisma/
-├── schema.prisma         # Data model
-├── migrations/           # SQL migrations
-└── seed.ts               # Seed script
+├── lib/                  # templates, canvas frame generation, export assets, rate limiting
+└── proxy.ts              # Edge headers (Next 16 renamed middleware → proxy)
 ```
 
 ## Deploying
 
-The app deploys to Vercel. Migrations run **separately** from the Vercel build, which has no
-database access:
+There is no database and no migration step, so a deploy is a build.
 
-- A GitHub Action (`.github/workflows/migrate.yml`) runs `prisma migrate deploy` on every push
-  to `main` that touches `prisma/migrations/`. It needs a `DATABASE_URL` repository secret
-  pointing at the production database; without it the job no-ops rather than failing.
-- Or run it by hand against production: `DATABASE_URL=... npm run deploy`.
+```sh
+npx vercel deploy --prod
+```
 
-Apply new migrations before the code that depends on them serves traffic, or routes reading a
-new column will error.
-
-## Plans and payments
-
-Every template is free on every plan, including the free one. Paid plans raise how many
-websites you keep **saved and published** (1 / 2 / 4 / 7 / 30), remove the "Made with
-ScrollCraft" badge from published pages, and add priority support. The publish allowance is
-enforced per plan in `POST /api/sites/[id]/publish`.
-
-- **Subscriptions (Razorpay, INR):** webhooks verify HMAC signatures and update the user's
-  plan idempotently.
-- **One‑time purchases (Lemon Squeezy, global):** the checkout carries `site_id`/`user_id` as
-  custom data; the webhook records a `PAID` `ExportPurchase` idempotently, keyed on the LS
-  order id.
+It also runs anywhere that runs Next.js, and the sites it produces are static files
+that run anywhere at all.
 
 ## Contributing
 
@@ -250,8 +210,8 @@ coding standards, and how to pick up an issue.
 
 ## Sponsor
 
-ScrollCraft is free and open source, and the hosted version costs real money to run
-(frame rendering, blob storage, a database). If it saved you a studio invoice, you can
+ScrollCraft is free and open source, and the hosted version still costs something to
+run. If it saved you a studio invoice, you can
 [sponsor the project on GitHub](https://github.com/sponsors/singhharsh1708), one-off or
 monthly. Sponsoring funds the open source work — it is not a purchase and unlocks
 nothing, which is deliberate.

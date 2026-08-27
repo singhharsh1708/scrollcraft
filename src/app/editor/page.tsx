@@ -1,8 +1,7 @@
 "use client";
 import { useState, useEffect, useRef, useCallback, Suspense } from "react";
-import { loadFrames, storeFrames } from "@/lib/frameStorage";
+import { loadFrames, storeFrames, storeDocument, loadDocument } from "@/lib/frameStorage";
 import { useSearchParams } from "next/navigation";
-import RequireAuth from "@/components/RequireAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -151,7 +150,6 @@ function EditorInner() {
   // the published result. Measure the port instead.
   const [previewViewportH, setPreviewViewportH] = useState(0);
   const [audioSrc, setAudioSrc] = useState<string | null>(null);
-  const [siteId, setSiteId] = useState<string | null>(searchParams.get("siteId"));
   // Background recipe and theme travel with the site so the published page and the export
   // can recompile them; frames themselves never reach the server.
   const [styleSpec, setStyleSpec] = useState<SiteStyle | null>(() => {
@@ -189,44 +187,12 @@ function EditorInner() {
   }, []);
   const audioFileRef = useRef<HTMLInputElement>(null);
 
-  // A premium template ships only its opening section to the browser; the rest is served
-  // by the entitlement-checked route. Without this the editor would silently open a
-  // one-section stub of a template the user has paid for.
-  const premiumFetched = useRef(false);
-  useEffect(() => {
-    if (!pickedTemplate?.premium || premiumFetched.current) return;
-    if (searchParams.get("siteId")) return; // an existing site already carries its content
-    premiumFetched.current = true;
-    let cancelled = false;
-    (async () => {
-      try {
-        const res = await fetch(`/api/templates/${pickedTemplate.slug}`);
-        if (res.status === 402 || res.status === 401) {
-          if (!cancelled) {
-            toast.error("Unlock this template to edit it.");
-            window.location.assign(`/templates/${pickedTemplate.slug}`);
-          }
-          return;
-        }
-        if (!res.ok) throw new Error(String(res.status));
-        const data = await res.json();
-        if (cancelled || !Array.isArray(data.sections) || !data.sections.length) return;
-        const mapped = toEditorSections(pickedTemplate, data.sections);
-        setSections(mapped);
-        setSelectedSection(mapped[0].id);
-      } catch {
-        if (!cancelled) toast.error("Couldn't load this template. Please try again.");
-      }
-    })();
-    return () => { cancelled = true; };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   // "Use this template" arrives with sections but no frames; render the template's own
   // background instead of leaving the demo one underneath it.
   const templateGenStarted = useRef(false);
   useEffect(() => {
-    if (!pickedTemplate || parsedFrames || framesKey || searchParams.get("siteId")) return;
+    if (!pickedTemplate || parsedFrames || framesKey) return;
     if (templateGenStarted.current) return;
     templateGenStarted.current = true;
     const isMobileViewport = window.innerWidth < 768;
@@ -256,84 +222,72 @@ function EditorInner() {
   });
 
 
-  // Hydrate a saved site from the DB when opened with ?siteId= and no frames in the URL.
-  // This makes saved sites re-editable and lets users return after a Lemon Squeezy
-  // export purchase (they land back here via the checkout redirect).
-  const [hydrating, setHydrating] = useState(() => !!searchParams.get("siteId") && !parsedFrames);
+  /**
+   * Restore the document this browser last saved.
+   *
+   * Only when the editor is opened cold — a template or a fresh generation in the URL
+   * means the visitor asked for something specific and must not have it overwritten by
+   * an older save.
+   */
+  const openedCold =
+    !searchParams.get("template") && !searchParams.get("framesKey") && !parsedFrames && !searchParams.get("style");
+  const [hydrating, setHydrating] = useState(() => openedCold);
   useEffect(() => {
-    const sid = searchParams.get("siteId");
-    if (!sid || parsedFrames) return; // fresh-from-generation flow already has frames
+    // openedCold is derived from the URL, which does not change for the life of this
+    // component, so the initial state above is already correct when it is false.
+    if (!openedCold) return;
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch(`/api/sites/${sid}`);
-        if (!res.ok) {
-          if (!cancelled) toast.error("Couldn't load that site. It may have been deleted.");
-          return;
+        const doc = await loadDocument().catch(() => null);
+        if (cancelled || !doc) return;
+
+        if (Array.isArray(doc.sections) && doc.sections.length) {
+          const restored = doc.sections as Section[];
+          setSections(restored);
+          setSelectedSection(restored[0].id);
         }
-        const { site } = await res.json();
-        if (cancelled || !site) return;
-        // A persisted site is never a demo, even if its frames can't be resolved on this
-        // device — the demo lock is only for browser-generated placeholder frames, and
-        // leaving it on here made a real site refuse to Save or Export.
-        setIsDemo(false);
-        // Load frames from IndexedDB (primary). Fall back to DB framesJson for old sites.
-        // Guard the read: an IndexedDB rejection must not throw past the rest of the
-        // hydration, which would discard the sections, name, and theme already fetched.
-        const storedFrames = await loadFrames(`scrollcraft_frames_${sid}`).catch(() => null);
-        const storedMobile = await loadFrames(`scrollcraft_mframes_${sid}`).catch(() => null);
-        let framesResolved = false;
-        if (storedFrames && storedFrames.length) {
-          setFrames(storedFrames); setFrameCount(storedFrames.length); setIsDemo(false);
-          if (storedMobile && storedMobile.length) setMobileFrames(storedMobile);
-          framesResolved = true;
-        } else if (site.framesJson) {
-          const f = JSON.parse(site.framesJson);
-          if (Array.isArray(f) && f.length) { setFrames(f); setFrameCount(f.length); setIsDemo(false); framesResolved = true; }
-        }
-        // Opened on a second device: the IndexedDB frames live in the other browser, but a
-        // stored style recipe lets us regenerate the background instead of leaving the demo.
-        if (!framesResolved && site.styleJson) {
-          const recipe = siteStyleSchema.safeParse(JSON.parse(site.styleJson));
-          if (recipe.success) {
-            const mob = window.innerWidth < 768;
-            const regen = await generate2DFrames({
-              style: recipe.data.style,
-              color1: recipe.data.colors[0], color2: recipe.data.colors[1], color3: recipe.data.colors[2],
-              frameCount: mob ? 60 : 90, width: mob ? 640 : 1280, height: mob ? 360 : 720,
-            }, () => {}).catch(() => null);
-            if (!cancelled && regen && regen.length) {
-              setFrames(regen); setFrameCount(regen.length); setIsDemo(false);
-              storeFrames(`scrollcraft_frames_${sid}`, regen).catch(() => {});
-            }
-          }
-        }
-        if (site.sectionsJson) {
-          const s = JSON.parse(site.sectionsJson);
-          if (Array.isArray(s) && s.length) {
-            setSections(s);
-            setSelectedSection(s[0].id);
-          }
-        }
-        if (typeof site.fps === "number") setFps(site.fps);
-        if (site.name) setSiteName(site.name);
-        if (site.description) setSiteDescription(site.description);
-        if (site.customHead) setCustomHead(site.customHead);
-        if (site.themeJson) {
-          const parsedTheme = themeSchema.safeParse(JSON.parse(site.themeJson));
+        if (doc.name) setSiteName(doc.name);
+        if (doc.description) setSiteDescription(doc.description);
+        if (typeof doc.fps === "number") setFps(doc.fps);
+        if (doc.customHead) setCustomHead(doc.customHead);
+        if (doc.customCss) setCustomCss(doc.customCss);
+        if (doc.themeJson) {
+          const parsedTheme = themeSchema.safeParse(JSON.parse(doc.themeJson));
           if (parsedTheme.success) setSiteTheme(parsedTheme.data);
         }
-        if (site.styleJson) {
-          const parsedStyle = siteStyleSchema.safeParse(JSON.parse(site.styleJson));
-          if (parsedStyle.success) setStyleSpec(parsedStyle.data);
+
+        let recipe: SiteStyle | null = null;
+        if (doc.styleJson) {
+          const parsedStyle = siteStyleSchema.safeParse(JSON.parse(doc.styleJson));
+          if (parsedStyle.success) { setStyleSpec(parsedStyle.data); recipe = parsedStyle.data; }
         }
-        if (site.customCss) setCustomCss(site.customCss);
-        if (site.audioUrl) setAudioSrc(site.audioUrl);
-        if (searchParams.get("purchased") === "1") {
-          toast.success("Export unlocked! Click Export to download your ZIP.");
+
+        // Frames first; if storage dropped them, the recipe can redraw the background.
+        const storedFrames = doc.framesKey ? await loadFrames(doc.framesKey).catch(() => null) : null;
+        const storedMobile = await loadFrames("scrollcraft_saved_mframes").catch(() => null);
+        if (cancelled) return;
+        if (storedFrames?.length) {
+          setFrames(storedFrames);
+          setFrameCount(storedFrames.length);
+          setIsDemo(false);
+          if (storedMobile?.length) setMobileFrames(storedMobile);
+        } else if (recipe) {
+          const mob = window.innerWidth < 768;
+          const regen = await generate2DFrames({
+            style: recipe.style,
+            color1: recipe.colors[0], color2: recipe.colors[1], color3: recipe.colors[2],
+            frameCount: mob ? 60 : 90, width: mob ? 640 : 1280, height: mob ? 360 : 720,
+          }, () => {}).catch(() => null);
+          if (!cancelled && regen?.length) {
+            setFrames(regen);
+            setFrameCount(regen.length);
+            setIsDemo(false);
+          }
         }
+        if (!cancelled) toast.info("Restored what you were working on");
       } catch {
-        if (!cancelled) toast.error("Couldn't load that site. Please try again.");
+        // A restore failure is not fatal: the editor simply opens empty.
       } finally {
         if (!cancelled) setHydrating(false);
       }
@@ -344,8 +298,8 @@ function EditorInner() {
 
   // Show demo toast once on mount — but not when reopening a saved site (it hydrates async)
   useEffect(() => {
-    if (initialIsDemo && !searchParams.get("siteId")) {
-      toast.info("Running in demo mode — add your API key for real AI video generation");
+    if (initialIsDemo) {
+      toast.info("Showing a placeholder background — pick a template or a style to replace it");
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -476,18 +430,10 @@ function EditorInner() {
     }
     setIsExporting(true);
     try {
-      // The export is rebuilt server-side from the saved site's stored content, so save
-      // first or unsaved edits are silently dropped from the ZIP. A failed save is not
-      // fatal: fall back to the last known site id and warn.
-      const savedSiteId = await handleSave({ silent: true });
-      const effectiveSiteId = savedSiteId ?? siteId;
-      if (!effectiveSiteId) {
-        toast.error("Couldn't save your site — sign in and try again.");
-        return;
-      }
-      if (!savedSiteId) {
-        toast.warning("Couldn't save your latest edits — exporting the last saved version.");
-      }
+      // The export is built from what is on screen, so there is nothing to sync first.
+      // Still save, so closing the tab after exporting does not lose the work — but a
+      // failed save must not block the download.
+      await handleSave({ silent: true });
 
       // Resolve audio for the ZIP. Only data: URIs used to qualify, so a track stored
       // as a remote URL — which is the only form that survives a save, since a
@@ -533,7 +479,6 @@ function EditorInner() {
           fps,
           customHead,
           customCss,
-          siteId: effectiveSiteId,
           // With a background recipe the exported page draws its own frames, so the ZIP
           // ships none — tens of megabytes of JPEGs become a few hundred bytes of JSON.
           styleJson: exportProcedurally ? JSON.stringify(styleSpec) : undefined,
@@ -657,66 +602,50 @@ function EditorInner() {
     }
   };
 
+  /**
+   * Keep the current document in this browser.
+   *
+   * There is no account and no server, so this is the whole persistence story: the
+   * document goes to IndexedDB and is restored the next time the editor opens. Frames
+   * are stored under their own key because they are far too large to sit alongside it.
+   */
   const handleSave = async (opts?: { silent?: boolean }): Promise<string | null> => {
     if (isDemo) {
-      if (!opts?.silent) toast.error("Can't save demo — generate real frames first");
+      if (!opts?.silent) toast.error("Nothing to save yet - pick a template or generate a background first");
       return null;
     }
     setIsSaving(true);
     const genAtSave = editGenRef.current;
+    const framesKeyForDoc = "scrollcraft_saved_frames";
     try {
-      // Frames are NOT sent to the server (would exceed Vercel's 4.5 MB limit).
-      // They are stored in sessionStorage keyed by site ID after a successful save.
-      const res = await fetch("/api/sites", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id: siteId ?? undefined,
-          name: siteName,
-          description: siteDescription || undefined,
-          fps,
-          frameCount,
-          sectionsJson: JSON.stringify(sections),
-          themeJson: siteTheme ? JSON.stringify(siteTheme) : undefined,
-          styleJson: styleSpec ? JSON.stringify(styleSpec) : undefined,
-          // Frame data never fits the request cap, but the video path's frames are blob
-          // URLs, which do — and they are what lets that site publish.
-          framesJson: frames.length && frames.every((f) => /^https?:\/\//i.test(f))
-            ? JSON.stringify(frames)
-            : undefined,
-          customHead,
-          customCss,
-          // Uploaded audio is a multi-MB data: URI held on the client only — the API
-          // stores a URL and rejects anything longer than 2000 chars, so sending it
-          // would fail the whole save.
-          audioUrl: audioSrc && !audioSrc.startsWith("data:") ? audioSrc : undefined,
-        }),
-      });
-      if (res.status === 401) { toast.error("Sign in to save your site"); return null; }
-      if (!res.ok) {
-        const msg = await res.json().then((d) => d?.error).catch(() => null);
-        throw new Error(msg || "Export failed. Please try again.");
-      }
-      const data = await res.json();
-      const savedId = data.site.id as string;
-      setSiteId(savedId);
-
-      // Persist frames in IndexedDB so they survive navigation without hitting sessionStorage quota.
-      const framesCached = await storeFrames(`scrollcraft_frames_${savedId}`, frames).then(() => true, () => false);
+      const framesCached = await storeFrames(framesKeyForDoc, frames).then(() => true, () => false);
       if (mobileFrames.length) {
-        await storeFrames(`scrollcraft_mframes_${savedId}`, mobileFrames).catch(() => {});
+        await storeFrames("scrollcraft_saved_mframes", mobileFrames).catch(() => {});
       }
 
-      // Only clear dirty if nothing was edited while the request was in flight, so those
-      // in-flight edits aren't lost from the unsaved-changes tracking.
+      await storeDocument({
+        name: siteName,
+        description: siteDescription || undefined,
+        sections,
+        themeJson: siteTheme ? JSON.stringify(siteTheme) : null,
+        styleJson: styleSpec ? JSON.stringify(styleSpec) : null,
+        customHead,
+        customCss,
+        fps,
+        framesKey: framesCached ? framesKeyForDoc : undefined,
+        savedAt: new Date().toISOString(),
+      });
+
+      // Only clear dirty if nothing changed while the write was in flight, so those
+      // edits are not silently marked as saved.
       if (editGenRef.current === genAtSave) setDirty(false);
       if (!opts?.silent) {
-        if (framesCached) toast.success("Site saved!");
-        else toast.warning("Site saved. Frames couldn't be cached on this device — reopen here to re-cache them.");
+        if (framesCached) toast.success("Saved in this browser");
+        else toast.warning("Saved, but the background could not be cached - export to keep it.");
       }
-      return savedId;
+      return framesKeyForDoc;
     } catch {
-      toast.error("Failed to save site");
+      toast.error("Couldn't save. Your browser may be out of storage or in private mode.");
       return null;
     } finally {
       setIsSaving(false);
@@ -1360,9 +1289,7 @@ export default function EditorPage() {
         <Loader2 className="w-8 h-8 text-primary animate-spin" />
       </div>
     }>
-      <RequireAuth>
-        <EditorInner />
-      </RequireAuth>
+      <EditorInner />
     </Suspense>
   );
 }

@@ -37,7 +37,6 @@ export const PRODUCTION_CHECKS = [
       try { json = JSON.parse(r.body); } catch { return fail(`/api/health did not return JSON: ${r.body.slice(0, 200)}`); }
       const bad = [];
       if (json.status !== "ok") bad.push(`status="${json.status}"`);
-      if (json.checks?.database && json.checks.database !== "up") bad.push(`database="${json.checks.database}"`);
       if (json.checks?.config && json.checks.config !== "ok") bad.push(`config="${json.checks.config}"`);
       return bad.length ? fail(`/api/health reports ${bad.join(", ")}`) : pass();
     },
@@ -70,29 +69,6 @@ export const PRODUCTION_CHECKS = [
     async run() {
       const r = await get("/templates/meridian-watch");
       return r.status === 200 ? pass() : fail(`GET /templates/meridian-watch returned ${r.status}`);
-    },
-  },
-  {
-    key: "prod-published-route",
-    title: "The published-site route errors instead of 404ing an unknown slug",
-    severity: "high",
-    area: "backend",
-    async run() {
-      // A 500 here means the /s route or its database read is broken; 404 is correct.
-      const r = await get("/s/__watchdog_probe_nonexistent__");
-      if (r.status === 404) return pass();
-      return fail(`GET /s/<unknown> returned ${r.status} (expected 404; a 500 means the publishing route or DB is broken)`);
-    },
-  },
-  {
-    key: "prod-oauth-providers",
-    title: "GitHub sign-in provider is not configured in production",
-    severity: "critical",
-    area: "auth",
-    async run() {
-      const r = await get("/api/auth/providers");
-      if (r.status !== 200) return fail(`GET /api/auth/providers returned ${r.status}`);
-      return r.body.includes('"github"') ? pass() : fail("provider list no longer contains github — the OAuth env vars may be unset");
     },
   },
   {

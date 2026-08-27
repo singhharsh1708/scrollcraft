@@ -23,7 +23,7 @@ export default function EditorError({
       </p>
       <div className="flex gap-3">
         <Button onClick={reset}>Try again</Button>
-        <Button variant="outline" onClick={() => (window.location.href = "/dashboard")}>
+        <Button variant="outline" onClick={() => (window.location.href = "/templates")}>
           Go to dashboard
         </Button>
       </div>

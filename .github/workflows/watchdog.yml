@@ -13,7 +13,6 @@ on:
     branches: [main]
     paths:
       - "src/**"
-      - "prisma/**"
       - "package.json"
       - ".github/watchdog/**"
   workflow_dispatch:
@@ -62,7 +61,6 @@ jobs:
           WATCHDOG_BASE_URL: ${{ vars.WATCHDOG_BASE_URL || 'https://scrollcraft-gilt.vercel.app' }}
           # A placeholder so `next build` in the code checks does not fail env validation;
           # the build never connects, and production checks probe the real deployment.
-          DATABASE_URL: "postgresql://placeholder:placeholder@localhost:5432/placeholder"
           AUTH_SECRET: "placeholder-build-only-secret"
         run: node .github/watchdog/run.mjs "${{ steps.mode.outputs.mode }}" > results.json
 

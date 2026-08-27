@@ -9,12 +9,10 @@ when something breaks — under strict rules so it stays useful instead of noisy
 
 | Check | Fails when |
 | --- | --- |
-| `prod-health` | `/api/health` is not `status: ok` (database down, config invalid). |
+| `prod-health` | `/api/health` is not `status: ok` (configuration invalid). |
 | `prod-home` | `/` does not return 200. |
 | `prod-templates-gallery` | `/templates` does not return 200. |
 | `prod-template-preview` | a template page does not return 200. |
-| `prod-published-route` | `/s/<unknown>` returns anything but 404 (a 500 means the publishing route or DB is broken). |
-| `prod-oauth-providers` | `/api/auth/providers` no longer lists GitHub (OAuth env unset). |
 | `prod-sitemap` | `/sitemap.xml` is missing or has no template URLs. |
 
 **Code** (daily, and on every push to `main` that touches `src/`, `prisma/`, or the watchdog):

@@ -4,7 +4,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { TEMPLATES } from "@/lib/templates";
 import { findPreset } from "@/lib/presets";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { ArrowLeft, ArrowRight, Sparkles, Upload, CheckCircle2, Loader2, Layers, Zap, Waves, Circle } from "lucide-react";
@@ -12,8 +11,8 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { generate2DFrames, type Style2D } from "@/lib/generate2DFrames";
 import { storeFrames, deleteFrames } from "@/lib/frameStorage";
+import { extractFramesInBrowser } from "@/lib/extractFramesInBrowser";
 import StylePreview from "@/components/StylePreview";
-import RequireAuth from "@/components/RequireAuth";
 
 const STYLES: { id: Style2D; label: string; description: string; icon: React.ReactNode; colors: [string, string, string] }[] = [
   { id: "gradient",  label: "Gradient Flow",  description: "Smooth color morphing with floating light orbs", icon: <Circle className="w-5 h-5" />,  colors: ["#7c3aed", "#2563eb", "#0f172a"] },
@@ -59,7 +58,6 @@ function CreatePageInner() {
     templateColors ?? ["#7c3aed", "#2563eb", "#0f172a"]
   );
   const [frameCount, setFrameCount] = useState(120);
-  const [videoUrl, setVideoUrl] = useState("");
   const [generateMobile, setGenerateMobile] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -117,80 +115,25 @@ function CreatePageInner() {
   const handleUpload = async (file: File) => {
     setStep(2);
     setIsGenerating(true);
-    setProgress(20);
+    setProgress(5);
     try {
-      const formData = new FormData();
-      formData.append("video", file);
-      formData.append("fps", "24");
-      formData.append("quality", "80");
-      const res = await fetch("/api/extract-frames", { method: "POST", body: formData });
-      // A failed upload does not always carry a JSON body: a 413 from the platform or a
-      // 502 from the proxy is an HTML page, and res.json() then threw a SyntaxError that
-      // was shown to the user verbatim in place of the real reason.
-      const raw = await res.text();
-      let data: { error?: string; frames?: string[]; frameCount?: number } = {};
-      try { data = raw ? JSON.parse(raw) : {}; } catch { /* handled below */ }
-      if (!res.ok) {
-        throw new Error(
-          data.error ||
-          (res.status === 413
-            ? "That video is too large — try a shorter or smaller file."
-            : `Extraction failed (${res.status})`)
-        );
-      }
-      if (!data.frames?.length) throw new Error("Extraction failed — no frames were returned.");
-      setProgress(100);
-      await storeFrames("scrollcraft_desktop_frames", data.frames);
+      // Extracted here, in the browser. The video never leaves the device and there is
+      // no server involved at all.
+      const { frames, frameCount: count } = await extractFramesInBrowser(file, {
+        frameCount,
+        onProgress: (pct) => setProgress(Math.max(5, pct)),
+      });
+      await storeFrames("scrollcraft_desktop_frames", frames);
 
       const params = new URLSearchParams({
         framesKey: "scrollcraft_desktop_frames",
-        frameCount: String(data.frameCount),
+        frameCount: String(count),
         fps: "24",
         name: file.name.replace(/\.[^.]+$/, "") || "Video upload",
       });
       router.push(`/editor?${params.toString()}`);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Upload failed");
-      setStep(1);
-      setIsGenerating(false);
-    }
-  };
-
-  const handleUrlSubmit = async () => {
-    const url = videoUrl.trim();
-    if (!url) return;
-    try {
-      new URL(url);
-    } catch {
-      toast.error("That does not look like a valid URL.");
-      return;
-    }
-    setStep(2);
-    setIsGenerating(true);
-    setProgress(20);
-    try {
-      const res = await fetch("/api/extract-frames", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ videoUrl: url, fps: 24, quality: 80 }),
-      });
-      const raw = await res.text();
-      let data: { error?: string; frames?: string[]; frameCount?: number } = {};
-      try { data = raw ? JSON.parse(raw) : {}; } catch { /* handled below */ }
-      if (!res.ok) throw new Error(data.error || `Extraction failed (${res.status})`);
-      if (!data.frames?.length) throw new Error("Extraction failed — no frames were returned.");
-      setProgress(100);
-      await storeFrames("scrollcraft_desktop_frames", data.frames);
-
-      const params = new URLSearchParams({
-        framesKey: "scrollcraft_desktop_frames",
-        frameCount: String(data.frameCount),
-        fps: "24",
-        name: url.split("/").pop()?.replace(/\.[^.]+$/, "") || "Video import",
-      });
-      router.push(`/editor?${params.toString()}`);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Import failed");
+      toast.error(err instanceof Error ? err.message : "Could not read that video");
       setStep(1);
       setIsGenerating(false);
     }
@@ -242,7 +185,6 @@ function CreatePageInner() {
         </div>
         <div className="flex items-center gap-4">
           <Link href="/presets" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Presets</Link>
-          <Link href="/pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Pricing</Link>
         </div>
       </div>
 
@@ -413,28 +355,9 @@ function CreatePageInner() {
               >
                 <Upload className="w-6 h-6" />
                 <p className="font-medium text-sm">{dragActive ? "Drop to upload" : "Drop a video or click to upload"}</p>
-                <p className="text-xs">MP4, MOV, WebM — max 500MB</p>
+                <p className="text-xs">MP4, MOV or WebM — read on this device, never uploaded</p>
               </button>
               <input ref={fileRef} type="file" accept="video/*" className="hidden" onChange={(e) => e.target.files?.[0] && handleUpload(e.target.files[0])} />
-
-              <div className="flex gap-2">
-                <Input
-                  aria-label="Video URL"
-                  value={videoUrl}
-                  onChange={(e) => setVideoUrl(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleUrlSubmit(); } }}
-                  placeholder="…or paste a public video URL"
-                  className="h-9 bg-white/5 border-white/10 text-sm"
-                />
-                <Button
-                  variant="outline"
-                  onClick={handleUrlSubmit}
-                  disabled={!videoUrl.trim()}
-                  className="border-white/10 h-9 shrink-0"
-                >
-                  Import
-                </Button>
-              </div>
             </div>
 
             <div className="flex gap-3">
@@ -473,9 +396,7 @@ function CreatePageInner() {
 export default function CreatePage() {
   return (
     <Suspense>
-      <RequireAuth>
-        <CreatePageInner />
-      </RequireAuth>
+      <CreatePageInner />
     </Suspense>
   );
 }

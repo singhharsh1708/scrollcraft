@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
-import { auth } from "@/auth";
-import { db } from "@/lib/db";
-import { rateLimit } from "@/lib/rateLimit";
+import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { REVEALS, type Section, visibleSections as onlyVisible } from "@/lib/siteSchema";
 import { layoutStyle } from "@/lib/layoutStyles";
 import { parseThemeJson, parseStyleJson } from "@/lib/siteSchema";
@@ -41,15 +39,9 @@ function safeHref(s: unknown): string {
 }
 
 export async function POST(req: NextRequest) {
-  const session = await auth();
-  // Guard on the same field the entitlement queries below are scoped by: Prisma drops
-  // a `where` key whose value is undefined, so a session without an id would turn the
-  // purchase lookup into "any PAID purchase for this site".
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const rl = await rateLimit(`user:${session.user.id}`, { bucket: "export-site", limit: 10, windowMs: 60_000 });
+  // No accounts and no database, so the request body is the whole input and there is no
+  // stored record to prefer over it. Rate limited by IP, there being no user to key on.
+  const rl = await rateLimit(getClientIp(req), { bucket: "export-site", limit: 30, windowMs: 60_000 });
   if (!rl.allowed) {
     return NextResponse.json({ error: "Too many requests. Try again in a minute." }, { status: 429 });
   }
@@ -79,14 +71,7 @@ export async function POST(req: NextRequest) {
       audioMime = "audio/mpeg",
       frameCount,
     } = body;
-    // siteId feeds Prisma `where` clauses, whose generated type also accepts a filter
-    // object — an unvalidated `{"not":""}` would match any owned site and defeat the
-    // per-site export entitlement, so only a plain string is ever passed through.
-    const siteId: string | null =
-      typeof body.siteId === "string" && body.siteId.length > 0 && body.siteId.length <= 128
-        ? body.siteId
-        : null;
-    let {
+    const {
       sections,
       siteName,
       siteDescription = "",
@@ -97,53 +82,12 @@ export async function POST(req: NextRequest) {
       fps = 24,
     } = body;
 
-    // Export is free on every plan. A supplied siteId still makes the stored record
-    // authoritative and is scoped to the caller, so nobody can export a site they do
-    // not own by passing its id. Without a siteId the request body is exported as-is.
-    if (siteId) {
-      const site = await db.site.findFirst({
-        where: { id: siteId, userId: session.user.id },
-        select: {
-          name: true,
-          description: true,
-          styleJson: true,
-          fps: true,
-          sectionsJson: true,
-          customHead: true,
-          customCss: true,
-          themeJson: true,
-        },
-      });
-      if (!site) {
-        return NextResponse.json({ error: "Site not found" }, { status: 404 });
-      }
-      try {
-        sections = site.sectionsJson ? JSON.parse(site.sectionsJson) : [];
-      } catch {
-        return NextResponse.json(
-          { error: "Saved site content is unreadable. Re-save your site and try again." },
-          { status: 400 }
-        );
-      }
-      siteName = site.name;
-      siteDescription = site.description ?? "";
-      styleJson = site.styleJson ?? "";
-      customHead = site.customHead ?? "";
-      customCss = site.customCss ?? "";
-      themeJson = site.themeJson ?? "";
-      fps = site.fps;
-      // frameCount, mobileFrameCount and the audio flags stay request-sourced: those
-      // assets never reach the server and are written into the ZIP by the browser, so
-      // the generated page must count what the client is actually shipping. The stored
-      // Site.frameCount can lag (or be 0) and would leave the export requesting frames
-      // the ZIP does not contain.
-    }
 
     if (!Array.isArray(sections) || sections.length === 0) {
       return NextResponse.json({ error: "sections must be a non-empty array" }, { status: 400 });
     }
-    // Cap the section payload to match the save-time limit. Sections loaded via siteId
-    // come from the DB (already bounded); this guards the request-sourced path.
+    // Cap the section payload: with no stored record to fall back on, the body is the
+    // only input and an uncapped `sections` amplifies a small request into a huge page.
     if (sections.length > 200 || JSON.stringify(sections).length > 1_000_000) {
       return NextResponse.json({ error: "sections payload is too large" }, { status: 400 });
     }

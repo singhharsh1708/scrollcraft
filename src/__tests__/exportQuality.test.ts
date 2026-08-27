@@ -20,7 +20,7 @@ vi.mock("@/lib/rateLimit", () => ({ rateLimit: rateLimitMock, getClientIp: () =>
 type Handler = typeof import("../app/api/export-site/route").POST;
 let POST: Handler;
 
-const TEMPLATE = TEMPLATES.find((t) => !t.premium)!;
+const TEMPLATE = TEMPLATES[0];
 
 async function exportHtml(over: Record<string, unknown> = {}): Promise<string> {
   const res = await POST(new Request("https://scrollcraft.app/api/export-site", {
@@ -157,9 +157,9 @@ describe("the ZIP ships what a site needs to go online", () => {
   });
 });
 
-describe("published sites get the same treatment as exported ones", () => {
+describe("the in-app renderer matches the exporter", () => {
   it("renders the first heading as an h1 and the rest as h2", async () => {
-    // Parity with the exporter: a published page previously had no h1 at all.
+    // Parity with the exporter: the renderer previously had no h1 at all.
     const src = await import("node:fs").then((fs) =>
       fs.readFileSync("src/components/SiteRenderer.tsx", "utf8")
     );
@@ -183,9 +183,4 @@ describe("published sites get the same treatment as exported ones", () => {
     expect(src).toContain(".sc-site a:focus-visible");
   });
 
-  it("ships a per-site social card route", async () => {
-    const { size, contentType } = await import("../app/s/[slug]/opengraph-image");
-    expect(size).toEqual({ width: 1200, height: 630 });
-    expect(contentType).toBe("image/png");
-  });
 });

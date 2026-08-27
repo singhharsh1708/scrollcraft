@@ -19,27 +19,38 @@ export default function ContactPage() {
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", topic: TOPICS[0], message: "" });
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  /**
+   * Composes the message in the visitor's own mail client.
+   *
+   * There is no server to post to any more, and a form that quietly dropped what it
+   * collected is worse than no form. This hands the text to something that can actually
+   * deliver it, and the visitor sees exactly what is being sent.
+   */
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name || !form.email || !form.message) { toast.error("Please fill all fields"); return; }
     setLoading(true);
-    try {
-      const res = await fetch("/api/contact", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        toast.error(data.error || "Couldn't send your message. Please try again.");
-        return;
-      }
-      setSent(true);
-    } catch {
-      toast.error("Couldn't send your message. Please try again.");
-    } finally {
+
+    const subject = `[ScrollCraft] ${form.topic} — ${form.name}`;
+    const body = [
+      form.message,
+      "",
+      "—",
+      `From: ${form.name} <${form.email}>`,
+      `Topic: ${form.topic}`,
+    ].join("\n");
+
+    // mailto URLs are truncated by some clients past roughly 2000 characters.
+    const url = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    if (url.length > 1900) {
+      toast.error("That message is too long to hand to your mail app — please shorten it, or email directly.");
       setLoading(false);
+      return;
     }
+
+    window.location.href = url;
+    setSent(true);
+    setLoading(false);
   };
 
   return (
@@ -88,10 +99,13 @@ export default function ContactPage() {
                   <CheckCircle2 className="w-7 h-7 text-primary" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-lg mb-1">Message sent!</h3>
-                  <p className="text-muted-foreground text-sm">We&apos;ll get back to you within a few hours.</p>
+                  <h3 className="font-bold text-lg mb-1">Your mail app should be open</h3>
+                  <p className="text-muted-foreground text-sm">
+                    Nothing is sent until you press send there. If it did not open, email{" "}
+                    {CONTACT_EMAIL} directly.
+                  </p>
                 </div>
-                <Button onClick={() => setSent(false)} variant="outline" className="border-white/10 mt-2">Send another</Button>
+                <Button onClick={() => setSent(false)} variant="outline" className="border-white/10 mt-2">Write another</Button>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">
@@ -120,7 +134,7 @@ export default function ContactPage() {
                   <Textarea value={form.message} onChange={e => setForm(f => ({ ...f, message: e.target.value }))} placeholder="Tell us what's on your mind..." className="bg-white/5 border-white/10 min-h-[140px] resize-none" />
                 </div>
                 <Button type="submit" disabled={loading} className="w-full bg-primary hover:bg-primary/90 text-white font-semibold py-5">
-                  {loading ? "Sending..." : "Send message"}
+                  {loading ? "Opening…" : "Compose message"}
                 </Button>
               </form>
             )}
