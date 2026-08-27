@@ -103,9 +103,16 @@ describe("decoration is not presented as text", () => {
     // they carry no meaning. WCAG 1.4.3 exempts pure decoration; a pseudo-element is how
     // that is expressed so a checker agrees.
     expect(CSS).toContain(".sc-ornament::before");
-    const home = readFileSync("src/app/page.tsx", "utf8");
-    expect(home).toContain("sc-ornament");
-    expect(home).not.toMatch(/text-white\/4[^"]*">\{p\.step\}/);
+
+    // Located by content rather than by filename, so moving the markup between files
+    // cannot quietly turn this check off.
+    const users = sourceFiles([".tsx"]).filter((f) => readFileSync(f, "utf8").includes("sc-ornament"));
+    expect(users.length, "nothing uses the ornament class").toBeGreaterThan(0);
+
+    const offenders = sourceFiles([".tsx"]).filter((f) =>
+      /text-white\/4[^"]*">\{(p\.step|i \+ 1)\}/.test(readFileSync(f, "utf8"))
+    );
+    expect(offenders, "an ornamental numeral is still rendered as text").toEqual([]);
   });
 });
 
