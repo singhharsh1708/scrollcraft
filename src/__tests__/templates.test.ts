@@ -1,14 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { readdirSync, readFileSync } from "node:fs";
-import { join } from "node:path";
 import {
   TEMPLATES,
   templateBySlug,
   templateCategories,
   templateScrollHeight,
-  templateSectionCount,
 } from "@/lib/templates";
-import { withheldSectionsFor, fullTemplateSections } from "@/lib/premiumTemplateSections";
 import { sectionsSchema, SECTION_LAYOUTS, SECTION_KINDS, REVEALS } from "@/lib/siteSchema";
 import { LAYOUT_STYLES, layoutStyle } from "@/lib/layoutStyles";
 
@@ -18,7 +14,7 @@ import { LAYOUT_STYLES, layoutStyle } from "@/lib/layoutStyles";
  * run against the full sections either way — otherwise making a template premium would
  * quietly exempt it from every check below.
  */
-const fullSections = fullTemplateSections;
+const fullSections = (t: (typeof TEMPLATES)[number]) => t.sections;
 
 describe("template catalogue", () => {
   it("ships a catalogue worth calling a library", () => {
@@ -118,29 +114,8 @@ describe("template catalogue", () => {
     }
   });
 
-  it("keeps the public counts on a premium template honest", () => {
-    // fullSectionCount / fullScrollHeight are baked numbers describing withheld content.
-    // If they drift from the real sections the gallery starts advertising a lie.
-    for (const t of TEMPLATES.filter((x) => x.premium)) {
-      const full = fullSections(t);
-      expect(templateSectionCount(t), `${t.slug} section count`).toBe(
-        full.filter((s) => s.kind !== "spacer").length
-      );
-      expect(t.fullScrollHeight, `${t.slug} scroll height`).toBe(
-        full.reduce((a, s) => a + (s.scrollHeight ?? 1000), 0)
-      );
-    }
-  });
-
-  it("reports a free template's counts straight from its own sections", () => {
-    for (const t of TEMPLATES.filter((x) => !x.premium)) {
-      expect(t.fullSectionCount, t.slug).toBeUndefined();
-      expect(templateSectionCount(t), t.slug).toBe(
-        t.sections.filter((s) => s.kind !== "spacer").length
-      );
-    }
-  });
-
+  
+  
   it("looks a template up by slug and misses cleanly", () => {
     expect(templateBySlug(TEMPLATES[0].slug)?.name).toBe(TEMPLATES[0].name);
     expect(templateBySlug("no-such-template")).toBeUndefined();
@@ -191,78 +166,4 @@ describe("shared layout table", () => {
   });
 });
 
-describe("premium templates are actually gated, not just labelled", () => {
-  const premium = TEMPLATES.filter((t) => t.premium);
 
-  it("marks a meaningful minority premium, leaving most of the library free", () => {
-    expect(premium.length).toBeGreaterThanOrEqual(5);
-    expect(premium.length).toBeLessThanOrEqual(10);
-    expect(TEMPLATES.length - premium.length).toBeGreaterThan(premium.length);
-  });
-
-  it("publishes only a teaser section for a premium template", () => {
-    // lib/templates.ts is imported by client components, so everything here is in the
-    // browser bundle. One section is a preview; the rest is the product.
-    for (const t of premium) {
-      expect(t.sections.length, t.slug).toBe(1);
-    }
-  });
-
-  it("keeps the full content out of the public module entirely", () => {
-    for (const t of premium) {
-      const withheld = withheldSectionsFor(t.slug) ?? [];
-      expect(withheld.length, t.slug).toBeGreaterThan(0);
-      // No withheld paragraph may appear in the public record.
-      const publicJson = JSON.stringify(t.sections);
-      for (const sec of withheld) {
-        if (sec.body) expect(publicJson, `${t.slug} leaks body copy`).not.toContain(sec.body);
-      }
-    }
-  });
-
-  it("has server-side content for every template it marks premium", () => {
-    for (const t of premium) {
-      expect(withheldSectionsFor(t.slug), t.slug).toBeTruthy();
-    }
-  });
-
-  it("has no orphaned premium content for a template that is not premium", () => {
-    const premiumSlugs = new Set(premium.map((t) => t.slug));
-    for (const t of TEMPLATES) {
-      if (!premiumSlugs.has(t.slug)) {
-        expect(withheldSectionsFor(t.slug), `${t.slug} is free but has gated content`).toBeNull();
-      }
-    }
-  });
-
-  it("leaves a free template in the categories a beginner reaches for first", () => {
-    const freeCategories = new Set(TEMPLATES.filter((t) => !t.premium).map((t) => t.category));
-    for (const c of ["SaaS", "Portfolio", "Agency", "Editorial", "Food & Drink"]) {
-      expect(freeCategories, `${c} has no free template`).toContain(c);
-    }
-  });
-});
-
-describe("the gate cannot be undone by an import", () => {
-  it("is never imported by a client component", () => {
-    // A single `"use client"` file importing the server-only module would put every
-    // withheld paragraph back into the browser bundle. `import "server-only"` turns that
-    // into a build error, and this says so at test time with a clearer message.
-    const files: string[] = [];
-    (function walk(dir: string) {
-      for (const entry of readdirSync(dir, { withFileTypes: true })) {
-        const full = join(dir, entry.name);
-        if (entry.isDirectory()) walk(full);
-        else if (/\.(ts|tsx)$/.test(entry.name)) files.push(full);
-      }
-    })("src");
-
-    const offenders = files.filter((f) => {
-      if (f.includes("__tests__")) return false;
-      const body = readFileSync(f, "utf8");
-      return body.includes('"use client"') && body.includes("premiumTemplateSections");
-    });
-
-    expect(offenders, "client components must not import withheld template content").toEqual([]);
-  });
-});

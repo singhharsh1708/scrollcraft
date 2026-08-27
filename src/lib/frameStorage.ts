@@ -56,3 +56,58 @@ export async function deleteFrames(key: string): Promise<void> {
     settle(db, tx, resolve, reject, () => undefined);
   });
 }
+
+/**
+ * The editor document — everything except the frames, which are stored separately
+ * because they are large.
+ *
+ * With no accounts and no server there is nowhere else for work in progress to live, so
+ * "Save" means "keep this in this browser". Deliberately one slot: a single working
+ * document is the honest shape for a tool with no account to hang a library off.
+ */
+export interface StoredDocument {
+  name: string;
+  description?: string;
+  sections: unknown[];
+  themeJson?: string | null;
+  styleJson?: string | null;
+  customHead?: string;
+  customCss?: string;
+  fps?: number;
+  framesKey?: string;
+  savedAt: string;
+}
+
+const DOCUMENT_KEY = "scrollcraft_document";
+
+export async function storeDocument(doc: StoredDocument): Promise<void> {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, "readwrite");
+    tx.objectStore(STORE_NAME).put(doc, DOCUMENT_KEY);
+    settle(db, tx, resolve, reject, () => undefined);
+  });
+}
+
+export async function loadDocument(): Promise<StoredDocument | null> {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, "readonly");
+    const req = tx.objectStore(STORE_NAME).get(DOCUMENT_KEY);
+    settle(db, tx, resolve, reject, () => {
+      const v = req.result;
+      return v && typeof v === "object" && Array.isArray((v as StoredDocument).sections)
+        ? (v as StoredDocument)
+        : null;
+    });
+  });
+}
+
+export async function deleteDocument(): Promise<void> {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, "readwrite");
+    tx.objectStore(STORE_NAME).delete(DOCUMENT_KEY);
+    settle(db, tx, resolve, reject, () => undefined);
+  });
+}

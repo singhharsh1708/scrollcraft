@@ -26,8 +26,6 @@ jobs:
         with:
           node-version: 20
           cache: npm
-      # `prisma generate` runs on postinstall, so the generated client the typecheck
-      # needs is present without a separate step.
       - name: Install
         run: npm ci
       - name: Typecheck

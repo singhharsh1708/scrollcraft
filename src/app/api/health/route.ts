@@ -1,26 +1,19 @@
 import { NextResponse } from "next/server";
 import { env, getEnvIssues } from "@/lib/env";
 
+/**
+ * Liveness and configuration check.
+ *
+ * There is no database to probe any more: ScrollCraft keeps no server-side state, so
+ * the only thing that can be misconfigured is the environment itself.
+ */
 export async function GET() {
   const { errors, warnings } = getEnvIssues();
-
-  let database: "up" | "down" = "down";
-  try {
-    // Imported lazily so that a failure while constructing the Prisma client is
-    // reported as a degraded check rather than crashing the handler.
-    const { db } = await import("@/lib/db");
-    await db.$queryRaw`SELECT 1`;
-    database = "up";
-  } catch {
-    database = "down";
-  }
-
-  const healthy = database === "up" && errors.length === 0;
+  const healthy = errors.length === 0;
 
   const body: Record<string, unknown> = {
     status: healthy ? "ok" : "degraded",
     checks: {
-      database,
       config: errors.length > 0 ? "invalid" : warnings.length > 0 ? "incomplete" : "ok",
     },
     timestamp: new Date().toISOString(),

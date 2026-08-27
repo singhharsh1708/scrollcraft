@@ -319,17 +319,18 @@ export default function Home() {
             <span className="text-muted-foreground">Genuinely.</span>
           </h2>
           <p className="text-muted-foreground text-lg mb-10 max-w-xl mx-auto">
-            Every template, the editor, publishing and ZIP export cost nothing. No card, no trial clock.
+            Every template, the editor and ZIP export cost nothing. No account, no card,
+            no server holding your work hostage. It runs in your browser.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link href="/create">
               <Button size="lg" className="bg-primary hover:bg-primary/90 text-white px-8 py-6 text-base font-semibold">
-                Start free trial <ArrowRight className="ml-2 w-5 h-5" />
+                Start building <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
             </Link>
-            <Link href="/pricing">
+            <Link href="/templates">
               <Button size="lg" variant="outline" className="border-white/10 hover:bg-white/5 px-8 py-6 text-base">
-                View pricing
+                Browse templates
               </Button>
             </Link>
           </div>
@@ -386,9 +387,9 @@ export default function Home() {
                   Start for free <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
               </Link>
-              <Link href="/pricing">
+              <Link href="/templates">
                 <Button size="lg" variant="outline" className="border-white/10 hover:bg-white/5 px-10 py-7 text-lg">
-                  See pricing
+                  Browse templates
                 </Button>
               </Link>
             </div>

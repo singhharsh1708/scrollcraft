@@ -1,43 +1,19 @@
 import { z } from "zod";
 
+/**
+ * Environment.
+ *
+ * Every variable here is optional, and that is the point: ScrollCraft keeps no accounts
+ * and no server-side state, so it runs with an empty environment. There is nothing to
+ * configure before someone can fork it and start it.
+ */
 const envSchema = z.object({
-  // Database
-  DATABASE_URL: z.string().url().optional(),
-  DB_POOL_MAX: z.coerce.number().int().positive().optional(),
-
-  // Auth — NextAuth v5 reads the AUTH_ prefix and still accepts the NEXTAUTH_ v4 aliases
-  AUTH_SECRET: z.string().min(1).optional(),
-  AUTH_URL: z.string().url().optional(),
-  NEXTAUTH_SECRET: z.string().min(1).optional(),
-  NEXTAUTH_URL: z.string().url().optional(),
-  AUTH_GITHUB_ID: z.string().optional(),
-  AUTH_GITHUB_SECRET: z.string().optional(),
-  AUTH_GOOGLE_ID: z.string().optional(),
-  AUTH_GOOGLE_SECRET: z.string().optional(),
-
-  // Storage
-  BLOB_READ_WRITE_TOKEN: z.string().optional(),
-
-  // Payments
-  RAZORPAY_KEY_ID: z.string().optional(),
-  RAZORPAY_KEY_SECRET: z.string().optional(),
-  RAZORPAY_WEBHOOK_SECRET: z.string().optional(),
+  // Public origin, used for robots.txt, the sitemap and canonical URLs.
+  SITE_URL: z.string().url().optional(),
 
   // Rate limiting (Upstash Redis — optional, falls back to in-memory)
   UPSTASH_REDIS_REST_URL: z.string().url().optional(),
   UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
-
-  // Lemon Squeezy — one-time export purchases
-  LEMONSQUEEZY_API_KEY: z.string().optional(),
-  LEMONSQUEEZY_STORE_ID: z.string().optional(),
-  LEMONSQUEEZY_VARIANT_ID: z.string().optional(),
-  LEMONSQUEEZY_WEBHOOK_SECRET: z.string().optional(),
-  LEMONSQUEEZY_EXPORT_PRICE_CENTS: z.coerce.number().int().nonnegative().optional(),
-  // Premium templates are sold through their own Lemon Squeezy variant, so the price and
-  // the product page stay separate from the per-site export.
-  LEMONSQUEEZY_TEMPLATE_VARIANT_ID: z.string().optional(),
-  LEMONSQUEEZY_TEMPLATE_PRICE_CENTS: z.coerce.number().int().nonnegative().optional(),
-  LEMONSQUEEZY_EXPORT_CURRENCY: z.string().length(3).toUpperCase().optional(),
 
   // Observability
   NEXT_PUBLIC_SENTRY_DSN: z.string().url().optional(),
@@ -85,22 +61,17 @@ function parseEnv(): z.infer<typeof envSchema> {
 
 export const env = parseEnv();
 
-// NextAuth v5 prefers the AUTH_ prefix; the NEXTAUTH_ spellings remain supported aliases,
-// so either one counts as configured.
-export const authSecret = env.AUTH_SECRET ?? env.NEXTAUTH_SECRET;
-export const authUrl = env.AUTH_URL ?? env.NEXTAUTH_URL;
-
 // scrollcraft.app belongs to an unrelated product. Falling back to it would publish
-// canonical URLs, sitemap entries and payment redirect_urls pointing at someone else.
+// canonical URLs and sitemap entries pointing at someone else.
 const CANONICAL_FALLBACK_URL = "https://scrollcraft-gilt.vercel.app";
 
 /**
- * Public origin for robots.txt and the sitemap. `.env.example` ships AUTH_URL pointed at
- * localhost, and that value carried into a production deploy would publish localhost URLs
- * to search engines — so it is ignored there rather than trusted.
+ * Public origin for robots.txt, the sitemap and canonical URLs. A localhost value is
+ * ignored in production rather than trusted, because publishing localhost URLs to
+ * search engines is worse than falling back.
  */
 export const siteUrl = (() => {
-  const candidate = authUrl?.trim();
+  const candidate = env.SITE_URL?.trim();
   if (!candidate) return CANONICAL_FALLBACK_URL;
   if (env.NODE_ENV === "production" && /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:|\/|$)/i.test(candidate)) {
     return CANONICAL_FALLBACK_URL;
@@ -108,17 +79,11 @@ export const siteUrl = (() => {
   return candidate.replace(/\/+$/, "");
 })();
 
-/** Variables the app cannot serve requests without. */
+/**
+ * Nothing is required. With no accounts and no database there is no variable whose
+ * absence stops the app serving requests, so this stays empty by design.
+ */
 const errors: EnvIssue[] = [];
-if (!rawEnv.DATABASE_URL) {
-  errors.push({ variable: "DATABASE_URL", message: "is not set" });
-}
-if (!authSecret) {
-  errors.push({
-    variable: "AUTH_SECRET",
-    message: "is not set — sessions cannot be signed (NEXTAUTH_SECRET is also accepted)",
-  });
-}
 
 if (isBuildPhase) {
   if (errors.length > 0) {

@@ -8,7 +8,7 @@ import { CONTACT_EMAIL, GITHUB_REPO_URL, GITHUB_SPONSORS_URL, LINKEDIN_URL } fro
 // GitHub and sponsor links had nowhere consistent to live.
 
 const COLUMNS: Array<[string, Array<[string, string]>]> = [
-  ["Product", [["Templates", "/templates"], ["Styles", "/presets"], ["Pricing", "/pricing"], ["Builder", "/create"]]],
+  ["Product", [["Templates", "/templates"], ["Styles", "/presets"], ["Builder", "/create"]]],
   ["Company", [["About", "/about"], ["Changelog", "/changelog"], ["Contact", "/contact"]]],
   ["Legal", [["Privacy Policy", "/privacy"], ["Terms of Service", "/terms"], ["Cookie Policy", "/cookies"]]],
 ];
