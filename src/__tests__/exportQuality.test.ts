@@ -143,7 +143,7 @@ describe("the ZIP ships what a site needs to go online", () => {
   });
 
   it("writes deploy instructions for the hosts people actually use", () => {
-    const readme = exportReadme("OrbitCRM", true);
+    const readme = exportReadme("OrbitCRM", true, "https://example.test");
     for (const host of ["Netlify", "Vercel", "GitHub Pages", "Cloudflare Pages"]) {
       expect(readme, `${host} missing from README`).toContain(host);
     }
@@ -151,9 +151,9 @@ describe("the ZIP ships what a site needs to go online", () => {
   });
 
   it("tells a procedural export it has no frames folder, and a baked one that it does", () => {
-    expect(exportReadme("X", true)).toContain("no");
-    expect(exportReadme("X", true)).not.toContain("| `frames/` |");
-    expect(exportReadme("X", false)).toContain("| `frames/` |");
+    expect(exportReadme("X", true, "https://example.test")).toContain("no");
+    expect(exportReadme("X", true, "https://example.test")).not.toContain("| `frames/` |");
+    expect(exportReadme("X", false, "https://example.test")).toContain("| `frames/` |");
   });
 });
 

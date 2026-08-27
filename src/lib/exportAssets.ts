@@ -76,10 +76,10 @@ export function notFoundHtml(siteName: string, ground: string, ink: string): str
 }
 
 /** Deploy instructions for the hosts people actually use, written for a non-developer. */
-export function exportReadme(siteName: string, procedural: boolean, madeWithUrl?: string): string {
+export function exportReadme(siteName: string, procedural: boolean, madeWithUrl: string): string {
   return `# ${siteName}
 
-Your site, exported from [ScrollCraft](${madeWithUrl ?? "https://scrollcraft-gilt.vercel.app"}).
+Your site, exported from [ScrollCraft](${madeWithUrl}).
 Plain HTML, CSS and JavaScript — no build step, no framework, no account needed. It is
 yours outright.
 

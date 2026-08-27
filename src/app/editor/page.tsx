@@ -20,7 +20,6 @@ import { toast } from "sonner";
 import dynamic from "next/dynamic";
 import { siteStyleSchema, themeSchema, type EditorSection, type SiteStyle, type Theme } from "@/lib/siteSchema";
 import { templateBySlug, type Template } from "@/lib/templates";
-import { PRODUCTION_URL } from "@/lib/links";
 import { faviconSvg, notFoundHtml, exportReadme, renderSocialCard } from "@/lib/exportAssets";
 import { generate2DFrames } from "@/lib/generate2DFrames";
 
@@ -540,7 +539,7 @@ function EditorInner() {
       const ogBlob = await renderSocialCard(siteName, siteDescription, frames[0], siteTheme?.ground ?? "#05070c", siteTheme?.ink ?? "#ffffff");
       if (ogBlob) zip.file("og-image.png", ogBlob);
 
-      zip.file("README.md", exportReadme(siteName, exportProcedurally, PRODUCTION_URL));
+      zip.file("README.md", exportReadme(siteName, exportProcedurally, window.location.origin));
 
       // A recipe-driven export ships no JPEGs at all — the page draws its own frames.
       if (!exportProcedurally) {

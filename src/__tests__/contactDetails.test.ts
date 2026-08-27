@@ -3,7 +3,6 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
   CONTACT_EMAIL,
-  PRODUCTION_URL,
   GITHUB_REPO_URL,
   GITHUB_PROFILE_URL,
   GITHUB_SPONSORS_URL,
@@ -56,11 +55,6 @@ describe("contact details are real", () => {
     expect(offenders, "found a link to an unrelated product's domain").toEqual([]);
   });
 
-  it("falls back to the real deployment, not a domain we do not control", () => {
-    expect(PRODUCTION_URL).toBe("https://scrollcraft-gilt.vercel.app");
-    const env = readFileSync("src/lib/env.ts", "utf8");
-    expect(env).toContain('CANONICAL_FALLBACK_URL = "https://scrollcraft-gilt.vercel.app"');
-  });
 });
 
 describe("profile links point at the real accounts", () => {
@@ -73,7 +67,7 @@ describe("profile links point at the real accounts", () => {
   });
 
   it("keeps every outbound link on https", () => {
-    for (const url of [GITHUB_REPO_URL, GITHUB_PROFILE_URL, GITHUB_SPONSORS_URL, LINKEDIN_URL, AUTHOR_SITE_URL, PRODUCTION_URL]) {
+    for (const url of [GITHUB_REPO_URL, GITHUB_PROFILE_URL, GITHUB_SPONSORS_URL, LINKEDIN_URL, AUTHOR_SITE_URL]) {
       expect(url).toMatch(/^https:\/\//);
     }
   });
@@ -112,5 +106,24 @@ describe("the site does not claim things it cannot do", () => {
       const offenders = FILES.filter((f) => claim.test(readFileSync(f, "utf8")));
       expect(offenders, `found an unsupported support claim: ${claim}`).toEqual([]);
     }
+  });
+});
+
+describe("a fork resolves its own origin", () => {
+  it("does not hardcode the maintainer's deployment in anything a fork ships", () => {
+    // A fork's exported READMEs, social cards and canonical URLs must point at the fork,
+    // not at whoever published first. env.ts keeps one last-resort fallback; nothing else
+    // may name a specific deployment.
+    const offenders = FILES.filter((f) => {
+      if (f.endsWith("src/lib/env.ts")) return false;
+      return /scrollcraft-gilt\.vercel\.app/.test(readFileSync(f, "utf8"));
+    });
+    expect(offenders, "found a hardcoded deployment URL").toEqual([]);
+  });
+
+  it("resolves the origin from configuration before falling back", () => {
+    const env = readFileSync("src/lib/env.ts", "utf8");
+    expect(env).toContain("env.SITE_URL");
+    expect(env).toContain("VERCEL_PROJECT_PRODUCTION_URL");
   });
 });
