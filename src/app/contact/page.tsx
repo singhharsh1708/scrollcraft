@@ -59,7 +59,7 @@ export default function ContactPage() {
 
       <section className="pt-20 pb-16 px-6 max-w-5xl mx-auto">
         <div className="text-center mb-14">
-          <Badge variant="outline" className="mb-5 border-primary/40 text-primary bg-primary/10 px-4 py-1.5">Get in touch</Badge>
+          <Badge variant="outline" className="mb-5 border-primary/40 text-primary-ink bg-primary/10 px-4 py-1.5">Get in touch</Badge>
           <h1 className="text-5xl font-black tracking-tighter mb-4">How can we help?</h1>
           <p className="text-muted-foreground text-lg max-w-lg mx-auto">
             Messages come straight to me. Bugs and feature requests are usually better as
@@ -82,10 +82,10 @@ export default function ContactPage() {
                 className="block p-5 rounded-2xl border border-white/8 bg-card hover:border-white/15 transition-colors"
               >
                 <div className="w-9 h-9 rounded-xl bg-primary/15 flex items-center justify-center mb-3">
-                  <c.icon className="w-4 h-4 text-primary" />
+                  <c.icon className="w-4 h-4 text-primary-ink" />
                 </div>
                 <p className="font-semibold text-sm mb-0.5">{c.title}</p>
-                <p className="text-xs text-primary mb-0.5">{c.desc}</p>
+                <p className="text-xs text-primary-ink mb-0.5">{c.desc}</p>
                 <p className="text-xs text-muted-foreground">{c.sub}</p>
               </a>
             ))}
@@ -96,7 +96,7 @@ export default function ContactPage() {
             {sent ? (
               <div className="h-full flex flex-col items-center justify-center text-center gap-4 py-8">
                 <div className="w-14 h-14 rounded-full bg-primary/15 flex items-center justify-center">
-                  <CheckCircle2 className="w-7 h-7 text-primary" />
+                  <CheckCircle2 className="w-7 h-7 text-primary-ink" />
                 </div>
                 <div>
                   <h3 className="font-bold text-lg mb-1">Your mail app should be open</h3>

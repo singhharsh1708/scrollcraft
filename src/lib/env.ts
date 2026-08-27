@@ -10,6 +10,10 @@ import { z } from "zod";
 const envSchema = z.object({
   // Public origin, used for robots.txt, the sitemap and canonical URLs.
   SITE_URL: z.string().url().optional(),
+  // Set automatically by Vercel. Used so a fork resolves its own origin without anyone
+  // having to configure SITE_URL first.
+  VERCEL_PROJECT_PRODUCTION_URL: z.string().optional(),
+  VERCEL_URL: z.string().optional(),
 
   // Rate limiting (Upstash Redis — optional, falls back to in-memory)
   UPSTASH_REDIS_REST_URL: z.string().url().optional(),
@@ -61,17 +65,22 @@ function parseEnv(): z.infer<typeof envSchema> {
 
 export const env = parseEnv();
 
-// scrollcraft.app belongs to an unrelated product. Falling back to it would publish
-// canonical URLs and sitemap entries pointing at someone else.
+// Last resort only. Anyone who forks this and deploys it gets their own origin from
+// SITE_URL or from Vercel, so this is what a build with neither falls back to.
 const CANONICAL_FALLBACK_URL = "https://scrollcraft-gilt.vercel.app";
 
 /**
- * Public origin for robots.txt, the sitemap and canonical URLs. A localhost value is
- * ignored in production rather than trusted, because publishing localhost URLs to
- * search engines is worse than falling back.
+ * Public origin for robots.txt, the sitemap and canonical URLs.
+ *
+ * Resolution order is SITE_URL, then whatever Vercel reports, then the fallback — so a
+ * fork publishes its own URLs without anyone configuring anything. A localhost value is
+ * ignored in production rather than trusted: publishing localhost URLs to search engines
+ * is worse than falling back.
  */
 export const siteUrl = (() => {
-  const candidate = env.SITE_URL?.trim();
+  const fromVercel = env.VERCEL_PROJECT_PRODUCTION_URL ?? env.VERCEL_URL;
+  const candidate =
+    env.SITE_URL?.trim() || (fromVercel ? `https://${fromVercel.replace(/^https?:\/\//, "")}` : "");
   if (!candidate) return CANONICAL_FALLBACK_URL;
   if (env.NODE_ENV === "production" && /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:|\/|$)/i.test(candidate)) {
     return CANONICAL_FALLBACK_URL;

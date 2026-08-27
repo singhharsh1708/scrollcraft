@@ -1,6 +1,9 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+/* The legal pages use prose classes; without this plugin they were inert and those
+   pages rendered as unstyled markup. */
+@plugin "@tailwindcss/typography";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -35,6 +38,7 @@
   --color-secondary: var(--secondary);
   --color-primary-foreground: var(--primary-foreground);
   --color-primary: var(--primary);
+  --color-primary-ink: var(--primary-ink);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
@@ -57,6 +61,9 @@
   --popover-foreground: oklch(0.98 0 0);
   --primary: oklch(0.52 0.22 290);
   --primary-foreground: oklch(0.98 0 0);
+  /* Accent text on a dark surface. --primary itself is a fill colour and is too dark
+     to read at small sizes: it measures 3.18:1, below the 4.5:1 AA floor. */
+  --primary-ink: oklch(0.66 0.18 290);
   --secondary: oklch(0.14 0 0);
   --secondary-foreground: oklch(0.98 0 0);
   --muted: oklch(0.14 0 0);
@@ -93,6 +100,9 @@
   --popover-foreground: oklch(0.98 0 0);
   --primary: oklch(0.52 0.22 290);
   --primary-foreground: oklch(0.98 0 0);
+  /* Accent text on a dark surface. --primary itself is a fill colour and is too dark
+     to read at small sizes: it measures 3.18:1, below the 4.5:1 AA floor. */
+  --primary-ink: oklch(0.66 0.18 290);
   --secondary: oklch(0.14 0 0);
   --secondary-foreground: oklch(0.98 0 0);
   --muted: oklch(0.14 0 0);
@@ -132,4 +142,12 @@
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* Decorative numerals behind the pipeline and feature cards. Pure ornament under
+   WCAG 1.4.3, so it is drawn as generated content instead of text: at the opacity the
+   design calls for it could never meet a contrast floor, and it carries no meaning a
+   reader would miss. The value comes from --ornament on the element. */
+.sc-ornament::before {
+  content: var(--ornament, "");
 }

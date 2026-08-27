@@ -15,6 +15,3 @@ export const GITHUB_SPONSORS_URL = "https://github.com/sponsors/singhharsh1708";
 export const LINKEDIN_URL = "https://linkedin.com/in/singhharsh1708";
 export const AUTHOR_SITE_URL = "https://singhharsh.in";
 export const AUTHOR_NAME = "Harsh Singh";
-
-/** Where the product actually lives. Not scrollcraft.app, which belongs to someone else. */
-export const PRODUCTION_URL = "https://scrollcraft-gilt.vercel.app";

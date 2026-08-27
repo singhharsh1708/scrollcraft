@@ -1,4 +1,5 @@
 import { ImageResponse } from "next/og";
+import { siteUrl } from "@/lib/env";
 
 export const runtime = "edge";
 export const alt = "ScrollCraft — AI Scroll Sites";
@@ -106,7 +107,7 @@ export default function OGImage() {
             fontSize: 18,
           }}
         >
-          scrollcraft-gilt.vercel.app
+          {siteUrl.replace(/^https?:\/\//, "")}
         </div>
       </div>
     ),
