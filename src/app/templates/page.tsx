@@ -38,7 +38,7 @@ export default function TemplatesPage() {
       <Navbar />
 
       <section className="pt-16 pb-10 text-center px-6">
-        <Badge variant="outline" className="mb-5 border-primary/40 text-primary bg-primary/10 px-4 py-1.5">
+        <Badge variant="outline" className="mb-5 border-primary/40 text-primary-ink bg-primary/10 px-4 py-1.5">
           <Layers className="w-3 h-3 mr-1.5" /> {TEMPLATES.length} templates, all free
         </Badge>
         <h1 className="text-5xl md:text-6xl font-black tracking-tighter mb-4">
@@ -72,7 +72,7 @@ export default function TemplatesPage() {
               aria-pressed={activeCategory === c}
               className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
                 activeCategory === c
-                  ? "border-primary/50 bg-primary/15 text-primary"
+                  ? "border-primary/50 bg-primary/15 text-primary-ink"
                   : "border-white/10 text-muted-foreground hover:text-foreground hover:border-white/20"
               }`}
             >

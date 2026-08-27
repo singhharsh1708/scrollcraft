@@ -19,7 +19,7 @@ export default function SponsorCard({ compact = false }: { compact?: boolean }) 
           </Button>
         </a>
         <a href={GITHUB_SPONSORS_URL} target="_blank" rel="noopener noreferrer">
-          <Button variant="outline" size="sm" className="border-pink-400/30 text-pink-300 hover:bg-pink-400/10 h-8 text-xs gap-1.5">
+          <Button variant="outline" size="sm" className="border-pink-400/40 text-pink-300 hover:bg-pink-400/10 h-8 text-xs gap-1.5">
             <Heart className="w-3.5 h-3.5" /> Sponsor
           </Button>
         </a>
@@ -50,11 +50,11 @@ export default function SponsorCard({ compact = false }: { compact?: boolean }) 
             </Button>
           </a>
           <a href={GITHUB_SPONSORS_URL} target="_blank" rel="noopener noreferrer">
-            <Button className="w-full bg-pink-500 hover:bg-pink-500/90 text-white gap-2 font-semibold">
+            <Button className="w-full bg-pink-600 hover:bg-pink-600/90 text-white gap-2 font-semibold">
               <Heart className="w-4 h-4" /> Sponsor
             </Button>
           </a>
-          <p className="text-[11px] text-muted-foreground/70 text-center">
+          <p className="text-xs text-muted-foreground text-center">
             Sponsorship goes to hosting and maintenance.
           </p>
         </div>

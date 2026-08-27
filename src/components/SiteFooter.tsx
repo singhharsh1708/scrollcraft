@@ -20,7 +20,7 @@ export default function SiteFooter({ compact = false }: { compact?: boolean }) {
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
             <div className="w-5 h-5 rounded bg-primary/20 flex items-center justify-center">
-              <Sparkles className="w-3 h-3 text-primary" />
+              <Sparkles className="w-3 h-3 text-primary-ink" />
             </div>
             ScrollCraft — open source, built with Next.js
           </div>
@@ -54,7 +54,7 @@ export default function SiteFooter({ compact = false }: { compact?: boolean }) {
           <div>
             <div className="flex items-center gap-2 mb-4">
               <div className="w-6 h-6 rounded bg-primary/20 flex items-center justify-center">
-                <Sparkles className="w-3 h-3 text-primary" />
+                <Sparkles className="w-3 h-3 text-primary-ink" />
               </div>
               <span className="font-semibold">ScrollCraft</span>
             </div>

@@ -179,7 +179,7 @@ function CreatePageInner() {
         </Link>
         <div className="flex items-center gap-2">
           <div className="w-6 h-6 rounded bg-primary/20 flex items-center justify-center">
-            <Zap className="w-3.5 h-3.5 text-primary" />
+            <Zap className="w-3.5 h-3.5 text-primary-ink" />
           </div>
           <span className="font-semibold">ScrollCraft</span>
         </div>
@@ -194,7 +194,7 @@ function CreatePageInner() {
           <div key={s} className="flex items-center gap-2">
             <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
               i === step ? "bg-primary text-white" :
-              i < step ? "bg-primary/20 text-primary" :
+              i < step ? "bg-primary/20 text-primary-ink" :
               "bg-white/5 text-muted-foreground"
             }`}>
               {i < step ? <CheckCircle2 className="w-3.5 h-3.5" /> : <span className="w-4 text-center">{i + 1}</span>}
@@ -247,7 +247,7 @@ function CreatePageInner() {
                   </div>
                   <div className="p-3 bg-card">
                     <div className="flex items-center gap-2 mb-0.5">
-                      <span className={selectedStyle === s.id ? "text-primary" : "text-muted-foreground"}>{s.icon}</span>
+                      <span className={selectedStyle === s.id ? "text-primary-ink" : "text-muted-foreground"}>{s.icon}</span>
                       <span className="font-semibold text-sm">{s.label}</span>
                     </div>
                     <div className="text-xs text-muted-foreground">{s.description}</div>
@@ -310,7 +310,7 @@ function CreatePageInner() {
               <div className="space-y-3">
                 <div className="flex justify-between">
                   <label className="font-medium text-sm">Frame Count</label>
-                  <Badge variant="outline" className="border-primary/30 text-primary">{frameCount} frames</Badge>
+                  <Badge variant="outline" className="border-primary/30 text-primary-ink">{frameCount} frames</Badge>
                 </div>
                 <input
                   aria-label="Frame count"
@@ -349,7 +349,7 @@ function CreatePageInner() {
                 onDrop={handleDrop}
                 className={`w-full p-5 rounded-2xl border-2 border-dashed transition-colors flex flex-col items-center gap-2 ${
                   dragActive
-                    ? "border-primary bg-primary/10 text-primary"
+                    ? "border-primary bg-primary/10 text-primary-ink"
                     : "border-white/15 hover:border-primary/40 text-muted-foreground hover:text-foreground"
                 }`}
               >
@@ -375,7 +375,7 @@ function CreatePageInner() {
         {step === 2 && (
           <div className="w-full max-w-lg text-center space-y-8">
             <div className="w-20 h-20 rounded-full bg-primary/15 flex items-center justify-center mx-auto">
-              <Loader2 className="w-10 h-10 text-primary animate-spin" />
+              <Loader2 className="w-10 h-10 text-primary-ink animate-spin" />
             </div>
             <div>
               <h2 className="text-2xl font-bold mb-2">Generating frames…</h2>

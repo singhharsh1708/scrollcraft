@@ -717,6 +717,7 @@ function EditorInner() {
           </Link>
           <div className="w-px h-4 bg-white/10" />
           <Input
+            aria-label="Site name"
             value={siteName}
             onChange={(e) => { setSiteName(e.target.value); setDirty(true); }}
             className="h-7 bg-transparent border-transparent hover:border-white/10 focus:border-primary/50 text-sm font-medium w-48"
@@ -752,7 +753,7 @@ function EditorInner() {
               title={audioMuted ? "Unmute audio" : "Mute audio"}
               className="p-1 rounded text-muted-foreground hover:text-foreground transition-colors"
             >
-              {audioMuted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5 text-primary" />}
+              {audioMuted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5 text-primary-ink" />}
             </button>
           )}
           {/* Viewport toggle */}
@@ -762,7 +763,7 @@ function EditorInner() {
                 key={mode}
                 onClick={() => setViewportMode(mode)}
                 title={mode.charAt(0).toUpperCase() + mode.slice(1)}
-                className={`p-1 rounded transition-colors ${viewportMode === mode ? "bg-primary/30 text-primary" : "text-muted-foreground hover:text-foreground"}`}
+                className={`p-1 rounded transition-colors ${viewportMode === mode ? "bg-primary/30 text-primary-ink" : "text-muted-foreground hover:text-foreground"}`}
               >
                 <Icon className="w-3.5 h-3.5" />
               </button>
@@ -808,14 +809,21 @@ function EditorInner() {
         </div>
       </div>
 
-      <div className="flex flex-1 overflow-x-auto md:overflow-hidden">
+      <main className="flex flex-1 overflow-x-auto md:overflow-hidden">
         {/* Left panel: sections list */}
         <div className="w-56 border-r border-white/5 flex flex-col bg-card/30 flex-shrink-0">
           <div className="p-3 border-b border-white/5 flex items-center justify-between">
             <div className="flex items-center gap-2 text-sm font-medium">
-              <Layers className="w-3.5 h-3.5 text-primary" /> Sections
+              <Layers className="w-3.5 h-3.5 text-primary-ink" /> Sections
             </div>
-            <Button onClick={addSection} size="sm" variant="ghost" className="h-6 w-6 p-0 hover:bg-primary/20">
+            <Button
+              onClick={addSection}
+              size="sm"
+              variant="ghost"
+              aria-label="Add section"
+              title="Add section"
+              className="h-6 w-6 p-0 hover:bg-primary/20"
+            >
               <Plus className="w-3.5 h-3.5" />
             </Button>
           </div>
@@ -835,13 +843,13 @@ function EditorInner() {
                 <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${s.visible ? "bg-primary" : "bg-white/20"}`} />
                 <span className="text-xs flex-1 truncate">{s.heading || `Section ${i + 1}`}</span>
                 <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
-                  <button onClick={(e) => { e.stopPropagation(); moveSection(s.id, "up"); }} className="p-0.5 hover:text-primary" title="Move up">
+                  <button onClick={(e) => { e.stopPropagation(); moveSection(s.id, "up"); }} className="p-0.5 hover:text-primary-ink" title="Move up">
                     <ChevronUp className="w-3 h-3" />
                   </button>
-                  <button onClick={(e) => { e.stopPropagation(); moveSection(s.id, "down"); }} className="p-0.5 hover:text-primary" title="Move down">
+                  <button onClick={(e) => { e.stopPropagation(); moveSection(s.id, "down"); }} className="p-0.5 hover:text-primary-ink" title="Move down">
                     <ChevronDown className="w-3 h-3" />
                   </button>
-                  <button onClick={(e) => { e.stopPropagation(); duplicateSection(s.id); }} className="p-0.5 hover:text-primary" title="Duplicate section">
+                  <button onClick={(e) => { e.stopPropagation(); duplicateSection(s.id); }} className="p-0.5 hover:text-primary-ink" title="Duplicate section">
                     <Copy className="w-3 h-3" />
                   </button>
                   <button
@@ -963,7 +971,7 @@ function EditorInner() {
             )}
             {frames.length === 0 && (
               <div className="absolute inset-0 flex items-center justify-center">
-                <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                <Loader2 className="w-8 h-8 text-primary-ink animate-spin" />
               </div>
             )}
           </div>
@@ -1119,7 +1127,7 @@ function EditorInner() {
                   <div className="flex gap-1">
                     {(["left", "center", "right"] as const).map(a => (
                       <button key={a} onClick={() => updateSection(selectedSectionData.id, { textAlign: a })}
-                        className={`flex-1 h-7 rounded border text-xs flex items-center justify-center transition-colors ${selectedSectionData.textAlign === a ? "border-primary bg-primary/15 text-primary" : "border-white/10 hover:border-white/20"}`}
+                        className={`flex-1 h-7 rounded border text-xs flex items-center justify-center transition-colors ${selectedSectionData.textAlign === a ? "border-primary bg-primary/15 text-primary-ink" : "border-white/10 hover:border-white/20"}`}
                       >
                         {a === "left" ? <AlignLeft className="w-3.5 h-3.5" /> : a === "center" ? <AlignCenter className="w-3.5 h-3.5" /> : <AlignRight className="w-3.5 h-3.5" />}
                       </button>
@@ -1144,7 +1152,7 @@ function EditorInner() {
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
                     <label className="text-xs text-muted-foreground">Section height (scroll px)</label>
-                    <Badge variant="outline" className="text-xs border-primary/30 text-primary">{selectedSectionData.scrollHeight}px</Badge>
+                    <Badge variant="outline" className="text-xs border-primary/30 text-primary-ink">{selectedSectionData.scrollHeight}px</Badge>
                   </div>
                   <Slider
                     aria-label="Section height in pixels"
@@ -1158,7 +1166,7 @@ function EditorInner() {
                   <div className="flex gap-1">
                     {["flex-start", "center", "flex-end"].map((a) => (
                       <button key={a} onClick={() => updateSection(selectedSectionData.id, { align: a })}
-                        className={`flex-1 h-7 rounded border text-xs transition-colors ${selectedSectionData.align === a ? "border-primary bg-primary/15 text-primary" : "border-white/10 hover:border-white/20"}`}
+                        className={`flex-1 h-7 rounded border text-xs transition-colors ${selectedSectionData.align === a ? "border-primary bg-primary/15 text-primary-ink" : "border-white/10 hover:border-white/20"}`}
                       >
                         {a === "flex-start" ? "Top" : a === "center" ? "Middle" : "Bottom"}
                       </button>
@@ -1170,7 +1178,7 @@ function EditorInner() {
                   <div className="flex gap-1">
                     {["flex-start", "center", "flex-end"].map((a) => (
                       <button key={a} onClick={() => updateSection(selectedSectionData.id, { justify: a })}
-                        className={`flex-1 h-7 rounded border text-xs transition-colors ${selectedSectionData.justify === a ? "border-primary bg-primary/15 text-primary" : "border-white/10 hover:border-white/20"}`}
+                        className={`flex-1 h-7 rounded border text-xs transition-colors ${selectedSectionData.justify === a ? "border-primary bg-primary/15 text-primary-ink" : "border-white/10 hover:border-white/20"}`}
                       >
                         {a === "flex-start" ? "Left" : a === "center" ? "Center" : "Right"}
                       </button>
@@ -1185,7 +1193,7 @@ function EditorInner() {
                   <p className="text-xs text-muted-foreground/70">Volume fades in on scroll, fades out when idle</p>
                   <button
                     onClick={() => audioFileRef.current?.click()}
-                    className={`w-full p-3 rounded-xl border-2 border-dashed transition-colors flex flex-col items-center gap-1.5 text-xs ${audioSrc ? "border-primary/40 bg-primary/5 text-primary" : "border-white/15 hover:border-primary/30 text-muted-foreground"}`}
+                    className={`w-full p-3 rounded-xl border-2 border-dashed transition-colors flex flex-col items-center gap-1.5 text-xs ${audioSrc ? "border-primary/40 bg-primary/5 text-primary-ink" : "border-white/15 hover:border-primary/30 text-muted-foreground"}`}
                   >
                     <Music className="w-5 h-5" />
                     {audioSrc ? "Audio loaded — scroll to play" : "Upload MP3 / WAV"}
@@ -1276,7 +1284,7 @@ function EditorInner() {
             </Tabs>
           </div>
         )}
-      </div>
+      </main>
     </div>
   );
 }
@@ -1285,7 +1293,7 @@ export default function EditorPage() {
   return (
     <Suspense fallback={
       <div className="h-screen flex items-center justify-center bg-background">
-        <Loader2 className="w-8 h-8 text-primary animate-spin" />
+        <Loader2 className="w-8 h-8 text-primary-ink animate-spin" />
       </div>
     }>
       <EditorInner />

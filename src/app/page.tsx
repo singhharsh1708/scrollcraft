@@ -112,7 +112,7 @@ export default function Home() {
         <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] rounded-full bg-primary/8 blur-[140px] pointer-events-none" />
         <div className="absolute top-2/3 left-1/4 w-[300px] h-[300px] rounded-full bg-blue-500/6 blur-[100px] pointer-events-none" />
 
-        <Badge variant="outline" className="mb-6 border-primary/40 text-primary bg-primary/10 px-4 py-1.5">
+        <Badge variant="outline" className="mb-6 border-primary/40 text-primary-ink bg-primary/10 px-4 py-1.5">
           <Sparkles className="w-3 h-3 mr-1.5" /> Ready-made templates · No code · Animated scroll
         </Badge>
 
@@ -145,7 +145,7 @@ export default function Home() {
         <div className="mt-6 flex items-center gap-6 text-sm text-muted-foreground">
           {["Free plan, no time limit", "No credit card", "Deploy anywhere"].map((t) => (
             <div key={t} className="flex items-center gap-1.5">
-              <Check className="w-3.5 h-3.5 text-primary" /> {t}
+              <Check className="w-3.5 h-3.5 text-primary-ink" /> {t}
             </div>
           ))}
         </div>
@@ -189,7 +189,7 @@ export default function Home() {
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
             {PIPELINE.map((p) => (
               <div key={p.step} className="relative p-6 rounded-2xl border border-white/8 bg-card hover:border-primary/20 transition-colors group">
-                <div className="text-5xl font-black text-white/4 group-hover:text-primary/10 transition-colors mb-4 leading-none">{p.step}</div>
+                <div aria-hidden="true" style={{ "--ornament": `"${p.step}"` } as React.CSSProperties} className="sc-ornament text-5xl font-black text-white/4 group-hover:text-primary-ink/10 transition-colors mb-4 leading-none" />
                 <h3 className="font-semibold mb-2">{p.title}</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">{p.desc}</p>
               </div>
@@ -211,9 +211,9 @@ export default function Home() {
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {FEATURES.map((f, i) => (
               <div key={f.title} className="relative p-6 rounded-2xl border border-white/8 bg-card hover:border-primary/30 transition-colors group">
-                <div className="absolute top-4 right-4 text-4xl font-black text-white/4 group-hover:text-primary/8 transition-colors">{i + 1}</div>
+                <div aria-hidden="true" style={{ "--ornament": `"${i + 1}"` } as React.CSSProperties} className="sc-ornament absolute top-4 right-4 text-4xl font-black text-white/4 group-hover:text-primary-ink/8 transition-colors" />
                 <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center mb-4">
-                  <f.icon className="w-5 h-5 text-primary" />
+                  <f.icon className="w-5 h-5 text-primary-ink" />
                 </div>
                 <h3 className="font-semibold mb-2">{f.title}</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
@@ -234,7 +234,7 @@ export default function Home() {
                 Production-tested starters with finished scroll layouts, copy structure, and palettes.
               </p>
             </div>
-            <Link href="/presets">
+            <Link href="/presets" aria-label="View all presets">
               <Button variant="outline" className="border-white/10 hover:bg-white/5 hidden md:flex">
                 View all presets <ArrowRight className="ml-2 w-4 h-4" />
               </Button>
@@ -273,7 +273,7 @@ export default function Home() {
             ))}
           </div>
           <div className="text-center mt-8">
-            <Link href="/presets">
+            <Link href="/presets" aria-label="View all presets">
               <Button variant="outline" className="border-white/10 hover:bg-white/5 md:hidden">
                 View all presets <ArrowRight className="ml-2 w-4 h-4" />
               </Button>

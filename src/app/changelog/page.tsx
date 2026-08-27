@@ -7,7 +7,7 @@ const ENTRIES = [
     version: "v1.0.0",
     date: "August 27, 2026",
     tag: "Major",
-    tagColor: "bg-primary/15 text-primary border-primary/30",
+    tagColor: "bg-primary/15 text-primary-ink border-primary/30",
     changes: [
       { type: "new", text: "Fully open source and free. No accounts, no database, no payment of any kind" },
       { type: "new", text: "Runs with an empty environment: clone it, npm install, npm run dev. Nothing to configure" },
@@ -23,7 +23,7 @@ const ENTRIES = [
     version: "v0.5.0",
     date: "August 26, 2026",
     tag: "Major",
-    tagColor: "bg-primary/15 text-primary border-primary/30",
+    tagColor: "bg-primary/15 text-primary-ink border-primary/30",
     changes: [
       { type: "new", text: "Publish — every site gets a hosted link at /s/your-site, one button from the dashboard" },
       { type: "new", text: "Template library — 21 finished sites across 11 categories, free on every plan" },
@@ -36,7 +36,7 @@ const ENTRIES = [
     version: "v0.4.0",
     date: "August 26, 2026",
     tag: "Major",
-    tagColor: "bg-primary/15 text-primary border-primary/30",
+    tagColor: "bg-primary/15 text-primary-ink border-primary/30",
     changes: [
       { type: "new", text: "Every template is free on every plan, including the free one" },
       { type: "improved", text: "Paid plans now differ only by how many websites you keep saved, and that limit is enforced" },
@@ -49,7 +49,7 @@ const ENTRIES = [
     version: "v0.3.0",
     date: "June 7, 2026",
     tag: "Major",
-    tagColor: "bg-primary/15 text-primary border-primary/30",
+    tagColor: "bg-primary/15 text-primary-ink border-primary/30",
     changes: [
       { type: "new", text: "Pricing page with monthly/annual toggle and 5 tiers" },
       { type: "new", text: "Presets gallery — 12 production-ready templates with search & category filters" },
@@ -91,7 +91,7 @@ const ENTRIES = [
 ];
 
 const TYPE_STYLES: Record<string, string> = {
-  new: "bg-primary/10 text-primary",
+  new: "bg-primary/10 text-primary-ink",
   improved: "bg-blue-500/10 text-blue-400",
   fixed: "bg-emerald-500/10 text-emerald-400",
   removed: "bg-red-500/10 text-red-400",
@@ -103,7 +103,7 @@ export default function ChangelogPage() {
       <Navbar />
 
       <section className="pt-20 pb-8 text-center px-6">
-        <Badge variant="outline" className="mb-5 border-primary/40 text-primary bg-primary/10 px-4 py-1.5">
+        <Badge variant="outline" className="mb-5 border-primary/40 text-primary-ink bg-primary/10 px-4 py-1.5">
           What&apos;s new
         </Badge>
         <h1 className="text-5xl font-black tracking-tighter mb-4">Changelog</h1>

@@ -40,7 +40,7 @@ export default function AboutPage() {
       {/* Hero */}
       <section className="pt-24 pb-16 text-center px-6">
         <div className="absolute left-1/2 -translate-x-1/2 w-[500px] h-[300px] rounded-full bg-primary/8 blur-[100px] pointer-events-none" />
-        <Badge variant="outline" className="mb-5 border-primary/40 text-primary bg-primary/10 px-4 py-1.5">Our story</Badge>
+        <Badge variant="outline" className="mb-5 border-primary/40 text-primary-ink bg-primary/10 px-4 py-1.5">Our story</Badge>
         <h1 className="text-5xl md:text-6xl font-black tracking-tighter mb-6 max-w-3xl mx-auto">
           The web should be
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-indigo-400"> cinematic</span>
@@ -77,7 +77,7 @@ export default function AboutPage() {
               { value: "100%", label: "Code ownership" },
             ].map(s => (
               <div key={s.label} className="p-5 rounded-2xl border border-white/8 bg-card text-center">
-                <p className="text-3xl font-black text-primary mb-1">{s.value}</p>
+                <p className="text-3xl font-black text-primary-ink mb-1">{s.value}</p>
                 <p className="text-xs text-muted-foreground">{s.label}</p>
               </div>
             ))}
@@ -96,7 +96,7 @@ export default function AboutPage() {
             {VALUES.map(v => (
               <div key={v.title} className="p-6 rounded-2xl border border-white/8 bg-card">
                 <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center mb-4">
-                  <v.icon className="w-5 h-5 text-primary" />
+                  <v.icon className="w-5 h-5 text-primary-ink" />
                 </div>
                 <h3 className="font-semibold mb-2">{v.title}</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">{v.desc}</p>
@@ -116,12 +116,12 @@ export default function AboutPage() {
           <div className="grid gap-5 max-w-2xl mx-auto">
             {TEAM.map(m => (
               <div key={m.name} className="flex items-start gap-4 p-6 rounded-2xl border border-white/8 bg-card">
-                <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-sm flex-shrink-0">
+                <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center text-primary-ink font-bold text-sm flex-shrink-0">
                   {m.avatar}
                 </div>
                 <div>
                   <p className="font-semibold">{m.name}</p>
-                  <p className="text-xs text-primary mb-2">{m.role}</p>
+                  <p className="text-xs text-primary-ink mb-2">{m.role}</p>
                   <p className="text-sm text-muted-foreground mb-3">{m.bio}</p>
                   <div className="flex flex-wrap gap-3">
                     {m.links.map((l) => (
