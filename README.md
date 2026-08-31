@@ -5,8 +5,8 @@
 **Ready-made cinematic scroll websites — no code, pure HTML.**
 
 Pick a template, change the words, and export a production‑ready HTML/CSS/JS ZIP you can
-deploy anywhere. The editor, publishing and ZIP export are free, along with 13 of the 21
-templates. The other 8 are bought once, outright.
+deploy anywhere. All of it is free and open source: every template, the editor, and the
+export. No account, nothing to buy.
 
 [Live demo](https://scrollcraft-gilt.vercel.app) · [Report a bug](https://github.com/singhharsh1708/scrollcraft/issues) · [Request a feature](https://github.com/singhharsh1708/scrollcraft/issues)
 
@@ -31,7 +31,7 @@ ScrollCraft removes all of that. You:
 
 - 🎨 **Generated scroll frames** — pick a style (gradient, geometric, particles, wave) and a palette; the frame sequence is rendered in-browser on canvas, no API key required.
 - 🎬 **Scroll‑linked animation engine** — smooth canvas scrubbing, desktop + mobile frame sets.
-- 🧩 **Template library** — 21 finished scroll sites across 11 categories, all free, each with its own Google Fonts pairing and palette.
+- 🧩 **Template library** — 21 finished scroll sites across 16 categories, all free, each with its own Google Fonts pairing and palette.
 - 📦 **Pure HTML export** — zero dependencies, zero lock‑in, deploy anywhere. The ZIP ships a 404 page, favicon, social card, `robots.txt` and host configs, and scores 100 across Lighthouse.
 - 🎞️ **Bring your own video** — frames are extracted in your browser; the file never leaves your device.
 - 🔊 **Scroll‑synced audio** — attach a soundtrack that responds to scroll position.

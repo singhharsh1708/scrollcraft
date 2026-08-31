@@ -10,7 +10,7 @@ export default function CookiesPage() {
       <Navbar />
       <article className="max-w-3xl mx-auto px-6 py-16 prose prose-invert prose-sm">
         <h1>Cookie Policy</h1>
-        <p className="text-muted-foreground">Last updated: June 2026</p>
+        <p className="text-muted-foreground">Last updated: August 2026</p>
 
         <h2>We set none</h2>
         <p>

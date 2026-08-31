@@ -12,7 +12,7 @@ import GitHubMark from "@/components/GitHubMark";
 import LinkedInMark from "@/components/LinkedInMark";
 import SiteFooter from "@/components/SiteFooter";
 
-const TOPICS = ["General question", "Bug report", "Feature request", "Enterprise inquiry", "Billing", "Partnership"];
+const TOPICS = ["General question", "Bug report", "Feature request", "Enterprise inquiry", "Partnership"];
 
 export default function ContactPage() {
   const [sent, setSent] = useState(false);

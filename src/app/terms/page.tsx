@@ -9,7 +9,7 @@ export default function TermsPage() {
       <Navbar />
       <article className="max-w-3xl mx-auto px-6 py-16 prose prose-invert prose-sm">
         <h1>Terms of Service</h1>
-        <p className="text-muted-foreground">Last updated: June 2026</p>
+        <p className="text-muted-foreground">Last updated: August 2026</p>
 
         <h2>Acceptance</h2>
         <p>By using ScrollCraft you agree to these terms. If you do not agree, do not use the service.</p>

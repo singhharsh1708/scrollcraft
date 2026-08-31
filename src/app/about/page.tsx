@@ -27,7 +27,7 @@ const TEAM = [
 
 const VALUES = [
   { icon: Sparkles, title: "Ready to ship", desc: "Every template is a finished site, not a blank canvas. Pick one and change the words." },
-  { icon: Zap, title: "Ship fast", desc: "We release weekly. Features, fixes, and improvements every single week." },
+  { icon: Zap, title: "Nothing to wait for", desc: "No signup, no build step, no keys. Open the editor and you are already working." },
   { icon: Globe, title: "Own your code", desc: "Everything you export belongs to you. No lock-in, ever." },
   { icon: Users, title: "Built for builders", desc: "Freelancers, founders, agencies — we build for people who make things." },
 ];
