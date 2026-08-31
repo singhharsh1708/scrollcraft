@@ -95,6 +95,19 @@ describe("editor autosave", () => {
     expect(body).toContain("generate2DFrames(");
   });
 
+  it("clears the mobile-frames slot when this document has none", () => {
+    // There is one slot and it is shared. The write only ever put to it, and the restore
+    // loads it unconditionally, so a site with no mobile variant inherited whatever the
+    // last site that had one left behind - and exported it as its own.
+    // Verified in Chrome: seed the slot, edit a site with no mobile frames, let autosave
+    // run. Previous build left ["SITE-A-MOBILE-FRAME"] in place; this one clears it.
+    const write = EDITOR.slice(EDITOR.indexOf("const writeDocument"), EDITOR.indexOf("const handleSave"));
+    expect(write).toContain("storeFrames(SAVED_MOBILE_FRAMES_KEY, mobileFrames)");
+    expect(write).toContain("deleteFrames(SAVED_MOBILE_FRAMES_KEY)");
+    // Both branches of the same condition, so the slot always matches the document.
+    expect(write).toMatch(/if \(mobileFrames\.length\) \{[\s\S]*?\} else \{[\s\S]*?deleteFrames/);
+  });
+
   it("keeps the unload warning as the backstop for the debounce window", () => {
     expect(EDITOR).toContain('window.addEventListener("beforeunload", onBeforeUnload);');
     expect(EDITOR).toMatch(/if \(!dirty\) return;/);
