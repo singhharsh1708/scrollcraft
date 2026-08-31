@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import type { NextRequest } from "next/server";
 import { TEMPLATES } from "@/lib/templates";
+import { MAX_SECTIONS } from "@/lib/siteSchema";
 import { faviconSvg, notFoundHtml, exportReadme } from "@/lib/exportAssets";
 
 /**
@@ -41,6 +42,67 @@ beforeEach(async () => {
   vi.clearAllMocks();
   rateLimitMock.mockResolvedValue({ allowed: true });
   ({ POST } = await import("../app/api/export-site/route"));
+});
+
+/**
+ * The route reads the request body and nothing else - no accounts, no stored record to
+ * prefer over it - so the body's shape is the only thing between a caller and the page
+ * that gets generated. It was checked for being a non-empty array and for size, never
+ * for shape, so a null element threw inside the generator and surfaced as a 500 "Export
+ * failed", and a heading of the wrong type was interpolated as-is: {"heading":{"a":1}}
+ * shipped a page whose <h1> read "[object Object]". Verified against a running
+ * production build before and after.
+ */
+async function exportStatus(sections: unknown): Promise<{ status: number; error?: string }> {
+  const res = await POST(new Request("https://scrollcraft.app/api/export-site", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ sections, siteName: "S", frameCount: 10 }),
+  }) as unknown as NextRequest);
+  const json = await res.json();
+  return { status: res.status, error: json.error };
+}
+
+describe("the export route validates the shape of what it is given", () => {
+  it("still exports a well-formed document, so the guard is not just rejecting everything", async () => {
+    const ok = await exportStatus([{ heading: "Hi", scrollHeight: 1000 }]);
+    expect(ok.status).toBe(200);
+  });
+
+  it("rejects a malformed section with a 400 that names the field", async () => {
+    for (const [label, sections] of [
+      ["null element", [null]],
+      ["string element", ["oops"]],
+      ["heading of the wrong type", [{ heading: 12345 }]],
+      ["nested object as heading", [{ heading: { a: 1 } }]],
+      ["scrollHeight as a string", [{ heading: "Hi", scrollHeight: "tall" }]],
+    ] as const) {
+      const res = await exportStatus(sections);
+      expect(res.status, `${label} was not rejected`).toBe(400);
+      expect(res.error, `${label} produced no message`).toBeTruthy();
+    }
+  });
+
+  it("never lets a non-string heading reach the page", async () => {
+    // The 500 was the loud failure; this was the quiet one.
+    const res = await exportStatus([{ heading: { a: 1 } }]);
+    expect(res.status).toBe(400);
+  });
+
+  it("clamps an out-of-range number rather than failing the whole export", async () => {
+    // The route's existing contract for imageWidth, scrim and reveal, which is why the
+    // shape check above is types-only. scrollHeight was the one field with neither a
+    // bound nor a clamp, so -99999 was emitted straight into the page's inline style.
+    const html = await exportHtml({ sections: [{ heading: "A", scrollHeight: -99999 }] });
+    expect(html).not.toContain("-99999");
+    expect(html).toContain("height:1000px");
+  });
+
+  it("holds the section count to the limit the editor itself enforces", async () => {
+    const one = { heading: "Hi", scrollHeight: 1000 };
+    expect((await exportStatus(Array.from({ length: MAX_SECTIONS }, () => one))).status).toBe(200);
+    expect((await exportStatus(Array.from({ length: MAX_SECTIONS + 1 }, () => one))).status).toBe(400);
+  });
 });
 
 describe("the exported page has a real document outline", () => {

@@ -117,6 +117,45 @@ export const sectionSchema = object({
 
 export const sectionsSchema = array(sectionSchema).max(MAX_SECTIONS);
 
+/**
+ * What the export route requires of a section it is handed directly.
+ *
+ * Stricter than "an array of anything": the route interpolates these into a page, so a
+ * null element threw inside the generator and a heading of the wrong type rendered as
+ * "[object Object]".
+ *
+ * Deliberately looser than sectionSchema on ranges and enums. The route already clamps
+ * an oversized imageWidth, a scrim outside 0-1 and an unrecognised reveal, and failing a
+ * whole export over a scrim of 1.05 would be worse for the user than fixing it. Types
+ * here, ranges there. exportSectionsCoverSameFields in the schema tests keeps the two in
+ * step.
+ */
+export const exportSectionSchema = object({
+  id: string().optional(),
+  layout: string().optional(),
+  kind: string().optional(),
+  reveal: string().optional(),
+  scrim: number().optional(),
+  eyebrow: string().optional(),
+  heading: string().optional(),
+  body: string().optional(),
+  ctaLabel: string().optional(),
+  ctaHref: string().optional(),
+  image: string().optional(),
+  imageAlt: string().optional(),
+  imageWidth: number().optional(),
+  accentColor: string().optional(),
+  headingColor: string().optional(),
+  bodyColor: string().optional(),
+  textAlign: string().optional(),
+  align: string().optional(),
+  justify: string().optional(),
+  scrollHeight: number().optional(),
+  visible: boolean().optional(),
+}).strip();
+
+export const exportSectionsSchema = array(exportSectionSchema).max(MAX_SECTIONS);
+
 export type Section = zInfer<typeof sectionSchema>;
 
 export type EditorSection = Section & {

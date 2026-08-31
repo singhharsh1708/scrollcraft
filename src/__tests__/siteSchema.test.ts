@@ -5,7 +5,10 @@ import {
   REVEALS,
   MAX_SECTIONS,
   parseSectionsJson,
+  exportSectionSchema,
+  exportSectionsSchema,
   sectionSchema,
+  sectionsSchema,
   visibleSections,
   type Section,
 } from "@/lib/siteSchema";
@@ -139,5 +142,32 @@ describe("visibleSections", () => {
   it("drops only sections explicitly hidden", () => {
     const s: Section[] = [{ heading: "A" }, { heading: "B", visible: false }, { heading: "C", visible: true }];
     expect(visibleSections(s).map((x) => x.heading)).toEqual(["A", "C"]);
+  });
+});
+
+describe("the export route's lenient schema stays in step with the strict one", () => {
+  it("covers exactly the same fields", () => {
+    // Two schemas exist on purpose: the route clamps ranges rather than rejecting them,
+    // so its input schema checks types only. They must still describe the same section,
+    // or a field added to one is silently stripped by the other.
+    const strict = Object.keys(sectionSchema.shape).sort();
+    const lenient = Object.keys(exportSectionSchema.shape).sort();
+    expect(strict.length).toBeGreaterThan(10);
+    expect(lenient).toEqual(strict);
+  });
+
+  it("still rejects the shapes that broke the generator", () => {
+    expect(exportSectionsSchema.safeParse([null]).success).toBe(false);
+    expect(exportSectionsSchema.safeParse(["oops"]).success).toBe(false);
+    expect(exportSectionsSchema.safeParse([{ heading: { a: 1 } }]).success).toBe(false);
+    expect(exportSectionsSchema.safeParse([{ heading: 12345 }]).success).toBe(false);
+  });
+
+  it("leaves out-of-range values for the route to clamp", () => {
+    // Rejecting these would break the export over something the route already fixes.
+    for (const section of [{ scrim: 5 }, { imageWidth: 99999 }, { reveal: "explode" }, { scrollHeight: -99999 }]) {
+      expect(exportSectionsSchema.safeParse([section]).success, JSON.stringify(section)).toBe(true);
+      expect(sectionsSchema.safeParse([section]).success, `${JSON.stringify(section)} should fail the strict schema`).toBe(false);
+    }
   });
 });
