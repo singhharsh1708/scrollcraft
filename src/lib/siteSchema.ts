@@ -1,4 +1,12 @@
-import { z } from "zod";
+/**
+ * Imported by name rather than as the `z` namespace.
+ *
+ * `import { z } from "zod"` binds a namespace object, which the bundler has to keep
+ * whole — including `z.locales`, all 53 of them. This module is reachable from the
+ * editor and the gallery, so that was 41.6 KiB of translated validation messages, in
+ * languages this app does not speak, on the two heaviest routes.
+ */
+import { string, number, boolean, object, array, tuple, enum as zEnum, type infer as zInfer, type ZodType } from "zod";
 
 export const SECTION_LAYOUTS = ["center", "left", "right", "lower-third", "upper-third"] as const;
 export type SectionLayout = (typeof SECTION_LAYOUTS)[number];
@@ -11,15 +19,15 @@ export type Reveal = (typeof REVEALS)[number];
 
 export const MAX_SECTIONS = 100;
 
-export const sectionIdSchema = z.string().min(1).max(100);
+export const sectionIdSchema = string().min(1).max(100);
 
-export const colorSchema = z.string().max(50)
+export const colorSchema = string().max(50)
   .regex(/^(?:#[0-9a-fA-F]{3,8}|(?:rgb|hsl)a?\([\d\s.,%/]+\)|[a-zA-Z]{3,20})$/);
 
-export const ctaHrefSchema = z.string().max(2000)
+export const ctaHrefSchema = string().max(2000)
   .refine((v) => v === "" || /^(?:#|\/|\.{1,2}\/|https?:\/\/|mailto:|tel:)/i.test(v));
 
-export const imageSrcSchema = z.string().max(2000)
+export const imageSrcSchema = string().max(2000)
   .refine((v) => v === "" || /^(?:https?:\/\/|\/|\.{1,2}\/|assets\/)/i.test(v), {
     message: "image must be an http(s) URL or a relative path",
   });
@@ -30,35 +38,35 @@ export const BACKGROUND_STYLES = ["gradient", "geometric", "particles", "wave"] 
 
 // The family name is interpolated into a Google Fonts stylesheet URL, so the charset is
 // constrained rather than escaped.
-export const fontFamilySchema = z.string().min(1).max(60).regex(/^[A-Za-z0-9][A-Za-z0-9 ]*$/);
+export const fontFamilySchema = string().min(1).max(60).regex(/^[A-Za-z0-9][A-Za-z0-9 ]*$/);
 
-export const themeSchema = z.object({
+export const themeSchema = object({
   fontDisplay: fontFamilySchema.optional(),
   fontBody: fontFamilySchema.optional(),
-  scale: z.enum(TYPE_SCALE_KEYS).optional(),
-  displayWeight: z.number().int().min(100).max(900).optional(),
-  displayCase: z.enum(["none", "upper"]).optional(),
-  displayTracking: z.number().min(-0.08).max(0.4).optional(),
+  scale: zEnum(TYPE_SCALE_KEYS).optional(),
+  displayWeight: number().int().min(100).max(900).optional(),
+  displayCase: zEnum(["none", "upper"]).optional(),
+  displayTracking: number().min(-0.08).max(0.4).optional(),
   ink: colorSchema.optional(),
   muted: colorSchema.optional(),
   accent: colorSchema.optional(),
   accentText: colorSchema.optional(),
   ground: colorSchema.optional(),
-  radius: z.number().min(0).max(64).optional(),
+  radius: number().min(0).max(64).optional(),
 }).strip();
 
-export type Theme = z.infer<typeof themeSchema>;
+export type Theme = zInfer<typeof themeSchema>;
 
-export const siteStyleSchema = z.object({
-  style: z.enum(BACKGROUND_STYLES),
-  colors: z.tuple([colorSchema, colorSchema, colorSchema]),
+export const siteStyleSchema = object({
+  style: zEnum(BACKGROUND_STYLES),
+  colors: tuple([colorSchema, colorSchema, colorSchema]),
 }).strip();
 
-export type SiteStyle = z.infer<typeof siteStyleSchema>;
+export type SiteStyle = zInfer<typeof siteStyleSchema>;
 
 export type JsonParse<T> = { ok: true; value: T } | { ok: false; error: string };
 
-function parseJsonField<T>(raw: unknown, name: string, schema: z.ZodType<T>): JsonParse<T> {
+function parseJsonField<T>(raw: unknown, name: string, schema: ZodType<T>): JsonParse<T> {
   if (typeof raw !== "string") return { ok: false, error: `${name} must be a string` };
   let decoded: unknown;
   try {
@@ -83,33 +91,33 @@ export function parseStyleJson(raw: unknown): JsonParse<SiteStyle> {
   return parseJsonField(raw, "styleJson", siteStyleSchema);
 }
 
-export const sectionSchema = z.object({
+export const sectionSchema = object({
   id: sectionIdSchema.optional(),
-  layout: z.enum(SECTION_LAYOUTS).optional(),
-  kind: z.enum(SECTION_KINDS).optional(),
-  reveal: z.enum(REVEALS).optional(),
-  scrim: z.number().min(0).max(1).optional(),
-  eyebrow: z.string().max(200).optional(),
-  heading: z.string().max(500).optional(),
-  body: z.string().max(5000).optional(),
-  ctaLabel: z.string().max(200).optional(),
+  layout: zEnum(SECTION_LAYOUTS).optional(),
+  kind: zEnum(SECTION_KINDS).optional(),
+  reveal: zEnum(REVEALS).optional(),
+  scrim: number().min(0).max(1).optional(),
+  eyebrow: string().max(200).optional(),
+  heading: string().max(500).optional(),
+  body: string().max(5000).optional(),
+  ctaLabel: string().max(200).optional(),
   ctaHref: ctaHrefSchema.optional(),
   image: imageSrcSchema.optional(),
-  imageAlt: z.string().max(500).optional(),
-  imageWidth: z.number().int().min(16).max(1600).optional(),
+  imageAlt: string().max(500).optional(),
+  imageWidth: number().int().min(16).max(1600).optional(),
   accentColor: colorSchema.optional(),
   headingColor: colorSchema.optional(),
   bodyColor: colorSchema.optional(),
-  textAlign: z.enum(["left", "center", "right"]).optional(),
-  align: z.string().max(30).optional(),
-  justify: z.string().max(30).optional(),
-  scrollHeight: z.number().int().min(100).max(20_000).optional(),
-  visible: z.boolean().optional(),
+  textAlign: zEnum(["left", "center", "right"]).optional(),
+  align: string().max(30).optional(),
+  justify: string().max(30).optional(),
+  scrollHeight: number().int().min(100).max(20_000).optional(),
+  visible: boolean().optional(),
 }).strip();
 
-export const sectionsSchema = z.array(sectionSchema).max(MAX_SECTIONS);
+export const sectionsSchema = array(sectionSchema).max(MAX_SECTIONS);
 
-export type Section = z.infer<typeof sectionSchema>;
+export type Section = zInfer<typeof sectionSchema>;
 
 export type EditorSection = Section & {
   id: string;
