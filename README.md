@@ -183,7 +183,7 @@ unexported work is gone.** Export early.
 ```
 src/
 ├── app/
-│   ├── api/              # Route handlers (sites, payments, webhooks, export, …)
+│   ├── api/              # Route handlers (export-site, demo-frame, health)
 │   ├── templates/        # Template gallery + preview (/templates, /templates/[slug])
 │   ├── editor/           # The visual scroll-site editor
 │   └── create/           # Style + upload → editor flow
