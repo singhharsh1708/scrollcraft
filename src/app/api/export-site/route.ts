@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
-import { REVEALS, type Section, visibleSections as onlyVisible } from "@/lib/siteSchema";
+import { REVEALS, exportSectionsSchema, type Section, visibleSections as onlyVisible } from "@/lib/siteSchema";
 import { layoutStyle } from "@/lib/layoutStyles";
 import { parseThemeJson, parseStyleJson } from "@/lib/siteSchema";
 import { proceduralRuntimeSource } from "@/lib/generate2DFrames";
@@ -13,6 +13,19 @@ function esc(s: unknown): string {
           .replace(/"/g, "&quot;").replace(/'/g, "&#x27;");
 }
 
+
+/**
+ * The scroll track a section occupies.
+ *
+ * Clamped the way imageWidth and scrim already are. `Number(x) || 1000` accepted a
+ * negative, so a scrollHeight of -99999 was emitted straight into the exported page's
+ * inline style; the bounds are sectionSchema's own.
+ */
+function trackHeight(s: Section): number {
+  const raw = Number(s.scrollHeight);
+  if (!Number.isFinite(raw) || raw <= 0) return 1000;
+  return Math.min(Math.max(Math.round(raw), 100), 20_000);
+}
 
 function layoutFor(s: Section) {
   return layoutStyle(s.layout);
@@ -88,9 +101,26 @@ export async function POST(req: NextRequest) {
     }
     // Cap the section payload: with no stored record to fall back on, the body is the
     // only input and an uncapped `sections` amplifies a small request into a huge page.
-    if (sections.length > 200 || JSON.stringify(sections).length > 1_000_000) {
+    if (JSON.stringify(sections).length > 1_000_000) {
       return NextResponse.json({ error: "sections payload is too large" }, { status: 400 });
     }
+    // Shape, not just size. Without this the route read whatever arrived: a null element
+    // threw inside the generator and surfaced as a 500 "Export failed", and a heading of
+    // the wrong type was interpolated as-is, so `{"heading":{"a":1}}` shipped a page
+    // whose <h1> read "[object Object]". Types only - out-of-range numbers stay the
+    // clamps' job below, and MAX_SECTIONS is the limit the editor itself enforces.
+    const parsedSections = exportSectionsSchema.safeParse(sections);
+    if (!parsedSections.success) {
+      const issue = parsedSections.error.issues[0];
+      const where = issue?.path?.length ? issue.path.join(".") : "sections";
+      return NextResponse.json(
+        { error: `${where}: ${issue?.message ?? "invalid section"}` },
+        { status: 400 }
+      );
+    }
+    // Cast because this schema checks types, not the enums: an unrecognised layout or
+    // reveal is clamped a few lines down rather than rejected.
+    const validSections = parsedSections.data as Section[];
     // A background recipe lets the exported page draw its own frames, so the ZIP carries
     // no JPEGs at all. Frames are only required when there is no recipe to draw from.
     const parsedStyle = styleJson ? parseStyleJson(styleJson) : null;
@@ -174,7 +204,9 @@ export async function POST(req: NextRequest) {
       siteName ||
       "A cinematic scroll website";
 
-    const visibleSections = onlyVisible(sections as Section[]);
+    // The validated copy, not the raw body: unknown keys are stripped and every field
+    // is the type the generator below assumes.
+    const visibleSections = onlyVisible(validSections);
     if (visibleSections.length === 0) {
       return NextResponse.json({ error: "At least one section must be visible to export" }, { status: 400 });
     }
@@ -191,13 +223,13 @@ export async function POST(req: NextRequest) {
       const imgWidth = Math.min(Number(s.imageWidth) || 480, 1600);
       if (s.kind === "spacer") {
         return `
-    <section class="scroll-section" aria-hidden="true" style="height:${Number(s.scrollHeight) || 1000}px; position:relative; z-index:10;"></section>`;
+    <section class="scroll-section" aria-hidden="true" style="height:${trackHeight(s)}px; position:relative; z-index:10;"></section>`;
       }
       const reveal = (REVEALS as readonly string[]).includes(s.reveal ?? "") ? s.reveal : "rise";
       const hTag = sectionIndex === firstHeadingIndex ? "h1" : "h2";
       const scrim = Math.min(Math.max(Number(s.scrim ?? 0) || 0, 0), 1);
       return `
-    <section class="scroll-section" style="height:${Number(s.scrollHeight) || 1000}px; position:relative; z-index:10;">
+    <section class="scroll-section" style="height:${trackHeight(s)}px; position:relative; z-index:10;">
       <div class="section-sticky" style="position:sticky; top:0; height:100vh; display:flex; align-items:${safeCss(s.align || L.align)}; justify-content:${safeCss(s.justify || L.justify)}; overflow:hidden;">
         <div class="section-content" data-reveal="${reveal}" style="${scrim > 0 ? `background:radial-gradient(ellipse 120% 100% at 50% 50%, rgba(0,0,0,${scrim}) 0%, rgba(0,0,0,${(scrim * 0.72).toFixed(3)}) 45%, rgba(0,0,0,0) 78%); ` : ""}text-align:${safeCss(s.textAlign || L.textAlign)}; padding:${L.pad}; max-width:${L.maxWidth}px; transition:opacity 0.6s cubic-bezier(0.25,0.46,0.45,0.94),transform 0.6s cubic-bezier(0.25,0.46,0.45,0.94),clip-path 0.7s cubic-bezier(0.25,0.46,0.45,0.94);">
           ${imgSrc ? `<img src="${esc(imgSrc)}" alt="${esc(s.imageAlt || "")}" style="display:block; max-width:min(100%, ${imgWidth}px); height:auto; margin:${stack};" />` : ""}
@@ -212,7 +244,7 @@ export async function POST(req: NextRequest) {
     </section>`;
     }).join("\n");
 
-    const totalScrollHeight = visibleSections.reduce((acc: number, s: Section) => acc + (Number(s.scrollHeight) || 1000), 0) + 1000;
+    const totalScrollHeight = visibleSections.reduce((acc: number, s: Section) => acc + trackHeight(s), 0) + 1000;
 
     const html = `<!DOCTYPE html>
 <html lang="en">
