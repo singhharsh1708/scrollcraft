@@ -127,3 +127,70 @@ describe("a fork resolves its own origin", () => {
     expect(env).toContain("VERCEL_PROJECT_PRODUCTION_URL");
   });
 });
+
+/**
+ * Numbers and capabilities the site publishes about itself.
+ *
+ * Every one of these was wrong at some point after the open-source pivot: the README's
+ * opening paragraph still sold 8 of the 21 templates and advertised a publishing feature
+ * removed in v1.0.0, the presets page promised an AI that no longer exists, and the
+ * about page promised a weekly release cadence the changelog contradicts.
+ */
+describe("what the site claims about itself is true", () => {
+  const README = readFileSync("README.md", "utf8");
+  const TEMPLATES_SRC = readFileSync("src/lib/templates.ts", "utf8");
+
+  const templateCount = (TEMPLATES_SRC.match(/^ {4}slug: "/gm) ?? []).length;
+  const categoryCount = new Set(
+    [...TEMPLATES_SRC.matchAll(/^ {4}category: "([^"]+)"/gm)].map((m) => m[1])
+  ).size;
+
+  it("counted the catalogue at all, so the assertions below are not vacuous", () => {
+    expect(templateCount).toBeGreaterThan(10);
+    expect(categoryCount).toBeGreaterThan(3);
+  });
+
+  it("quotes the real template and category counts in the README", () => {
+    const line = README.split("\n").find((l) => l.includes("Template library"));
+    expect(line, "the README feature bullet is gone").toBeTruthy();
+    expect(line).toContain(`${templateCount} finished scroll sites`);
+    expect(line).toContain(`${categoryCount} categories`);
+  });
+
+  it("sells nothing, anywhere", () => {
+    for (const [label, text] of [
+      ["README", README],
+      ["terms", readFileSync("src/app/terms/page.tsx", "utf8")],
+      ["contact", readFileSync("src/app/contact/page.tsx", "utf8")],
+    ] as const) {
+      expect(text, `${label} still offers something for sale`).not.toMatch(
+        /bought once|are paid|paid templates|premium template|"Billing"/i
+      );
+    }
+  });
+
+  it("promises no AI, which the product does not have", () => {
+    // The changelog records its removal by name, so it is the one file allowed to say it.
+    for (const file of ["README.md", "src/app/presets/page.tsx", "src/app/HomeClient.tsx", "src/app/create/page.tsx", "src/app/about/page.tsx"]) {
+      expect(readFileSync(file, "utf8"), `${file} advertises AI`).not.toMatch(
+        /\bthe AI\b|AI generates|AI-generated|AI-powered/i
+      );
+    }
+  });
+
+  it("promises no release cadence it does not keep", () => {
+    expect(readFileSync("src/app/about/page.tsx", "utf8")).not.toMatch(
+      /release weekly|every single week|ship daily|weekly releases/i
+    );
+  });
+
+  it("keeps the legal pages dated to when they were last rewritten", () => {
+    // They described the August teardown while dated June, which reads as unmaintained.
+    for (const file of ["src/app/terms/page.tsx", "src/app/cookies/page.tsx", "src/app/privacy/page.tsx"]) {
+      const text = readFileSync(file, "utf8");
+      const stamp = /Last updated: ([A-Z][a-z]+ \d{4})/.exec(text);
+      expect(stamp, `${file} has no Last updated line`).toBeTruthy();
+      expect(stamp![1], `${file} predates the open-source rewrite`).not.toBe("June 2026");
+    }
+  });
+});

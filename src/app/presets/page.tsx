@@ -164,7 +164,7 @@ export default function PresetsPage() {
       <section className="pb-24 px-6 text-center border-t border-white/5 pt-20">
         <h2 className="text-3xl font-black tracking-tighter mb-4">Don&apos;t see what you need?</h2>
         <p className="text-muted-foreground mb-8 max-w-md mx-auto">
-          Start from scratch — describe any atmosphere and the AI generates it instantly.
+          Start from scratch — pick a style and a palette, or bring your own video, and the frames render in your browser.
         </p>
         <Link href="/create">
           <Button size="lg" className="bg-primary hover:bg-primary/90 text-white px-10 py-6 text-base font-semibold shadow-xl shadow-primary/30">
