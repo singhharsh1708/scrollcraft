@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef, useCallback, Suspense } from "react";
+import { useState, useEffect, useRef, useCallback, useSyncExternalStore, Suspense } from "react";
 import { loadFrames, storeFrames, storeDocument, loadDocument } from "@/lib/frameStorage";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -356,6 +356,14 @@ function EditorInner() {
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
   const [dirty, setDirty] = useState(false);
+  // The handler accepts metaKey and ctrlKey alike, but the labels promised ⌘ to
+  // everyone. useSyncExternalStore keeps this hydration-safe: the server snapshot
+  // matches the first client render, then the real platform takes over.
+  const modKey = useSyncExternalStore(
+    () => () => {}, // the platform never changes; nothing to subscribe to
+    () => (/Mac|iPhone|iPad/.test(navigator.platform) ? "⌘" : "Ctrl"),
+    () => "Ctrl"
+  );
   const [saveState, setSaveState] = useState<SaveState>("idle");
   // Bumped on every content edit. A save captures this at its start and only clears the
   // dirty flag if it is unchanged when the request resolves — otherwise edits the user
@@ -748,7 +756,7 @@ function EditorInner() {
     shortcutsRef.current = { undo, redo, handleSave, handleExport, isSaving, isExporting };
   });
 
-  // Keyboard shortcuts: ⌘Z undo, ⌘⇧Z / ⌘Y redo, ⌘S save, ⌘E export
+  // Keyboard shortcuts: mod+Z undo, mod+Shift+Z / mod+Y redo, mod+S save, mod+E export
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const mod = e.metaKey || e.ctrlKey;
@@ -818,7 +826,7 @@ function EditorInner() {
             <button
               onClick={undo}
               disabled={!canUndo}
-              title="Undo (⌘Z)"
+              title={`Undo (${modKey}+Z)`}
               className="p-1.5 rounded transition-colors text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed"
             >
               <Undo2 className="w-3.5 h-3.5" />
@@ -826,7 +834,7 @@ function EditorInner() {
             <button
               onClick={redo}
               disabled={!canRedo}
-              title="Redo (⌘⇧Z)"
+              title={`Redo (${modKey}+Shift+Z)`}
               className="p-1.5 rounded transition-colors text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed"
             >
               <Redo2 className="w-3.5 h-3.5" />
@@ -872,6 +880,7 @@ function EditorInner() {
             size="sm"
             onClick={() => handleSave()}
             disabled={isSaving}
+            title={`Save (${modKey}+S)`}
             className="border-white/10 h-7 px-3 text-xs gap-1"
           >
             {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
@@ -881,7 +890,7 @@ function EditorInner() {
             size="sm"
             onClick={handleExport}
             disabled={isExporting}
-            title={exportStage ?? undefined}
+            title={exportStage ?? `Export (${modKey}+E)`}
             className="bg-primary hover:bg-primary/90 text-white h-7 px-3 text-xs font-semibold"
           >
             {isExporting ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : <Download className="w-3.5 h-3.5 mr-1" />}
