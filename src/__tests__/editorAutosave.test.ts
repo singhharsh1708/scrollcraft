@@ -108,6 +108,21 @@ describe("editor autosave", () => {
     expect(write).toMatch(/if \(mobileFrames\.length\) \{[\s\S]*?\} else \{[\s\S]*?deleteFrames/);
   });
 
+  it("tells the user when a second editor tab is open", () => {
+    // One document slot by design, so two tabs autosave over each other and the loser's
+    // work is gone with no sign it happened. Nothing to merge, so the fix is to say so
+    // while both tabs are still open. Verified in Chrome: one tab warns about nothing,
+    // and opening a second makes both warn.
+    expect(EDITOR).toContain('const EDITOR_CHANNEL = "scrollcraft-editor-tabs";');
+    expect(EDITOR).toContain("new BroadcastChannel(EDITOR_CHANNEL)");
+    expect(EDITOR).toContain("Another editor tab is open");
+    // A per-tab id, or a channel would answer itself and a dev double-mount would warn.
+    expect(EDITOR).toContain("if (!msg || msg.from === TAB_ID) return;");
+    // Absent in some environments, and losing the warning must not lose the editor.
+    expect(EDITOR).toContain('if (typeof BroadcastChannel === "undefined") return;');
+    expect(EDITOR).toContain("return () => channel.close();");
+  });
+
   it("keeps the unload warning as the backstop for the debounce window", () => {
     expect(EDITOR).toContain('window.addEventListener("beforeunload", onBeforeUnload);');
     expect(EDITOR).toMatch(/if \(!dirty\) return;/);
