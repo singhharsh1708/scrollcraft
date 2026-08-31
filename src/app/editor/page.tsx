@@ -29,6 +29,18 @@ const ScrollSection = dynamic(() => import("@/components/ScrollSection"), { ssr:
 
 type Section = EditorSection;
 
+/**
+ * One tab, one saved document.
+ *
+ * There is a single document slot by design - a tool with no account has nothing to hang
+ * a library off - so two editor tabs autosave over each other and the loser's work is
+ * gone with no sign it ever happened. There is nothing to merge, so the honest fix is to
+ * say so while both tabs are still open rather than report the loss afterwards.
+ */
+const EDITOR_CHANNEL = "scrollcraft-editor-tabs";
+/** Per tab, so a channel never answers itself and a double-mount in dev cannot warn. */
+const TAB_ID = typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : String(Math.random());
+
 const SAVED_FRAMES_KEY = "scrollcraft_saved_frames";
 const SAVED_MOBILE_FRAMES_KEY = "scrollcraft_saved_mframes";
 
@@ -828,6 +840,38 @@ function EditorInner() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  useEffect(() => {
+    if (typeof BroadcastChannel === "undefined") return;
+    let channel: BroadcastChannel;
+    try {
+      channel = new BroadcastChannel(EDITOR_CHANNEL);
+    } catch {
+      return;
+    }
+    let warned = false;
+    const warnOnce = () => {
+      if (warned) return;
+      warned = true;
+      toast.warning("Another editor tab is open. Both save to the same document, so the last one to save wins.", {
+        duration: 10000,
+      });
+    };
+    channel.onmessage = (e: MessageEvent) => {
+      const msg = e.data as { type?: string; from?: string } | null;
+      if (!msg || msg.from === TAB_ID) return;
+      // A new tab asks; every existing tab answers. Both ends warn, so whichever tab the
+      // user is looking at tells them.
+      if (msg.type === "hello") {
+        channel.postMessage({ type: "here", from: TAB_ID });
+        warnOnce();
+      } else if (msg.type === "here") {
+        warnOnce();
+      }
+    };
+    channel.postMessage({ type: "hello", from: TAB_ID });
+    return () => channel.close();
   }, []);
 
   // Warn before leaving with unsaved changes
