@@ -2,7 +2,7 @@ import { ImageResponse } from "next/og";
 import { siteUrl } from "@/lib/env";
 
 export const runtime = "edge";
-export const alt = "ScrollCraft — AI Scroll Sites";
+export const alt = "ScrollCraft — Cinematic Scroll Sites";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -47,10 +47,16 @@ export default function OGImage() {
             alignItems: "center",
             justifyContent: "center",
             marginBottom: 28,
-            fontSize: 36,
           }}
         >
-          ✦
+          {/* Drawn, not typed: the edge runtime's font has no U+2726, so the old ✦
+              rendered as a tofu box on every share card. */}
+          <svg width="40" height="40" viewBox="0 0 512 512">
+            <path
+              d="M256 106 L287.1 224.9 L406 256 L287.1 287.1 L256 406 L224.9 287.1 L106 256 L224.9 224.9 Z"
+              fill="#ffffff"
+            />
+          </svg>
         </div>
 
         {/* Title */}
@@ -81,7 +87,7 @@ export default function OGImage() {
 
         {/* Pills */}
         <div style={{ display: "flex", gap: 16 }}>
-          {["AI-generated frames", "Scroll-linked animation", "Pure HTML export"].map((t) => (
+          {["Procedural canvas backgrounds", "Scroll-linked animation", "Pure HTML export"].map((t) => (
             <div
               key={t}
               style={{
