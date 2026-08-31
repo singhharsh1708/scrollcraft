@@ -144,6 +144,28 @@ describe("the editor is reachable without a mouse", () => {
   });
 });
 
+describe("the app has one theme and every component agrees on it", () => {
+  it("fixes the theme on the document, with no provider and no switch", () => {
+    expect(readFileSync("src/app/layout.tsx", "utf8")).toMatch(/<html lang="en" className={`dark /);
+    // Nothing resolves the theme at runtime, so nothing may ask the OS what it is.
+    const askers = sourceFiles().filter((f) => readFileSync(f, "utf8").includes("next-themes"));
+    expect(askers, "a component reads the theme from next-themes, which has no provider").toEqual([]);
+  });
+
+  it("tells the toaster the theme instead of letting it read the OS", () => {
+    // useTheme() with no provider returns "system", so sonner followed
+    // prefers-color-scheme. Measured in Chrome with the media feature emulated: on a
+    // machine set to light the toaster rendered data-sonner-theme="light" and a
+    // rgb(240,248,255) card over the black app.
+    expect(readFileSync("src/components/ui/sonner.tsx", "utf8")).toContain('theme="dark"');
+  });
+
+  it("has dropped the dependency that was only there to answer that question", () => {
+    const pkg = JSON.parse(readFileSync("package.json", "utf8"));
+    expect({ ...pkg.dependencies, ...pkg.devDependencies }["next-themes"]).toBeUndefined();
+  });
+});
+
 describe("analytics does not break a self-hosted deploy", () => {
   it("only mounts the Vercel script when Vercel is serving", () => {
     // Mounted unconditionally the insights script 404s and trips strict MIME checking,
