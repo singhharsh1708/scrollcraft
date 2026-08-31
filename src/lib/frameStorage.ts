@@ -4,15 +4,41 @@ const DB_NAME = "scrollcraft";
 const STORE_NAME = "frames";
 const DB_VERSION = 1;
 
-function openDB(): Promise<IDBDatabase> {
+function requestDB(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
     const req = indexedDB.open(DB_NAME, DB_VERSION);
-    req.onupgradeneeded = () => req.result.createObjectStore(STORE_NAME);
+    req.onupgradeneeded = () => {
+      if (!req.result.objectStoreNames.contains(STORE_NAME)) req.result.createObjectStore(STORE_NAME);
+    };
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
     // Without this a version bump held open by another tab hangs here forever.
     req.onblocked = () => reject(new Error("IndexedDB upgrade blocked by another tab"));
   });
+}
+
+/**
+ * A database can exist at the current version without its store — an upgrade that was
+ * interrupted partway leaves exactly that. onupgradeneeded never fires again for the
+ * same version, so without recovery every read and write in this module fails forever.
+ * A store-less database holds nothing, so deleting and recreating it loses nothing.
+ */
+async function openDB(): Promise<IDBDatabase> {
+  const db = await requestDB();
+  if (db.objectStoreNames.contains(STORE_NAME)) return db;
+  db.close();
+  await new Promise<void>((resolve, reject) => {
+    const del = indexedDB.deleteDatabase(DB_NAME);
+    del.onsuccess = () => resolve();
+    del.onerror = () => reject(del.error);
+    del.onblocked = () => reject(new Error("IndexedDB delete blocked by another tab"));
+  });
+  const recreated = await requestDB();
+  if (!recreated.objectStoreNames.contains(STORE_NAME)) {
+    recreated.close();
+    throw new Error("IndexedDB store could not be created");
+  }
+  return recreated;
 }
 
 // A transaction can abort without any request error — storage eviction, the connection
