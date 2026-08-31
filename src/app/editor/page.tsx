@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useRef, useCallback, useSyncExternalStore, Suspense } from "react";
-import { loadFrames, storeFrames, storeDocument, loadDocument } from "@/lib/frameStorage";
+import { loadFrames, storeFrames, deleteFrames, storeDocument, loadDocument } from "@/lib/frameStorage";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -707,8 +707,13 @@ function EditorInner() {
       framesCached = await storeFrames(SAVED_FRAMES_KEY, frames).then(() => true, () => false);
       if (framesCached) {
         savedFramesSigRef.current = framesSignature;
+        // Clear the slot when this document has none, or it keeps whatever the last
+        // document that did put there - restore loads this key unconditionally, so a
+        // site with no mobile variant inherited the previous site's and exported it.
         if (mobileFrames.length) {
           await storeFrames(SAVED_MOBILE_FRAMES_KEY, mobileFrames).catch(() => {});
+        } else {
+          await deleteFrames(SAVED_MOBILE_FRAMES_KEY).catch(() => {});
         }
       }
     }
