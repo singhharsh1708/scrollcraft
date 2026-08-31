@@ -1,3 +1,4 @@
+import "server-only"; // a client import would pull zod's whole namespace back in
 import { z } from "zod";
 
 /**
