@@ -15,7 +15,7 @@ when something breaks — under strict rules so it stays useful instead of noisy
 | `prod-template-preview` | a template page does not return 200. |
 | `prod-sitemap` | `/sitemap.xml` is missing or has no template URLs. |
 
-**Code** (daily, and on every push to `main` that touches `src/`, `prisma/`, or the watchdog):
+**Code** (daily, and on every push to `main` that touches `src/` or the watchdog):
 
 | Check | Fails when |
 | --- | --- |

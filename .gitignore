@@ -42,8 +42,5 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# temporary frame extraction files
+# scratch directory, in case a script wants one
 /tmp
-
-# Prisma generated client is regenerated via postinstall/build — do not commit
-# /src/generated/prisma

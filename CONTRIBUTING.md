@@ -18,21 +18,20 @@ isn't tolerated.
 
 ## Development setup
 
-> Requires Node.js 20+ and a PostgreSQL database.
+> Requires Node.js 20+. That is the whole list.
 
 ```bash
 # Fork the repo, then:
 git clone https://github.com/<your-username>/scrollcraft.git
 cd scrollcraft
 npm install
-
-cp .env.example .env          # fill in DATABASE_URL + NEXTAUTH_SECRET at minimum
-npx prisma migrate deploy     # apply the schema
 npm run dev
 ```
 
-You can develop most features in **demo mode** (no AI/payment keys needed) — the editor
-falls back to placeholder frames.
+There is no database to provision, no account to create and no key to obtain. Every
+environment variable is optional, so the app runs with no `.env` at all. If you want
+error reporting or shared rate limiting while developing, `.env.example` lists what
+those need.
 
 ## Workflow
 
@@ -68,9 +67,9 @@ falls back to placeholder frames.
 Follow [Conventional Commits](https://www.conventionalcommits.org):
 
 ```
-feat: add Lemon Squeezy one-time export checkout
-fix: read LS custom_data from meta in webhook
-docs: rewrite README for ScrollCraft
+feat: autosave the editor instead of relying on the Save button
+fix: stop the toasts from following the OS instead of the app
+docs: fix contributor setup, which still asked for a database
 ```
 
 ## Coding standards
@@ -83,21 +82,19 @@ docs: rewrite README for ScrollCraft
 - **Log, don't `console.log`** — use the structured `logger` from `src/lib/logger.ts` in API/server code.
 - **Lint clean** — don't introduce new ESLint errors. Run `npm run lint` before pushing.
 
-## Database changes
+## Where state lives
 
-When you change `prisma/schema.prisma`:
+There is no server-side state to change. A visitor's work is held in their own browser
+(IndexedDB, via `src/lib/frameStorage.ts`) until they export it, and the two API routes
+hold nothing between requests.
 
-1. Create a migration:
-   ```bash
-   npx prisma migrate dev --name short_description
-   ```
-2. Commit **both** the schema change and the generated SQL in `prisma/migrations/`.
-3. The generated client lives in `src/generated/prisma` and is regenerated on `npm run build` / `postinstall`.
+If a change would need somewhere to persist data, say so in the issue before building
+it — adding a database back is a product decision, not an implementation detail.
 
 ## Tests
 
 - Tests live in `src/__tests__/` and run with [Vitest](https://vitest.dev).
-- Add tests for new logic, especially anything security- or payment-related
+- Add tests for new logic, especially anything that touches the exporter, the scroll engine, or what the site claims about itself
   (signature verification, rate limiting, idempotency).
 - Run the suite with `npm test`.
 
