@@ -22,11 +22,48 @@ import { siteStyleSchema, themeSchema, type EditorSection, type SiteStyle, type 
 import { templateBySlug, type Template } from "@/lib/templates";
 import { faviconSvg, notFoundHtml, exportReadme, renderSocialCard } from "@/lib/exportAssets";
 import { generate2DFrames } from "@/lib/generate2DFrames";
+import { AUTOSAVE_DEBOUNCE_MS, saveStatusLabel, type SaveState } from "@/lib/saveStatus";
 
 const ScrollEngine = dynamic(() => import("@/components/ScrollEngine"), { ssr: false });
 const ScrollSection = dynamic(() => import("@/components/ScrollSection"), { ssr: false });
 
 type Section = EditorSection;
+
+const SAVED_FRAMES_KEY = "scrollcraft_saved_frames";
+const SAVED_MOBILE_FRAMES_KEY = "scrollcraft_saved_mframes";
+
+/** Autosave is silent, so this is the only place the user can see whether work is safe. */
+function SaveIndicator({ dirty, state }: { dirty: boolean; state: SaveState }) {
+  const label = saveStatusLabel(dirty, state);
+  if (!label) return null;
+  if (label === "Saving…") {
+    return (
+      <span role="status" className="flex items-center gap-1 flex-shrink-0 text-xs text-muted-foreground">
+        <Loader2 className="w-3 h-3 animate-spin" aria-hidden="true" />{label}
+      </span>
+    );
+  }
+  if (label === "Not saved") {
+    return (
+      <span
+        role="status"
+        className="flex-shrink-0 text-xs text-amber-400"
+        title="Autosave failed. Your browser may be out of storage or in private mode - export to keep your work."
+      >
+        {label}
+      </span>
+    );
+  }
+  if (label === "Unsaved changes") {
+    return (
+      <span role="status" className="flex items-center flex-shrink-0" title={label}>
+        <span aria-hidden="true" className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+        <span className="sr-only">{label}</span>
+      </span>
+    );
+  }
+  return <span role="status" className="flex-shrink-0 text-xs text-muted-foreground">{label}</span>;
+}
 
 const defaultSection = (i: number): Section => ({
   id: `section-${Date.now()}-${i}`,
@@ -264,7 +301,7 @@ function EditorInner() {
 
         // Frames first; if storage dropped them, the recipe can redraw the background.
         const storedFrames = doc.framesKey ? await loadFrames(doc.framesKey).catch(() => null) : null;
-        const storedMobile = await loadFrames("scrollcraft_saved_mframes").catch(() => null);
+        const storedMobile = await loadFrames(SAVED_MOBILE_FRAMES_KEY).catch(() => null);
         if (cancelled) return;
         if (storedFrames?.length) {
           setFrames(storedFrames);
@@ -319,6 +356,7 @@ function EditorInner() {
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
   const [dirty, setDirty] = useState(false);
+  const [saveState, setSaveState] = useState<SaveState>("idle");
   // Bumped on every content edit. A save captures this at its start and only clears the
   // dirty flag if it is unchanged when the request resolves — otherwise edits the user
   // made while the save was in flight would be silently marked as saved.
@@ -606,8 +644,41 @@ function EditorInner() {
    *
    * There is no account and no server, so this is the whole persistence story: the
    * document goes to IndexedDB and is restored the next time the editor opens. Frames
-   * are stored under their own key because they are far too large to sit alongside it.
+   * are stored under their own key because they are far too large to sit alongside it,
+   * and are rewritten only when their contents change so an autosave on every keystroke
+   * does not push megabytes through IndexedDB.
    */
+  const savedFramesSigRef = useRef<string>("");
+  const framesSignature = `${frames.length}:${frames[0]?.slice(0, 64) ?? ""}:${mobileFrames.length}`;
+
+  const writeDocument = async (opts: { withFrames: boolean }): Promise<boolean> => {
+    let framesCached = savedFramesSigRef.current === framesSignature;
+
+    if (opts.withFrames || !framesCached) {
+      framesCached = await storeFrames(SAVED_FRAMES_KEY, frames).then(() => true, () => false);
+      if (framesCached) {
+        savedFramesSigRef.current = framesSignature;
+        if (mobileFrames.length) {
+          await storeFrames(SAVED_MOBILE_FRAMES_KEY, mobileFrames).catch(() => {});
+        }
+      }
+    }
+
+    await storeDocument({
+      name: siteName,
+      description: siteDescription || undefined,
+      sections,
+      themeJson: siteTheme ? JSON.stringify(siteTheme) : null,
+      styleJson: styleSpec ? JSON.stringify(styleSpec) : null,
+      customHead,
+      customCss,
+      fps,
+      framesKey: framesCached ? SAVED_FRAMES_KEY : undefined,
+      savedAt: new Date().toISOString(),
+    });
+    return framesCached;
+  };
+
   const handleSave = async (opts?: { silent?: boolean }): Promise<string | null> => {
     if (isDemo) {
       if (!opts?.silent) toast.error("Nothing to save yet - pick a template or generate a background first");
@@ -615,41 +686,56 @@ function EditorInner() {
     }
     setIsSaving(true);
     const genAtSave = editGenRef.current;
-    const framesKeyForDoc = "scrollcraft_saved_frames";
     try {
-      const framesCached = await storeFrames(framesKeyForDoc, frames).then(() => true, () => false);
-      if (mobileFrames.length) {
-        await storeFrames("scrollcraft_saved_mframes", mobileFrames).catch(() => {});
-      }
-
-      await storeDocument({
-        name: siteName,
-        description: siteDescription || undefined,
-        sections,
-        themeJson: siteTheme ? JSON.stringify(siteTheme) : null,
-        styleJson: styleSpec ? JSON.stringify(styleSpec) : null,
-        customHead,
-        customCss,
-        fps,
-        framesKey: framesCached ? framesKeyForDoc : undefined,
-        savedAt: new Date().toISOString(),
-      });
+      const framesCached = await writeDocument({ withFrames: true });
 
       // Only clear dirty if nothing changed while the write was in flight, so those
       // edits are not silently marked as saved.
       if (editGenRef.current === genAtSave) setDirty(false);
+      setSaveState("saved");
       if (!opts?.silent) {
         if (framesCached) toast.success("Saved in this browser");
         else toast.warning("Saved, but the background could not be cached - export to keep it.");
       }
-      return framesKeyForDoc;
+      return SAVED_FRAMES_KEY;
     } catch {
+      setSaveState("failed");
       toast.error("Couldn't save. Your browser may be out of storage or in private mode.");
       return null;
     } finally {
       setIsSaving(false);
     }
   };
+
+  // The autosave timer below is scheduled by one render and fires during another, so it
+  // reaches the current writeDocument through a ref rather than a stale closure.
+  const writeDocumentRef = useRef(writeDocument);
+  useEffect(() => { writeDocumentRef.current = writeDocument; });
+
+  /**
+   * Autosave.
+   *
+   * Everything lives in this browser, so an unsaved editor is one closed tab away from
+   * being gone. Wait for a pause in typing, then write; the beforeunload warning stays as
+   * the backstop for a tab closed inside that window.
+   */
+  useEffect(() => {
+    if (!dirty || isDemo || hydrating) return;
+    const timer = setTimeout(() => {
+      const genAtSave = editGenRef.current;
+      setSaveState("saving");
+      writeDocumentRef.current({ withFrames: false }).then(
+        () => {
+          // Edits made while the write was in flight are still unsaved.
+          if (editGenRef.current !== genAtSave) { setSaveState("idle"); return; }
+          setDirty(false);
+          setSaveState("saved");
+        },
+        () => setSaveState("failed"),
+      );
+    }, AUTOSAVE_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [dirty, isDemo, hydrating, sections, siteName, siteDescription, customHead, customCss, fps, styleSpec, siteTheme, framesSignature]);
 
   const totalScrollHeight = sections.filter(s => s.visible).reduce((a, s) => a + s.scrollHeight, 0) + 1000;
 
@@ -722,7 +808,7 @@ function EditorInner() {
             onChange={(e) => { setSiteName(e.target.value); setDirty(true); }}
             className="h-7 bg-transparent border-transparent hover:border-white/10 focus:border-primary/50 text-sm font-medium w-48"
           />
-          {dirty && <span title="Unsaved changes" className="w-1.5 h-1.5 rounded-full bg-amber-400 flex-shrink-0" />}
+          <SaveIndicator dirty={dirty} state={saveState} />
           {isDemo && <Badge variant="outline" className="border-amber-500/40 text-amber-400 text-xs">Demo mode</Badge>}
         </div>
 
