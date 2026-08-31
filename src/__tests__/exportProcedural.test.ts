@@ -1,15 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import type { NextRequest } from "next/server";
 
-const dbMock = vi.hoisted(() => ({
-  exportPurchase: { findFirst: vi.fn() },
-  site: { findFirst: vi.fn() },
-}));
-const authMock = vi.hoisted(() => vi.fn());
 const rateLimitMock = vi.hoisted(() => vi.fn());
 
-vi.mock("@/lib/db", () => ({ db: dbMock }));
-vi.mock("@/auth", () => ({ auth: authMock }));
 vi.mock("@/lib/rateLimit", () => ({ rateLimit: rateLimitMock, getClientIp: () => "1.2.3.4" }));
 
 type Handler = typeof import("../app/api/export-site/route").POST;
@@ -41,7 +34,6 @@ async function proceduralHtml(over: Record<string, unknown> = {}): Promise<strin
 beforeEach(async () => {
   vi.clearAllMocks();
   rateLimitMock.mockResolvedValue({ allowed: true });
-  authMock.mockResolvedValue({ user: { id: "u1", email: "a@b.c", plan: "PRO" } });
   ({ POST } = await import("../app/api/export-site/route"));
 });
 
