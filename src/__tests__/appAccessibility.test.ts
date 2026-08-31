@@ -144,6 +144,24 @@ describe("the editor is reachable without a mouse", () => {
     expect(editor).toContain('aria-label="Site name"');
   });
 
+  it("advertises its shortcuts in the key the visitor actually has", () => {
+    // The handler accepts metaKey and ctrlKey alike, but the titles promised ⌘ to
+    // everyone. Verified in Chrome: a Mac sees ⌘+Z, a spoofed Win32 platform sees
+    // Ctrl+Z, with no hydration mismatch (useSyncExternalStore with a "Ctrl" server
+    // snapshot). Save and Export carry titles too — they had shortcuts nobody could
+    // discover.
+    expect(editor).not.toMatch(/title="[^"]*⌘/);
+    for (const title of [
+      "title={`Undo (${modKey}+Z)`}",
+      "title={`Redo (${modKey}+Shift+Z)`}",
+      "title={`Save (${modKey}+S)`}",
+      "title={exportStage ?? `Export (${modKey}+E)`}",
+    ]) {
+      expect(editor).toContain(title);
+    }
+    expect(editor).toContain('() => "Ctrl"');
+  });
+
   it("gives every icon-only control a target WCAG 2.5.8 accepts", () => {
     // A 14px icon needs p-1.5 to clear 24px; p-1 gives 22 and p-0.5 gives 18. Measured
     // in Chrome at 390x844 against a production build: twelve controls under 24px
