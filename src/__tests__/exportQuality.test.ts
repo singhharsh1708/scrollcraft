@@ -9,12 +9,8 @@ import { faviconSvg, notFoundHtml, exportReadme } from "@/lib/exportAssets";
  * decisions that earn those numbers, because each one was previously missing.
  */
 
-const dbMock = vi.hoisted(() => ({ site: { findFirst: vi.fn() } }));
-const authMock = vi.hoisted(() => vi.fn());
 const rateLimitMock = vi.hoisted(() => vi.fn());
 
-vi.mock("@/lib/db", () => ({ db: dbMock }));
-vi.mock("@/auth", () => ({ auth: authMock }));
 vi.mock("@/lib/rateLimit", () => ({ rateLimit: rateLimitMock, getClientIp: () => "1.2.3.4" }));
 
 type Handler = typeof import("../app/api/export-site/route").POST;
@@ -44,7 +40,6 @@ async function exportHtml(over: Record<string, unknown> = {}): Promise<string> {
 beforeEach(async () => {
   vi.clearAllMocks();
   rateLimitMock.mockResolvedValue({ allowed: true });
-  authMock.mockResolvedValue({ user: { id: "u1", email: "a@b.c", plan: "FREE" } });
   ({ POST } = await import("../app/api/export-site/route"));
 });
 
