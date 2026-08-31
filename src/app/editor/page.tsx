@@ -43,12 +43,16 @@ function SaveIndicator({ dirty, state }: { dirty: boolean; state: SaveState }) {
       </span>
     );
   }
-  if (label === "Not saved") {
+  if (label === "Not saved" || label === "Background not saved") {
     return (
       <span
         role="status"
         className="flex-shrink-0 text-xs text-amber-400"
-        title="Autosave failed. Your browser may be out of storage or in private mode - export to keep your work."
+        title={
+          label === "Not saved"
+            ? "Autosave failed. Your browser may be out of storage or in private mode - export to keep your work."
+            : "Your text is saved but the background was too large to keep. Export now to keep it."
+        }
       >
         {label}
       </span>
@@ -209,16 +213,53 @@ function EditorInner() {
     return () => observer.disconnect();
   }, [showPreview, viewportMode]);
 
-  // Load desktop frames from IndexedDB (primary store; sessionStorage was too small at 5 MB)
+  /**
+   * Load desktop frames from IndexedDB, where /create left them.
+   *
+   * The handoff is a key, not the data, so the entry can be gone: storage evicted, a
+   * different browser, a bookmarked link opened days later. Silently keeping the
+   * placeholder then passed it off as the user's own background, and it would have been
+   * saved and exported as one. Redraw from the recipe in the URL where there is one, and
+   * say so where there is not.
+   */
   useEffect(() => {
     if (!framesKey || parsedFrames) return;
-    loadFrames(framesKey).then((f) => {
-      if (f && f.length) {
-        setFrames(f);
-        setFrameCount(f.length);
+    let cancelled = false;
+    (async () => {
+      const stored = await loadFrames(framesKey).catch(() => null);
+      if (cancelled) return;
+      if (stored?.length) {
+        setFrames(stored);
+        setFrameCount(stored.length);
         setIsDemo(false);
+        return;
       }
-    }).catch(() => {});
+      // The recipe the URL carried. Re-derived here rather than read from state: this
+      // effect runs once on mount, and state may have moved on by the time it resolves.
+      const parsed = siteStyleSchema.safeParse({ style: styleParam, colors: colorParams });
+      if (parsed.success) {
+        const recipe = parsed.data;
+        const mob = window.innerWidth < 768;
+        const regen = await generate2DFrames({
+          style: recipe.style,
+          color1: recipe.colors[0],
+          color2: recipe.colors[1],
+          color3: recipe.colors[2],
+          frameCount: mob ? 60 : 90, width: mob ? 640 : 1280, height: mob ? 360 : 720,
+        }, () => {}).catch(() => null);
+        if (cancelled) return;
+        if (regen?.length) {
+          setFrames(regen);
+          setFrameCount(regen.length);
+          setIsDemo(false);
+          toast.info("Redrew the background from its style - this browser no longer had the frames");
+          return;
+        }
+      }
+      setIsDemo(true);
+      toast.warning("That background is no longer in this browser. Pick a template or a style to make a new one.");
+    })();
+    return () => { cancelled = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const audioFileRef = useRef<HTMLInputElement>(null);
@@ -700,7 +741,7 @@ function EditorInner() {
       // Only clear dirty if nothing changed while the write was in flight, so those
       // edits are not silently marked as saved.
       if (editGenRef.current === genAtSave) setDirty(false);
-      setSaveState("saved");
+      setSaveState(framesCached ? "saved" : "partial");
       if (!opts?.silent) {
         if (framesCached) toast.success("Saved in this browser");
         else toast.warning("Saved, but the background could not be cached - export to keep it.");
@@ -733,11 +774,14 @@ function EditorInner() {
       const genAtSave = editGenRef.current;
       setSaveState("saving");
       writeDocumentRef.current({ withFrames: false }).then(
-        () => {
+        (framesCached) => {
           // Edits made while the write was in flight are still unsaved.
           if (editGenRef.current !== genAtSave) { setSaveState("idle"); return; }
           setDirty(false);
-          setSaveState("saved");
+          // The document write can succeed while the frames write fails — the frames are
+          // orders of magnitude larger, so they are what a quota rejects. Saying "Saved"
+          // there sends the user off to close the tab on a background that is gone.
+          setSaveState(framesCached ? "saved" : "partial");
         },
         () => setSaveState("failed"),
       );
