@@ -229,6 +229,51 @@ describe("the app has one theme and every component agrees on it", () => {
   });
 });
 
+describe("every form control has a name a screen reader can read", () => {
+  /**
+   * Measured in Chrome against production builds by walking every rendered input,
+   * textarea, select and role=switch and checking for a label, aria-label,
+   * aria-labelledby or title. Before: 3 on /contact, 1 on /presets, 1 on the /create
+   * configure step. After: 0 on all of them.
+   */
+  it("associates every contact field with its label", () => {
+    const contact = readFileSync("src/app/contact/page.tsx", "utf8");
+    for (const id of ["contact-name", "contact-email", "contact-message"]) {
+      expect(contact, `${id} has no label association`).toContain(`htmlFor="${id}"`);
+      expect(contact, `${id} is not on a control`).toContain(`id="${id}"`);
+    }
+    // The topic pills are a group, not a field: a bare <label> named nothing.
+    expect(contact).toContain('role="group" aria-labelledby="contact-topic-label"');
+    expect(contact).toContain("aria-pressed={form.topic === t}");
+  });
+
+  it("names the presets search box", () => {
+    const presets = readFileSync("src/app/presets/page.tsx", "utf8");
+    expect(presets).toContain('<label htmlFor="preset-search" className="sr-only">Search presets</label>');
+    expect(presets).toContain('id="preset-search"');
+  });
+
+  it("names the mobile-variant switch", () => {
+    // role="switch" with aria-checked and no name announces only its state.
+    const create = readFileSync("src/app/create/page.tsx", "utf8");
+    const sw = create.slice(create.indexOf('role="switch"') - 400, create.indexOf('role="switch"') + 200);
+    expect(sw).toContain('aria-label="Generate mobile variant"');
+  });
+});
+
+describe("Enter belongs to the control that has focus", () => {
+  it("does not also run the create wizard's own Enter handler", () => {
+    // The browser already turns Enter on a focused button into a click. Handling it at
+    // the window too meant one keypress both chose a palette and started generation.
+    // Verified in Chrome: on the previous build, focusing a palette swatch and pressing
+    // Enter started generation; now it does not, while Enter on a non-interactive
+    // target still advances the wizard.
+    const create = readFileSync("src/app/create/page.tsx", "utf8");
+    expect(create).not.toMatch(/if \(tag === "INPUT" \|\| tag === "TEXTAREA"\) return;/);
+    expect(create).toContain(`el.closest("input, textarea, select, button, a[href], [contenteditable], [role='switch'], [role='button']")`);
+  });
+});
+
 describe("analytics does not break a self-hosted deploy", () => {
   it("only mounts the Vercel script when Vercel is serving", () => {
     // Mounted unconditionally the insights script 404s and trips strict MIME checking,
