@@ -135,12 +135,57 @@ describe("the editor is reachable without a mouse", () => {
   const editor = readFileSync("src/app/editor/page.tsx", "utf8");
 
   it("wraps its working area in a main landmark", () => {
-    expect(editor).toMatch(/<main className="flex flex-1/);
+    // Asserted on the element, not its classes, so a layout change cannot fail it.
+    expect(editor).toMatch(/<main className=/);
   });
 
   it("names its icon-only controls", () => {
     expect(editor).toContain('aria-label="Add section"');
     expect(editor).toContain('aria-label="Site name"');
+  });
+
+  it("gives every icon-only control a target WCAG 2.5.8 accepts", () => {
+    // A 14px icon needs p-1.5 to clear 24px; p-1 gives 22 and p-0.5 gives 18. Measured
+    // in Chrome at 390x844 against a production build: twelve controls under 24px
+    // before, none after. Each string below appears in the previous revision.
+    for (const tooTight of [
+      'className="p-1 rounded',
+      'className="p-0.5 ',
+      "className={`p-1 rounded",
+    ]) {
+      expect(editor, `${tooTight} is a target under 24px`).not.toContain(tooTight);
+    }
+  });
+});
+
+describe("the editor fits a phone", () => {
+  const editor = readFileSync("src/app/editor/page.tsx", "utf8");
+
+  /**
+   * Measured in Chrome at 390x844 against a production build, with the template loaded.
+   * Before: nine controls off the right edge, including Export, the Layout/Audio/Code
+   * tabs and every text input in the inspector, reachable only by scrolling the whole
+   * app sideways. After: none.
+   */
+  it("stacks its panels rather than scrolling the app sideways", () => {
+    expect(editor).toContain('<main className="flex flex-col md:flex-row flex-1');
+  });
+
+  it("gives every panel the full width before it stacks", () => {
+    expect(editor).toMatch(/className="w-full max-h-52 md:w-56/);
+    expect(editor).toMatch(/className="w-full md:w-72/);
+  });
+
+  it("lets the toolbar wrap, so Export does not fall off the edge", () => {
+    expect(editor).toContain('<div className="flex items-center gap-2 flex-wrap justify-end">');
+  });
+
+  it("fits the inspector tabs in the panel that holds them", () => {
+    // Five icon-and-label tabs overflowed a 288px panel at every width: Content was
+    // clipped on the left and Code ran off the right, where it could not be clicked.
+    const tabStrip = editor.slice(editor.indexOf("<TabsList"), editor.indexOf("</TabsList>"));
+    expect(tabStrip).toContain("grid grid-cols-5");
+    expect(tabStrip).not.toMatch(/<(Type|Sparkles|Settings|Music) /);
   });
 });
 

@@ -10,7 +10,7 @@ import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   ArrowLeft, Download, Plus, Trash2, Eye, EyeOff, ChevronUp, ChevronDown,
-  Sparkles, Layers, Settings, Type, Loader2, AlignLeft, AlignCenter, AlignRight,
+  Layers, Loader2, AlignLeft, AlignCenter, AlignRight,
   Monitor, Tablet, Smartphone, Music, Volume2, VolumeX, Save,
   Undo2, Redo2, Copy
 } from "lucide-react";
@@ -797,7 +797,7 @@ function EditorInner() {
           <Link
             href="/create"
             onClick={(e) => { if (dirty && !window.confirm("Discard unsaved changes and leave?")) e.preventDefault(); }}
-            className="flex items-center gap-1 text-muted-foreground hover:text-foreground text-sm transition-colors"
+            className="flex items-center gap-1 py-1 text-muted-foreground hover:text-foreground text-sm transition-colors"
           >
             <ArrowLeft className="w-3.5 h-3.5" /> Back
           </Link>
@@ -812,14 +812,14 @@ function EditorInner() {
           {isDemo && <Badge variant="outline" className="border-amber-500/40 text-amber-400 text-xs">Demo mode</Badge>}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap justify-end">
           {/* Undo / redo */}
           <div className="flex items-center bg-white/5 rounded-md p-0.5 gap-0.5">
             <button
               onClick={undo}
               disabled={!canUndo}
               title="Undo (⌘Z)"
-              className="p-1 rounded transition-colors text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed"
+              className="p-1.5 rounded transition-colors text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed"
             >
               <Undo2 className="w-3.5 h-3.5" />
             </button>
@@ -827,7 +827,7 @@ function EditorInner() {
               onClick={redo}
               disabled={!canRedo}
               title="Redo (⌘⇧Z)"
-              className="p-1 rounded transition-colors text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed"
+              className="p-1.5 rounded transition-colors text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed"
             >
               <Redo2 className="w-3.5 h-3.5" />
             </button>
@@ -837,7 +837,7 @@ function EditorInner() {
             <button
               onClick={() => setAudioMuted(m => !m)}
               title={audioMuted ? "Unmute audio" : "Mute audio"}
-              className="p-1 rounded text-muted-foreground hover:text-foreground transition-colors"
+              className="p-1.5 rounded text-muted-foreground hover:text-foreground transition-colors"
             >
               {audioMuted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5 text-primary-ink" />}
             </button>
@@ -849,7 +849,7 @@ function EditorInner() {
                 key={mode}
                 onClick={() => setViewportMode(mode)}
                 title={mode.charAt(0).toUpperCase() + mode.slice(1)}
-                className={`p-1 rounded transition-colors ${viewportMode === mode ? "bg-primary/30 text-primary-ink" : "text-muted-foreground hover:text-foreground"}`}
+                className={`p-1.5 rounded transition-colors ${viewportMode === mode ? "bg-primary/30 text-primary-ink" : "text-muted-foreground hover:text-foreground"}`}
               >
                 <Icon className="w-3.5 h-3.5" />
               </button>
@@ -895,9 +895,9 @@ function EditorInner() {
         </div>
       </div>
 
-      <main className="flex flex-1 overflow-x-auto md:overflow-hidden">
+      <main className="flex flex-col md:flex-row flex-1 overflow-y-auto md:overflow-x-auto md:overflow-y-hidden">
         {/* Left panel: sections list */}
-        <div className="w-56 border-r border-white/5 flex flex-col bg-card/30 flex-shrink-0">
+        <div className="w-full max-h-52 md:w-56 md:max-h-none border-b md:border-b-0 md:border-r border-white/5 flex flex-col bg-card/30 flex-shrink-0">
           <div className="p-3 border-b border-white/5 flex items-center justify-between">
             <div className="flex items-center gap-2 text-sm font-medium">
               <Layers className="w-3.5 h-3.5 text-primary-ink" /> Sections
@@ -929,19 +929,19 @@ function EditorInner() {
                 <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${s.visible ? "bg-primary" : "bg-white/20"}`} />
                 <span className="text-xs flex-1 truncate">{s.heading || `Section ${i + 1}`}</span>
                 <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
-                  <button onClick={(e) => { e.stopPropagation(); moveSection(s.id, "up"); }} className="p-0.5 hover:text-primary-ink" title="Move up">
+                  <button onClick={(e) => { e.stopPropagation(); moveSection(s.id, "up"); }} className="p-1.5 hover:text-primary-ink" title="Move up">
                     <ChevronUp className="w-3 h-3" />
                   </button>
-                  <button onClick={(e) => { e.stopPropagation(); moveSection(s.id, "down"); }} className="p-0.5 hover:text-primary-ink" title="Move down">
+                  <button onClick={(e) => { e.stopPropagation(); moveSection(s.id, "down"); }} className="p-1.5 hover:text-primary-ink" title="Move down">
                     <ChevronDown className="w-3 h-3" />
                   </button>
-                  <button onClick={(e) => { e.stopPropagation(); duplicateSection(s.id); }} className="p-0.5 hover:text-primary-ink" title="Duplicate section">
+                  <button onClick={(e) => { e.stopPropagation(); duplicateSection(s.id); }} className="p-1.5 hover:text-primary-ink" title="Duplicate section">
                     <Copy className="w-3 h-3" />
                   </button>
                   <button
                     onClick={(e) => { e.stopPropagation(); removeSection(s.id); }}
                     onBlur={() => setPendingDeleteId(null)}
-                    className={`p-0.5 rounded transition-colors ${pendingDeleteId === s.id ? "bg-destructive text-white ring-1 ring-destructive" : "hover:text-destructive"}`}
+                    className={`p-1.5 rounded transition-colors ${pendingDeleteId === s.id ? "bg-destructive text-white ring-1 ring-destructive" : "hover:text-destructive"}`}
                     title={pendingDeleteId === s.id ? "Click again to confirm delete" : "Delete section"}
                   >
                     <Trash2 className="w-3 h-3" />
@@ -954,7 +954,7 @@ function EditorInner() {
 
         {/* Center: preview canvas */}
         {showPreview && (
-          <div className="flex-1 relative overflow-hidden bg-black/20 flex items-center justify-center">
+          <div className="h-[45vh] flex-shrink-0 md:h-auto md:flex-1 md:flex-shrink relative overflow-hidden bg-black/20 flex items-center justify-center">
             {frames.length > 0 && (
               <div
                 ref={previewScrollRef}
@@ -1065,25 +1065,18 @@ function EditorInner() {
 
         {/* Right panel: section editor */}
         {selectedSectionData && (
-          <div className="w-72 border-l border-white/5 flex flex-col bg-card/30 flex-shrink-0 overflow-y-auto" data-lenis-prevent>
+          <div className="w-full md:w-72 border-t md:border-t-0 md:border-l border-white/5 flex flex-col bg-card/30 flex-shrink-0 md:overflow-y-auto" data-lenis-prevent>
             <Tabs defaultValue="content">
               <div className="p-3 border-b border-white/5">
-                <TabsList className="w-full h-8 bg-white/5">
-                  <TabsTrigger value="content" className="flex-1 text-xs h-6">
-                    <Type className="w-3 h-3 mr-1" /> Content
-                  </TabsTrigger>
-                  <TabsTrigger value="style" className="flex-1 text-xs h-6">
-                    <Sparkles className="w-3 h-3 mr-1" /> Style
-                  </TabsTrigger>
-                  <TabsTrigger value="layout" className="flex-1 text-xs h-6">
-                    <Settings className="w-3 h-3 mr-1" /> Layout
-                  </TabsTrigger>
-                  <TabsTrigger value="audio" className="flex-1 text-xs h-6">
-                    <Music className="w-3 h-3 mr-1" /> Audio
-                  </TabsTrigger>
-                  <TabsTrigger value="code" className="flex-1 text-xs h-6">
-                    &lt;/&gt; Code
-                  </TabsTrigger>
+                {/* Five icon-and-label tabs did not fit the panel at any width: Content
+                    was clipped on the left and Code ran off the right, unreachable. The
+                    label is what names a tab, so the icons go. */}
+                <TabsList className="grid grid-cols-5 w-full h-8 bg-white/5">
+                  <TabsTrigger value="content" className="text-xs h-6 px-1">Content</TabsTrigger>
+                  <TabsTrigger value="style" className="text-xs h-6 px-1">Style</TabsTrigger>
+                  <TabsTrigger value="layout" className="text-xs h-6 px-1">Layout</TabsTrigger>
+                  <TabsTrigger value="audio" className="text-xs h-6 px-1">Audio</TabsTrigger>
+                  <TabsTrigger value="code" className="text-xs h-6 px-1">Code</TabsTrigger>
                 </TabsList>
               </div>
 
