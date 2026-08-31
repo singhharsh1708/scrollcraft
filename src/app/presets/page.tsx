@@ -55,8 +55,10 @@ export default function PresetsPage() {
       {/* Search + filters */}
       <div className="px-6 pb-8 max-w-7xl mx-auto space-y-4">
         <div className="relative max-w-md mx-auto">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
+          <label htmlFor="preset-search" className="sr-only">Search presets</label>
           <Input
+            id="preset-search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search presets…"

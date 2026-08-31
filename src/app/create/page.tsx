@@ -148,8 +148,12 @@ function CreatePageInner() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== "Enter" || isGenerating) return;
-      const tag = (e.target as HTMLElement)?.tagName;
-      if (tag === "INPUT" || tag === "TEXTAREA") return;
+      // Enter on a focused control belongs to that control - the browser turns it into a
+      // click. Handling it here too fired the button and advanced the wizard from the
+      // same keypress, so tabbing to a palette swatch and pressing Enter chose the
+      // palette and started generation together.
+      const el = e.target as HTMLElement | null;
+      if (!el || el.closest("input, textarea, select, button, a[href], [contenteditable], [role='switch'], [role='button']")) return;
       if (step === 0) { e.preventDefault(); setStep(1); }
       // Through a ref: the listener is only rebound when step/isGenerating change, so
       // calling handleGenerate directly ran the closure captured back then — generating
@@ -333,6 +337,7 @@ function CreatePageInner() {
                   className={`relative w-10 h-6 rounded-full transition-colors ${generateMobile ? "bg-primary" : "bg-white/10"}`}
                   role="switch"
                   aria-checked={generateMobile}
+                  aria-label="Generate mobile variant"
                 >
                   <span className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform ${generateMobile ? "translate-x-5" : "translate-x-1"}`} />
                 </button>

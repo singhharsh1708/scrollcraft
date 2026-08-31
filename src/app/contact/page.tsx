@@ -111,27 +111,30 @@ export default function ContactPage() {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="text-xs text-muted-foreground">Name</label>
-                    <Input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Your name" className="bg-white/5 border-white/10" />
+                    <label htmlFor="contact-name" className="text-xs text-muted-foreground">Name</label>
+                    <Input id="contact-name" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Your name" className="bg-white/5 border-white/10" />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-xs text-muted-foreground">Email</label>
-                    <Input value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} placeholder="you@example.com" type="email" className="bg-white/5 border-white/10" />
+                    <label htmlFor="contact-email" className="text-xs text-muted-foreground">Email</label>
+                    <Input id="contact-email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} placeholder="you@example.com" type="email" className="bg-white/5 border-white/10" />
                   </div>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs text-muted-foreground">Topic</label>
-                  <div className="flex flex-wrap gap-2">
+                  {/* A pill group, not a text field: named as a group so a screen reader
+                      announces what the pressed state belongs to. */}
+                  <span id="contact-topic-label" className="block text-xs text-muted-foreground">Topic</span>
+                  <div role="group" aria-labelledby="contact-topic-label" className="flex flex-wrap gap-2">
                     {TOPICS.map(t => (
                       <button key={t} type="button" onClick={() => setForm(f => ({ ...f, topic: t }))}
+                        aria-pressed={form.topic === t}
                         className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${form.topic === t ? "bg-primary text-white border-primary" : "border-white/10 text-muted-foreground hover:border-white/20"}`}
                       >{t}</button>
                     ))}
                   </div>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs text-muted-foreground">Message</label>
-                  <Textarea value={form.message} onChange={e => setForm(f => ({ ...f, message: e.target.value }))} placeholder="Tell us what's on your mind..." className="bg-white/5 border-white/10 min-h-[140px] resize-none" />
+                  <label htmlFor="contact-message" className="text-xs text-muted-foreground">Message</label>
+                  <Textarea id="contact-message" value={form.message} onChange={e => setForm(f => ({ ...f, message: e.target.value }))} placeholder="Tell us what's on your mind..." className="bg-white/5 border-white/10 min-h-[140px] resize-none" />
                 </div>
                 <Button type="submit" disabled={loading} className="w-full bg-primary hover:bg-primary/90 text-white font-semibold py-5">
                   {loading ? "Opening…" : "Compose message"}
