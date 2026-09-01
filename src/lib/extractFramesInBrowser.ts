@@ -22,8 +22,16 @@ export interface BrowserExtractOptions {
 export interface BrowserExtractResult {
   frames: string[];
   frameCount: number;
-  /** Source duration in seconds, for reporting. */
+  /** Seconds actually sampled. Capped at MAX_DURATION_SECONDS. */
   duration: number;
+  /**
+   * The clip's own length, which is not always what was sampled.
+   *
+   * The two were reported as one number called `duration`, and the caller read neither,
+   * so a clip past the cap was quietly cut and the user was told nothing: they uploaded
+   * five minutes of footage and got the first two with no explanation.
+   */
+  sourceDuration: number;
 }
 
 /** Longest clip worth sampling. Past this the frames are far apart and the result is a slideshow. */
@@ -120,7 +128,7 @@ export async function extractFramesInBrowser(
       if (i % 5 === 0) await new Promise((r) => setTimeout(r, 0));
     }
 
-    return { frames, frameCount: frames.length, duration };
+    return { frames, frameCount: frames.length, duration, sourceDuration: video.duration };
   } finally {
     video.pause();
     video.removeAttribute("src");

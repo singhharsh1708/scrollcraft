@@ -350,12 +350,20 @@ export default function HomeClient({ presetCount, featured }: { presetCount: num
                 <button
                   onClick={() => setOpenFaq(openFaq === i ? null : i)}
                   className="w-full text-left px-5 py-4 flex items-center justify-between gap-4 hover:bg-white/3 transition-colors"
+                  aria-expanded={openFaq === i}
+                  aria-controls={`faq-answer-${i}`}
+                  id={`faq-question-${i}`}
                 >
                   <span className="font-medium text-sm">{item.q}</span>
-                  <span className={`text-muted-foreground text-lg leading-none transition-transform flex-shrink-0 ${openFaq === i ? "rotate-45" : ""}`}>+</span>
+                  <span aria-hidden="true" className={`text-muted-foreground text-lg leading-none transition-transform flex-shrink-0 ${openFaq === i ? "rotate-45" : ""}`}>+</span>
                 </button>
                 {openFaq === i && (
-                  <div className="px-5 pb-4 text-sm text-muted-foreground leading-relaxed border-t border-white/5 pt-3">
+                  <div
+                    id={`faq-answer-${i}`}
+                    role="region"
+                    aria-labelledby={`faq-question-${i}`}
+                    className="px-5 pb-4 text-sm text-muted-foreground leading-relaxed border-t border-white/5 pt-3"
+                  >
                     {item.a}
                   </div>
                 )}

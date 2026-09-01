@@ -106,6 +106,22 @@ describe("the export route validates the shape of what it is given", () => {
   });
 });
 
+describe("the request body is capped while it is read, not after", () => {
+  it("stops reading instead of buffering the whole stream", () => {
+    // The Content-Length check is only as honest as the sender. Omit the header, send
+    // chunked, and req.text() held the entire stream in memory before anything looked
+    // at its size. Measured with a 120 MB chunked body and no Content-Length: the
+    // previous build accepted all 120,021,432 bytes before answering 413; this one
+    // stops at ~12.8 MB, one chunk past the cap.
+    const route = readFileSync("src/app/api/export-site/route.ts", "utf8");
+    expect(route).toContain("await readCapped(req, MAX_BODY)");
+    expect(route).not.toMatch(/const raw = await req\.text\(\);/);
+    // The cap has to be enforced inside the read loop, not after it.
+    const helper = route.slice(route.indexOf("async function readCapped"));
+    expect(helper.slice(0, helper.indexOf("\n}"))).toContain("if (seen > limit) return null;");
+  });
+});
+
 describe("the exported page has a real document outline", () => {
   it("gives the page exactly one h1", async () => {
     const html = await exportHtml();

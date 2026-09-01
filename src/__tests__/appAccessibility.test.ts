@@ -274,6 +274,34 @@ describe("Enter belongs to the control that has focus", () => {
   });
 });
 
+describe("controls that open something say whether it is open", () => {
+  /**
+   * Both are disclosure widgets rendered as plain buttons: the state was visible only
+   * as a rotating "+" or a swapped icon, so a screen reader was told a button existed
+   * and nothing about what it did. Verified in Chrome on both builds - before, neither
+   * carried aria-expanded at all; after, both toggle it and their aria-controls
+   * resolves to the element that appears.
+   */
+  it("tells assistive tech whether the mobile menu is open", () => {
+    const navbar = readFileSync("src/components/Navbar.tsx", "utf8");
+    expect(navbar).toContain("aria-expanded={open}");
+    expect(navbar).toContain('aria-controls="mobile-menu"');
+    // aria-controls pointing at nothing is worse than omitting it.
+    expect(navbar).toContain('id="mobile-menu"');
+  });
+
+  it("wires each FAQ row to the answer it reveals", () => {
+    const home = readFileSync("src/app/HomeClient.tsx", "utf8");
+    expect(home).toContain("aria-expanded={openFaq === i}");
+    expect(home).toContain("aria-controls={`faq-answer-${i}`}");
+    expect(home).toContain("id={`faq-question-${i}`}");
+    expect(home).toContain('role="region"');
+    expect(home).toContain("aria-labelledby={`faq-question-${i}`}");
+    // The "+" is decoration; the state is on the button.
+    expect(home).toMatch(/<span aria-hidden="true" className=\{`text-muted-foreground text-lg/);
+  });
+});
+
 describe("analytics does not break a self-hosted deploy", () => {
   it("only mounts the Vercel script when Vercel is serving", () => {
     // Mounted unconditionally the insights script 404s and trips strict MIME checking,

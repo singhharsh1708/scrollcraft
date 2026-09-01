@@ -184,6 +184,16 @@ describe("what the site claims about itself is true", () => {
     );
   });
 
+  it("describes the rate limiting it actually applies", () => {
+    // One of three API routes is rate-limited; the privacy page promised two.
+    const privacy = readFileSync("src/app/privacy/page.tsx", "utf8");
+    expect(privacy).not.toContain("rate-limit the two API routes");
+    const limited = readdirSync("src/app/api", { withFileTypes: true })
+      .filter((d) => d.isDirectory())
+      .filter((d) => readFileSync(join("src/app/api", d.name, "route.ts"), "utf8").includes("rateLimit("));
+    expect(limited.map((d) => d.name)).toEqual(["export-site"]);
+  });
+
   it("keeps the legal pages dated to when they were last rewritten", () => {
     // They described the August teardown while dated June, which reads as unmaintained.
     for (const file of ["src/app/terms/page.tsx", "src/app/cookies/page.tsx", "src/app/privacy/page.tsx"]) {
