@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useState, useEffect, useSyncExternalStore } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight, Sparkles, Zap, Download, Play, Check } from "lucide-react";
@@ -8,23 +8,29 @@ import Navbar from "@/components/Navbar";
 import StylePreview from "@/components/StylePreview";
 import type { Style2D } from "@/lib/generate2DFrames";
 import SponsorCard from "@/components/SponsorCard";
+import PluginInstall from "@/components/PluginInstall";
 import GitHubMark from "@/components/GitHubMark";
 import { AUTHOR_NAME, AUTHOR_SITE_URL, GITHUB_REPO_URL } from "@/lib/links";
 import SiteFooter from "@/components/SiteFooter";
 
-const DEMO_COUNT = 60;
-const demoFrames = Array.from({ length: DEMO_COUNT }, (_, i) => `/api/demo-frame?i=${i}&total=${DEMO_COUNT}`);
+/**
+ * The hero animation, drawn rather than fetched.
+ *
+ * Same drawFrame2D the product itself uses, on a canvas, for no network requests - cheap
+ * enough to run on a phone as well as a desktop.
+ */
+const HERO_STYLE: Style2D = "gradient";
+/** The Chromatic preset's own palette, so the hero shows a real one from the catalogue. */
+const HERO_COLORS: [string, string, string] = ["#8b5cf6", "#c026d3", "#12031a"];
 
-// Mobile skips the hero autoplay so it never fires 60 concurrent frame requests (#156).
-// Server-rendered as mobile so the initial HTML never references the frame URLs.
-const MOBILE_HERO_QUERY = "(max-width: 767px)";
-const subscribeMobileHero = (onChange: () => void) => {
-  const mq = window.matchMedia(MOBILE_HERO_QUERY);
+const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
+const subscribeReducedMotion = (onChange: () => void) => {
+  const mq = window.matchMedia(REDUCED_MOTION_QUERY);
   mq.addEventListener("change", onChange);
   return () => mq.removeEventListener("change", onChange);
 };
-const getMobileHeroSnapshot = () => window.matchMedia(MOBILE_HERO_QUERY).matches;
-const getMobileHeroServerSnapshot = () => true;
+const getReducedMotionSnapshot = () => window.matchMedia(REDUCED_MOTION_QUERY).matches;
+const getReducedMotionServerSnapshot = () => false;
 
 export interface FeaturedPreset {
   name: string;
@@ -59,40 +65,21 @@ const FAQ = [
 ];
 
 function HeroPreview() {
-  const isMobileHero = useSyncExternalStore(
-    subscribeMobileHero,
-    getMobileHeroSnapshot,
-    getMobileHeroServerSnapshot
+  const reducedMotion = useSyncExternalStore(
+    subscribeReducedMotion,
+    getReducedMotionSnapshot,
+    getReducedMotionServerSnapshot
   );
-  const [heroFrameIdx, setHeroFrameIdx] = useState(0);
-  // Cycle through demo frames automatically at ~10fps (no user scroll required).
-  useEffect(() => {
-    if (isMobileHero) return;
-    let frame = 0;
-    let last = 0;
-    let rafId: number;
-    const INTERVAL = 100; // ms per frame → ~10fps
-    const tick = (ts: number) => {
-      if (ts - last >= INTERVAL) {
-        frame = (frame + 1) % DEMO_COUNT;
-        setHeroFrameIdx(frame);
-        last = ts;
-      }
-      rafId = requestAnimationFrame(tick);
-    };
-    rafId = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(rafId);
-  }, [isMobileHero]);
 
   return (
-    <>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={demoFrames[heroFrameIdx]}
-        alt="ScrollCraft scroll animation preview"
-        className="w-full aspect-video object-cover"
-      />
-    </>
+    <StylePreview
+      style={HERO_STYLE}
+      colors={HERO_COLORS}
+      paused={reducedMotion}
+      durationSec={9}
+      maxProgress={0.55}
+      className="w-full h-full"
+    />
   );
 }
 
@@ -108,58 +95,60 @@ export default function HomeClient({ presetCount, featured }: { presetCount: num
       <Navbar position="fixed" />
 
       {/* Hero */}
-      <section className="relative flex flex-col items-center justify-center min-h-screen text-center px-6 pt-20">
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] rounded-full bg-primary/8 blur-[140px] pointer-events-none" />
-        <div className="absolute top-2/3 left-1/4 w-[300px] h-[300px] rounded-full bg-blue-500/6 blur-[100px] pointer-events-none" />
+      <section className="relative px-6 pt-28 pb-20 lg:pt-32 lg:pb-28">
+        <div className="absolute top-1/3 left-1/4 w-[700px] h-[700px] rounded-full bg-primary/8 blur-[140px] pointer-events-none" />
+        <div className="absolute top-2/3 right-1/4 w-[300px] h-[300px] rounded-full bg-blue-500/6 blur-[100px] pointer-events-none" />
 
-        <Badge variant="outline" className="mb-6 border-primary/40 text-primary-ink bg-primary/10 px-4 py-1.5">
-          <Sparkles className="w-3 h-3 mr-1.5" /> Ready-made templates · No code · Animated scroll
-        </Badge>
+        {/* Two columns from lg up: the copy and the thing it describes, side by side. The
+            demo used to sit 733px down a 900px viewport behind a fade, so a visitor read
+            three paragraphs about a scroll animation before seeing one. */}
+        <div className="relative max-w-7xl mx-auto grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-12 lg:gap-16 items-center">
+          <div className="text-center lg:text-left">
+            <Badge variant="outline" className="mb-6 border-primary/40 text-primary-ink bg-primary/10 px-4 py-1.5">
+              <Sparkles className="w-3 h-3 mr-1.5" /> Ready-made templates · No code · Animated scroll
+            </Badge>
 
-        <h1 className="text-6xl md:text-8xl font-black tracking-tighter mb-6 leading-none">
-          Build cinematic<br />
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-purple-400 to-indigo-400">
-            scroll websites
-          </span><br />
-          in minutes
-        </h1>
+            <h1 className="text-5xl sm:text-6xl xl:text-7xl font-black tracking-tighter mb-6 leading-[0.95]">
+              Build cinematic{" "}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-purple-400 to-indigo-400">
+                scroll websites
+              </span>{" "}
+              in minutes
+            </h1>
 
-        <p className="text-xl text-muted-foreground max-w-2xl mb-10 leading-relaxed">
-          Pick a style. ScrollCraft generates smooth animated canvas frames,
-          and wires them up as a silky scroll experience — exported as pure HTML. No code.
-        </p>
+            <p className="text-lg sm:text-xl text-muted-foreground max-w-xl mx-auto lg:mx-0 mb-8 leading-relaxed">
+              Pick a style. ScrollCraft generates smooth animated canvas frames,
+              and wires them up as a silky scroll experience, exported as pure HTML. No code.
+            </p>
 
-        <div className="flex flex-col sm:flex-row items-center gap-4">
-          <Link href="/create">
-            <Button size="lg" className="bg-primary hover:bg-primary/90 text-white px-8 py-6 text-base font-semibold shadow-lg shadow-primary/25">
-              Create your site <ArrowRight className="ml-2 w-5 h-5" />
-            </Button>
-          </Link>
-          <Link href="/presets">
-            <Button size="lg" variant="outline" className="border-white/10 hover:bg-white/5 px-8 py-6 text-base">
-              Browse presets
-            </Button>
-          </Link>
-        </div>
-
-        <div className="mt-6 flex items-center gap-6 text-sm text-muted-foreground">
-          {["Free plan, no time limit", "No credit card", "Deploy anywhere"].map((t) => (
-            <div key={t} className="flex items-center gap-1.5">
-              <Check className="w-3.5 h-3.5 text-primary-ink" /> {t}
+            <div className="flex flex-col sm:flex-row items-center lg:justify-start justify-center gap-4">
+              <Link href="/create">
+                <Button size="lg" className="bg-primary hover:bg-primary/90 text-white px-8 py-6 text-base font-semibold shadow-lg shadow-primary/25">
+                  Create your site <ArrowRight className="ml-2 w-5 h-5" />
+                </Button>
+              </Link>
+              <Link href="/presets">
+                <Button size="lg" variant="outline" className="border-white/10 hover:bg-white/5 px-8 py-6 text-base">
+                  Browse presets
+                </Button>
+              </Link>
             </div>
-          ))}
-        </div>
 
-        {/* Hero visual — live scroll demo (desktop only; mobile skips 60 concurrent requests) */}
-        <div className="relative mt-16 w-full max-w-5xl mx-auto rounded-2xl overflow-hidden border border-white/10 shadow-2xl shadow-black/60">
-          {/* Autoplay animation — owns its own frame state so the ~10fps loop re-renders
-              only this image, not the whole landing page. */}
-          <HeroPreview />
-          {/* Fade-out at bottom */}
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent pointer-events-none" style={{ zIndex: 2 }} />
-          {/* Label */}
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-xs text-white/30 uppercase tracking-widest pointer-events-none" style={{ zIndex: 3 }}>
-            Live preview
+            <div className="mt-6 flex flex-wrap items-center lg:justify-start justify-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
+              {["No account", "Runs in your browser", "MIT licensed"].map((t) => (
+                <div key={t} className="flex items-center gap-1.5">
+                  <Check className="w-3.5 h-3.5 text-primary-ink" /> {t}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* The product, at first paint. */}
+          <div className="relative w-full aspect-[16/10] rounded-2xl overflow-hidden border border-white/10 shadow-2xl shadow-black/60 bg-black/40">
+            <HeroPreview />
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-xs text-white/40 uppercase tracking-widest pointer-events-none">
+              Live preview
+            </div>
           </div>
         </div>
       </section>
@@ -373,6 +362,11 @@ export default function HomeClient({ presetCount, featured }: { presetCount: num
         </div>
       </section>
 
+      {/* Plugin */}
+      <section className="px-6 pb-6 max-w-5xl mx-auto">
+        <PluginInstall />
+      </section>
+
       {/* Open source */}
       <section className="px-6 pb-4 max-w-5xl mx-auto">
         <SponsorCard />
@@ -392,7 +386,7 @@ export default function HomeClient({ presetCount, featured }: { presetCount: num
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link href="/create">
                 <Button size="lg" className="bg-primary hover:bg-primary/90 text-white px-10 py-7 text-lg font-semibold shadow-xl shadow-primary/30">
-                  Start for free <ArrowRight className="ml-2 w-5 h-5" />
+                  Start building <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
               </Link>
               <Link href="/templates">

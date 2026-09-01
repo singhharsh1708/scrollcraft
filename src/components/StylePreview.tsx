@@ -9,6 +9,14 @@ interface StylePreviewProps {
   durationSec?: number;
   /** Pause the rAF loop to save CPU (e.g. when off-screen / not selected) */
   paused?: boolean;
+  /**
+   * Upper bound of the scrubbed range, 0..1.
+   *
+   * Every style lerps toward its third colour as progress rises, and most palettes end
+   * near black because that is what a scroll background does under the closing sections.
+   * A preview that has to look good in isolation can stop short of that.
+   */
+  maxProgress?: number;
   className?: string;
 }
 
@@ -22,6 +30,7 @@ export default function StylePreview({
   colors,
   durationSec = 6,
   paused = false,
+  maxProgress = 1,
   className = "",
 }: StylePreviewProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -76,7 +85,7 @@ export default function StylePreview({
       // Ping-pong 0->1->0 instead of a 0..1 sawtooth: the draw functions are not periodic
       // in p, so a sawtooth snaps at the wrap. A triangle wave is continuous at both ends.
       const phase = (elapsed / durationSec) % 2;
-      const p = phase <= 1 ? phase : 2 - phase;
+      const p = (phase <= 1 ? phase : 2 - phase) * maxProgress;
       const { w, h } = sizeRef.current;
       drawFrame2D(ctx, w, h, p, optsRef.current);
       rafId = requestAnimationFrame(tick);
@@ -84,7 +93,7 @@ export default function StylePreview({
 
     rafId = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(rafId);
-  }, [paused, durationSec]);
+  }, [paused, durationSec, maxProgress]);
 
   // While paused the loop is not running, so redraw the static frame on restyle.
   useEffect(() => {

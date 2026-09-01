@@ -184,6 +184,16 @@ describe("what the site claims about itself is true", () => {
     );
   });
 
+  it("does not imply a paid tier that does not exist", () => {
+    // There is no checkout, no account and no plan, so "free plan", "no credit card"
+    // and "start for free" all answered a question nobody was asked and implied tiers.
+    // templates.ts is exempt: its section copy is sample content for fictional sites.
+    const offenders = sourceFiles()
+      .filter((f) => !f.includes("templates.ts") && !f.includes("changelog"))
+      .filter((f) => /free plan|no credit card|start for free|start free/i.test(readFileSync(f, "utf8")));
+    expect(offenders, "the site still talks like it has pricing").toEqual([]);
+  });
+
   it("describes the rate limiting it actually applies", () => {
     // One of three API routes is rate-limited; the privacy page promised two.
     const privacy = readFileSync("src/app/privacy/page.tsx", "utf8");
