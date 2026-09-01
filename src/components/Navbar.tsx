@@ -9,7 +9,7 @@ import { GITHUB_REPO_URL, GITHUB_SPONSORS_URL } from "@/lib/links";
 
 const NAV_LINKS = [
   { href: "/templates", label: "Templates" },
-  { href: "/presets",   label: "Styles"    },
+  { href: "/presets",   label: "Presets"   },
 ];
 
 export default function Navbar({ position = "sticky" }: { position?: "fixed" | "sticky" | "relative" }) {
