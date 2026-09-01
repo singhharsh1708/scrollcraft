@@ -46,9 +46,16 @@ function safeCss(s: unknown): string {
   return String(s ?? "").replace(/[<>"'\\;{}]/g, "");
 }
 
+/**
+ * The CTA target, allowing what ctaHrefSchema allows and nothing else.
+ *
+ * An allowlist, so javascript:, data: and anything unlisted become "#". `//host` is
+ * excluded as well: it satisfies the schema's leading slash but leaves the origin.
+ */
 function safeHref(s: unknown): string {
-  const href = String(s ?? "");
-  return /^https?:\/\//i.test(href) ? href : "#";
+  const href = String(s ?? "").trim();
+  if (href.startsWith("//")) return "#";
+  return /^(?:https?:\/\/|mailto:|tel:|#|\/|\.{1,2}\/)/i.test(href) ? href : "#";
 }
 
 export async function POST(req: NextRequest) {
@@ -128,6 +135,7 @@ export async function POST(req: NextRequest) {
     // How many steps the procedural background is sampled over. Not files on disk, so
     // this costs nothing but smoothness.
     const PROCEDURAL_FRAMES = 240;
+    const proceduralRuntime = proceduralRuntimeSource();
     if (styleSpec) {
       if (frameCount !== undefined && frameCount !== 0 && !Number.isInteger(frameCount)) {
         return NextResponse.json({ error: "frameCount must be an integer" }, { status: 400 });
@@ -378,7 +386,7 @@ export async function POST(req: NextRequest) {
       ${styleSpec ? `
       // Procedural background: the ZIP ships no frames at all, the page draws each one
       // on demand at the viewport's own resolution.
-      ${proceduralRuntimeSource()}
+      ${proceduralRuntime.source}
 
       // drawFrame2D takes FrameOptions (color1/color2/color3) while a stored style
       // recipe holds a colours array. Emitting the recipe verbatim left every colour
@@ -394,7 +402,7 @@ export async function POST(req: NextRequest) {
       function drawFrame(index) {
         var cssW = window.innerWidth, cssH = window.innerHeight;
         var p = frameCount > 1 ? index / (frameCount - 1) : 0;
-        drawFrame2D(ctx, cssW, cssH, p, recipe);
+        ${proceduralRuntime.entry}(ctx, cssW, cssH, p, recipe);
       }
       ` : `
       function drawFrame(index) {
@@ -599,12 +607,13 @@ export async function POST(req: NextRequest) {
     (function() {
       // Observe the section-content divs (inside sticky wrappers) for entrance animations.
       const contents = document.querySelectorAll('.section-content');
+      // Add only, and the same rootMargin SiteRenderer uses, so a section reveals once
+      // here as it does in the preview rather than replaying on every pass.
       const observer = new IntersectionObserver(function(entries) {
         entries.forEach(function(entry) {
           if (entry.isIntersecting) entry.target.classList.add('visible');
-          else entry.target.classList.remove('visible');
         });
-      }, { threshold: 0.1 });
+      }, { threshold: 0.1, rootMargin: '0px 0px -8% 0px' });
       contents.forEach(function(el) { observer.observe(el); });
     })();
   </script>

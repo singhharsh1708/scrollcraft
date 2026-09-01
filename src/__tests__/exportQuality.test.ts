@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import type { NextRequest } from "next/server";
 import { TEMPLATES } from "@/lib/templates";
 import { MAX_SECTIONS } from "@/lib/siteSchema";
+import { readFileSync } from "node:fs";
 import { faviconSvg, notFoundHtml, exportReadme } from "@/lib/exportAssets";
 
 /**
@@ -180,6 +181,30 @@ describe("the ZIP ships what a site needs to go online", () => {
     expect(svg).toContain("<svg");
     expect(svg).toContain("#7c3aed");
     expect(svg).toContain(">O<");
+  });
+
+  it("takes a whole character for the favicon glyph", () => {
+    // siteName[0] is half a surrogate pair for a name that opens with an emoji: not a
+    // character, and written into the SVG it rendered as the replacement glyph. Read
+    // the <text> rather than the whole file, since the name is also in the aria-label.
+    const glyph = (name: string) => {
+      const m = /<text[^>]*>([\s\S]*?)<\/text>/.exec(faviconSvg("#7c3aed", "#05070c", name));
+      expect(m, "the favicon has no text glyph").not.toBeNull();
+      return m![1];
+    };
+    expect(glyph("🚀 Rocket")).toBe("🚀");
+    expect(glyph("OrbitCRM")).toBe("O");
+    expect(glyph("   ")).toBe("•");
+  });
+
+  it("gives both frame folders the long-cache headers", () => {
+    // Mobile frames ship in frames-mobile/, which neither host config covered, so a
+    // phone re-downloaded every frame on every visit — the frames it does not share
+    // with desktop are exactly the ones it needs cached.
+    const editor = readFileSync("src/app/editor/page.tsx", "utf8");
+    for (const rule of ['for = "/frames/*"', 'for = "/frames-mobile/*"', 'source: "/frames/(.*)"', 'source: "/frames-mobile/(.*)"']) {
+      expect(editor, `${rule} is missing`).toContain(rule);
+    }
   });
 
   it("escapes a hostile site name in the favicon", () => {

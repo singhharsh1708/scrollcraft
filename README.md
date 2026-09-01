@@ -77,28 +77,28 @@ Ask Claude for a scroll site, or drive it yourself:
 ```bash
 # Fastest path — no footage needed. Scaffolds the spec, generates a
 # background, and builds a working site in one command.
-node scripts/init.mjs --name "Orrery" --style aurora
+node plugins/scrollcraft/skills/scrollcraft/scripts/init.mjs --name "Orrery" --style aurora
 ```
 
 Or step by step:
 
 ```bash
 # 1a. your own video -> frame sequence, desktop + mobile
-node scripts/frames-from-video.mjs --input hero.mp4 --out frames \
+node plugins/scrollcraft/skills/scrollcraft/scripts/frames-from-video.mjs --input hero.mp4 --out frames \
   --fps 24 --width 1920 --mobile-width 828 --mobile-out frames-mobile
 
 # 1b. or generate one: six cinematic styles, ~1MB instead of ~36MB
-node scripts/frames-from-style.mjs --list
-node scripts/frames-from-style.mjs --style nebula --count 180 \
+node plugins/scrollcraft/skills/scrollcraft/scripts/frames-from-style.mjs --list
+node plugins/scrollcraft/skills/scrollcraft/scripts/frames-from-style.mjs --style nebula --count 180 \
   --width 1920 --mobile-width 828 --mobile-out frames-mobile
 
 # 2. write scrollcraft.json describing your sections, then build
-node scripts/build-site.mjs --spec scrollcraft.json --out dist
+node plugins/scrollcraft/skills/scrollcraft/scripts/build-site.mjs --spec scrollcraft.json --out dist
 
 # 3. check the files, then check what actually renders
-node scripts/doctor.mjs --spec scrollcraft.json
-node scripts/verify.mjs --dir dist --shots shots
-node scripts/serve.mjs --dir dist --port 4321
+node plugins/scrollcraft/skills/scrollcraft/scripts/doctor.mjs --spec scrollcraft.json
+node plugins/scrollcraft/skills/scrollcraft/scripts/verify.mjs --dir dist --shots shots
+node plugins/scrollcraft/skills/scrollcraft/scripts/serve.mjs --dir dist --port 4321
 ```
 
 `verify.mjs` drives headless Chrome over the DevTools Protocol with no npm dependencies,
@@ -135,7 +135,8 @@ to sign up for and nothing to configure.
 
 ### Prerequisites
 
-Node.js 20 or newer. That is the whole list.
+Node.js 22 or newer. That is the whole list — `verify.mjs` drives Chrome over the
+global `WebSocket`, which Node only exposes unflagged from 22.
 
 ```bash
 git clone https://github.com/singhharsh1708/scrollcraft.git

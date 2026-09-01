@@ -208,3 +208,89 @@ describe("skill build-site section images", () => {
     expect(html()).not.toContain("<script>alert(1)</script>");
   });
 });
+
+/**
+ * The skill's reference docs are the contract a reader follows. Each check below pins a
+ * place where they described something the scripts do not do.
+ */
+describe("the skill's docs describe the skill that exists", () => {
+  const root = "plugins/scrollcraft/skills/scrollcraft";
+  const initSrc = fs.readFileSync(`${root}/scripts/init.mjs`, "utf8");
+  const grammars = fs.readFileSync(`${root}/references/grammars.md`, "utf8");
+  const siteSpec = fs.readFileSync(`${root}/references/site-spec.md`, "utf8");
+
+  /** Rows in a markdown table under a `### name` heading, header excluded. */
+  function docRows(doc: string, name: string): number {
+    const section = new RegExp(`###\\s+\`?${name}\`?([\\s\\S]*?)(?=\\n###|$)`, "i").exec(doc);
+    expect(section, `grammars.md has no section for ${name}`).not.toBeNull();
+    const rows = section![1]
+      .split("\n")
+      .map((l) => l.trim())
+      .filter((l) => l.startsWith("|") && !/^\|[\s:-]+\|/.test(l));
+    return rows.length - 1;
+  }
+
+  function codeRows(name: string): number {
+    const all = /const GRAMMARS\s*=\s*\{([\s\S]*?)\n\};/.exec(initSrc);
+    expect(all, "init.mjs has no GRAMMARS table").not.toBeNull();
+    const one = new RegExp(`${name}:\\s*\\[([\\s\\S]*?)\\n\\s*\\]`).exec(all![1]);
+    expect(one, `init.mjs has no ${name} grammar`).not.toBeNull();
+    return (one![1].match(/\{/g) ?? []).length;
+  }
+
+  it("gives every grammar the number of sections the scaffolder emits", () => {
+    // catalogue documented six slots against five in the code, and dossier five against
+    // four, so a reader planning copy wrote a section that never appeared.
+    const names = [...(/const GRAMMARS\s*=\s*\{([\s\S]*?)\n\};/.exec(initSrc)![1].matchAll(/^\s{2}(\w+):\s*\[/gm))].map((m) => m[1]);
+    expect(names.length).toBeGreaterThan(3);
+    for (const name of names) {
+      expect(docRows(grammars, name), `${name}: grammars.md and init.mjs disagree`).toBe(codeRows(name));
+    }
+  });
+
+  it("documents every section field the schema carries", () => {
+    // scrim was missing outright: a real, tested feature with no entry at all.
+    const schema = fs.readFileSync("src/lib/siteSchema.ts", "utf8");
+    const block = /export const sectionSchema = object\(\{([\s\S]*?)\}\)/.exec(schema);
+    expect(block, "sectionSchema moved").not.toBeNull();
+    const fields = [...block![1].matchAll(/^\s{2}(\w+):/gm)].map((m) => m[1]).filter((f) => f !== "id");
+    expect(fields.length).toBeGreaterThan(10);
+    for (const field of fields) {
+      expect(siteSpec, `site-spec.md does not document \`${field}\``).toContain(`\`${field}\``);
+    }
+  });
+
+  it("quotes the eyebrow default the builder actually uses", () => {
+    const builder = fs.readFileSync(`${root}/scripts/build-site.mjs`, "utf8");
+    const fallback = /--sc-accent-text,\s*(#[0-9a-f]{6})/i.exec(builder);
+    expect(fallback, "the eyebrow fallback moved").not.toBeNull();
+    expect(siteSpec, "site-spec.md quotes a colour the builder never emits").toContain(fallback![1]);
+  });
+
+  it("points the README at scripts that exist", () => {
+    // Every command said `node scripts/<name>.mjs`, and there is no scripts/ directory
+    // at the repo root, so each one died with "Cannot find module".
+    const readme = fs.readFileSync("README.md", "utf8");
+    const paths = [...readme.matchAll(/node ([\w./-]+\.mjs)/g)].map((m) => m[1]);
+    expect(paths.length).toBeGreaterThan(3);
+    for (const rel of new Set(paths)) {
+      expect(fs.existsSync(rel), `README runs ${rel}, which does not exist`).toBe(true);
+    }
+  });
+
+  it("asks Google Fonts for the weight the theme declares", () => {
+    // The URL hardcoded 400;600;800 while displayWeight is free between 100 and 900.
+    // Space Grotesk serves no 800, so tide's 700 display resolved down to 600.
+    const builder = fs.readFileSync(`${root}/scripts/build-site.mjs`, "utf8");
+    expect(builder).not.toContain(":wght@400;600;800");
+    expect(builder).toContain("Number(theme.displayWeight)");
+  });
+
+  it("does not repaint frame 0 when the other frame set arrives", () => {
+    // export-contract.md promises crossing the breakpoint "does not snap the background
+    // back to frame 0"; the runtime did exactly that on every preload.
+    const runtime = fs.readFileSync(`${root}/engine/scrollcraft.runtime.js`, "utf8");
+    expect(runtime).not.toContain("isPrimary");
+    expect(runtime).toContain("if (i === currentFrame) drawFrame(i);");
+  });
+});

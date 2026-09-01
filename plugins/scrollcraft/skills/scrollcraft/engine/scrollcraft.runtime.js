@@ -54,7 +54,7 @@
     return dir + '/frame_' + s + '.jpg';
   }
 
-  function preloadSet(count, dir, target, isPrimary) {
+  function preloadSet(count, dir, target) {
     if (!count) return;
     var STEP = 5;
     var keyframes = [];
@@ -83,7 +83,6 @@
       }
       img.onload = function () {
         target[i] = img;
-        if (i === 0 && isPrimary) drawFrame(0);
         if (i === currentFrame) drawFrame(i);
         advance();
       };
@@ -96,10 +95,10 @@
 
   function preload() {
     if (hasMobile && isMobile) {
-      preloadSet(mobileCount, framesMobileDir, mobileImages, true);
+      preloadSet(mobileCount, framesMobileDir, mobileImages);
       mobileLoaded = true;
     } else {
-      preloadSet(desktopCount, framesDir, desktopImages, true);
+      preloadSet(desktopCount, framesDir, desktopImages);
       desktopLoaded = true;
     }
   }
@@ -130,11 +129,11 @@
       isMobile = e.matches;
       frameCount = isMobile ? mobileCount : desktopCount;
       if (isMobile && !mobileLoaded) {
-        preloadSet(mobileCount, framesMobileDir, mobileImages, true);
+        preloadSet(mobileCount, framesMobileDir, mobileImages);
         mobileLoaded = true;
       }
       if (!isMobile && !desktopLoaded) {
-        preloadSet(desktopCount, framesDir, desktopImages, true);
+        preloadSet(desktopCount, framesDir, desktopImages);
         desktopLoaded = true;
       }
       currentFrame = -1;

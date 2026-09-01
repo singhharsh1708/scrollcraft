@@ -61,7 +61,12 @@ function themeHead(theme) {
     if (!fams.includes(f)) fams.push(f);
   }
   if (!fams.length) return "";
-  const q = fams.map((f) => `family=${f.replace(/ /g, "+")}:wght@400;600;800`).join("&");
+  // Ask for the weight the theme declares, not a fixed 400/600/800. displayWeight is
+  // free between 100 and 900, and a face that does not serve the requested weight is
+  // matched to a neighbour: Space Grotesk stops at 600, so tide's 700 display rendered
+  // at 600, while Fraunces and Playfair Display jumped 700 up to 800.
+  const weights = [...new Set([400, 600, Number(theme.displayWeight) || 800])].sort((a, b) => a - b);
+  const q = fams.map((f) => `family=${f.replace(/ /g, "+")}:wght@${weights.join(";")}`).join("&");
   return [
     '<link rel="preconnect" href="https://fonts.googleapis.com" />',
     '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />',
@@ -109,9 +114,12 @@ function safeCss(s) {
   return String(s ?? "").replace(/[<>"'\\;{}]/g, "");
 }
 
+// An allowlist, matching the app's exporter: a scheme that executes never reaches the
+// page, and // is excluded because it leaves the origin rather than naming a local path.
 function safeHref(s) {
-  const href = String(s ?? "");
-  return /^https?:\/\//i.test(href) || href.startsWith("#") ? href : "#";
+  const href = String(s ?? "").trim();
+  if (href.startsWith("//")) return "#";
+  return /^(?:https?:\/\/|mailto:|tel:|#|\/|\.{1,2}\/)/i.test(href) ? href : "#";
 }
 
 function safeCssBlock(s) {

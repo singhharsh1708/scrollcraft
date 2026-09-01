@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import dynamic from "next/dynamic";
 import { siteStyleSchema, themeSchema, type EditorSection, type SiteStyle, type Theme } from "@/lib/siteSchema";
 import { templateBySlug, type Template } from "@/lib/templates";
+import { layoutStyle } from "@/lib/layoutStyles";
 import { faviconSvg, notFoundHtml, exportReadme, renderSocialCard } from "@/lib/exportAssets";
 import { generate2DFrames } from "@/lib/generate2DFrames";
 import { AUTOSAVE_DEBOUNCE_MS, saveStatusLabel, type SaveState } from "@/lib/saveStatus";
@@ -106,9 +107,17 @@ const defaultSection = (i: number): Section => ({
  * reactive graph and stopped the React Compiler preserving the undo/redo memoization.
  */
 function toEditorSections(t: Template, secs: Template["sections"]): Section[] {
-  return secs.map((s, i) => ({
+  return secs.map((s, i) => {
+    // A template places its copy with `layout` and sets none of the three directly.
+    // defaultSection's "center" is right for a blank section but would outrank the
+    // layout here, since both renderers read `s.align ?? L.align`.
+    const L = layoutStyle(s.layout);
+    return {
     ...defaultSection(i),
     ...s,
+    textAlign: s.textAlign ?? L.textAlign,
+    align: s.align ?? L.align,
+    justify: s.justify ?? L.justify,
     id: `section-${i}-${t.slug}`,
     heading: s.heading ?? "",
     eyebrow: s.eyebrow ?? "",
@@ -120,7 +129,8 @@ function toEditorSections(t: Template, secs: Template["sections"]): Section[] {
     bodyColor: s.bodyColor ?? t.theme.muted ?? "rgba(255,255,255,0.7)",
     scrollHeight: s.scrollHeight ?? 1000,
     visible: true,
-  }));
+    };
+  });
 }
 
 function EditorInner() {
@@ -579,6 +589,9 @@ function EditorInner() {
           customCss,
           // With a background recipe the exported page draws its own frames, so the ZIP
           // ships none — tens of megabytes of JPEGs become a few hundred bytes of JSON.
+          // Without this the route falls back to themeJson = "": no font link and none
+          // of the --sc- custom properties.
+          themeJson: siteTheme ? JSON.stringify(siteTheme) : undefined,
           styleJson: exportProcedurally ? JSON.stringify(styleSpec) : undefined,
           frameCount: exportProcedurally ? 0 : frames.length,
           mobileFrameCount: exportProcedurally ? 0 : mobileFrames.length,
@@ -625,14 +638,16 @@ function EditorInner() {
       // GitHub Pages otherwise runs the output through Jekyll, which silently drops
       // any file or folder whose name begins with an underscore.
       zip.file(".nojekyll", "");
-      zip.file("netlify.toml", '[build]\n  publish = "."\n\n[[headers]]\n  for = "/frames/*"\n  [headers.values]\n    Cache-Control = "public, max-age=31536000, immutable"\n');
+      // Both folders: the mobile set is the one a phone cannot share with desktop.
+      const IMMUTABLE = "public, max-age=31536000, immutable";
+      zip.file("netlify.toml", `[build]\n  publish = "."\n\n[[headers]]\n  for = "/frames/*"\n  [headers.values]\n    Cache-Control = "${IMMUTABLE}"\n\n[[headers]]\n  for = "/frames-mobile/*"\n  [headers.values]\n    Cache-Control = "${IMMUTABLE}"\n`);
       zip.file("vercel.json", JSON.stringify({
         $schema: "https://openapi.vercel.sh/vercel.json",
         cleanUrls: true,
-        headers: [{
-          source: "/frames/(.*)",
-          headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }],
-        }],
+        headers: [
+          { source: "/frames/(.*)", headers: [{ key: "Cache-Control", value: IMMUTABLE }] },
+          { source: "/frames-mobile/(.*)", headers: [{ key: "Cache-Control", value: IMMUTABLE }] },
+        ],
       }, null, 2) + "\n");
 
       const ogBlob = await renderSocialCard(siteName, siteDescription, frames[0], siteTheme?.ground ?? "#05070c", siteTheme?.ink ?? "#ffffff");
