@@ -18,7 +18,7 @@ isn't tolerated.
 
 ## Development setup
 
-> Requires Node.js 20+. That is the whole list.
+> Requires Node.js 22+. That is the whole list.
 
 ```bash
 # Fork the repo, then:

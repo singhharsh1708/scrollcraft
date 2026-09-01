@@ -33,7 +33,6 @@ rhythm, so no section needs to shout.
 | text | left | rise | 1300 |
 | text | right | rise | 1300 |
 | text | left | rise | 1300 |
-| text | right | rise | 1300 |
 | text | center | scale | 1000 |
 
 ### `manifesto` — text pinned low, background doing the talking
@@ -53,7 +52,6 @@ For specifications, data, a technical story. `compact` type scale suits it.
 
 | kind | layout | reveal | track |
 | --- | --- | --- | --- |
-| text | upper-third | fade | 900 |
 | text | upper-third | fade | 900 |
 | text | upper-third | fade | 900 |
 | text | upper-third | fade | 900 |

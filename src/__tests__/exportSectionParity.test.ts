@@ -1,6 +1,9 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import type { NextRequest } from "next/server";
+import { readFileSync } from "node:fs";
 import { SECTION_LAYOUTS } from "@/lib/siteSchema";
+import { layoutStyle } from "@/lib/layoutStyles";
+import { TEMPLATES } from "@/lib/templates";
 
 const rateLimitMock = vi.hoisted(() => vi.fn());
 
@@ -17,13 +20,15 @@ function exportRequest(body: Record<string, unknown>): NextRequest {
   }) as unknown as NextRequest;
 }
 
-async function exportHtml(sections: unknown[]): Promise<string> {
-  const res = await POST(exportRequest({ sections, siteName: "Parity", frameCount: 10, fps: 24 }));
+async function exportHtml(sections: unknown[], over: Record<string, unknown> = {}): Promise<string> {
+  const res = await POST(exportRequest({ sections, siteName: "Parity", frameCount: 10, fps: 24, ...over }));
   expect(res.status).toBe(200);
   const json = await res.json();
   expect(typeof json.html).toBe("string");
   return json.html as string;
 }
+
+const EDITOR_SRC = readFileSync("src/app/editor/page.tsx", "utf8");
 
 beforeEach(async () => {
   vi.clearAllMocks();
@@ -288,5 +293,87 @@ describe("exported site description", () => {
     const html = await exportWith({ siteDescription: "x".repeat(500) });
     const match = html.match(/<meta name="description" content="(x+)"/);
     expect(match?.[1].length).toBe(300);
+  });
+});
+
+describe("the editor hands the exporter what the template asked for", () => {
+  const TEMPLATE = TEMPLATES.find((t) => t.sections.some((s) => s.layout && s.layout !== "center"))!;
+
+  it("sends the theme, without which the page ships as the untouched default", async () => {
+    // handleExport never included themeJson, so the route fell back to "" on every
+    // export: no Google Fonts link and none of the --sc- custom properties. Measured
+    // against a production build, an OrbitCRM export carried 0 font links and 3 vars
+    // where the template's own theme gives 3 and 11.
+    expect(EDITOR_SRC).toContain("themeJson: siteTheme ? JSON.stringify(siteTheme) : undefined,");
+
+    const withTheme = await exportHtml(TEMPLATE.sections, { themeJson: JSON.stringify(TEMPLATE.theme) });
+    for (const token of ["fonts.googleapis.com", "--sc-ink:", "--sc-muted:", "--sc-accent:", "--sc-font-display:"]) {
+      expect(withTheme, `${token} is missing`).toContain(token);
+    }
+    const without = await exportHtml(TEMPLATE.sections);
+    expect(without).not.toContain("fonts.googleapis.com");
+  });
+
+  it("does not stamp its blank-section defaults over a template's layout", () => {
+    // defaultSection supplies centre for textAlign, align and justify, which is right
+    // for a new empty section. toEditorSections spread it over template sections that
+    // carry none of the three, and both the renderer and the exporter read
+    // `s.align ?? L.align` — so the stamp won and every left, right and lower-third
+    // composition in the catalogue exported dead centre.
+    const fn = EDITOR_SRC.slice(EDITOR_SRC.indexOf("function toEditorSections"), EDITOR_SRC.indexOf("function EditorInner"));
+    expect(fn).toContain("const L = layoutStyle(s.layout);");
+    for (const line of ["textAlign: s.textAlign ?? L.textAlign,", "align: s.align ?? L.align,", "justify: s.justify ?? L.justify,"]) {
+      expect(fn, `${line} is missing`).toContain(line);
+    }
+    // From the exporter's own table, not a second copy of the placement rules.
+    expect(layoutStyle("lower-third")).toMatchObject({ align: "flex-end", justify: "flex-start", textAlign: "left" });
+  });
+
+  it("keeps a template's mix of placements once those defaults are resolved", async () => {
+    const resolved = TEMPLATE.sections.map((sec) => {
+      const L = layoutStyle(sec.layout);
+      return { ...sec, textAlign: sec.textAlign ?? L.textAlign, align: sec.align ?? L.align, justify: sec.justify ?? L.justify };
+    });
+    const html = await exportHtml(resolved);
+    const placements = new Set(
+      [...html.matchAll(/align-items:([a-z-]+); justify-content:([a-z-]+)/g)].map((m) => `${m[1]}/${m[2]}`)
+    );
+    expect(placements.size, "every section exported to the same placement").toBeGreaterThan(1);
+  });
+});
+
+describe("exported CTA links go where they say", () => {
+  const cta = async (href: string) => {
+    const html = await exportHtml([{ heading: "H", ctaLabel: "Go", ctaHref: href, scrollHeight: 1000 }]);
+    return /<a href="([^"]*)"[^>]*>Go<\/a>/.exec(html)?.[1];
+  };
+
+  it("keeps every form the CTA field accepts", async () => {
+    // ctaHrefSchema allows all of these and the editor's link field takes them, but the
+    // exporter allowed only http(s), so each shipped as a dead href="#" — an in-page
+    // anchor included.
+    for (const href of ["https://example.com", "mailto:a@b.com", "tel:+123456", "#pricing", "/pricing", "./docs", "../up"]) {
+      expect(await cta(href), `${href} was rewritten`).toBe(href);
+    }
+  });
+
+  it("still refuses anything that executes or leaves the origin unasked", async () => {
+    // The allowlist exists because of the XSS escaping pass; loosening it must not
+    // reopen it. // is excluded as well: it satisfies the schema's leading slash but
+    // jumps to another origin.
+    for (const href of ["javascript:alert(1)", "JaVaScRiPt:alert(1)", "  javascript:alert(1)", "data:text/html,x", "vbscript:x", "//evil.com"]) {
+      expect(await cta(href), `${href} survived`).toBe("#");
+    }
+  });
+});
+
+describe("exported reveals behave like the preview's", () => {
+  it("reveals a section once instead of replaying it on every pass", async () => {
+    // SiteRenderer only ever adds its visible class. The exported observer also removed
+    // it on exit, so each section faded back to nothing and re-animated every time the
+    // visitor scrolled past — a different page from the one they approved.
+    const html = await exportHtml([{ heading: "A", reveal: "rise", scrollHeight: 1000 }]);
+    expect(html).not.toContain("classList.remove('visible')");
+    expect(html).toContain("rootMargin: '0px 0px -8% 0px'");
   });
 });

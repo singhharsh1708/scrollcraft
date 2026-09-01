@@ -13,9 +13,13 @@ function esc(s: string): string {
     .replace(/"/g, "&quot;").replace(/'/g, "&#x27;");
 }
 
-/** First letter of the site name, for the icon glyph. Falls back to a dot. */
+/**
+ * First character of the site name, for the icon glyph. Falls back to a dot.
+ *
+ * By code point: `"🚀 Rocket"[0]` is half a surrogate pair, not a character.
+ */
 function initial(siteName: string): string {
-  const ch = siteName.trim()[0];
+  const ch = [...siteName.trim()][0];
   return ch ? ch.toUpperCase() : "•";
 }
 

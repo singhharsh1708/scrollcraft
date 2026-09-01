@@ -203,17 +203,32 @@ export function drawFrame2D(
   }
 }
 
+export interface ProceduralRuntime {
+  source: string;
+  /** What the emitted source calls the entry point, which a minified build renames. */
+  entry: string;
+}
+
 /**
  * The drawing core as plain JavaScript, for inlining into an exported site.
  *
  * The export has no bundler, so the runtime has to travel as source. Serialising the
  * real functions rather than keeping a hand-written copy means the exported background
  * and the in-app one cannot drift apart — there is still only one implementation.
+ *
+ * `entry` is returned rather than left for the caller to spell, because fn.toString()
+ * carries whatever names the build produced and a minified build produces short ones.
  */
-export function proceduralRuntimeSource(): string {
-  return [hexToRgb, lerp, drawGradient, drawGeometric, drawParticles, drawWave, drawFrame2D]
-    .map((fn) => fn.toString())
+export function proceduralRuntimeSource(): ProceduralRuntime {
+  const fns = [hexToRgb, lerp, drawGradient, drawGeometric, drawParticles, drawWave, drawFrame2D];
+  const source = fns
+    .map((fn) => {
+      const src = fn.toString();
+      // A declaration binds its own name; an expression binds nothing, so name it.
+      return /^\s*(async\s+)?function\b/.test(src) ? src : `var ${fn.name} = ${src};`;
+    })
     .join("\n\n");
+  return { source, entry: drawFrame2D.name };
 }
 
 export async function generate2DFrames(opts: FrameOptions, onProgress?: (pct: number) => void): Promise<string[]> {
