@@ -377,3 +377,20 @@ describe("exported reveals behave like the preview's", () => {
     expect(html).toContain("rootMargin: '0px 0px -8% 0px'");
   });
 });
+
+describe("the exported CTA uses the theme's corner radius", () => {
+  it("takes the radius from the theme, as the preview already does", async () => {
+    // The preview renders borderRadius: var(--sc-radius, 8px); the export hardcoded
+    // 0.5rem, which is 8px, so only the two templates that ask for 8 were right.
+    // Nineteen of twenty-one ask for something else, three of them for square corners.
+    const html = await exportHtml(
+      [{ heading: "H", ctaLabel: "Go", ctaHref: "https://x.com", scrollHeight: 1000 }],
+      { themeJson: JSON.stringify({ radius: 20 }) }
+    );
+    const cta = /<a href="https:\/\/x\.com"[^>]*style="([^"]*)"/.exec(html);
+    expect(cta, "no CTA anchor was emitted").toBeTruthy();
+    expect(cta![1]).toContain("border-radius:var(--sc-radius, 8px)");
+    expect(cta![1]).not.toContain("border-radius:0.5rem");
+    expect(html).toContain("--sc-radius:20px");
+  });
+});

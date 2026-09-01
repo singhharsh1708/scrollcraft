@@ -52,6 +52,28 @@ function safeCss(s: unknown): string {
  * An allowlist, so javascript:, data: and anything unlisted become "#". `//host` is
  * excluded as well: it satisfies the schema's leading slash but leaves the origin.
  */
+/** The body, or null once it exceeds `limit` — at which point reading stops. */
+async function readCapped(req: NextRequest, limit: number): Promise<string | null> {
+  const body = req.body;
+  if (!body) return "";
+  const reader = body.getReader();
+  const decoder = new TextDecoder();
+  let out = "";
+  let seen = 0;
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      seen += value.byteLength;
+      if (seen > limit) return null;
+      out += decoder.decode(value, { stream: true });
+    }
+  } finally {
+    reader.releaseLock();
+  }
+  return out + decoder.decode();
+}
+
 function safeHref(s: unknown): string {
   const href = String(s ?? "").trim();
   if (href.startsWith("//")) return "#";
@@ -75,8 +97,12 @@ export async function POST(req: NextRequest) {
     if (Number.isFinite(declaredLen) && declaredLen > MAX_BODY) {
       return NextResponse.json({ error: "Request body too large." }, { status: 413 });
     }
-    const raw = await req.text();
-    if (raw.length > MAX_BODY) {
+    // Read with a running cap rather than buffering first and measuring after. The
+    // header check above is only as honest as the sender: omit Content-Length, send
+    // chunked, and req.text() would hold the whole stream in memory before anyone
+    // looked at its size.
+    const raw = await readCapped(req, MAX_BODY);
+    if (raw === null) {
       return NextResponse.json({ error: "Request body too large." }, { status: 413 });
     }
     let body;
@@ -246,7 +272,7 @@ export async function POST(req: NextRequest) {
             ? `<${hTag} class="sc-display sc-statement" style="color:${safeCss(s.headingColor || "var(--sc-ink, #ffffff)")}; margin-bottom:1rem;">${esc(s.heading)}</${hTag}>`
             : `<${hTag} class="sc-display" style="font-size:var(--sc-heading-size, clamp(2rem,5vw,4rem)); font-weight:var(--sc-display-weight, 900); line-height:1; letter-spacing:var(--sc-display-tracking, -0.03em); text-transform:var(--sc-display-case, none); color:${safeCss(s.headingColor || "var(--sc-ink, #ffffff)")}; margin-bottom:1rem;">${esc(s.heading)}</${hTag}>`) : ""}
           ${s.body ? `<p style="font-size:var(--sc-body-size, 1.125rem); line-height:1.7; color:${safeCss(s.bodyColor || "var(--sc-muted, rgba(255,255,255,0.72))")}; max-width:var(--sc-measure, 600px); margin:${stack};">${esc(s.body)}</p>` : ""}
-          ${s.ctaLabel ? `<a href="${esc(safeHref(s.ctaHref || "#"))}" style="display:inline-block; background:${safeCss(s.accentColor || "var(--sc-accent, #7c3aed)")}; color:white; padding:0.875rem 2rem; border-radius:0.5rem; font-weight:600; text-decoration:none; font-size:1rem;">${esc(s.ctaLabel)}</a>` : ""}
+          ${s.ctaLabel ? `<a href="${esc(safeHref(s.ctaHref || "#"))}" style="display:inline-block; background:${safeCss(s.accentColor || "var(--sc-accent, #7c3aed)")}; color:white; padding:0.875rem 2rem; border-radius:var(--sc-radius, 8px); font-weight:600; text-decoration:none; font-size:1rem;">${esc(s.ctaLabel)}</a>` : ""}
         </div>
       </div>
     </section>`;

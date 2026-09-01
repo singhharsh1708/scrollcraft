@@ -137,8 +137,8 @@ function EditorInner() {
   const searchParams = useSearchParams();
   const previewScrollRef = useRef<HTMLDivElement>(null);
 
-  // Derive initial frame state. Frames live in IndexedDB (primary) with sessionStorage as a
-  // legacy fallback for any in-flight sessions created before this change.
+  // Derive initial frame state. Frames live in IndexedDB; nothing reads sessionStorage,
+  // which was too small at 5 MB to hold a frame sequence.
   const pickedTemplate = templateBySlug(searchParams.get("template") ?? "");
   // A template arrives as a finished site: its sections become the starting document,
   // with the ids the editor needs to track selection and undo.
@@ -154,7 +154,7 @@ function EditorInner() {
   const countParam = searchParams.get("frameCount");
   const fpsParam = searchParams.get("fps");
 
-  // Synchronous fast path: check legacy sessionStorage only (may be empty for new sessions)
+  // Synchronous fast path: the legacy ?frames= URL parameter, which predates IndexedDB.
   const parsedFrames: string[] | null = (() => {
     if (framesParam) {
       try {

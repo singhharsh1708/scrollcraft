@@ -37,8 +37,8 @@ export default function PrivacyPage() {
           </li>
           <li>
             <strong>Ordinary request logs.</strong> Our host records the usual server access
-            logs, including IP addresses, which we also use to rate-limit the two API routes
-            so one visitor cannot exhaust them for everyone.
+            logs, including IP addresses, which we also use to rate-limit the export endpoint
+            so one visitor cannot exhaust it for everyone.
           </li>
         </ul>
         <p>

@@ -70,6 +70,8 @@ export default function Navbar({ position = "sticky" }: { position?: "fixed" | "
           className="md:hidden p-2 rounded-md text-muted-foreground hover:text-foreground cursor-pointer"
           onClick={() => setOpen((v) => !v)}
           aria-label="Toggle menu"
+          aria-expanded={open}
+          aria-controls="mobile-menu"
         >
           {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>
@@ -77,7 +79,7 @@ export default function Navbar({ position = "sticky" }: { position?: "fixed" | "
 
       {/* Mobile drawer */}
       {open && (
-        <div className="md:hidden border-t border-white/5 bg-background/95 backdrop-blur-xl px-5 py-4 flex flex-col gap-3">
+        <div id="mobile-menu" className="md:hidden border-t border-white/5 bg-background/95 backdrop-blur-xl px-5 py-4 flex flex-col gap-3">
           {NAV_LINKS.map(({ href, label }) => (
             <Link
               key={href}

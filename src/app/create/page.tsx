@@ -119,10 +119,18 @@ function CreatePageInner() {
     try {
       // Extracted here, in the browser. The video never leaves the device and there is
       // no server involved at all.
-      const { frames, frameCount: count } = await extractFramesInBrowser(file, {
+      const { frames, frameCount: count, duration, sourceDuration } = await extractFramesInBrowser(file, {
         frameCount,
         onProgress: (pct) => setProgress(Math.max(5, pct)),
       });
+      // Sampling stops at a cap, and silently returning a shortened site is worse than
+      // saying so - the missing footage is the first thing the user looks for.
+      if (sourceDuration > duration + 0.5) {
+        toast.info(
+          `Used the first ${Math.round(duration)}s of your ${Math.round(sourceDuration)}s clip. ` +
+          "Past that the frames are too far apart to scrub smoothly."
+        );
+      }
       await storeFrames("scrollcraft_desktop_frames", frames);
 
       const params = new URLSearchParams({
