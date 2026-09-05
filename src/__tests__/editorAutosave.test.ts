@@ -128,3 +128,28 @@ describe("editor autosave", () => {
     expect(EDITOR).toMatch(/if \(!dirty\) return;/);
   });
 });
+
+describe("the editor's opening message tells the truth", () => {
+  /**
+   * The placeholder toast fired from a mount-time effect whenever the URL carried no
+   * frames - which is every template open ("pick a template", to someone who just did)
+   * and every cold open, where it then sat next to "Restored what you were working on".
+   * Verified in Chrome by polling toasts for the first six seconds of each load.
+   */
+  it("does not guess at mount", () => {
+    expect(EDITOR).not.toMatch(/useEffect\(\(\) => \{\s*if \(initialIsDemo\) \{\s*toast/);
+  });
+
+  it("calls the editor empty only after the restore has looked", () => {
+    const restore = EDITOR.slice(EDITOR.indexOf("const doc = await loadDocument()"), EDITOR.indexOf("if (Array.isArray(doc.sections)"));
+    expect(restore).toContain("if (!doc) {");
+    expect(restore).toContain("Showing a placeholder background");
+  });
+
+  it("says which half came back when the background did not", () => {
+    // "Restored" over a placeholder is the same lie as "Saved" over a dropped background.
+    expect(EDITOR).toContain("let backgroundRestored = false;");
+    expect(EDITOR).toContain("Restored your text, but the background is gone from this browser");
+    expect(EDITOR).toMatch(/if \(backgroundRestored\) \{\s*toast\.info\("Restored what you were working on"\);/);
+  });
+});
