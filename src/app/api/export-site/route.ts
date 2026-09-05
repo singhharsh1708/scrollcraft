@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
-import { REVEALS, exportSectionsSchema, type Section, visibleSections as onlyVisible } from "@/lib/siteSchema";
+import { REVEALS, exportSectionsSchema, sectionAnchor, type Section, visibleSections as onlyVisible } from "@/lib/siteSchema";
 import { layoutStyle } from "@/lib/layoutStyles";
 import { DISPLAY_STYLES, displayStyle } from "@/lib/displayStyles";
 import { parseThemeJson, parseStyleJson } from "@/lib/siteSchema";
@@ -265,7 +265,7 @@ export async function POST(req: NextRequest) {
       const hTag = sectionIndex === firstHeadingIndex ? "h1" : "h2";
       const scrim = Math.min(Math.max(Number(s.scrim ?? 0) || 0, 0), 1);
       return `
-    <section class="scroll-section" style="height:${trackHeight(s)}px; position:relative; z-index:10;">
+    <section id="${sectionAnchor(sectionIndex)}" class="scroll-section" style="height:${trackHeight(s)}px; position:relative; z-index:10;">
       <div class="section-sticky" style="position:sticky; top:0; height:100vh; display:flex; align-items:${safeCss(s.align || L.align)}; justify-content:${safeCss(s.justify || L.justify)}; overflow:hidden;">
         <div class="section-content" data-reveal="${reveal}" style="${scrim > 0 ? `background:radial-gradient(ellipse 120% 100% at 50% 50%, rgba(0,0,0,${scrim}) 0%, rgba(0,0,0,${(scrim * 0.72).toFixed(3)}) 45%, rgba(0,0,0,0) 78%); ` : ""}text-align:${safeCss(s.textAlign || L.textAlign)}; padding:${L.pad}; max-width:${L.maxWidth}px; transition:opacity 0.6s cubic-bezier(0.25,0.46,0.45,0.94),transform 0.6s cubic-bezier(0.25,0.46,0.45,0.94),clip-path 0.7s cubic-bezier(0.25,0.46,0.45,0.94);">
           ${imgSrc ? `<img src="${esc(imgSrc)}" alt="${esc(s.imageAlt || "")}" style="display:block; max-width:min(100%, ${imgWidth}px); height:auto; margin:${stack};" />` : ""}
@@ -339,6 +339,34 @@ export async function POST(req: NextRequest) {
         opacity: 1 !important; transform: none !important; clip-path: none !important; transition: none !important;
       }
     }
+    /* The footer sits above the fixed canvas and closes the page: a scroll site with no
+       footer reads as a deck, and the owner's name and year are the minimum a visitor
+       looks for. Theme tokens throughout, so it inherits the site's own type and colour. */
+    #site-footer {
+      position: relative; z-index: 10;
+      padding: clamp(3rem, 8vh, 6rem) clamp(1.5rem, 6vw, 5rem) clamp(2rem, 5vh, 3.5rem);
+      background: var(--sc-ground, #05070c);
+      border-top: 1px solid color-mix(in oklab, var(--sc-ink, #ffffff) 12%, transparent);
+      text-align: center;
+    }
+    #site-footer .footer-name {
+      font-family: var(--sc-font-display, var(--sc-font-body, inherit));
+      font-weight: var(--sc-display-weight, 800);
+      letter-spacing: var(--sc-display-tracking, -0.02em);
+      font-size: clamp(1.25rem, 3vw, 1.75rem);
+      color: var(--sc-ink, #ffffff);
+      margin: 0 0 0.5rem;
+    }
+    #site-footer .footer-tagline {
+      color: var(--sc-muted, rgba(255,255,255,0.72));
+      font-size: 1rem; line-height: 1.6;
+      max-width: var(--sc-measure, 600px); margin: 0 auto 1.5rem;
+    }
+    #site-footer .footer-legal {
+      color: var(--sc-muted, rgba(255,255,255,0.72));
+      font-size: 0.8125rem; margin: 0; opacity: 0.75;
+    }
+
     #scroll-hint {
       position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%);
       pointer-events: none;
@@ -380,6 +408,11 @@ export async function POST(req: NextRequest) {
     <span>Scroll</span>
     <div class="arrow"></div>
   </div>
+  <footer id="site-footer">
+    <p class="footer-name">${esc(siteName)}</p>
+    ${siteDescription ? `<p class="footer-tagline">${esc(siteDescription)}</p>` : ""}
+    <p class="footer-legal">&copy; <span id="footer-year">${new Date().getUTCFullYear()}</span> ${esc(siteName)}. All rights reserved.</p>
+  </footer>
   ${hasAudio ? `<button id="audio-mute" title="Toggle audio">🔊</button>` : ""}
 
   <script>

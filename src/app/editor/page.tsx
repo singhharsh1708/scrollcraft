@@ -18,7 +18,7 @@ import { useScrollAudio } from "@/lib/useScrollAudio";
 import Link from "next/link";
 import { toast } from "sonner";
 import dynamic from "next/dynamic";
-import { siteStyleSchema, themeSchema, type EditorSection, type SiteStyle, type Theme } from "@/lib/siteSchema";
+import { siteStyleSchema, themeSchema, sectionAnchor, visibleSections as onlyVisible, type EditorSection, type SiteStyle, type Theme } from "@/lib/siteSchema";
 import { templateBySlug, type Template } from "@/lib/templates";
 import { layoutStyle } from "@/lib/layoutStyles";
 import { faviconSvg, notFoundHtml, exportReadme, renderSocialCard, renderTouchIcon } from "@/lib/exportAssets";
@@ -720,6 +720,23 @@ function EditorInner() {
       a.click();
       URL.revokeObjectURL(url);
       toast.success("Site exported! Extract and serve with `npx serve .`");
+
+      // A call to action pointing at an in-page id that no section carries is a button
+      // that does nothing. Templates ship one on purpose - only the owner knows where it
+      // should go - so say which, rather than letting it go out silently dead.
+      // The same set the exporter numbers its anchors from.
+      const visibleForExport = onlyVisible(sections);
+      const anchors = new Set(visibleForExport.map((_, i) => sectionAnchor(i)));
+      const unresolved = visibleForExport
+        .filter((s) => s.ctaLabel && s.ctaHref?.startsWith("#") && !anchors.has(s.ctaHref.slice(1)))
+        .map((s) => s.ctaLabel);
+      if (unresolved.length) {
+        toast.warning(
+          `${unresolved.length === 1 ? "One button needs" : `${unresolved.length} buttons need`} a real link: ` +
+          `${unresolved.join(", ")}. Set it in the section's CTA link field, then export again.`,
+          { duration: 12000 }
+        );
+      }
     } catch (err) {
       toast.error(String(err));
     } finally {
