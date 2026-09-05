@@ -7,6 +7,7 @@ import ScrollEngine from "@/components/ScrollEngine";
 import { generate2DFrames } from "@/lib/generate2DFrames";
 import { loadFrames, storeFrames } from "@/lib/frameStorage";
 import { layoutStyle } from "@/lib/layoutStyles";
+import { displayStyle } from "@/lib/displayStyles";
 
 const REVEAL_CSS = `
 .sc-reveal{opacity:0;will-change:opacity,transform;transition:opacity .6s cubic-bezier(.25,.46,.45,.94),transform .6s cubic-bezier(.25,.46,.45,.94),clip-path .7s cubic-bezier(.25,.46,.45,.94)}
@@ -271,12 +272,10 @@ export default function SiteRenderer({
                   {s.heading && (
                     <Heading style={{
                       fontFamily: "var(--sc-font-display, var(--sc-font-body, inherit))",
-                      fontSize: s.kind === "statement"
-                        ? "clamp(2.75rem,11vw,9rem)"
-                        : "var(--sc-heading-size, clamp(2rem,5vw,4rem))",
-                      fontWeight: "var(--sc-display-weight, 900)" as unknown as number,
-                      lineHeight: s.kind === "statement" ? 0.92 : 1,
-                      letterSpacing: "var(--sc-display-tracking, -0.03em)",
+                      fontSize: displayStyle(s.kind).fontSize,
+                      fontWeight: displayStyle(s.kind).fontWeight as unknown as number,
+                      lineHeight: displayStyle(s.kind).lineHeight,
+                      letterSpacing: displayStyle(s.kind).letterSpacing,
                       textTransform: "var(--sc-display-case, none)" as "none" | "uppercase",
                       color: s.headingColor ?? "var(--sc-ink, #fff)",
                       marginBottom: "1rem",

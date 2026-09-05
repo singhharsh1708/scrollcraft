@@ -3,6 +3,7 @@ import { logger } from "@/lib/logger";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { REVEALS, exportSectionsSchema, type Section, visibleSections as onlyVisible } from "@/lib/siteSchema";
 import { layoutStyle } from "@/lib/layoutStyles";
+import { DISPLAY_STYLES, displayStyle } from "@/lib/displayStyles";
 import { parseThemeJson, parseStyleJson } from "@/lib/siteSchema";
 import { proceduralRuntimeSource } from "@/lib/generate2DFrames";
 import { compileTheme, varsToCss } from "@/lib/themeCss";
@@ -252,6 +253,7 @@ export async function POST(req: NextRequest) {
 
     const sectionsHtml = visibleSections.map((s: Section, sectionIndex: number) => {
       const L = layoutFor(s);
+      const H = displayStyle(s.kind);
       const stack = L.textAlign === "center" ? "0 auto 1.5rem" : "0 0 1.5rem";
       const imgSrc = exportableImage(s.image);
       const imgWidth = Math.min(Number(s.imageWidth) || 480, 1600);
@@ -270,7 +272,7 @@ export async function POST(req: NextRequest) {
           ${s.eyebrow ? `<p class="eyebrow" style="font-size:0.875rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:${safeCss(s.accentColor || "var(--sc-accent-text, #ede9fe)")}; margin-bottom:0.75rem;">${esc(s.eyebrow)}</p>` : ""}
           ${s.heading ? (s.kind === "statement"
             ? `<${hTag} class="sc-display sc-statement" style="color:${safeCss(s.headingColor || "var(--sc-ink, #ffffff)")}; margin-bottom:1rem;">${esc(s.heading)}</${hTag}>`
-            : `<${hTag} class="sc-display" style="font-size:var(--sc-heading-size, clamp(2rem,5vw,4rem)); font-weight:var(--sc-display-weight, 900); line-height:1; letter-spacing:var(--sc-display-tracking, -0.03em); text-transform:var(--sc-display-case, none); color:${safeCss(s.headingColor || "var(--sc-ink, #ffffff)")}; margin-bottom:1rem;">${esc(s.heading)}</${hTag}>`) : ""}
+            : `<${hTag} class="sc-display" style="font-size:${H.fontSize}; font-weight:${H.fontWeight}; line-height:${H.lineHeight}; letter-spacing:${H.letterSpacing}; text-transform:var(--sc-display-case, none); color:${safeCss(s.headingColor || "var(--sc-ink, #ffffff)")}; margin-bottom:1rem;">${esc(s.heading)}</${hTag}>`) : ""}
           ${s.body ? `<p style="font-size:var(--sc-body-size, 1.125rem); line-height:1.7; color:${safeCss(s.bodyColor || "var(--sc-muted, rgba(255,255,255,0.72))")}; max-width:var(--sc-measure, 600px); margin:${stack};">${esc(s.body)}</p>` : ""}
           ${s.ctaLabel ? `<a href="${esc(safeHref(s.ctaHref || "#"))}" style="display:inline-block; background:${safeCss(s.accentColor || "var(--sc-accent, #7c3aed)")}; color:white; padding:0.875rem 2rem; border-radius:var(--sc-radius, 8px); font-weight:600; text-decoration:none; font-size:1rem;">${esc(s.ctaLabel)}</a>` : ""}
         </div>
@@ -331,7 +333,7 @@ export async function POST(req: NextRequest) {
     .section-content[data-reveal="stagger"].visible > *:nth-child(3) { transition-delay: 180ms; }
     .section-content[data-reveal="stagger"].visible > *:nth-child(n+4) { transition-delay: 270ms; }
     .sc-display { font-family: var(--sc-font-display, var(--sc-font-body, system-ui, sans-serif)); }
-    .sc-statement { font-size: clamp(2.75rem, 11vw, 9rem); font-weight: var(--sc-display-weight, 800); line-height: 0.92; letter-spacing: var(--sc-display-tracking, -0.045em); text-transform: var(--sc-display-case, none); margin: 0; }
+    .sc-statement { font-size: ${DISPLAY_STYLES.statement.fontSize}; font-weight: ${DISPLAY_STYLES.statement.fontWeight}; line-height: ${DISPLAY_STYLES.statement.lineHeight}; letter-spacing: ${DISPLAY_STYLES.statement.letterSpacing}; text-transform: var(--sc-display-case, none); margin: 0; }
     @media (prefers-reduced-motion: reduce) {
       .section-content[data-reveal], .section-content[data-reveal="stagger"] > * {
         opacity: 1 !important; transform: none !important; clip-path: none !important; transition: none !important;
