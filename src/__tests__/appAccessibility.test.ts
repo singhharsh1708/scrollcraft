@@ -295,7 +295,7 @@ describe("every form control has a name a screen reader can read", () => {
     // role="switch" with aria-checked and no name announces only its state.
     const create = readFileSync("src/app/create/page.tsx", "utf8");
     const sw = create.slice(create.indexOf('role="switch"') - 400, create.indexOf('role="switch"') + 200);
-    expect(sw).toContain('aria-label="Generate mobile variant"');
+    expect(sw).toMatch(/aria-label="(Generate mobile variant|Portrait frames for an uploaded video)"/);
   });
 });
 

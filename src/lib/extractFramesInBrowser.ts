@@ -117,11 +117,23 @@ export async function extractFramesInBrowser(
     const ctx = canvas.getContext("2d");
     if (!ctx) throw new VideoExtractError("This browser cannot draw to a canvas.");
 
+    // When an explicit size changes the aspect ratio - a portrait set out of landscape
+    // footage - fill the box by covering it and cropping the overflow, centred. Scaling
+    // the source into the box instead stretches every face in the clip.
+    const srcAspect = srcW / srcH;
+    const dstAspect = w / h;
+    const cover = Math.abs(srcAspect - dstAspect) > 0.01;
+    const sw = cover && srcAspect > dstAspect ? Math.round(srcH * dstAspect) : srcW;
+    const sh = cover && srcAspect > dstAspect ? srcH : Math.round(srcW / dstAspect);
+    const sx = Math.round((srcW - sw) / 2);
+    const sy = Math.round((srcH - sh) / 2);
+
     const frames: string[] = [];
     for (let i = 0; i < frameCount; i++) {
       const t = (i / Math.max(frameCount - 1, 1)) * duration;
       await seekTo(video, t);
-      ctx.drawImage(video, 0, 0, w, h);
+      if (cover) ctx.drawImage(video, sx, sy, sw, sh, 0, 0, w, h);
+      else ctx.drawImage(video, 0, 0, w, h);
       frames.push(canvas.toDataURL("image/jpeg", quality));
       opts.onProgress?.(Math.round(((i + 1) / frameCount) * 100));
       // Yield so the progress bar can paint between frames.
