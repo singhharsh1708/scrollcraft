@@ -339,7 +339,13 @@ function EditorInner() {
     (async () => {
       try {
         const doc = await loadDocument().catch(() => null);
-        if (cancelled || !doc) return;
+        if (cancelled) return;
+        if (!doc) {
+          // Nothing in the URL and nothing saved: this is the one case that is really
+          // empty, and the only moment the editor knows it.
+          toast.info("Showing a placeholder background - pick a template or a style to replace it");
+          return;
+        }
 
         if (Array.isArray(doc.sections) && doc.sections.length) {
           const restored = doc.sections as Section[];
@@ -366,10 +372,12 @@ function EditorInner() {
         const storedFrames = doc.framesKey ? await loadFrames(doc.framesKey).catch(() => null) : null;
         const storedMobile = await loadFrames(SAVED_MOBILE_FRAMES_KEY).catch(() => null);
         if (cancelled) return;
+        let backgroundRestored = false;
         if (storedFrames?.length) {
           setFrames(storedFrames);
           setFrameCount(storedFrames.length);
           setIsDemo(false);
+          backgroundRestored = true;
           if (storedMobile?.length) setMobileFrames(storedMobile);
         } else if (recipe) {
           const mob = window.innerWidth < 768;
@@ -382,9 +390,17 @@ function EditorInner() {
             setFrames(regen);
             setFrameCount(regen.length);
             setIsDemo(false);
+            backgroundRestored = true;
           }
         }
-        if (!cancelled) toast.info("Restored what you were working on");
+        if (cancelled) return;
+        if (backgroundRestored) {
+          toast.info("Restored what you were working on");
+        } else {
+          // The text came back and the background did not: say which, rather than
+          // "Restored" over a placeholder.
+          toast.warning("Restored your text, but the background is gone from this browser. Pick a template or a style to make a new one.");
+        }
       } catch {
         // A restore failure is not fatal: the editor simply opens empty.
       } finally {
@@ -392,14 +408,6 @@ function EditorInner() {
       }
     })();
     return () => { cancelled = true; };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Show demo toast once on mount — but not when reopening a saved site (it hydrates async)
-  useEffect(() => {
-    if (initialIsDemo) {
-      toast.info("Showing a placeholder background — pick a template or a style to replace it");
-    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
