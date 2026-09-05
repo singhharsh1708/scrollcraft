@@ -134,11 +134,12 @@ Do **not** open \`index.html\` by double-clicking it. Browsers block a page load
 | \`index.html\` | Your whole site |
 | \`404.html\` | Shown for an address that does not exist |
 | \`favicon.svg\` | The icon in the browser tab |
-| \`og-image.png\` | The preview image when the link is shared |
+| \`og-image.jpg\` | The preview image when the link is shared |
+| \`apple-touch-icon.png\` | The icon when saved to a phone's home screen |
 | \`robots.txt\` | Tells search engines they may index the site |
 | \`lenis.min.js\` | Smooth scrolling. Remove it and scrolling still works |
 ${procedural
-  ? "\nThe background is drawn in the browser from a small style recipe, so there is no\n`frames/` folder and the whole site is a few kilobytes."
+  ? "\nThe background is drawn in the browser from a small style recipe, so there is no\n`frames/` folder. The page itself is about 35 KB; the social preview image is the only\nfile larger than that."
   : "\n| `frames/` | The background images |\n\nKeep `frames/` beside `index.html`."}
 
 ## Making changes
@@ -147,17 +148,17 @@ Everything is editable in a text editor.
 
 - **Words** — search \`index.html\` for the text you want to change.
 - **Colours** — near the top of the \`<style>\` block, the \`--sc-\` custom properties.
-- **Social preview** — replace \`og-image.png\` with your own 1200×630 image.
+- **Social preview** — replace \`og-image.jpg\` with your own 1200×630 image.
 - **Icon** — replace \`favicon.svg\`.
 
 ### One thing worth doing
 
 The social preview and canonical address are relative, which works on most platforms but
-not all. Once you know your real address, search \`index.html\` for \`og-image.png\` and make
+not all. Once you know your real address, search \`index.html\` for \`og-image.jpg\` and make
 it absolute:
 
 \`\`\`html
-<meta property="og:image" content="https://your-domain.com/og-image.png" />
+<meta property="og:image" content="https://your-domain.com/og-image.jpg" />
 \`\`\`
 
 ## Accessibility
@@ -257,6 +258,61 @@ export async function renderSocialCard(
       ctx.fillText(desc, 80, y + 8);
       ctx.globalAlpha = 1;
     }
+
+    // JPEG, not PNG: this is a photographic gradient, which PNG cannot compress. The same
+    // 1200x630 card measured 544 KB as PNG and 46 KB as JPEG at this quality - it was 94%
+    // of a procedural export's ZIP.
+    return await new Promise<Blob | null>((resolve) => {
+      canvas.toBlob((b) => resolve(b), "image/jpeg", 0.85);
+    });
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * A square home-screen icon in the favicon's own design.
+ *
+ * iOS ignores SVG for apple-touch-icon and wants a 180x180 PNG; the export pointed the
+ * tag at the 1200x630 social card, which iOS squashes into its square. Drawn here, in the
+ * browser, from the same accent, ground and initial the favicon uses.
+ */
+export async function renderTouchIcon(accent: string, ground: string, siteName: string): Promise<Blob | null> {
+  try {
+    const S = 180;
+    const canvas = document.createElement("canvas");
+    canvas.width = S;
+    canvas.height = S;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+
+    const r = S * 14 / 64;
+    const rounded = (x: number, y: number, w: number, h: number, rad: number) => {
+      ctx.beginPath();
+      ctx.moveTo(x + rad, y);
+      ctx.arcTo(x + w, y, x + w, y + h, rad);
+      ctx.arcTo(x + w, y + h, x, y + h, rad);
+      ctx.arcTo(x, y + h, x, y, rad);
+      ctx.arcTo(x, y, x + w, y, rad);
+      ctx.closePath();
+    };
+
+    ctx.fillStyle = ground;
+    rounded(0, 0, S, S, r);
+    ctx.fill();
+
+    ctx.strokeStyle = accent;
+    ctx.globalAlpha = 0.9;
+    ctx.lineWidth = S * 3 / 64;
+    rounded(S * 4 / 64, S * 4 / 64, S * 56 / 64, S * 56 / 64, S * 12 / 64);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+
+    ctx.fillStyle = accent;
+    ctx.font = `700 ${Math.round(S * 30 / 64)}px system-ui, -apple-system, "Segoe UI", sans-serif`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "alphabetic";
+    ctx.fillText(initial(siteName), S / 2, S * 43 / 64);
 
     return await new Promise<Blob | null>((resolve) => {
       canvas.toBlob((b) => resolve(b), "image/png");

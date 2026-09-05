@@ -21,7 +21,7 @@ import dynamic from "next/dynamic";
 import { siteStyleSchema, themeSchema, type EditorSection, type SiteStyle, type Theme } from "@/lib/siteSchema";
 import { templateBySlug, type Template } from "@/lib/templates";
 import { layoutStyle } from "@/lib/layoutStyles";
-import { faviconSvg, notFoundHtml, exportReadme, renderSocialCard } from "@/lib/exportAssets";
+import { faviconSvg, notFoundHtml, exportReadme, renderSocialCard, renderTouchIcon } from "@/lib/exportAssets";
 import { generate2DFrames } from "@/lib/generate2DFrames";
 import { AUTOSAVE_DEBOUNCE_MS, saveStatusLabel, type SaveState } from "@/lib/saveStatus";
 
@@ -631,7 +631,10 @@ function EditorInner() {
       // a robots.txt, and config so one drag-and-drop deploys correctly on the
       // hosts people actually use.
       setExportStage("Adding site files…");
-      zip.file("favicon.svg", faviconSvg(siteTheme?.accent ?? "#7c3aed", siteTheme?.ground ?? "#05070c", siteName));
+      // One pair of colours for every icon the ZIP carries, so they cannot drift apart.
+      const iconAccent = siteTheme?.accent ?? "#7c3aed";
+      const iconGround = siteTheme?.ground ?? "#05070c";
+      zip.file("favicon.svg", faviconSvg(iconAccent, iconGround, siteName));
       zip.file("robots.txt", "User-agent: *\nAllow: /\n");
       zip.file("404.html", notFoundHtml(siteName, siteTheme?.ground ?? "#05070c", siteTheme?.ink ?? "#ffffff"));
 
@@ -651,7 +654,9 @@ function EditorInner() {
       }, null, 2) + "\n");
 
       const ogBlob = await renderSocialCard(siteName, siteDescription, frames[0], siteTheme?.ground ?? "#05070c", siteTheme?.ink ?? "#ffffff");
-      if (ogBlob) zip.file("og-image.png", ogBlob);
+      if (ogBlob) zip.file("og-image.jpg", ogBlob);
+      const iconBlob = await renderTouchIcon(iconAccent, iconGround, siteName);
+      if (iconBlob) zip.file("apple-touch-icon.png", iconBlob);
 
       zip.file("README.md", exportReadme(siteName, exportProcedurally, window.location.origin));
 

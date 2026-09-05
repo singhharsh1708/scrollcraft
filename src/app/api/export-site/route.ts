@@ -292,11 +292,14 @@ export async function POST(req: NextRequest) {
   <meta property="og:title" content="${esc(siteName || "My ScrollCraft Site")}" />
   <meta property="og:description" content="${esc(metaDescription)}" />
   <meta name="twitter:card" content="summary_large_image" />
-  <meta property="og:image" content="og-image.png" />
-  <meta name="twitter:image" content="og-image.png" />
+  <meta property="og:image" content="og-image.jpg" />
+  <meta property="og:image:type" content="image/jpeg" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta name="twitter:image" content="og-image.jpg" />
   <meta name="theme-color" content="${esc(compiledTheme.vars["--sc-ground"] ?? "#000000")}" />
   <link rel="icon" href="favicon.svg" type="image/svg+xml" />
-  <link rel="apple-touch-icon" href="og-image.png" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
   <style>
     ${themeVarsCss}
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }

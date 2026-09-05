@@ -166,8 +166,33 @@ describe("the exported page is shareable and installable", () => {
   it("declares a social image, having promised a large card", async () => {
     const html = await exportHtml();
     expect(html).toContain('name="twitter:card" content="summary_large_image"');
-    expect(html).toContain('property="og:image"');
-    expect(html).toContain('name="twitter:image"');
+    // JPEG: the card is a photographic gradient. Measured on a real export, the same
+    // 1200x630 image was 544 KB as PNG - 94% of a procedural ZIP - and 46 KB as JPEG.
+    expect(html).toContain('property="og:image" content="og-image.jpg"');
+    expect(html).toContain('property="og:image:type" content="image/jpeg"');
+    expect(html).toContain('property="og:image:width" content="1200"');
+    expect(html).toContain('property="og:image:height" content="630"');
+    expect(html).toContain('name="twitter:image" content="og-image.jpg"');
+    expect(html).not.toContain("og-image.png");
+  });
+
+  it("gives iOS a square home-screen icon rather than the wide card", async () => {
+    // apple-touch-icon pointed at the 1200x630 card, which iOS squashes into a square.
+    const html = await exportHtml();
+    expect(html).toContain('rel="apple-touch-icon" href="apple-touch-icon.png"');
+    expect(html).not.toMatch(/rel="apple-touch-icon" href="og-image/);
+  });
+
+  it("ships the icon it links, in the favicon's colours", () => {
+    const editor = readFileSync("src/app/editor/page.tsx", "utf8");
+    expect(editor).toContain('zip.file("og-image.jpg", ogBlob)');
+    expect(editor).toContain('zip.file("apple-touch-icon.png", iconBlob)');
+    // Same accent and ground feed the favicon and the touch icon.
+    expect(editor).toContain("faviconSvg(iconAccent, iconGround, siteName)");
+    expect(editor).toContain("renderTouchIcon(iconAccent, iconGround, siteName)");
+    const assets = readFileSync("src/lib/exportAssets.ts", "utf8");
+    expect(assets).toContain('canvas.toBlob((b) => resolve(b), "image/jpeg", 0.85)');
+    expect(assets).toMatch(/const S = 180;/);
   });
 
   it("declares a favicon and a theme colour", async () => {
@@ -281,4 +306,21 @@ describe("the in-app renderer matches the exporter", () => {
     expect(src).toContain(".sc-site a:focus-visible");
   });
 
+});
+
+describe("the export README describes the ZIP it is in", () => {
+  it("lists the social card and the touch icon under the names they ship with", () => {
+    const readme = exportReadme("Site", true, "https://example.test");
+    expect(readme).toContain("`og-image.jpg`");
+    expect(readme).toContain("`apple-touch-icon.png`");
+    expect(readme).not.toContain("og-image.png");
+  });
+
+  it("does not call a 580 KB ZIP 'a few kilobytes'", () => {
+    // Measured: index.html 19.5 KB + lenis 11.6 KB, plus the card. The old sentence was
+    // written before the card existed.
+    const readme = exportReadme("Site", true, "https://example.test");
+    expect(readme).not.toMatch(/few kilobytes/);
+    expect(readme).toMatch(/about 35 KB/);
+  });
 });
