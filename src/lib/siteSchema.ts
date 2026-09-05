@@ -204,3 +204,15 @@ export function parseSectionsJson(raw: unknown): SectionsParse {
 export function visibleSections(sections: Section[]): Section[] {
   return sections.filter((s) => s.visible !== false);
 }
+
+/**
+ * The in-page anchor for a section, by its position among the visible ones.
+ *
+ * Every template's call to action was an in-page link - #start, #signup, #book - to an
+ * id the exported page never emitted, so the one button on a finished site did nothing.
+ * Positional rather than derived from the heading: a heading can be edited or emptied,
+ * and an anchor that changes when the copy changes breaks the link that points at it.
+ */
+export function sectionAnchor(indexAmongVisible: number): string {
+  return `section-${indexAmongVisible + 1}`;
+}

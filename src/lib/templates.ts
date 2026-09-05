@@ -81,9 +81,9 @@ export const TEMPLATES: Template[] = [
       { kind: "spacer", scrollHeight: 700 },
       {
         layout: "right", reveal: "fade",
-        eyebrow: "Trusted by 4,200 teams",
+        eyebrow: "Built for revenue teams",
         heading: "Scales past the point most tools break",
-        body: "SOC 2 Type II, 99.99% uptime, and an audit log your security reviewer will actually accept.",
+        body: "Role-based access, a full audit log, and single sign-on, so a security review is a conversation rather than a project.",
         scrollHeight: 1300,
       },
       {
@@ -756,7 +756,7 @@ export const TEMPLATES: Template[] = [
     gradient: "from-pink-700 via-rose-800 to-pink-900",
     theme: { fontDisplay: "Playfair Display", fontBody: "Lato", scale: "poster", displayWeight: 700, displayTracking: -0.025, ink: "#fdeef5", muted: "rgba(253,238,245,0.72)", accent: "#b33774", accentText: "#fdc7e2", radius: 18 },
     sections: [
-      { kind: "statement", layout: "center", reveal: "mask", eyebrow: "New collection", heading: "Radiance, redefined.", ctaLabel: "Shop now", ctaHref: "#start", scrollHeight: 1400 },
+      { kind: "statement", layout: "center", reveal: "mask", eyebrow: "New collection", heading: "Radiance, redefined.", ctaLabel: "Shop now", ctaHref: "#section-3", scrollHeight: 1400 },
       { layout: "right", reveal: "stagger", eyebrow: "The science of glow", heading: "Backed by nature, proven by labs.", body: "We partner with climate-positive farms in France and Japan to source cold-pressed botanicals at their peak potency. Every batch is third-party tested before it reaches your skin.", scrollHeight: 1200 },
       { layout: "center", reveal: "fade", eyebrow: "Over 180,000 happy customers", heading: "Your ritual starts here.", body: "Free shipping on orders over $60. Easy returns. And a personalised skin consultation with every first order — because you deserve to feel certain.", ctaLabel: "Build your ritual", ctaHref: "#start", scrollHeight: 1200 },
     ],
@@ -772,7 +772,7 @@ export const TEMPLATES: Template[] = [
     gradient: "from-purple-800 via-indigo-900 to-purple-950",
     theme: { fontDisplay: "Oswald", fontBody: "Roboto", scale: "poster", displayWeight: 700, displayCase: "upper", displayTracking: 0.01, ink: "#eae7fb", muted: "rgba(234,231,251,0.7)", accent: "#6d28d9", accentText: "#e0cefd", radius: 2 },
     sections: [
-      { kind: "statement", layout: "center", reveal: "mask", eyebrow: "Season III — The Veil War", heading: "Darkness has a name.", ctaLabel: "Play free", ctaHref: "#start", scrollHeight: 1400 },
+      { kind: "statement", layout: "center", reveal: "mask", eyebrow: "Season III — The Veil War", heading: "Darkness has a name.", ctaLabel: "Play free", ctaHref: "#section-3", scrollHeight: 1400 },
       { layout: "left", reveal: "stagger", eyebrow: "Forge your legend", heading: "Every warrior is different.", body: "Choose from 12 character archetypes, unlock 340+ skills, and craft legendary weapons from materials found nowhere else. No two playthroughs are ever the same.", scrollHeight: 1200 },
       { layout: "center", reveal: "fade", eyebrow: "Join 8 million warriors", heading: "The Realm awaits.", body: "Free-to-play. Cross-platform. Available on PC, PS5, Xbox, and mobile. Your progress, your loot, your story — wherever you are.", ctaLabel: "Download now", ctaHref: "#start", scrollHeight: 1200 },
     ],
@@ -788,9 +788,9 @@ export const TEMPLATES: Template[] = [
     gradient: "from-sky-700 via-blue-800 to-indigo-900",
     theme: { fontDisplay: "Space Grotesk", fontBody: "Inter", scale: "editorial", displayWeight: 700, ink: "#e8f4fb", muted: "rgba(232,244,251,0.72)", accent: "#026ca3", accentText: "#abddf7", radius: 14 },
     sections: [
-      { kind: "statement", layout: "center", reveal: "mask", eyebrow: "Travel smarter", heading: "Your whole trip in one tap.", ctaLabel: "Download TripVault", ctaHref: "#start", scrollHeight: 1400 },
+      { kind: "statement", layout: "center", reveal: "mask", eyebrow: "Travel smarter", heading: "Your whole trip in one tap.", ctaLabel: "Download TripVault", ctaHref: "#section-3", scrollHeight: 1400 },
       { layout: "left", reveal: "stagger", eyebrow: "Trip planning", heading: "Built by travellers, not spreadsheets.", body: "Say where you are going and TripVault assembles a day-by-day itinerary from places people actually went back to, with local restaurant picks and real-time price alerts.", scrollHeight: 1200 },
-      { layout: "center", reveal: "fade", eyebrow: "4.9 stars · 2.1M downloads", heading: "Start your next chapter.", body: "Free for solo travellers. Pro plans for families and groups. Available on iOS and Android. Your passport never felt so organised.", ctaLabel: "Get it free", ctaHref: "#start", scrollHeight: 1200 },
+      { layout: "center", reveal: "fade", eyebrow: "On iOS and Android", heading: "Start your next chapter.", body: "Free for solo travellers. Pro plans for families and groups. Available on iOS and Android. Your passport never felt so organised.", ctaLabel: "Get it free", ctaHref: "#start", scrollHeight: 1200 },
     ],
   },
   {
@@ -804,7 +804,7 @@ export const TEMPLATES: Template[] = [
     gradient: "from-green-700 via-lime-800 to-green-950",
     theme: { fontDisplay: "Archivo", fontBody: "IBM Plex Sans", scale: "editorial", displayWeight: 800, ink: "#e9f7f1", muted: "rgba(233,247,241,0.72)", accent: "#047653", accentText: "#91e7cc", radius: 10 },
     sections: [
-      { kind: "statement", layout: "center", reveal: "mask", eyebrow: "Series B — $42M raised", heading: "Decarbonisation at enterprise scale.", ctaLabel: "Book a demo", ctaHref: "#start", scrollHeight: 1400 },
+      { kind: "statement", layout: "center", reveal: "mask", eyebrow: "Series B — $42M raised", heading: "Decarbonisation at enterprise scale.", ctaLabel: "Book a demo", ctaHref: "#section-3", scrollHeight: 1400 },
       { layout: "right", reveal: "stagger", eyebrow: "Verified impact", heading: "Carbon removal you can actually trust.", body: "Every tonne removed on GreenShift is independently verified by Gold Standard and Verra. Satellite imagery, IoT sensor data, and third-party audits — all in one transparent dashboard.", scrollHeight: 1200 },
       { layout: "center", reveal: "fade", eyebrow: "120+ enterprise partners", heading: "The net-zero future starts now.", body: "Microsoft, Shopify, and 118 other companies trust GreenShift to power their climate commitments. Join them — and mean it.", ctaLabel: "Get started", ctaHref: "#start", scrollHeight: 1200 },
     ],
@@ -820,7 +820,7 @@ export const TEMPLATES: Template[] = [
     gradient: "from-orange-700 via-red-800 to-orange-950",
     theme: { fontDisplay: "Fraunces", fontBody: "Karla", scale: "poster", displayWeight: 700, displayTracking: -0.02, ink: "#fbeee6", muted: "rgba(251,238,230,0.72)", accent: "#b24309", accentText: "#fcccb4", radius: 6 },
     sections: [
-      { kind: "statement", layout: "center", reveal: "mask", eyebrow: "Now taking reservations", heading: "Some things are better burnt.", ctaLabel: "Reserve a table", ctaHref: "#start", scrollHeight: 1400 },
+      { kind: "statement", layout: "center", reveal: "mask", eyebrow: "Now taking reservations", heading: "Some things are better burnt.", ctaLabel: "Reserve a table", ctaHref: "#section-3", scrollHeight: 1400 },
       { layout: "left", reveal: "stagger", eyebrow: "The craft", heading: "Fire is the only seasoning we need.", body: "We use a custom-built 900°C ceramic hearth to achieve a crust that no pan can replicate. Our menu changes with the season. Our commitment to quality never does.", scrollHeight: 1200 },
       { layout: "center", reveal: "fade", eyebrow: "Downtown, Tuesday–Saturday", heading: "A meal worth the occasion.", body: "Dinner service from 6 pm. Tasting menu available Wednesday through Friday. Private dining for up to 14 guests. Sommelier-curated wine list included.", ctaLabel: "Make a reservation", ctaHref: "#start", scrollHeight: 1200 },
     ],

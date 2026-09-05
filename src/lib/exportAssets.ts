@@ -151,6 +151,20 @@ Everything is editable in a text editor.
 - **Social preview** — replace \`og-image.jpg\` with your own 1200×630 image.
 - **Icon** — replace \`favicon.svg\`.
 
+### The one thing only you can do
+
+Your call-to-action button needs a real destination. Templates ship it pointing at a
+placeholder, because only you know whether it should open a signup page, a booking form
+or your inbox. Search \`index.html\` for the button's text and set its \`href\`:
+
+\`\`\`html
+<a href="https://your-domain.com/signup" ...>Get started</a>
+\`\`\`
+
+\`mailto:you@your-domain.com\` and \`tel:+1234567890\` both work too. A button whose
+\`href\` starts with \`#\` scrolls to a section of this page; \`#section-1\` is the first
+section, \`#section-2\` the second, and so on.
+
 ### One thing worth doing
 
 The social preview and canonical address are relative, which works on most platforms but
