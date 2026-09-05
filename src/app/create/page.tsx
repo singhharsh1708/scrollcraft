@@ -72,24 +72,15 @@ function CreatePageInner() {
     try {
       const opts = { style: selectedStyle, color1: colors[0], color2: colors[1], color3: colors[2], frameCount };
 
-      setProgressLabel(generateMobile ? "Generating desktop frames…" : "Generating frames…");
+      setProgressLabel("Generating frames…");
       const frames = await generate2DFrames(
         { ...opts, width: 1280, height: 720 },
-        (p) => setProgress(generateMobile ? Math.round(p * 0.5) : p)
+        (p) => setProgress(p)
       );
-
-      if (generateMobile) {
-        setProgressLabel("Generating mobile portrait frames…");
-        const mobileFrames = await generate2DFrames(
-          { ...opts, width: 720, height: 1280 },
-          (p) => setProgress(50 + Math.round(p * 0.5))
-        );
-        // Mobile frames are ~8–12 MB — far beyond sessionStorage's 5 MB quota.
-        // Store in IndexedDB which supports hundreds of MB.
-        await storeFrames("scrollcraft_mobile_frames", mobileFrames);
-      } else {
-        await deleteFrames("scrollcraft_mobile_frames").catch(() => {});
-      }
+      // A style background needs no portrait set: the exported page carries the recipe
+      // and redraws every frame at whatever size the viewport is, so a phone gets a
+      // portrait background for free and at its own resolution.
+      await deleteFrames("scrollcraft_mobile_frames").catch(() => {});
 
       // Store frames in IndexedDB — sessionStorage's 5 MB quota is too small for even one
       // 120-frame set. IndexedDB handles hundreds of MB without issue.
@@ -102,7 +93,6 @@ function CreatePageInner() {
         name: templateLabel || STYLES.find(s => s.id === selectedStyle)?.label || selectedStyle,
         style: selectedStyle,
         c1: colors[0], c2: colors[1], c3: colors[2],
-        ...(generateMobile ? { hasMobileFrames: "1" } : {}),
       });
       router.push(`/editor?${params.toString()}`);
     } catch (err) {
@@ -121,7 +111,7 @@ function CreatePageInner() {
       // no server involved at all.
       const { frames, frameCount: count, duration, sourceDuration } = await extractFramesInBrowser(file, {
         frameCount,
-        onProgress: (pct) => setProgress(Math.max(5, pct)),
+        onProgress: (pct) => setProgress(Math.max(5, generateMobile ? Math.round(pct * 0.5) : pct)),
       });
       // Sampling stops at a cap, and silently returning a shortened site is worse than
       // saying so - the missing footage is the first thing the user looks for.
@@ -133,11 +123,34 @@ function CreatePageInner() {
       }
       await storeFrames("scrollcraft_desktop_frames", frames);
 
+      let hasMobile = false;
+      if (generateMobile) {
+        setProgressLabel("Sampling a portrait set for phones…");
+        const portrait = await extractFramesInBrowser(file, {
+          frameCount,
+          width: 720,
+          height: 1280,
+          onProgress: (pct) => setProgress(50 + Math.round(pct * 0.5)),
+        }).catch(() => null);
+        if (portrait?.frames.length) {
+          await storeFrames("scrollcraft_mobile_frames", portrait.frames);
+          hasMobile = true;
+        } else {
+          // Losing the portrait set must not lose the upload: the landscape frames are
+          // already stored and a phone falls back to them.
+          toast.warning("Could not sample the portrait set. Your site will use the landscape frames on phones.");
+          await deleteFrames("scrollcraft_mobile_frames").catch(() => {});
+        }
+      } else {
+        await deleteFrames("scrollcraft_mobile_frames").catch(() => {});
+      }
+
       const params = new URLSearchParams({
         framesKey: "scrollcraft_desktop_frames",
         frameCount: String(count),
         fps: "24",
         name: file.name.replace(/\.[^.]+$/, "") || "Video upload",
+        ...(hasMobile ? { hasMobileFrames: "1" } : {}),
       });
       router.push(`/editor?${params.toString()}`);
     } catch (err) {
@@ -337,15 +350,19 @@ function CreatePageInner() {
 
               <div className="flex items-center justify-between pt-1">
                 <div>
-                  <p className="font-medium text-sm">Generate mobile variant</p>
-                  <p className="text-xs text-muted-foreground">Also create portrait 9:16 frames for phones</p>
+                  <p className="font-medium text-sm">Portrait frames for an uploaded video</p>
+                  <p className="text-xs text-muted-foreground">
+                    Samples a second 9:16 set, centre-cropped, so a phone is not shown a
+                    letterboxed landscape frame. A style background needs no second set:
+                    it is redrawn at whatever size the screen is.
+                  </p>
                 </div>
                 <button
                   onClick={() => setGenerateMobile(m => !m)}
                   className={`relative w-10 h-6 rounded-full transition-colors ${generateMobile ? "bg-primary" : "bg-white/10"}`}
                   role="switch"
                   aria-checked={generateMobile}
-                  aria-label="Generate mobile variant"
+                  aria-label="Portrait frames for an uploaded video"
                 >
                   <span className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform ${generateMobile ? "translate-x-5" : "translate-x-1"}`} />
                 </button>
