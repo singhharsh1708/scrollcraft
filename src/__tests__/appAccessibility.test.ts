@@ -176,6 +176,44 @@ describe("the editor is reachable without a mouse", () => {
   });
 });
 
+describe("the editor's section list survives a nine-section template", () => {
+  /**
+   * Templates went from four sections to nine, which turned two small annoyances into
+   * an unusable list. Measured in Chrome on kiln-coffee: seven of nine labels were
+   * clipped to "Roasted t..." and "Light eno...", and two rows were spacers labelled
+   * "Section 4" and "Section 8" whose inspector offered an eyebrow, a heading, a body,
+   * a button and an image - five fields a spacer does not have. After: zero clipped.
+   */
+  const editor = readFileSync("src/app/editor/page.tsx", "utf8");
+
+  it("names a spacer instead of numbering it like content", () => {
+    expect(editor).toContain('<span className="text-xs flex-1 text-muted-foreground italic">Spacer · {s.scrollHeight}px</span>');
+  });
+
+  it("gives a heading the whole row rather than one clipped line", () => {
+    expect(editor).toContain('className="text-xs flex-1 line-clamp-2 leading-snug"');
+    // truncate is one line and was the reason seven of nine were unreadable.
+    expect(editor).not.toMatch(/<span className="text-xs flex-1 truncate">/);
+  });
+
+  it("takes the row controls out of the flow, so they reserve no width", () => {
+    // opacity-0 still occupies layout: four buttons held about 100px of a 224px panel
+    // even while invisible, which is what starved the label.
+    expect(editor).toContain('className="absolute right-1 top-1 flex items-center gap-0.5');
+    expect(editor).not.toMatch(/flex items-center gap-0\.5 flex-shrink-0 opacity-0/);
+    // Absolute positioning needs a containing block on the row.
+    expect(editor).toMatch(/className=\{`group relative flex items-start gap-2/);
+  });
+
+  it("offers a spacer only what a spacer has", () => {
+    const content = editor.slice(editor.indexOf('<TabsContent value="content"'), editor.indexOf('<TabsContent value="style"'));
+    expect(content).toContain('selectedSectionData.kind === "spacer" ?');
+    expect(content).toContain("This is a spacer");
+    // The height, which is the one thing it does have, stays on the Layout tab.
+    expect(editor).toContain('aria-label="Section height in pixels"');
+  });
+});
+
 describe("the editor fits a phone", () => {
   const editor = readFileSync("src/app/editor/page.tsx", "utf8");
 

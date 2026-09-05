@@ -1069,13 +1069,21 @@ function EditorInner() {
                 aria-pressed={selectedSection === s.id}
                 onClick={() => setSelectedSection(s.id)}
                 onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setSelectedSection(s.id); } }}
-                className={`group flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary ${
+                className={`group relative flex items-start gap-2 p-2 pr-2 rounded-lg cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary ${
                   selectedSection === s.id ? "bg-primary/15 border border-primary/30" : "hover:bg-white/5"
                 }`}
               >
-                <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${s.visible ? "bg-primary" : "bg-white/20"}`} />
-                <span className="text-xs flex-1 truncate">{s.heading || `Section ${i + 1}`}</span>
-                <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+                <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 self-start mt-1.5 ${
+                  s.kind === "spacer" ? "bg-white/15" : s.visible ? "bg-primary" : "bg-white/20"
+                }`} />
+                {s.kind === "spacer" ? (
+                  <span className="text-xs flex-1 text-muted-foreground italic">Spacer · {s.scrollHeight}px</span>
+                ) : (
+                  <span className="text-xs flex-1 line-clamp-2 leading-snug">
+                    {s.heading || `Section ${i + 1}`}
+                  </span>
+                )}
+                <div className="absolute right-1 top-1 flex items-center gap-0.5 rounded-md bg-card/95 backdrop-blur-sm px-0.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
                   <button onClick={(e) => { e.stopPropagation(); moveSection(s.id, "up"); }} className="p-1.5 hover:text-primary-ink" title="Move up">
                     <ChevronUp className="w-3 h-3" />
                   </button>
@@ -1228,6 +1236,21 @@ function EditorInner() {
               </div>
 
               <TabsContent value="content" className="p-3 space-y-3 mt-0">
+                {selectedSectionData.kind === "spacer" ? (
+                  /* A spacer exists to give the section before it room to breathe. It
+                     renders nothing, so offering an eyebrow, a heading, a body, a button
+                     and an image is offering five fields that do nothing. Its height is
+                     the only thing it has, and that lives on the Layout tab. */
+                  <div className="rounded-lg border border-white/8 bg-white/2 p-4 space-y-2">
+                    <p className="text-sm font-medium">This is a spacer</p>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      It draws nothing. It holds {selectedSectionData.scrollHeight}px of scroll
+                      open so the section before it can finish before the next one arrives.
+                      Change that on the Layout tab, or delete it if the pacing feels slow.
+                    </p>
+                  </div>
+                ) : (
+                <>
                 <div className="space-y-1.5">
                   <label className="text-xs text-muted-foreground">Eyebrow text</label>
                   <Input
@@ -1324,6 +1347,8 @@ function EditorInner() {
                     </div>
                   </div>
                 ) : null}
+                </>
+                )}
               </TabsContent>
 
               <TabsContent value="style" className="p-3 space-y-3 mt-0">
