@@ -259,7 +259,7 @@ export async function POST(req: NextRequest) {
       const imgWidth = Math.min(Number(s.imageWidth) || 480, 1600);
       if (s.kind === "spacer") {
         return `
-    <section class="scroll-section" aria-hidden="true" style="height:${trackHeight(s)}px; position:relative; z-index:10;"></section>`;
+    <section id="${sectionAnchor(sectionIndex)}" class="scroll-section" aria-hidden="true" style="height:${trackHeight(s)}px; position:relative; z-index:10;"></section>`;
       }
       const reveal = (REVEALS as readonly string[]).includes(s.reveal ?? "") ? s.reveal : "rise";
       const hTag = sectionIndex === firstHeadingIndex ? "h1" : "h2";
