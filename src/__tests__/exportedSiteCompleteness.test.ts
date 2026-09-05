@@ -106,16 +106,49 @@ describe("the exported page closes like a website", () => {
 
 describe("no template publishes a claim on its owner's behalf", () => {
   it("invents no customer counts, ratings or compliance certifications", () => {
-    // A template's copy ships as the owner's own words. "Trusted by 4,200 teams" and
-    // "SOC 2 Type II, 99.99% uptime" were statements they had not made.
+    // A template's copy ships as the owner's own words. The first pass of this test
+    // missed "Over 180,000 happy customers" (a word sits between the number and the
+    // noun) and "Join 8 million warriors" (the noun was not on the list), so the
+    // number-and-noun rule now allows filler words and a wider set of nouns. It must
+    // start with a digit: [\d,.]+ also matches a bare full stop, which made ". Most
+    // teams are running their first review" look like a customer count.
     const src = readFileSync("src/lib/templates.ts", "utf8");
-    const claims = [...src.matchAll(/"([^"]{4,})"/g)]
-      .map((m) => m[1])
-      .filter((v) =>
-        /trusted by [\d,]|[\d,.]+\s*(k|m|\+)?\s*(teams|customers|users|clients|downloads|reviews)\b/i.test(v) ||
-        /\bSOC ?2\b|\bISO ?27001\b|\b99\.9\d*%|\bHIPAA\b/i.test(v) ||
-        /\b\d\.\d\s*stars?\b|\baward-winning\b/i.test(v)
-      );
+    const strings = [...src.matchAll(/"([^"]{4,})"/g)].map((m) => m[1]);
+    const claims = strings.filter((v) =>
+      /\btrusted by\b|\bjoin\s+\d[\d,.]*/i.test(v) ||
+      /\d[\d,.]*\s*(k|m|\+|million|thousand)?\s+(\w+\s+){0,2}(teams|customers|users|clients|companies|partners|downloads|reviews|warriors|players|members|subscribers)\b/i.test(v) ||
+      /\bSOC ?2\b|\bISO ?27001\b|\b99\.9\d*%|\bHIPAA\b/i.test(v) ||
+      /\b\d\.\d\s*stars?\b|\baward-winning\b/i.test(v) ||
+      /\bSeries\s+[A-D]\b|\$\s?[\d,.]+\s*(m|bn|million|billion)\b.*\braised\b/i.test(v)
+    );
     expect(claims, "a template asserts something its owner cannot").toEqual([]);
   });
+
+  it("names no real company as a customer of a fictional product", () => {
+    // greenshift claimed "Microsoft, Shopify, and 118 other companies trust GreenShift".
+    // Exported unchanged, that publishes a false customer list under the owner's name.
+    const src = readFileSync("src/lib/templates.ts", "utf8");
+    const brands = /\b(Microsoft|Shopify|Google|Apple|Amazon|Netflix|Stripe|Meta|Salesforce|Adobe|Uber|Airbnb|Spotify|Tesla|Oracle|IBM|Nike)\b/;
+    const offenders = [...src.matchAll(/(eyebrow|heading|body|ctaLabel|tagline):\s*"([^"]+)"/g)]
+      .map((m) => m[2])
+      .filter((v) => brands.test(v));
+    expect(offenders, "template copy names a real company").toEqual([]);
+  });
+
+  it("gives every template enough copy to read as a finished site", () => {
+    const words = (v: unknown) => String(v ?? "").trim().split(/\s+/).filter(Boolean).length;
+    for (const t of TEMPLATES) {
+      const content = t.sections.filter((s) => s.kind !== "spacer");
+      expect(content.length, `${t.slug} has too few content sections`).toBeGreaterThanOrEqual(6);
+      const total = t.sections.reduce(
+        (a, s) => a + words(s.eyebrow) + words(s.heading) + words(s.body) + words(s.ctaLabel), 0);
+      expect(total, `${t.slug} carries only ${total} words`).toBeGreaterThanOrEqual(150);
+      // Every section that is not a bare statement or spacer should say something.
+      for (const s of content) {
+        if (s.kind === "statement") continue;
+        expect(words(s.body), `${t.slug}: "${s.heading}" has no body`).toBeGreaterThanOrEqual(15);
+      }
+    }
+  });
+
 });
