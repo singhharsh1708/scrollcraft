@@ -666,7 +666,7 @@ function EditorInner() {
       const iconBlob = await renderTouchIcon(iconAccent, iconGround, siteName);
       if (iconBlob) zip.file("apple-touch-icon.png", iconBlob);
 
-      zip.file("README.md", exportReadme(siteName, exportProcedurally, window.location.origin));
+      zip.file("README.md", exportReadme(siteName, exportProcedurally, window.location.origin, { hasAudio }));
 
       // A recipe-driven export ships no JPEGs at all — the page draws its own frames.
       if (!exportProcedurally) {
