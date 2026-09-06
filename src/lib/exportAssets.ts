@@ -80,7 +80,13 @@ export function notFoundHtml(siteName: string, ground: string, ink: string): str
 }
 
 /** Deploy instructions for the hosts people actually use, written for a non-developer. */
-export function exportReadme(siteName: string, procedural: boolean, madeWithUrl: string): string {
+export function exportReadme(
+  siteName: string,
+  procedural: boolean,
+  madeWithUrl: string,
+  opts: { hasAudio?: boolean } = {}
+): string {
+  const { hasAudio = false } = opts;
   return `# ${siteName}
 
 Your site, exported from [ScrollCraft](${madeWithUrl}).
@@ -137,12 +143,26 @@ Do **not** open \`index.html\` by double-clicking it. Browsers block a page load
 | \`og-image.jpg\` | The preview image when the link is shared |
 | \`apple-touch-icon.png\` | The icon when saved to a phone's home screen |
 | \`robots.txt\` | Tells search engines they may index the site |
+${hasAudio ? "| \`audio/\` | Your background track |\n" : ""}
 | \`lenis.min.js\` | Smooth scrolling. Remove it and scrolling still works |
 ${procedural
   ? "\nThe background is drawn in the browser from a small style recipe, so there is no\n`frames/` folder. The page itself is about 35 KB; the social preview image is the only\nfile larger than that."
   : "\n| `frames/` | The background images |\n\nKeep `frames/` beside `index.html`."}
 
-## Making changes
+${hasAudio ? `## About the audio
+
+Your track is in \`audio/\`. It loops, fades in as the visitor scrolls and fades out when
+they stop.
+
+**It will not start on its own, and that is not a bug.** Every browser blocks audio until
+the visitor has interacted with the page, so the track begins on their first click, tap or
+key press. The speaker button in the corner mutes and unmutes it.
+
+To change the track, replace the file in \`audio/\` keeping the same name, or edit the
+filename in \`index.html\`. To remove it, delete the folder and the \`<button id="audio-mute">\`
+line.
+
+` : ""}## Making changes
 
 Everything is editable in a text editor.
 
