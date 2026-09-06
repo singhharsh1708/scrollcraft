@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import {
   completionsUrl,
+  describeCompletion,
   extractJsonArray,
   mergeCopyOnly,
   rewriteSections,
@@ -167,6 +168,24 @@ describe("rewriteSections", () => {
     expect(res).toMatchObject({ ok: false, status: 502 });
   });
 
+  it("says why an empty completion was empty, so a 502 is diagnosable", async () => {
+    const fetchImpl = vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        choices: [{ finish_reason: "length", message: { content: "", reasoning_content: "x".repeat(40) } }],
+        usage: { completion_tokens: 512 },
+      }),
+    })) as unknown as typeof fetch;
+    const res = await rewriteSections(DOC, "hi", { ...opts, fetchImpl });
+    expect(res.ok).toBe(false);
+    if (res.ok) return;
+    expect(res.diagnostic).toMatchObject({
+      finishReason: "length",
+      messageFields: { content: "string(0)", reasoning_content: "string(40)" },
+    });
+  });
+
   it("passes an upstream rate limit through as a rate limit", async () => {
     const fetchImpl = vi.fn(async () => ({ ok: false, status: 429 }) as Response);
     const res = await rewriteSections(DOC, "hi", { ...opts, fetchImpl: fetchImpl as typeof fetch });
@@ -213,6 +232,31 @@ describe("rewriteSections", () => {
     await rewriteSections(DOC, "hi", { apiKey: "k", fetchImpl });
     const init = (fetchImpl as unknown as ReturnType<typeof vi.fn>).mock.calls[0][1] as RequestInit;
     expect(JSON.parse(String(init.body)).model).toBe("sarvam-105b");
+  });
+});
+
+describe("describeCompletion", () => {
+  it("names the fields the reply carried and how long each was", () => {
+    const d = describeCompletion({
+      choices: [{ finish_reason: "length", message: { content: "", reasoning_content: "abc" } }],
+      usage: { total_tokens: 9 },
+    });
+    expect(d).toEqual({
+      choices: 1,
+      finishReason: "length",
+      messageFields: { content: "string(0)", reasoning_content: "string(3)" },
+      usage: { total_tokens: 9 },
+    });
+  });
+
+  it("carries no copy, only its shape", () => {
+    const secret = "Radiance, redefined.";
+    const d = describeCompletion({ choices: [{ message: { content: secret } }] });
+    expect(JSON.stringify(d)).not.toContain("Radiance");
+  });
+
+  it("survives a reply with no choices at all", () => {
+    expect(describeCompletion({})).toMatchObject({ choices: 0, finishReason: null });
   });
 });
 

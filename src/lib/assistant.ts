@@ -24,7 +24,38 @@ export const MAX_SECTIONS_IN = 40;
 
 export type AssistantResult =
   | { ok: true; sections: Section[] }
-  | { ok: false; status: number; error: string };
+  | { ok: false; status: number; error: string; diagnostic?: Record<string, unknown> };
+
+/** The upstream shape, as much of it as this module reads. */
+type Completion = {
+  choices?: {
+    finish_reason?: unknown;
+    message?: Record<string, unknown>;
+  }[];
+  usage?: Record<string, unknown>;
+};
+
+/**
+ * Why a completion could not be used, in field names and lengths only.
+ *
+ * A 502 saying "the assistant returned nothing" is unactionable on its own: it cannot
+ * distinguish a model that stopped early from one that put its answer in a field this
+ * code does not read. None of the copy itself goes in here.
+ */
+export function describeCompletion(json: Completion): Record<string, unknown> {
+  const choice = json?.choices?.[0];
+  const message = choice?.message ?? {};
+  const fields: Record<string, string> = {};
+  for (const [key, value] of Object.entries(message)) {
+    fields[key] = typeof value === "string" ? `string(${value.length})` : typeof value;
+  }
+  return {
+    choices: Array.isArray(json?.choices) ? json.choices.length : 0,
+    finishReason: choice?.finish_reason ?? null,
+    messageFields: fields,
+    usage: json?.usage ?? null,
+  };
+}
 
 /** The fields the assistant may touch. Everything else is the editor's to set. */
 const EDITABLE_FIELDS = ["eyebrow", "heading", "body", "ctaLabel"] as const;
@@ -132,22 +163,32 @@ export async function rewriteSections(
     return { ok: false, status: 502, error: "The assistant could not complete that." };
   }
 
-  let content: unknown;
+  let json: Completion;
   try {
-    const json = (await res.json()) as { choices?: { message?: { content?: unknown } }[] };
-    content = json?.choices?.[0]?.message?.content;
+    json = (await res.json()) as Completion;
   } catch {
     return { ok: false, status: 502, error: "The assistant returned something unreadable." };
   }
+  const content = json?.choices?.[0]?.message?.content;
   if (typeof content !== "string" || !content.trim()) {
-    return { ok: false, status: 502, error: "The assistant returned nothing." };
+    return {
+      ok: false,
+      status: 502,
+      error: "The assistant returned nothing.",
+      diagnostic: describeCompletion(json),
+    };
   }
 
   let proposed: unknown;
   try {
     proposed = extractJsonArray(content);
   } catch {
-    return { ok: false, status: 422, error: "The assistant did not return a usable edit." };
+    return {
+      ok: false,
+      status: 422,
+      error: "The assistant did not return a usable edit.",
+      diagnostic: describeCompletion(json),
+    };
   }
 
   const parsed = sectionsSchema.safeParse(proposed);
