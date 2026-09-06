@@ -22,6 +22,17 @@ export function completionsUrl(baseUrl?: string): string {
 export const MAX_INSTRUCTION_CHARS = 600;
 export const MAX_SECTIONS_IN = 40;
 
+/**
+ * Output budget for one completion.
+ *
+ * sarvam-105b reasons before it answers, and the API's own default of 2048 was not enough
+ * to hold the reasoning and the rewritten JSON together: every request finished with
+ * `finish_reason: "length"`, 2048 tokens of `reasoning_content` and a null `content`. A
+ * cap only bills what the model actually generates, so this is set well clear of the
+ * whole document rather than tuned tightly.
+ */
+export const MAX_COMPLETION_TOKENS = 16_384;
+
 export type AssistantResult =
   | { ok: true; sections: Section[] }
   | { ok: false; status: number; error: string; diagnostic?: Record<string, unknown> };
@@ -76,6 +87,8 @@ export function systemPrompt(): string {
     '- A section whose kind is "spacer" carries no copy. Return it unchanged.',
     "- Keep a heading under 80 characters and a body under 300.",
     "- Answer in the language the instruction is written in, unless it says otherwise.",
+    "",
+    "Do not explain yourself or think out loud. Emit the array and stop.",
   ].join("\n");
 }
 
@@ -115,6 +128,7 @@ export function buildRequestBody(sections: Section[], instruction: string, model
   return {
     model,
     temperature: 0.3,
+    max_tokens: MAX_COMPLETION_TOKENS,
     messages: [
       { role: "system", content: systemPrompt() },
       {
@@ -169,14 +183,23 @@ export async function rewriteSections(
   } catch {
     return { ok: false, status: 502, error: "The assistant returned something unreadable." };
   }
-  const content = json?.choices?.[0]?.message?.content;
+  const choice = json?.choices?.[0];
+  const content = choice?.message?.content;
   if (typeof content !== "string" || !content.trim()) {
-    return {
-      ok: false,
-      status: 502,
-      error: "The assistant returned nothing.",
-      diagnostic: describeCompletion(json),
-    };
+    const diagnostic = describeCompletion(json);
+    const refusal = choice?.message?.refusal;
+    if (typeof refusal === "string" && refusal.trim()) {
+      return { ok: false, status: 422, error: "The assistant declined that instruction.", diagnostic };
+    }
+    if (choice?.finish_reason === "length") {
+      return {
+        ok: false,
+        status: 502,
+        error: "That was too long for the assistant to finish. Try fewer sections at once.",
+        diagnostic,
+      };
+    }
+    return { ok: false, status: 502, error: "The assistant returned nothing.", diagnostic };
   }
 
   let proposed: unknown;

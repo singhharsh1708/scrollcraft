@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import {
+  MAX_COMPLETION_TOKENS,
   completionsUrl,
   describeCompletion,
   extractJsonArray,
@@ -166,6 +167,48 @@ describe("rewriteSections", () => {
   it("reports an empty completion rather than wiping the copy", async () => {
     const res = await rewriteSections(DOC, "hi", { ...opts, fetchImpl: fetchReturning("   ") });
     expect(res).toMatchObject({ ok: false, status: 502 });
+  });
+
+  // The bug this pins: sarvam-105b reasons first, and on the API's own default of 2048
+  // tokens it spent every one of them thinking and returned a null content. Without an
+  // explicit budget the feature failed on roughly every request.
+  it("asks for an output budget large enough to hold reasoning and the answer", async () => {
+    const fetchImpl = fetchReturning(JSON.stringify([{ heading: "ok" }, {}]));
+    await rewriteSections(DOC, "hi", { apiKey: "k", fetchImpl });
+    const init = (fetchImpl as unknown as ReturnType<typeof vi.fn>).mock.calls[0][1] as RequestInit;
+    const sent = JSON.parse(String(init.body));
+    expect(sent.max_tokens).toBe(MAX_COMPLETION_TOKENS);
+    expect(sent.max_tokens).toBeGreaterThan(2048);
+  });
+
+  it("says the reply was cut off rather than blaming an empty one", async () => {
+    const fetchImpl = vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        choices: [{ finish_reason: "length", message: { content: null, reasoning_content: "x".repeat(6683) } }],
+        usage: { completion_tokens: 2048 },
+      }),
+    })) as unknown as typeof fetch;
+    const res = await rewriteSections(DOC, "hi", { ...opts, fetchImpl });
+    expect(res.ok).toBe(false);
+    if (res.ok) return;
+    expect(res.error).toMatch(/too long/i);
+    expect(res.error).not.toMatch(/returned nothing/i);
+  });
+
+  it("reports a refusal as a refusal, not as a broken reply", async () => {
+    const fetchImpl = vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        choices: [{ finish_reason: "stop", message: { content: null, refusal: "I cannot help with that." } }],
+      }),
+    })) as unknown as typeof fetch;
+    const res = await rewriteSections(DOC, "hi", { ...opts, fetchImpl });
+    expect(res).toMatchObject({ ok: false, status: 422 });
+    if (res.ok) return;
+    expect(res.error).toMatch(/declined/i);
   });
 
   it("says why an empty completion was empty, so a 502 is diagnosable", async () => {
