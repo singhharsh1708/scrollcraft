@@ -11,7 +11,7 @@ export default function PrivacyPage() {
       <Navbar />
       <article className="max-w-3xl mx-auto px-6 py-16 prose prose-invert prose-sm">
         <h1>Privacy Policy</h1>
-        <p className="text-muted-foreground">Last updated: August 2026</p>
+        <p className="text-muted-foreground">Last updated: September 2026</p>
 
         <h2>The short version</h2>
         <p>
@@ -22,12 +22,12 @@ export default function PrivacyPage() {
 
         <h2>What we collect</h2>
         <p>
-          Nothing you type into ScrollCraft reaches us. Your sections, copy, colours,
-          uploaded video and audio are held in your browser&apos;s local storage
-          (IndexedDB) on your own device.
+          Your sections, copy, colours, uploaded video and audio are held in your
+          browser&apos;s local storage (IndexedDB) on your own device. Nothing there is
+          sent anywhere on its own.
         </p>
         <p>
-          Two things do leave your browser, both without identifying you:
+          Three things can leave your browser, none of them identifying you:
         </p>
         <ul>
           <li>
@@ -36,9 +36,16 @@ export default function PrivacyPage() {
             not written to any database or log.
           </li>
           <li>
+            <strong>Rewrite requests, only if you ask for one.</strong> The editor can rewrite
+            your copy from an instruction you type. Doing so sends that instruction and the
+            section text to Sarvam AI, which returns the rewritten words. Nothing is sent
+            unless you press Rewrite, and this instance only offers the button when it is
+            configured with a key. The request is not written to any database or log.
+          </li>
+          <li>
             <strong>Ordinary request logs.</strong> Our host records the usual server access
-            logs, including IP addresses, which we also use to rate-limit the export endpoint
-            so one visitor cannot exhaust it for everyone.
+            logs, including IP addresses, which we also use to rate-limit the export and
+            rewrite endpoints so one visitor cannot exhaust them for everyone.
           </li>
         </ul>
         <p>
@@ -51,6 +58,7 @@ export default function PrivacyPage() {
           <li><strong>Vercel</strong> — hosting. Request logs may be retained under their policy.</li>
           <li><strong>Sentry</strong> — error reports, when enabled. These carry a stack trace, not your content.</li>
           <li><strong>Upstash</strong> — rate limiting, when enabled. It stores a counter keyed by IP.</li>
+          <li><strong>Sarvam AI</strong> — the rewrite assistant, when enabled. It receives the instruction you type and the copy of the site you are editing, and only when you press Rewrite.</li>
           <li><strong>Google Fonts</strong> — templates load webfonts, which discloses your IP to Google. Exported sites do the same unless you self-host the fonts.</li>
         </ul>
 

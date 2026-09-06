@@ -28,7 +28,8 @@ those sites without WebGL, an animation library, or a render farm.
    `robots.txt` and host config for Netlify, Vercel, GitHub Pages and Cloudflare.
    Deploying is dragging a folder.
 
-Everything runs in the browser. There is no account, no database and nothing to buy.
+Everything runs in the browser. There is no account, no database and nothing to buy. The
+one exception is the copy assistant below, which is off unless you configure a key.
 
 ## Features
 
@@ -44,6 +45,10 @@ Everything runs in the browser. There is no account, no database and nothing to 
   device.
 - **Scroll-linked audio.** Attach a track that fades in as the reader scrolls and out when
   they stop.
+- **Copy rewriting, if you configure it.** Describe the change you want and the editor
+  rewrites the section copy from it, in one undo step. It touches the words only, never
+  the layout, colours, images or button links. It needs an API key, and without one the
+  button is not shown at all. See [Environment variables](#environment-variables).
 
 ## Two ways to use it
 
@@ -156,6 +161,9 @@ Every variable is optional. See [`.env.example`](.env.example).
 | `UPSTASH_REDIS_REST_*` | Shared rate limiting across instances; falls back to in-memory |
 | `NEXT_PUBLIC_SENTRY_DSN` | Error reporting; leave empty to disable |
 | `SENTRY_*` | Source map upload for readable stack traces |
+| `SARVAM_API_KEY` | Turns on the editor's copy assistant. Absent, the button is not shown |
+| `SARVAM_MODEL` | `sarvam-105b` (default) or `sarvam-105b-conversations` |
+| `SARVAM_BASE_URL` | Any endpoint speaking the OpenAI chat-completions shape. Defaults to Sarvam |
 
 ## Where your work lives
 
@@ -183,7 +191,7 @@ unsaved changes.
 ```
 src/
 ├── app/
-│   ├── api/              # Route handlers (export-site, demo-frame, health)
+│   ├── api/              # Route handlers (export-site, edit-site, demo-frame, health)
 │   ├── templates/        # Template gallery and preview (/templates, /templates/[slug])
 │   ├── editor/           # The visual scroll-site editor
 │   └── create/           # Style and upload flow into the editor

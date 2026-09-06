@@ -4,6 +4,18 @@ import SiteFooter from "@/components/SiteFooter";
 
 const ENTRIES = [
   {
+    version: "v1.1.0",
+    date: "September 7, 2026",
+    tag: "Minor",
+    tagColor: "bg-white/8 text-foreground border-white/15",
+    changes: [
+      { type: "new", text: "Copy rewriting in the editor — describe the change you want and the section copy is rewritten from it, in one undo step" },
+      { type: "new", text: "The rewrite touches the words only. Layout, colours, images and button links are left as you set them, and anything that comes back malformed is discarded rather than applied" },
+      { type: "new", text: "Instances without an API key do not show the button, so a fresh clone still runs on an empty environment" },
+      { type: "improved", text: "The privacy page now names the rewrite request as the third thing that can leave your browser, and only when you ask for one" },
+    ],
+  },
+  {
     version: "v1.0.0",
     date: "August 27, 2026",
     tag: "Major",
