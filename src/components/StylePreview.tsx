@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { drawFrame2D, type Style2D } from "@/lib/generate2DFrames";
 
 interface StylePreviewProps {
@@ -35,6 +35,23 @@ export default function StylePreview({
 }: StylePreviewProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const sizeRef = useRef({ w: 1, h: 1 });
+
+  // Whether the canvas is anywhere near the viewport. The landing page's hero kept
+  // drawing at 60fps while scrolled thousands of pixels out of sight, which costs a
+  // phone battery for pixels nobody can see. Starts true so a browser without the
+  // observer, or a canvas measured before layout settles, still animates.
+  const [inView, setInView] = useState(true);
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setInView(entry.isIntersecting),
+      // A margin, so the animation is already running by the time it scrolls in.
+      { rootMargin: "200px" }
+    );
+    observer.observe(canvas);
+    return () => observer.disconnect();
+  }, []);
 
   // The running loop reads its draw options from a ref, so recoloring mid-loop
   // repaints on the next tick instead of tearing the loop down and snapping to p=0.
@@ -72,7 +89,7 @@ export default function StylePreview({
   }, []);
 
   useEffect(() => {
-    if (paused) return;
+    if (paused || !inView) return;
     const ctx = canvasRef.current?.getContext("2d");
     if (!ctx) return;
 
@@ -93,16 +110,16 @@ export default function StylePreview({
 
     rafId = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(rafId);
-  }, [paused, durationSec, maxProgress]);
+  }, [paused, inView, durationSec, maxProgress]);
 
-  // While paused the loop is not running, so redraw the static frame on restyle.
+  // While the loop is not running, redraw the static frame on restyle.
   useEffect(() => {
-    if (!paused) return;
+    if (!paused && inView) return;
     const ctx = canvasRef.current?.getContext("2d");
     if (!ctx) return;
     const { w, h } = sizeRef.current;
     drawFrame2D(ctx, w, h, 0, { style, color1: colors[0], color2: colors[1], color3: colors[2], frameCount: 1 });
-  }, [paused, style, colors]);
+  }, [paused, inView, style, colors]);
 
   return <canvas ref={canvasRef} className={className} aria-hidden="true" />;
 }
