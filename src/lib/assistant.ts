@@ -20,7 +20,22 @@ export function completionsUrl(baseUrl?: string): string {
 
 /** Bounds on what one request may cost, since credits are finite and per-key. */
 export const MAX_INSTRUCTION_CHARS = 600;
-export const MAX_SECTIONS_IN = 40;
+
+/**
+ * How the work is divided.
+ *
+ * One call per whole document does not fit in a request. sarvam-105b reasons before it
+ * answers, and measured against the live API a single section took 13-21s while a
+ * nine-section site in Hindi ran past 50s and was aborted. Sections are therefore
+ * rewritten a few at a time, in parallel, so wall time tracks the batch rather than the
+ * length of the site. Spacers carry no copy and are never sent at all.
+ *
+ * MAX_SECTIONS_IN follows from the rest: BATCH_SIZE * CONCURRENCY sections per wave, and
+ * two waves inside the route's own time budget.
+ */
+export const BATCH_SIZE = 3;
+export const CONCURRENCY = 4;
+export const MAX_SECTIONS_IN = 24;
 
 /**
  * Output budget for one completion.
@@ -75,21 +90,33 @@ export function systemPrompt(): string {
   return [
     "You rewrite the copy of a scroll-driven marketing website.",
     "",
-    "You are given the site's sections as a JSON array and one instruction.",
-    "Reply with ONLY the full updated JSON array. No prose, no commentary.",
+    "You are given one instruction, the whole site's copy for context, and the numbered",
+    "sections you must rewrite. Reply with ONLY a JSON array holding one object per",
+    "section you were asked to rewrite, in the order they were given. No prose.",
     "",
     "Rules:",
-    '- Return the same number of objects, in the same order, with the same "kind" values.',
-    `- Only change these fields: ${EDITABLE_FIELDS.join(", ")}.`,
+    `- Only these fields: ${EDITABLE_FIELDS.join(", ")}. Omit a field to leave it alone.`,
     "- Never invent statistics, customer counts, review scores, funding rounds or",
     "  certifications, and never name a real company. Whoever publishes this site has to",
     "  be able to stand behind every sentence.",
-    '- A section whose kind is "spacer" carries no copy. Return it unchanged.',
     "- Keep a heading under 80 characters and a body under 300.",
     "- Answer in the language the instruction is written in, unless it says otherwise.",
+    "- The context is there so your wording stays consistent across the whole site.",
+    "  Rewrite only the sections you were asked for.",
     "",
     "Do not explain yourself or think out loud. Emit the array and stop.",
   ].join("\n");
+}
+
+/** The copy of the whole site, so a batch stays consistent with the sections around it. */
+function siteContext(sections: Section[]): string {
+  return sections
+    .map((s, i) =>
+      s.kind === "spacer"
+        ? `${i}. (spacer)`
+        : `${i}. ${[s.eyebrow, s.heading, s.body, s.ctaLabel].filter(Boolean).join(" / ")}`
+    )
+    .join("\n");
 }
 
 /**
@@ -124,7 +151,15 @@ export function mergeCopyOnly(original: Section[], proposed: Section[]): Section
   });
 }
 
-export function buildRequestBody(sections: Section[], instruction: string, model: string) {
+export function buildRequestBody(
+  sections: Section[],
+  batch: { index: number; section: Section }[],
+  instruction: string,
+  model: string
+) {
+  const asked = batch
+    .map(({ index, section }) => `Section ${index}: ${JSON.stringify(copyOf(section))}`)
+    .join("\n");
   return {
     model,
     temperature: 0.3,
@@ -133,23 +168,38 @@ export function buildRequestBody(sections: Section[], instruction: string, model
       { role: "system", content: systemPrompt() },
       {
         role: "user",
-        content: `Instruction: ${instruction}\n\nSections:\n${JSON.stringify(sections)}`,
+        content:
+          `Instruction: ${instruction}\n\n` +
+          `The whole site, for context:\n${siteContext(sections)}\n\n` +
+          `Rewrite these ${batch.length} section(s), and return exactly ${batch.length} object(s):\n${asked}`,
       },
     ],
   };
 }
 
-export async function rewriteSections(
+/** Just the four fields the model is allowed to see itself changing. */
+function copyOf(section: Section): Record<string, string> {
+  const out: Record<string, string> = {};
+  if (section.eyebrow) out.eyebrow = section.eyebrow;
+  if (section.heading) out.heading = section.heading;
+  if (section.body) out.body = section.body;
+  if (section.ctaLabel) out.ctaLabel = section.ctaLabel;
+  return out;
+}
+
+type Batch = { index: number; section: Section }[];
+
+type BatchResult =
+  | { ok: true; copy: Section[] }
+  | { ok: false; status: number; error: string; diagnostic?: Record<string, unknown> };
+
+/** One call: a few sections in, the same number of copy objects out. */
+async function rewriteBatch(
   sections: Section[],
+  batch: Batch,
   instruction: string,
-  opts: {
-    apiKey: string;
-    model?: string;
-    baseUrl?: string;
-    fetchImpl?: typeof fetch;
-    signal?: AbortSignal;
-  }
-): Promise<AssistantResult> {
+  opts: RewriteOptions
+): Promise<BatchResult> {
   const doFetch = opts.fetchImpl ?? fetch;
 
   let res: Response;
@@ -160,7 +210,9 @@ export async function rewriteSections(
         Authorization: `Bearer ${opts.apiKey}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(buildRequestBody(sections, instruction, opts.model ?? "sarvam-105b")),
+      body: JSON.stringify(
+        buildRequestBody(sections, batch, instruction, opts.model ?? "sarvam-105b")
+      ),
       signal: opts.signal,
     });
   } catch {
@@ -183,6 +235,7 @@ export async function rewriteSections(
   } catch {
     return { ok: false, status: 502, error: "The assistant returned something unreadable." };
   }
+
   const choice = json?.choices?.[0];
   const content = choice?.message?.content;
   if (typeof content !== "string" || !content.trim()) {
@@ -220,16 +273,84 @@ export async function rewriteSections(
     const where = issue?.path?.length ? issue.path.join(".") : "the section list";
     return { ok: false, status: 422, error: `The assistant's edit was rejected at ${where}.` };
   }
-  if (parsed.data.length !== sections.length) {
+  if (parsed.data.length !== batch.length) {
     return {
       ok: false,
       status: 422,
-      error: "The assistant changed how many sections the site has, so the edit was rejected.",
+      error: "The assistant rewrote the wrong number of sections, so the edit was rejected.",
     };
   }
-  if (parsed.data.length > MAX_SECTIONS) {
-    return { ok: false, status: 422, error: "The assistant's edit was too long." };
+
+  return { ok: true, copy: parsed.data };
+}
+
+/** Run `jobs` with at most `limit` in flight, preserving order. */
+async function pooled<T>(jobs: (() => Promise<T>)[], limit: number): Promise<T[]> {
+  const out = new Array<T>(jobs.length);
+  let next = 0;
+  const workers = Array.from({ length: Math.min(limit, jobs.length) }, async () => {
+    for (;;) {
+      const i = next++;
+      if (i >= jobs.length) return;
+      out[i] = await jobs[i]();
+    }
+  });
+  await Promise.all(workers);
+  return out;
+}
+
+export type RewriteOptions = {
+  apiKey: string;
+  model?: string;
+  baseUrl?: string;
+  fetchImpl?: typeof fetch;
+  signal?: AbortSignal;
+};
+
+export async function rewriteSections(
+  sections: Section[],
+  instruction: string,
+  opts: RewriteOptions
+): Promise<AssistantResult> {
+  if (sections.length > MAX_SECTIONS || sections.length > MAX_SECTIONS_IN) {
+    return { ok: false, status: 400, error: "That is more sections than one rewrite can carry." };
   }
 
-  return { ok: true, sections: mergeCopyOnly(sections, parsed.data) };
+  // Spacers render nothing, so sending them would spend a call to be told so.
+  const targets = sections
+    .map((section, index) => ({ index, section }))
+    .filter(({ section }) => section.kind !== "spacer");
+  if (targets.length === 0) return { ok: true, sections };
+
+  const batches: Batch[] = [];
+  for (let i = 0; i < targets.length; i += BATCH_SIZE) {
+    batches.push(targets.slice(i, i + BATCH_SIZE));
+  }
+
+  const results = await pooled(
+    batches.map((batch) => () => rewriteBatch(sections, batch, instruction, opts)),
+    CONCURRENCY
+  );
+
+  // A half-rewritten site is worse than an unchanged one, so one bad batch fails the
+  // whole edit and the editor's document is left exactly as it was.
+  const failure = results.find((r) => !r.ok);
+  if (failure && !failure.ok) return failure;
+
+  const byIndex = new Map<number, Section>();
+  results.forEach((result, b) => {
+    if (!result.ok) return;
+    batches[b].forEach(({ index }, withinBatch) => {
+      const from = result.copy[withinBatch];
+      if (from) byIndex.set(index, from);
+    });
+  });
+
+  return {
+    ok: true,
+    sections: sections.map((section, i) => {
+      const from = byIndex.get(i);
+      return from ? mergeCopyOnly([section], [from])[0] : section;
+    }),
+  };
 }
