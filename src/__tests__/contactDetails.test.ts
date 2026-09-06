@@ -195,13 +195,25 @@ describe("what the site claims about itself is true", () => {
   });
 
   it("describes the rate limiting it actually applies", () => {
-    // One of three API routes is rate-limited; the privacy page promised two.
+    // The privacy page once promised limits on two routes when only one had them. It now
+    // names the endpoints, so the wording has to keep up with the routes themselves.
     const privacy = readFileSync("src/app/privacy/page.tsx", "utf8");
     expect(privacy).not.toContain("rate-limit the two API routes");
     const limited = readdirSync("src/app/api", { withFileTypes: true })
       .filter((d) => d.isDirectory())
       .filter((d) => readFileSync(join("src/app/api", d.name, "route.ts"), "utf8").includes("rateLimit("));
-    expect(limited.map((d) => d.name)).toEqual(["export-site"]);
+    expect(limited.map((d) => d.name).sort()).toEqual(["edit-site", "export-site"]);
+    expect(privacy, "the privacy page names the limited endpoints").toMatch(
+      /rate-limit the export and\s+rewrite endpoints/
+    );
+  });
+
+  it("discloses every request that leaves the browser", () => {
+    // "Nothing you type reaches us" stopped being the whole truth the moment an
+    // instruction could be sent to a third party for rewriting.
+    const privacy = readFileSync("src/app/privacy/page.tsx", "utf8");
+    expect(privacy, "the rewrite request is not disclosed").toMatch(/Sarvam AI/);
+    expect(privacy).not.toContain("Two things do leave your browser");
   });
 
   it("keeps the legal pages dated to when they were last rewritten", () => {

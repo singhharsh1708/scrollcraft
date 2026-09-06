@@ -12,13 +12,14 @@ import {
   ArrowLeft, Download, Plus, Trash2, Eye, EyeOff, ChevronUp, ChevronDown,
   Layers, Loader2, AlignLeft, AlignCenter, AlignRight,
   Monitor, Tablet, Smartphone, Music, Volume2, VolumeX, Save,
-  Undo2, Redo2, Copy
+  Undo2, Redo2, Copy, Sparkles
 } from "lucide-react";
 import { useScrollAudio } from "@/lib/useScrollAudio";
+import { AssistantBar, useAssistantAvailable } from "@/components/AssistantBar";
 import Link from "next/link";
 import { toast } from "sonner";
 import dynamic from "next/dynamic";
-import { siteStyleSchema, themeSchema, sectionAnchor, visibleSections as onlyVisible, type EditorSection, type SiteStyle, type Theme } from "@/lib/siteSchema";
+import { siteStyleSchema, themeSchema, sectionAnchor, visibleSections as onlyVisible, type EditorSection, type Section as SchemaSection, type SiteStyle, type Theme } from "@/lib/siteSchema";
 import { templateBySlug, type Template } from "@/lib/templates";
 import { layoutStyle } from "@/lib/layoutStyles";
 import { faviconSvg, notFoundHtml, exportReadme, renderSocialCard, renderTouchIcon } from "@/lib/exportAssets";
@@ -187,6 +188,8 @@ function EditorInner() {
   }, [frameCount]);
   const [showPreview, setShowPreview] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
+  const [assistantOpen, setAssistantOpen] = useState(false);
+  const assistantAvailable = useAssistantAvailable();
   // A ZIP export runs for tens of seconds — a template fetch, a sequential fetch per
   // frame, then compression — behind a single spinner. Name the current stage so the
   // wait reads as progress rather than a hang.
@@ -467,6 +470,23 @@ function EditorInner() {
     setDirty(true);
     syncHistoryFlags();
   }, [syncHistoryFlags]);
+
+  // Only the four copy fields are taken, and each falls back to what is already there,
+  // so the editor keeps its own guarantee that every section carries these as strings.
+  // Applied through commitSections, so a rewrite is one undo away from being gone.
+  const applyAssistantEdit = useCallback((rewritten: SchemaSection[]) => {
+    commitSections(prev => prev.map((s, i) => {
+      const from = rewritten[i];
+      if (!from || s.kind === "spacer") return s;
+      return {
+        ...s,
+        eyebrow: from.eyebrow ?? s.eyebrow,
+        heading: from.heading ?? s.heading,
+        body: from.body ?? s.body,
+        ctaLabel: from.ctaLabel ?? s.ctaLabel,
+      };
+    }));
+  }, [commitSections]);
 
   const undo = useCallback(() => {
     if (!undoStack.current.length) return;
@@ -1013,6 +1033,19 @@ function EditorInner() {
           >
             {showPreview ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
           </Button>
+          {assistantAvailable && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setAssistantOpen(o => !o)}
+              aria-expanded={assistantOpen}
+              title="Rewrite the copy from an instruction"
+              className={`h-7 px-3 text-xs gap-1 border-white/10 ${assistantOpen ? "bg-primary/20 text-primary-ink" : ""}`}
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              Rewrite
+            </Button>
+          )}
           <Button
             variant="outline"
             size="sm"
@@ -1041,6 +1074,14 @@ function EditorInner() {
           )}
         </div>
       </div>
+
+      {assistantAvailable && assistantOpen && (
+        <AssistantBar
+          sections={sections}
+          onApply={applyAssistantEdit}
+          onClose={() => setAssistantOpen(false)}
+        />
+      )}
 
       <main className="flex flex-col md:flex-row flex-1 overflow-y-auto md:overflow-x-auto md:overflow-y-hidden">
         {/* Left panel: sections list */}
