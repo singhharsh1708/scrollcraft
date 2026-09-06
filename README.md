@@ -1,12 +1,11 @@
 <div align="center">
 
-# ✦ ScrollCraft
+# ScrollCraft
 
-**Ready-made cinematic scroll websites — no code, pure HTML.**
+**Cinematic scroll websites, exported as plain HTML.**
 
-Pick a template, change the words, and export a production‑ready HTML/CSS/JS ZIP you can
-deploy anywhere. All of it is free and open source: every template, the editor, and the
-export. No account, nothing to buy.
+Pick a template, change the words, download a ZIP, put it anywhere. The editor, every
+template and the export are free and open source.
 
 [Live demo](https://scrollcraft-gilt.vercel.app) · [Report a bug](https://github.com/singhharsh1708/scrollcraft/issues) · [Request a feature](https://github.com/singhharsh1708/scrollcraft/issues)
 
@@ -14,40 +13,49 @@ export. No account, nothing to buy.
 
 ---
 
-## What is ScrollCraft?
+## What it does
 
-Apple‑style scroll animations (where the page scrubs through a sequence of frames as you
-scroll) are gorgeous — and historically expensive. You either hire a studio, learn WebGL,
-or ship a heavy JavaScript framework that tanks your Lighthouse score.
+A scroll-scrubbed site plays through a sequence of frames as the reader scrolls, so the
+background moves with them instead of sitting still behind the text. ScrollCraft builds
+those sites without WebGL, an animation library, or a render farm.
 
-ScrollCraft removes all of that. You:
+1. **Start from a template.** Twenty-one finished sites, each with its own palette,
+   typography, pacing and copy. Or upload a video and use your own footage.
+2. **Get frames.** The engine draws the frame sequence on a canvas in your browser and
+   maps it to scroll position.
+3. **Edit it.** Sections, copy, buttons, colours, audio, custom CSS.
+4. **Export it.** A self-contained ZIP with a 404 page, favicon, social card,
+   `robots.txt` and host config for Netlify, Vercel, GitHub Pages and Cloudflare.
+   Deploying is dragging a folder.
 
-1. **Pick a template** — a finished scroll site with its own palette, typography, pacing and copy. Or upload your own video.
-2. **Get frames** — the engine renders a sequence of canvas frames mapped to scroll position, in your browser.
-3. **Edit visually** — change sections, copy, CTAs, audio and custom CSS.
-4. **Export** — download a self‑contained ZIP and put it anywhere. It carries its own 404 page, favicon, social card, `robots.txt`, and config for Netlify, Vercel, GitHub Pages and Cloudflare, so deploying is dragging a folder.
+Everything runs in the browser. There is no account, no database and nothing to buy.
 
 ## Features
 
-- 🎨 **Generated scroll frames** — pick a style (gradient, geometric, particles, wave) and a palette; the frame sequence is rendered in-browser on canvas, no API key required.
-- 🎬 **Scroll‑linked animation engine** — smooth canvas scrubbing, desktop + mobile frame sets.
-- 🧩 **Template library** — 21 finished scroll sites across 16 categories, all free, each with its own Google Fonts pairing and palette.
-- 📦 **Pure HTML export** — zero dependencies, zero lock‑in, deploy anywhere. The ZIP ships a 404 page, favicon, social card, `robots.txt` and host configs, and scores 100 across Lighthouse.
-- 🎞️ **Bring your own video** — frames are extracted in your browser; the file never leaves your device.
-- 🔊 **Scroll‑synced audio** — attach a soundtrack that responds to scroll position.
-- 🔓 **No account, no database, no payment** — clone it and run it. Nothing to sign up for, nothing to configure, nothing to pay.
+- **Generated backgrounds.** Choose a style (gradient, geometric, particles, wave) and a
+  palette. Frames are drawn on canvas locally, with no API key and nothing to install.
+- **Scroll engine.** Smooth canvas scrubbing with separate desktop and portrait frame sets,
+  so a phone gets a background shaped for it rather than a letterboxed one.
+- **Template library** — 21 finished scroll sites across 16 categories, each with its own
+  Google Fonts pairing and palette.
+- **Plain HTML export.** No dependencies and no lock-in. The exported page scores 100 on
+  Lighthouse for performance, accessibility, best practices and SEO.
+- **Your own video.** Frames are extracted in your browser. The file never leaves your
+  device.
+- **Scroll-linked audio.** Attach a track that fades in as the reader scrolls and out when
+  they stop.
 
-## Two ways to use ScrollCraft
+## Two ways to use it
 
-**Hosted app** — pick a template, edit it visually, export a ZIP. No sign-in.
-See [Getting started](#getting-started) to run it yourself.
+**The hosted app** — pick a template, edit it, export a ZIP. See
+[Getting started](#getting-started) to run it locally.
 
-**Claude Code skill** — build the same kind of site on your machine, in version control, with
-generated backgrounds or your own footage. No account, no server, no payment.
+**A Claude Code skill** — build the same site on your machine, in version control, from
+generated backgrounds or your own footage.
 
-Both emit the identical bundle layout (`index.html` + `frames/frame_0000.jpg` upward), so a
-site built by the skill opens in the hosted editor and an exported ZIP can be rebuilt by the
-skill.
+Both produce the same bundle layout (`index.html` plus `frames/frame_0000.jpg` upward), so
+a site built by the skill opens in the hosted editor and an exported ZIP can be rebuilt by
+the skill.
 
 ### Installing the skill
 
@@ -58,36 +66,33 @@ This repository is also a Claude Code plugin marketplace. From inside Claude Cod
 /plugin install scrollcraft@scrollcraft
 ```
 
-Then just describe what you want — "build me a scroll site from hero.mp4" — and the skill
-activates. To confirm it registered, run `/plugin` and look for `scrollcraft`.
-
-Updating later:
+Then describe what you want, such as "build me a scroll site from hero.mp4". Run `/plugin`
+and look for `scrollcraft` to confirm it registered. To update later:
 
 ```
 /plugin marketplace update scrollcraft
 ```
 
-### What the skill does
+### Using the skill
 
-`ffmpeg` is the only external requirement (`brew install ffmpeg`, or `apt install ffmpeg`).
-Everything else is plain Node with no dependencies.
+`ffmpeg` is the only external requirement (`brew install ffmpeg` or `apt install ffmpeg`).
+The scripts are plain Node with no dependencies.
 
-Ask Claude for a scroll site, or drive it yourself:
+Ask Claude for a scroll site, or drive it yourself. The quickest path needs no footage and
+scaffolds the spec, background and a working site in one command:
 
 ```bash
-# Fastest path — no footage needed. Scaffolds the spec, generates a
-# background, and builds a working site in one command.
 node plugins/scrollcraft/skills/scrollcraft/scripts/init.mjs --name "Orrery" --style aurora
 ```
 
 Or step by step:
 
 ```bash
-# 1a. your own video -> frame sequence, desktop + mobile
+# 1a. your own video -> frame sequence, desktop and portrait
 node plugins/scrollcraft/skills/scrollcraft/scripts/frames-from-video.mjs --input hero.mp4 --out frames \
   --fps 24 --width 1920 --mobile-width 828 --mobile-out frames-mobile
 
-# 1b. or generate one: six cinematic styles, ~1MB instead of ~36MB
+# 1b. or generate one: six styles, about 1 MB instead of about 36 MB
 node plugins/scrollcraft/skills/scrollcraft/scripts/frames-from-style.mjs --list
 node plugins/scrollcraft/skills/scrollcraft/scripts/frames-from-style.mjs --style nebula --count 180 \
   --width 1920 --mobile-width 828 --mobile-out frames-mobile
@@ -101,19 +106,18 @@ node plugins/scrollcraft/skills/scrollcraft/scripts/verify.mjs --dir dist --shot
 node plugins/scrollcraft/skills/scrollcraft/scripts/serve.mjs --dir dist --port 4321
 ```
 
-`verify.mjs` drives headless Chrome over the DevTools Protocol with no npm dependencies,
-scrolls the built page, and measures the frames a reader actually sees: that the canvas
-paints, that it advances, and that every line of copy clears 4.5:1 contrast against the
-pixels behind it. It catches the failure that matters — a missing frame set renders a black
-canvas, throws nothing, and logs nothing.
+`verify.mjs` drives headless Chrome over the DevTools Protocol, scrolls the built page and
+measures what a reader would actually see: that the canvas paints, that it advances, and
+that every line of copy clears 4.5:1 contrast against the pixels behind it. A missing frame
+set renders a black canvas without throwing or logging anything, so checking the files is
+not enough on its own.
 
-Two slash commands come with the plugin: `/scrollcraft-new` to start a site and
+The plugin adds two slash commands: `/scrollcraft-new` to start a site and
 `/scrollcraft-build` to rebuild, check and preview one.
 
-`dist/` is a static directory with no runtime dependencies and no external requests. Deploy it
-anywhere.
+`dist/` is a static directory with no runtime dependencies and no external requests.
 
-Skill source lives in [plugins/scrollcraft/](plugins/scrollcraft/); the bundle invariants both
+Skill source is in [plugins/scrollcraft/](plugins/scrollcraft/). The bundle invariants both
 halves rely on are written down in
 [references/export-contract.md](plugins/scrollcraft/skills/scrollcraft/references/export-contract.md).
 
@@ -128,15 +132,10 @@ halves rely on are written down in
 | Monitoring | [Sentry](https://sentry.io), optional |
 | Testing | [Vitest](https://vitest.dev) |
 
-There is no database, no authentication and no payment provider. There is nothing
-to sign up for and nothing to configure.
-
 ## Getting started
 
-### Prerequisites
-
-Node.js 22 or newer. That is the whole list — `verify.mjs` drives Chrome over the
-global `WebSocket`, which Node only exposes unflagged from 22.
+Node.js 22 or newer. `verify.mjs` drives Chrome over the global `WebSocket`, which Node
+only exposes unflagged from 22.
 
 ```bash
 git clone https://github.com/singhharsh1708/scrollcraft.git
@@ -145,11 +144,11 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). No `.env`, no database, no keys.
+Open [http://localhost:3000](http://localhost:3000). No `.env` file and no keys needed.
 
 ## Environment variables
 
-Every variable is optional — see [`.env.example`](.env.example).
+Every variable is optional. See [`.env.example`](.env.example).
 
 | Variable | Purpose |
 |----------|---------|
@@ -160,14 +159,14 @@ Every variable is optional — see [`.env.example`](.env.example).
 
 ## Where your work lives
 
-Nowhere but your own browser, and then in the ZIP you download.
+In your own browser, and then in the ZIP you download.
 
-Sites are held in IndexedDB on your device while you edit. Nothing is uploaded, no
-account exists to attach it to, and closing the tab does not send anything anywhere.
-The trade-off is deliberate and worth stating plainly: **clear your browser data and
-unexported work is gone.** Export early.
+Sites are held in IndexedDB on your device while you edit. Nothing is uploaded and no
+account exists to attach it to. **Clear your browser data and unexported work is gone**, so
+export early. The editor autosaves as you type and warns you before you close a tab with
+unsaved changes.
 
-## Available scripts
+## Scripts
 
 | Script | Description |
 |--------|-------------|
@@ -185,40 +184,37 @@ unexported work is gone.** Export early.
 src/
 ├── app/
 │   ├── api/              # Route handlers (export-site, demo-frame, health)
-│   ├── templates/        # Template gallery + preview (/templates, /templates/[slug])
+│   ├── templates/        # Template gallery and preview (/templates, /templates/[slug])
 │   ├── editor/           # The visual scroll-site editor
-│   └── create/           # Style + upload → editor flow
-├── components/           # UI + scroll engine (ScrollEngine, ScrollSection)
+│   └── create/           # Style and upload flow into the editor
+├── components/           # UI and scroll engine (ScrollEngine, ScrollSection)
 ├── lib/                  # templates, canvas frame generation, export assets, rate limiting
-└── proxy.ts              # Edge headers (Next 16 renamed middleware → proxy)
+└── proxy.ts              # Edge headers (Next 16 renamed middleware to proxy)
 ```
 
 ## Deploying
 
-There is no database and no migration step, so a deploy is a build.
+A deploy is a build, since there is no database and no migration step.
 
 ```sh
 npx vercel deploy --prod
 ```
 
-It also runs anywhere that runs Next.js, and the sites it produces are static files
-that run anywhere at all.
+It runs anywhere that runs Next.js, and the sites it produces are static files that run
+anywhere at all.
 
 ## Contributing
 
-Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for the workflow,
-coding standards, and how to pick up an issue.
+Contributions are welcome. [CONTRIBUTING.md](CONTRIBUTING.md) covers the workflow, coding
+standards and how to pick up an issue.
 
 ## Sponsor
 
-ScrollCraft is free and open source, and the hosted version still costs something to
-run. If it saved you a studio invoice, you can
-[sponsor the project on GitHub](https://github.com/sponsors/singhharsh1708), one-off or
-monthly. Sponsoring funds the open source work — it is not a purchase and unlocks
-nothing, which is deliberate.
+The hosted version costs something to run. If ScrollCraft saved you a studio invoice, you
+can [sponsor it on GitHub](https://github.com/sponsors/singhharsh1708), one-off or monthly.
+Sponsoring funds the open source work and unlocks nothing.
 
-Not in a position to pay? Starring the repo, filing a good bug report, or shipping a PR
-helps just as much.
+Not in a position to pay? A star, a good bug report or a pull request helps just as much.
 
 ## License
 
