@@ -11,7 +11,12 @@ import { MAX_SECTIONS, sectionsSchema, type Section } from "@/lib/siteSchema";
  * section or invents a field cannot damage anything, because only the words are taken.
  */
 
-const SARVAM_URL = "https://api.sarvam.ai/v1/chat/completions";
+export const SARVAM_DEFAULT_BASE_URL = "https://api.sarvam.ai/v1";
+
+/** `<base>/chat/completions`, with any number of trailing slashes on the base. */
+export function completionsUrl(baseUrl?: string): string {
+  return `${(baseUrl || SARVAM_DEFAULT_BASE_URL).replace(/\/+$/, "")}/chat/completions`;
+}
 
 /** Bounds on what one request may cost, since credits are finite and per-key. */
 export const MAX_INSTRUCTION_CHARS = 600;
@@ -92,13 +97,19 @@ export function buildRequestBody(sections: Section[], instruction: string, model
 export async function rewriteSections(
   sections: Section[],
   instruction: string,
-  opts: { apiKey: string; model?: string; fetchImpl?: typeof fetch; signal?: AbortSignal }
+  opts: {
+    apiKey: string;
+    model?: string;
+    baseUrl?: string;
+    fetchImpl?: typeof fetch;
+    signal?: AbortSignal;
+  }
 ): Promise<AssistantResult> {
   const doFetch = opts.fetchImpl ?? fetch;
 
   let res: Response;
   try {
-    res = await doFetch(SARVAM_URL, {
+    res = await doFetch(completionsUrl(opts.baseUrl), {
       method: "POST",
       headers: {
         Authorization: `Bearer ${opts.apiKey}`,

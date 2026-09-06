@@ -13,6 +13,12 @@ import { MAX_INSTRUCTION_CHARS, MAX_SECTIONS_IN, rewriteSections } from "@/lib/a
  * offers is worse than no button.
  */
 
+// A 105B model rewriting a whole site takes tens of seconds, well past the platform's
+// default function budget. Aborting at 50s means the caller gets this route's own error
+// rather than an opaque gateway timeout.
+export const maxDuration = 60;
+const REQUEST_TIMEOUT_MS = 50_000;
+
 const configured = () => Boolean(env.SARVAM_API_KEY);
 
 export async function GET() {
@@ -116,7 +122,8 @@ export async function POST(req: NextRequest) {
   const result = await rewriteSections(parsed.data, instruction, {
     apiKey: env.SARVAM_API_KEY as string,
     model: env.SARVAM_MODEL || undefined,
-    signal: AbortSignal.timeout(60_000),
+    baseUrl: env.SARVAM_BASE_URL || undefined,
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
   });
 
   if (!result.ok) {

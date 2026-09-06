@@ -11,7 +11,7 @@ export default function PrivacyPage() {
       <Navbar />
       <article className="max-w-3xl mx-auto px-6 py-16 prose prose-invert prose-sm">
         <h1>Privacy Policy</h1>
-        <p className="text-muted-foreground">Last updated: August 2026</p>
+        <p className="text-muted-foreground">Last updated: September 2026</p>
 
         <h2>The short version</h2>
         <p>
@@ -22,9 +22,9 @@ export default function PrivacyPage() {
 
         <h2>What we collect</h2>
         <p>
-          Nothing you type into ScrollCraft reaches us. Your sections, copy, colours,
-          uploaded video and audio are held in your browser&apos;s local storage
-          (IndexedDB) on your own device.
+          Your sections, copy, colours, uploaded video and audio are held in your
+          browser&apos;s local storage (IndexedDB) on your own device. Nothing there is
+          sent anywhere on its own.
         </p>
         <p>
           Three things can leave your browser, none of them identifying you:

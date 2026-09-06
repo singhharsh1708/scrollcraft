@@ -95,6 +95,9 @@ export function AssistantBar({
 
   return (
     <div className="border-b border-white/5 bg-card/40 px-4 py-3">
+      {/* Capped, because a one-line instruction stretched across a 1440px field reads as
+          a mistake and the note under it becomes a 200-character line. */}
+      <div className="max-w-3xl">
       <div className="flex items-start gap-2">
         <Textarea
           ref={inputRef}
@@ -117,7 +120,7 @@ export function AssistantBar({
             className="bg-primary hover:bg-primary/90 text-white h-8 px-3 text-xs font-semibold"
           >
             {busy ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : <Sparkles className="w-3.5 h-3.5 mr-1" />}
-            Rewrite
+            Rewrite copy
           </Button>
           <Button
             onClick={onClose}
@@ -142,14 +145,17 @@ export function AssistantBar({
             {s}
           </button>
         ))}
-        <span className={`ml-auto text-[11px] tabular-nums ${over ? "text-destructive" : "text-muted-foreground"}`}>
-          {instruction.length}/{MAX_INSTRUCTION_CHARS}
-        </span>
+        {instruction.length > 0 && (
+          <span className={`ml-auto text-[11px] tabular-nums ${over ? "text-destructive" : "text-muted-foreground"}`}>
+            {instruction.length}/{MAX_INSTRUCTION_CHARS}
+          </span>
+        )}
       </div>
       <p className="mt-1.5 text-[11px] text-muted-foreground">
-        It rewrites the words only. Layout, colours, images and button links are left as
-        you set them, and the instruction is sent to the assistant to do it.
+        The words only. Layout, colours, images and button links stay as you set them.
+        Your instruction and this site&apos;s copy are sent to the assistant to do it.
       </p>
+      </div>
     </div>
   );
 }

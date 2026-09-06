@@ -1,5 +1,11 @@
 import { describe, it, expect, vi } from "vitest";
-import { extractJsonArray, mergeCopyOnly, rewriteSections, systemPrompt } from "@/lib/assistant";
+import {
+  completionsUrl,
+  extractJsonArray,
+  mergeCopyOnly,
+  rewriteSections,
+  systemPrompt,
+} from "@/lib/assistant";
 import type { Section } from "@/lib/siteSchema";
 
 function reply(content: string) {
@@ -207,6 +213,25 @@ describe("rewriteSections", () => {
     await rewriteSections(DOC, "hi", { apiKey: "k", fetchImpl });
     const init = (fetchImpl as unknown as ReturnType<typeof vi.fn>).mock.calls[0][1] as RequestInit;
     expect(JSON.parse(String(init.body)).model).toBe("sarvam-105b");
+  });
+});
+
+describe("completionsUrl", () => {
+  it("defaults to Sarvam", () => {
+    expect(completionsUrl()).toBe("https://api.sarvam.ai/v1/chat/completions");
+    expect(completionsUrl("")).toBe("https://api.sarvam.ai/v1/chat/completions");
+  });
+
+  it("takes a gateway that speaks the same shape", () => {
+    expect(completionsUrl("http://127.0.0.1:8080/v1")).toBe(
+      "http://127.0.0.1:8080/v1/chat/completions"
+    );
+  });
+
+  it("does not double the slash on a base that ends in one", () => {
+    expect(completionsUrl("https://gw.example.com/v1///")).toBe(
+      "https://gw.example.com/v1/chat/completions"
+    );
   });
 });
 

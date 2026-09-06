@@ -33,6 +33,13 @@ const envSchema = z.object({
   // worse than a button that is not there.
   SARVAM_API_KEY: z.string().optional(),
   SARVAM_MODEL: z.enum(["sarvam-105b", "sarvam-105b-conversations"]).optional(),
+  // Sarvam speaks the OpenAI chat-completions shape, so a self-hosted copy can point
+  // this at any gateway that speaks it too. Restricted to http(s) so a value from a
+  // misread `.env` cannot turn into a file: or data: fetch.
+  SARVAM_BASE_URL: z.string().url().refine(
+    (u) => /^https?:\/\//i.test(u),
+    "SARVAM_BASE_URL must be an http(s) URL"
+  ).optional(),
 
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
 });

@@ -169,13 +169,34 @@ describe("what the site claims about itself is true", () => {
     }
   });
 
-  it("promises no AI, which the product does not have", () => {
-    // The changelog records its removal by name, so it is the one file allowed to say it.
-    for (const file of ["README.md", "src/app/presets/page.tsx", "src/app/HomeClient.tsx", "src/app/create/page.tsx", "src/app/about/page.tsx"]) {
+  it("does not promise the copy assistant on pages that cannot know it exists", () => {
+    // The assistant depends on a key, so a self-hosted copy usually does not have one.
+    // The landing, presets, create and about pages are served the same either way and
+    // cannot tell, so none of them may promise it. The README can, because it says in
+    // the same breath that a key is required. What none of them may do is slip back into
+    // the register the v0.4.0 teardown removed.
+    const marketing = ["src/app/presets/page.tsx", "src/app/HomeClient.tsx", "src/app/create/page.tsx", "src/app/about/page.tsx"];
+    for (const file of marketing) {
+      const text = readFileSync(file, "utf8");
+      expect(text, `${file} promises an assistant it cannot know is configured`).not.toMatch(
+        /rewrit\w* (?:your|the) (?:copy|site|words)|copy assistant/i
+      );
+    }
+    for (const file of ["README.md", ...marketing]) {
       expect(readFileSync(file, "utf8"), `${file} advertises AI`).not.toMatch(
         /\bthe AI\b|AI generates|AI-generated|AI-powered/i
       );
     }
+  });
+
+  it("says the assistant needs a key wherever it mentions the assistant", () => {
+    // "It rewrites your copy" on its own would be a promise a fresh clone cannot keep.
+    const readme = readFileSync("README.md", "utf8");
+    expect(readme).toMatch(/rewrites the section copy/i);
+    expect(readme, "the README mentions rewriting without mentioning the key").toMatch(
+      /needs an API key/i
+    );
+    expect(readme).toContain("SARVAM_API_KEY");
   });
 
   it("promises no release cadence it does not keep", () => {
