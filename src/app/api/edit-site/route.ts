@@ -129,7 +129,7 @@ export async function POST(req: NextRequest) {
   if (!result.ok) {
     // The instruction and the copy are the user's; only the shape of the failure is ours
     // to record.
-    logger.warn("edit-site rewrite failed", { status: result.status });
+    logger.warn("edit-site rewrite failed", { status: result.status, ...result.diagnostic });
     return NextResponse.json({ error: result.error }, { status: result.status });
   }
 

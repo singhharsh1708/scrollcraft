@@ -70,10 +70,7 @@ describe("assistant availability", () => {
 
 describe("POST /api/edit-site input handling", () => {
   it("rewrites the copy and leaves the structure alone", async () => {
-    vi.stubGlobal(
-      "fetch",
-      completion(JSON.stringify([{ heading: "After", body: "New copy." }, {}]))
-    );
+    vi.stubGlobal("fetch", completion(JSON.stringify([{ heading: "After", body: "New copy." }])));
     const res = await POST(post({ sections: SECTIONS, instruction: "make it warmer" }));
     expect(res.status).toBe(200);
     const { sections } = await res.json();
@@ -113,7 +110,7 @@ describe("POST /api/edit-site input handling", () => {
     expect(res.status).toBe(400);
   });
 
-  it("rejects more sections than one call should carry", async () => {
+  it("rejects more sections than one request should carry", async () => {
     const many = Array.from({ length: 41 }, (_, i) => ({ id: `s${i}`, heading: "h" }));
     const spy = completion("[]");
     vi.stubGlobal("fetch", spy);
@@ -143,8 +140,9 @@ describe("POST /api/edit-site upstream failures", () => {
     expect(await res.json()).not.toHaveProperty("sections");
   });
 
-  it("does not apply an edit that drops a section", async () => {
-    vi.stubGlobal("fetch", completion(JSON.stringify([{ heading: "Only one" }])));
+  it("does not apply an edit that answers with the wrong number of sections", async () => {
+    // One text section and a spacer, so exactly one object is asked for and expected.
+    vi.stubGlobal("fetch", completion(JSON.stringify([{ heading: "one" }, { heading: "two" }])));
     const res = await POST(post({ sections: SECTIONS, instruction: "shorter" }));
     expect(res.status).toBe(422);
   });
