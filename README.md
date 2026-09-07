@@ -7,7 +7,7 @@
 Pick a template, change the words, download a ZIP, put it anywhere. The editor, every
 template and the export are free and open source.
 
-[Live demo](https://scrollcraft-gilt.vercel.app) · [Report a bug](https://github.com/singhharsh1708/scrollcraft/issues) · [Request a feature](https://github.com/singhharsh1708/scrollcraft/issues)
+[Live demo](https://scrollcraft-gilt.vercel.app) · [Examples](https://scrollcraft-gilt.vercel.app/examples) · [Report a bug](https://github.com/singhharsh1708/scrollcraft/issues) · [Request a feature](https://github.com/singhharsh1708/scrollcraft/issues)
 
 </div>
 
@@ -49,6 +49,22 @@ one exception is the copy assistant below, which is off unless you configure a k
   rewrites the section copy from it, in one undo step. It touches the words only, never
   the layout, colours, images or button links. It needs an API key, and without one the
   button is not shown at all. See [Environment variables](#environment-variables).
+
+## Examples
+
+Three finished sites live at [/examples](https://scrollcraft-gilt.vercel.app/examples):
+an architecture practice, a distillery and a deep-ocean survey programme. Each link opens
+the exported bundle itself rather than a preview of it, so what you scroll is what a
+download contains.
+
+They are built from committed specs, one `scrollcraft.json` per site in
+[examples/](examples/), by the same scripts documented below. `npm run build:examples`
+reassembles all three, and it runs automatically before every build so `index.html` always
+comes from the current exporter rather than from a committed copy that has drifted.
+
+The frame sets are committed alongside each spec, because encoding them needs `ffmpeg` and
+a deploy image has none. `npm run examples:frames` regenerates them on a machine that
+does.
 
 ## Two ways to use it
 

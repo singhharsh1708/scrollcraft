@@ -4,6 +4,18 @@ import SiteFooter from "@/components/SiteFooter";
 
 const ENTRIES = [
   {
+    version: "v1.2.0",
+    date: "September 7, 2026",
+    tag: "Minor",
+    tagColor: "bg-white/8 text-foreground border-white/15",
+    changes: [
+      { type: "new", text: "Examples — three finished sites at /examples, each link opening the exported bundle itself rather than a preview of it" },
+      { type: "new", text: "Each example is a committed spec built by the same scripts the skill ships, so the page cannot drift from what the exporter actually produces" },
+      { type: "new", text: "Every example is checked with verify.mjs: the canvas has to advance and every line of copy has to clear 4.5:1 against the pixels behind it" },
+      { type: "fixed", text: "Canvas previews kept animating at 60fps while scrolled out of view, spending a phone's battery on pixels nobody could see" },
+    ],
+  },
+  {
     version: "v1.1.0",
     date: "September 7, 2026",
     tag: "Minor",

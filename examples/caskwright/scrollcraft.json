@@ -1,0 +1,90 @@
+{
+  "name": "Caskwright",
+  "description": "A small distillery on the edge of the moor. Four casks at a time, bottled at cask strength, sold at the door.",
+  "canvasAlt": "A warm rust-coloured glow moving slowly across near-black, like firelight on a barrel end",
+  "frames": "frames",
+  "framesMobile": "frames-mobile",
+  "theme": {
+    "fontDisplay": "Bodoni Moda",
+    "fontBody": "Karla",
+    "scale": "editorial",
+    "displayWeight": 500,
+    "displayCase": "none",
+    "displayTracking": -0.015,
+    "ink": "#f7f1ea",
+    "muted": "rgba(247,241,234,0.72)",
+    "accent": "#7a3418",
+    "accentText": "#e8b795",
+    "ground": "#0d0806",
+    "radius": 4
+  },
+  "sections": [
+    {
+      "kind": "text",
+      "layout": "center",
+      "reveal": "fade",
+      "eyebrow": "Distillery",
+      "heading": "Four casks at a time",
+      "body": "Caskwright sits on the edge of the moor, in a stone shed that used to hold tractors. We fill four casks at a time and bottle them one by one.",
+      "ctaLabel": "How it is made",
+      "ctaHref": "#section-2",
+      "scrollHeight": 1500
+    },
+    {
+      "kind": "text",
+      "layout": "left",
+      "reveal": "fade",
+      "eyebrow": "The mash",
+      "heading": "Barley from the next valley",
+      "body": "Floor malted, milled coarse, and mashed in an open tun so you can smell the wash from the road. Nothing is rushed to hit a delivery date.",
+      "scrollHeight": 1500
+    },
+    {
+      "kind": "text",
+      "layout": "right",
+      "reveal": "fade",
+      "eyebrow": "The still",
+      "heading": "One copper pot, run slow",
+      "body": "A slow run keeps the heavier oils in the spirit, which is what gives it weight later. We cut early and lose some volume for it.",
+      "scrollHeight": 1500
+    },
+    { "kind": "spacer", "scrollHeight": 900 },
+    {
+      "kind": "statement",
+      "layout": "center",
+      "reveal": "mask",
+      "heading": "Time is the only ingredient we cannot buy",
+      "scrollHeight": 2300
+    },
+    {
+      "kind": "text",
+      "layout": "left",
+      "reveal": "fade",
+      "eyebrow": "The wood",
+      "heading": "Ex-bourbon, then a year in oloroso",
+      "body": "The first fill gives vanilla and coconut, the second gives dried fruit and a darker colour. We taste every cask before we decide it is finished.",
+      "scrollHeight": 1600
+    },
+    { "kind": "spacer", "scrollHeight": 700 },
+    {
+      "kind": "text",
+      "layout": "lower-third",
+      "reveal": "fade",
+      "eyebrow": "Bottling",
+      "heading": "Cask strength, never chill filtered",
+      "body": "Each bottle is numbered by hand and carries the cask it came from. Add water at the table if you want it softer, rather than us doing it for you.",
+      "scrollHeight": 1500
+    },
+    {
+      "kind": "text",
+      "layout": "center",
+      "reveal": "fade",
+      "eyebrow": "Visit",
+      "heading": "The door is open on Saturdays",
+      "body": "Come and taste what is in the tun. If a cask is ready you can fill a bottle from it and write your own label.",
+      "ctaLabel": "Plan a visit",
+      "ctaHref": "mailto:hello@example.com",
+      "scrollHeight": 1700
+    }
+  ]
+}

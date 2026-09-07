@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { readFileSync } from "node:fs";
 import { withSentryConfig } from "@sentry/nextjs";
 
 const securityHeaders = [
@@ -34,9 +35,25 @@ const securityHeaders = [
   },
 ];
 
+// The example bundles are plain static directories under public/. Next serves
+// `/examples/<slug>/index.html` but not `/examples/<slug>`, which is the URL a person
+// types. This has to be a redirect, not a rewrite: the bundles reference their frames
+// relatively, so serving index.html under the shorter URL resolves `frames/frame_0000.jpg`
+// against `/examples/` and every frame 404s. That renders a black canvas and logs nothing,
+// which is the one failure the bundle contract calls out by name. Listed by slug so the
+// rule cannot shadow the gallery route or public/examples/built.json.
+const EXAMPLE_SLUGS: string[] = JSON.parse(
+  readFileSync(new URL("./examples/manifest.json", import.meta.url), "utf8")
+).map((e: { slug: string }) => e.slug);
+
 const nextConfig: NextConfig = {
   async redirects() {
     return [
+      ...EXAMPLE_SLUGS.map((slug) => ({
+        source: `/examples/${slug}`,
+        destination: `/examples/${slug}/index.html`,
+        permanent: false,
+      })),
       { source: "/showcase", destination: "/templates", permanent: true },
       { source: "/demos", destination: "/templates", permanent: true },
       { source: "/demos/:slug", destination: "/templates/:slug", permanent: true },
