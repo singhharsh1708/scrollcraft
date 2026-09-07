@@ -1,0 +1,90 @@
+{
+  "name": "Vantage",
+  "description": "An architecture practice working in concrete, glass and daylight. Housing, civic buildings and the occasional small chapel.",
+  "canvasAlt": "Slow graphite gradients drifting behind the page, like light moving across a concrete wall",
+  "frames": "frames",
+  "framesMobile": "frames-mobile",
+  "theme": {
+    "fontDisplay": "Syne",
+    "fontBody": "Chivo",
+    "scale": "editorial",
+    "displayWeight": 700,
+    "displayCase": "none",
+    "displayTracking": -0.02,
+    "ink": "#f2f4f7",
+    "muted": "rgba(242,244,247,0.72)",
+    "accent": "#2f3d52",
+    "accentText": "#c3d0e2",
+    "ground": "#0b0d10",
+    "radius": 2
+  },
+  "sections": [
+    {
+      "kind": "text",
+      "layout": "lower-third",
+      "reveal": "rise",
+      "eyebrow": "Architecture practice",
+      "heading": "We build for the light that is already there",
+      "body": "Vantage is a small practice working in concrete, glass and daylight. Housing, civic buildings, and the occasional small chapel.",
+      "ctaLabel": "See the work",
+      "ctaHref": "#section-4",
+      "scrollHeight": 1500
+    },
+    {
+      "kind": "text",
+      "layout": "left",
+      "reveal": "rise",
+      "eyebrow": "How we start",
+      "heading": "A site visit before a sketch",
+      "body": "Every commission begins with a day on site and nothing to show for it. Where the sun lands in February matters more than what the plan looks like on paper.",
+      "scrollHeight": 1600
+    },
+    { "kind": "spacer", "scrollHeight": 800 },
+    {
+      "kind": "statement",
+      "layout": "center",
+      "reveal": "mask",
+      "heading": "Rooms should be quiet before they are clever",
+      "scrollHeight": 2400
+    },
+    {
+      "kind": "text",
+      "layout": "right",
+      "reveal": "rise",
+      "eyebrow": "Materials",
+      "heading": "Three materials, honestly joined",
+      "body": "Board-marked concrete, oak, and glass with as little frame as the structure allows. We detail the junctions rather than hide them.",
+      "scrollHeight": 1500
+    },
+    {
+      "kind": "text",
+      "layout": "left",
+      "reveal": "rise",
+      "eyebrow": "Housing",
+      "heading": "Terraces that age well",
+      "body": "Our housing work is mostly infill: narrow plots, awkward orientation, neighbours close on both sides. Constraints make the plan.",
+      "scrollHeight": 1500
+    },
+    { "kind": "spacer", "scrollHeight": 700 },
+    {
+      "kind": "text",
+      "layout": "upper-third",
+      "reveal": "rise",
+      "eyebrow": "The practice",
+      "heading": "Four architects, one studio, no satellite offices",
+      "body": "We take on a handful of projects a year so the person you meet is the person drawing. Planning, tender and site are all handled in house.",
+      "scrollHeight": 1600
+    },
+    {
+      "kind": "text",
+      "layout": "center",
+      "reveal": "rise",
+      "eyebrow": "Enquiries",
+      "heading": "Tell us about the site",
+      "body": "Send the address, the orientation and roughly what you need from it. We reply to everything, including the projects we are not right for.",
+      "ctaLabel": "Start a conversation",
+      "ctaHref": "mailto:studio@example.com",
+      "scrollHeight": 1700
+    }
+  ]
+}

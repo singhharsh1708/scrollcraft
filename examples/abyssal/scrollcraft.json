@@ -1,0 +1,96 @@
+{
+  "name": "Abyssal",
+  "description": "A deep-ocean survey programme mapping the seafloor below 3,000 metres. Open data, open instruments, open ship time.",
+  "canvasAlt": "A dark teal gradient sweeping slowly across the page, like water moving under a light",
+  "frames": "frames",
+  "framesMobile": "frames-mobile",
+  "theme": {
+    "fontDisplay": "IBM Plex Mono",
+    "fontBody": "IBM Plex Sans",
+    "scale": "compact",
+    "displayWeight": 500,
+    "displayCase": "none",
+    "displayTracking": 0,
+    "ink": "#eaf4f4",
+    "muted": "rgba(234,244,244,0.7)",
+    "accent": "#10454f",
+    "accentText": "#8fc9cf",
+    "ground": "#04191c",
+    "radius": 2
+  },
+  "sections": [
+    {
+      "kind": "text",
+      "layout": "upper-third",
+      "reveal": "none",
+      "eyebrow": "Survey programme",
+      "heading": "Below three thousand metres",
+      "body": "Abyssal is a shared survey programme. We put instruments on the seabed, leave them there, and publish everything they record.",
+      "ctaLabel": "Read the method",
+      "ctaHref": "#section-2",
+      "scrollHeight": 1400
+    },
+    {
+      "kind": "text",
+      "layout": "left",
+      "reveal": "none",
+      "eyebrow": "Instruments",
+      "heading": "Landers built to be lost",
+      "body": "Each lander is cheap enough that losing one is a bad week rather than a bad year. Aluminium frame, glass spheres, an acoustic release and a strobe.",
+      "scrollHeight": 1500
+    },
+    {
+      "kind": "text",
+      "layout": "right",
+      "reveal": "none",
+      "eyebrow": "Deployment",
+      "heading": "Down in ninety minutes, up when called",
+      "body": "A lander free-falls to the seabed under ballast and sits recording until a ship returns and calls it back. Most come back. Some do not.",
+      "scrollHeight": 1500
+    },
+    {
+      "kind": "spacer",
+      "scrollHeight": 800
+    },
+    {
+      "kind": "statement",
+      "layout": "center",
+      "reveal": "fade",
+      "heading": "Most of the seafloor has never been measured, only estimated",
+      "scrollHeight": 2200
+    },
+    {
+      "kind": "text",
+      "layout": "left",
+      "reveal": "none",
+      "eyebrow": "Data",
+      "heading": "Raw first, tidy later",
+      "body": "Every recording is published as it came off the instrument, before anyone cleans it. The processing scripts go up beside it so the steps are auditable.",
+      "scrollHeight": 1500
+    },
+    {
+      "kind": "text",
+      "layout": "right",
+      "reveal": "none",
+      "eyebrow": "Ship time",
+      "heading": "Berths for people outside the programme",
+      "body": "Every cruise carries places for researchers with no funding of their own. Bring an instrument that fits the frame and we will drop it for you.",
+      "scrollHeight": 1500
+    },
+    {
+      "kind": "spacer",
+      "scrollHeight": 700
+    },
+    {
+      "kind": "text",
+      "layout": "center",
+      "reveal": "none",
+      "eyebrow": "Get involved",
+      "heading": "Tell us what you would measure",
+      "body": "Send the instrument, the depth it needs and how long it has to sit there. The next deployment window and what is already on the frame are both public.",
+      "ctaLabel": "Contact the programme",
+      "ctaHref": "mailto:survey@example.com",
+      "scrollHeight": 1600
+    }
+  ]
+}

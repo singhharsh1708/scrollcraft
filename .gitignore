@@ -44,3 +44,9 @@ next-env.d.ts
 
 # scratch directory, in case a script wants one
 /tmp
+
+# Example bundles are generated from examples/*/scrollcraft.json at build time.
+# 7 MiB of JPEGs that would go stale the moment the exporter changed.
+public/examples/
+examples/*/frames/
+examples/*/frames-mobile/

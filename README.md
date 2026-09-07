@@ -7,7 +7,7 @@
 Pick a template, change the words, download a ZIP, put it anywhere. The editor, every
 template and the export are free and open source.
 
-[Live demo](https://scrollcraft-gilt.vercel.app) · [Report a bug](https://github.com/singhharsh1708/scrollcraft/issues) · [Request a feature](https://github.com/singhharsh1708/scrollcraft/issues)
+[Live demo](https://scrollcraft-gilt.vercel.app) · [Examples](https://scrollcraft-gilt.vercel.app/examples) · [Report a bug](https://github.com/singhharsh1708/scrollcraft/issues) · [Request a feature](https://github.com/singhharsh1708/scrollcraft/issues)
 
 </div>
 
@@ -49,6 +49,18 @@ one exception is the copy assistant below, which is off unless you configure a k
   rewrites the section copy from it, in one undo step. It touches the words only, never
   the layout, colours, images or button links. It needs an API key, and without one the
   button is not shown at all. See [Environment variables](#environment-variables).
+
+## Examples
+
+Three finished sites live at [/examples](https://scrollcraft-gilt.vercel.app/examples):
+an architecture practice, a distillery and a deep-ocean survey programme. Each link opens
+the exported bundle itself rather than a preview of it, so what you scroll is what a
+download contains.
+
+They are built from committed specs, one `scrollcraft.json` per site in
+[examples/](examples/), by the same scripts documented below. `npm run build:examples`
+rebuilds all three. The frame sets are generated rather than committed, because 7 MiB of
+JPEGs would go stale the moment the exporter changed.
 
 ## Two ways to use it
 
