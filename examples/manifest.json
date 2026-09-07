@@ -5,9 +5,9 @@
     "tagline": "An architecture practice, in graphite and daylight",
     "note": "Restrained on purpose. One statement section at the peak, everything else quiet.",
     "style": "monolith",
-    "count": 120,
-    "width": 1280,
-    "mobileWidth": 640
+    "count": 90,
+    "width": 1152,
+    "mobileWidth": 576
   },
   {
     "slug": "caskwright",
@@ -15,9 +15,9 @@
     "tagline": "A small distillery on the edge of the moor",
     "note": "A didone display face and a warm frame set, paced slowly so the copy has room.",
     "style": "ember",
-    "count": 120,
-    "width": 1280,
-    "mobileWidth": 640
+    "count": 90,
+    "width": 1152,
+    "mobileWidth": 576
   },
   {
     "slug": "abyssal",
@@ -25,8 +25,8 @@
     "tagline": "A deep-ocean survey programme",
     "note": "A dossier: monospaced display, compact scale, and no reveal animation at all.",
     "style": "tide",
-    "count": 120,
-    "width": 1280,
-    "mobileWidth": 640
+    "count": 90,
+    "width": 1152,
+    "mobileWidth": 576
   }
 ]

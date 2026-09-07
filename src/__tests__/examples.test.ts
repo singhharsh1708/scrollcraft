@@ -36,6 +36,18 @@ describe("the example manifest", () => {
     expect(dirs.sort()).toEqual(MANIFEST.map((e) => e.slug).sort());
   });
 
+  it("asks for a frame count the scroll track can actually use", () => {
+    for (const e of MANIFEST) {
+      const track =
+        spec(e.slug).sections
+          .filter((s: { visible?: boolean }) => s.visible !== false)
+          .reduce((n: number, s: { scrollHeight?: number }) => n + (s.scrollHeight ?? 1000), 0) + 1000;
+      // Under roughly 200px of scroll per frame the scrub reads as continuous; above it
+      // the background visibly steps.
+      expect(track / e.count, `${e.slug} scrolls too far per frame`).toBeLessThan(200);
+    }
+  });
+
   it("names only frame styles the generator knows", () => {
     for (const e of MANIFEST) expect(KNOWN_STYLES, e.slug).toContain(e.style);
   });
@@ -172,8 +184,53 @@ describe("the examples are reachable", () => {
     expect(pkg.scripts.prebuild).toContain("build-examples");
   });
 
-  it("keeps the generated bundles out of git", () => {
+  it("keeps the assembled bundles out of git but the frame sets in it", () => {
     const ignored = readFileSync(".gitignore", "utf8");
     expect(ignored).toMatch(/^public\/examples\/$/m);
+    expect(ignored, "frame sets must be committed, the deploy image has no ffmpeg").not.toMatch(
+      /^examples\/\*\/frames/m
+    );
+  });
+
+  // The deploy failed on exactly this: the build ran frames-from-style.mjs, which shells
+  // out to ffmpeg to encode the JPEGs, and the build image has no ffmpeg. Frame
+  // generation is now opt-in and the committed sets are what the build assembles.
+  it("does not generate frames during a build, because the deploy image has no ffmpeg", () => {
+    const pkg = JSON.parse(readFileSync("package.json", "utf8"));
+    expect(pkg.scripts.prebuild).not.toContain("--frames");
+    expect(pkg.scripts["examples:frames"], "no way left to regenerate them").toContain("--frames");
+
+    // Anchored to the call site, not to any mention: the header comment names the script
+    // while explaining why it no longer runs during a build.
+    const script = readFileSync("scripts/build-examples.mjs", "utf8");
+    const call = script.indexOf('run("frames-from-style.mjs"');
+    expect(call, "the script can no longer generate frames at all").toBeGreaterThan(-1);
+    const guard = script.lastIndexOf("if (regenerateFrames) {", call);
+    expect(guard, "the frames-from-style call is not behind the --frames flag").toBeGreaterThan(-1);
+  });
+
+  it("still builds index.html on every build, so the page cannot outlive the exporter", () => {
+    const script = readFileSync("scripts/build-examples.mjs", "utf8");
+    expect(script).toContain('run("build-site.mjs"');
+    const pkg = JSON.parse(readFileSync("package.json", "utf8"));
+    expect(pkg.scripts.prebuild).toContain("build-examples");
+  });
+
+  it("ships a gap-free frame set for every example, desktop and mobile", () => {
+    // The runtime computes a path from an index rather than listing the directory, so one
+    // missing file is a black canvas and no error.
+    for (const e of MANIFEST) {
+      for (const dir of ["frames", "frames-mobile"]) {
+        const path = join("examples", e.slug, dir);
+        expect(existsSync(path), `${path} is missing`).toBe(true);
+        const files = readdirSync(path).filter((f) => f.endsWith(".jpg")).sort();
+        expect(files.length, `${path} has the wrong count`).toBe(e.count);
+        files.forEach((f, i) => {
+          expect(f, `${path} is not gap-free at ${i}`).toBe(
+            `frame_${String(i).padStart(4, "0")}.jpg`
+          );
+        });
+      }
+    }
   });
 });

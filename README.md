@@ -59,8 +59,12 @@ download contains.
 
 They are built from committed specs, one `scrollcraft.json` per site in
 [examples/](examples/), by the same scripts documented below. `npm run build:examples`
-rebuilds all three. The frame sets are generated rather than committed, because 7 MiB of
-JPEGs would go stale the moment the exporter changed.
+reassembles all three, and it runs automatically before every build so `index.html` always
+comes from the current exporter rather than from a committed copy that has drifted.
+
+The frame sets are committed alongside each spec, because encoding them needs `ffmpeg` and
+a deploy image has none. `npm run examples:frames` regenerates them on a machine that
+does.
 
 ## Two ways to use it
 

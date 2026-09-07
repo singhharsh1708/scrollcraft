@@ -1,14 +1,24 @@
 #!/usr/bin/env node
 /**
- * Build the example sites into public/examples/<slug>/.
+ * Assemble the example sites into public/examples/<slug>/.
  *
  * The examples are the real deliverable, not a mock-up of it: each one is produced by the
  * same scripts a reader would run, and what gets served is the exported bundle itself.
  *
- * Only the specs are committed. A frame set is 2.4 MiB per site and would be stale the
- * moment the exporter changed, so the bundles are generated here and git-ignored. The
- * whole run takes a few seconds, which is cheaper than carrying 7 MiB of JPEGs in the
- * repository and having to remember to regenerate them.
+ * The split between what is committed and what is generated is deliberate, and it is not
+ * the obvious one:
+ *
+ * - `index.html` is **generated** on every build. It comes from the exporter, so a
+ *   committed copy would quietly stop matching what the product actually produces, which
+ *   is the one thing this page exists to demonstrate.
+ * - The **frame sets are committed**. Generating them needs ffmpeg to encode the JPEGs,
+ *   and the deploy image does not have it: the first version of this script ran
+ *   frames-from-style.mjs during `prebuild` and failed the deploy with "ffmpeg not found
+ *   on PATH". They are background art from a fixed style and seed, so they do not go
+ *   stale the way the HTML would.
+ *
+ * Pass --frames to regenerate the frame sets too. That needs ffmpeg, so run it locally
+ * and commit the result.
  */
 import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, rmSync, statSync, readdirSync, writeFileSync } from "node:fs";
@@ -19,6 +29,8 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const scripts = join(root, "plugins/scrollcraft/skills/scrollcraft/scripts");
 const manifest = JSON.parse(readFileSync(join(root, "examples/manifest.json"), "utf8"));
 const outRoot = join(root, "public/examples");
+
+const regenerateFrames = process.argv.includes("--frames");
 
 const run = (script, args) =>
   execFileSync(process.execPath, [join(scripts, script), ...args], {
@@ -45,25 +57,27 @@ for (const site of manifest) {
   const framesMobile = join(src, "frames-mobile");
   const dist = join(outRoot, site.slug);
 
-  rmSync(frames, { recursive: true, force: true });
-  rmSync(framesMobile, { recursive: true, force: true });
+  if (regenerateFrames) {
+    rmSync(frames, { recursive: true, force: true });
+    rmSync(framesMobile, { recursive: true, force: true });
+    run("frames-from-style.mjs", [
+      "--style", site.style,
+      "--count", String(site.count),
+      "--width", String(site.width),
+      "--mobile-width", String(site.mobileWidth),
+      "--out", frames,
+      "--mobile-out", framesMobile,
+    ]);
+  }
+
+  if (!existsSync(frames)) {
+    throw new Error(
+      `${site.slug}: no frame set at ${frames}. Run \`npm run examples:frames\` on a machine with ffmpeg, then commit it.`
+    );
+  }
+
   rmSync(dist, { recursive: true, force: true });
-
-  run("frames-from-style.mjs", [
-    "--style", site.style,
-    "--count", String(site.count),
-    "--width", String(site.width),
-    "--mobile-width", String(site.mobileWidth),
-    "--out", frames,
-    "--mobile-out", framesMobile,
-  ]);
-
   run("build-site.mjs", ["--spec", spec, "--out", dist]);
-
-  // The frame sets live in the bundle now; leaving copies beside the spec would only
-  // confuse the next person to open the directory.
-  rmSync(frames, { recursive: true, force: true });
-  rmSync(framesMobile, { recursive: true, force: true });
 
   const htmlBytes = statSync(join(dist, "index.html")).size;
   const frameFiles = readdirSync(join(dist, "frames")).filter((f) => f.endsWith(".jpg")).length;
