@@ -65,6 +65,8 @@ for (const site of manifest) {
       "--count", String(site.count),
       "--width", String(site.width),
       "--mobile-width", String(site.mobileWidth),
+      // A style's default palette is not always the right brightness next to the others.
+      ...(site.colors ? ["--colors", site.colors] : []),
       "--out", frames,
       "--mobile-out", framesMobile,
     ]);

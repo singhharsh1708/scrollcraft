@@ -48,6 +48,19 @@ describe("the example manifest", () => {
     }
   });
 
+  it("explains any palette override, so it cannot become a magic value", () => {
+    // caskwright overrides ember's palette because ember is the darkest of the six:
+    // measured across all 16 verify positions it sat at 10.6 median composite luma
+    // against 17.7 and 19.6 for the other two. A bare hex string in the manifest would
+    // read as arbitrary six months from now.
+    for (const e of MANIFEST as (Example & { colors?: string; colorsNote?: string })[]) {
+      if (!e.colors) continue;
+      expect(e.colors, `${e.slug} colors is not a hex list`).toMatch(/^#[0-9a-f]{6}(,#[0-9a-f]{6})+$/i);
+      expect(e.colorsNote, `${e.slug} overrides the palette without saying why`).toBeTruthy();
+      expect((e.colorsNote ?? "").length, `${e.slug} note is too thin to be a reason`).toBeGreaterThan(60);
+    }
+  });
+
   it("names only frame styles the generator knows", () => {
     for (const e of MANIFEST) expect(KNOWN_STYLES, e.slug).toContain(e.style);
   });
