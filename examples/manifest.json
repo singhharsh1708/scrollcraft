@@ -17,7 +17,9 @@
     "style": "ember",
     "count": 90,
     "width": 1152,
-    "mobileWidth": 576
+    "mobileWidth": 576,
+    "colors": "#1a0a05,#6b230c,#c85c1c,#48180a,#1a0a05",
+    "colorsNote": "ember is the darkest of the six styles. Measured across all 16 verify positions the composite sat at 10.6 median luma against 17.7 and 19.6 for the other two, dim enough that its brightest position was darker than their darkest. Lifted to peak 23.0, in line with monolith at 23.7."
   },
   {
     "slug": "abyssal",
