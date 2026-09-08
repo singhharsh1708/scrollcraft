@@ -1,5 +1,7 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { findPreset, PRESETS } from "@/lib/presets";
-import HomeClient, { type FeaturedPreset } from "./HomeClient";
+import HomeClient, { type FeaturedPreset, type ExampleCard } from "./HomeClient";
 
 /**
  * Server shell for the landing page.
@@ -7,9 +9,21 @@ import HomeClient, { type FeaturedPreset } from "./HomeClient";
  * The page needs a preset count and four fields from six presets. Importing the
  * catalogue from a client component shipped all 57 entries — 686 lines — into the
  * browser bundle to produce a number and six cards. Reading it here keeps it on the
- * server and passes down only what is rendered.
+ * server and passes down only what is rendered. The example manifest is read the same
+ * way: three of its fields are on the page, and its palette notes are not.
  */
 const FEATURED_PRESET_NAMES = ["OrbitCRM", "TripVault", "Shopnest", "VisionForge", "StackForge", "Meridian"];
+
+function examples(): ExampleCard[] {
+  try {
+    const manifest = JSON.parse(
+      readFileSync(join(process.cwd(), "examples/manifest.json"), "utf8")
+    ) as { slug: string; name: string; tagline: string }[];
+    return manifest.map(({ slug, name, tagline }) => ({ slug, name, tagline }));
+  } catch {
+    return [];
+  }
+}
 
 export default function Home() {
   const featured: FeaturedPreset[] = FEATURED_PRESET_NAMES
@@ -17,5 +31,5 @@ export default function Home() {
     .filter((p): p is NonNullable<typeof p> => Boolean(p))
     .map((p) => ({ name: p.name, category: p.category, style: p.style, colors: p.colors }));
 
-  return <HomeClient presetCount={PRESETS.length} featured={featured} />;
+  return <HomeClient presetCount={PRESETS.length} featured={featured} examples={examples()} />;
 }
