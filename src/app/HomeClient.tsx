@@ -83,7 +83,17 @@ function HeroPreview() {
   );
 }
 
-export default function HomeClient({ presetCount, featured }: { presetCount: number; featured: FeaturedPreset[] }) {
+export type ExampleCard = { slug: string; name: string; tagline: string };
+
+export default function HomeClient({
+  presetCount,
+  featured,
+  examples,
+}: {
+  presetCount: number;
+  featured: FeaturedPreset[];
+  examples: ExampleCard[];
+}) {
   const PIPELINE = pipeline(presetCount);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   // Only the hovered featured card animates.
@@ -186,6 +196,63 @@ export default function HomeClient({ presetCount, featured }: { presetCount: num
           </div>
         </div>
       </section>
+
+      {/* Finished sites. The pipeline above says how it works; this says what comes out
+          of it, and each card opens the exported bundle rather than a preview of it. */}
+      {examples.length > 0 && (
+        <section className="py-32 px-6 border-t border-white/5">
+          <div className="max-w-6xl mx-auto">
+            <div className="flex items-end justify-between mb-12">
+              <div>
+                <Badge variant="outline" className="mb-4 border-white/10">Finished sites</Badge>
+                <h2 className="text-4xl md:text-5xl font-black tracking-tighter">
+                  What comes out the other end
+                </h2>
+                <p className="text-muted-foreground mt-3 max-w-lg">
+                  Three complete sites. Every one of these links opens the exported bundle
+                  itself, so what you scroll is what a download contains.
+                </p>
+              </div>
+              <Link href="/examples" aria-label="See all examples">
+                <Button variant="outline" className="border-white/10 hover:bg-white/5 hidden md:flex">
+                  See all three <ArrowRight className="ml-2 w-4 h-4" />
+                </Button>
+              </Link>
+            </div>
+            <div className="grid md:grid-cols-3 gap-5">
+              {examples.map((e) => (
+                <a
+                  key={e.slug}
+                  href={`/examples/${e.slug}`}
+                  className="group rounded-2xl border border-white/8 bg-card overflow-hidden hover:border-white/20 hover:-translate-y-1 transition-all focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element -- a still of the
+                      exported page, sized once at build time. */}
+                  <img
+                    src={`/example-previews/${e.slug}.jpg`}
+                    alt={`The ${e.name} site, scrolled to its opening section`}
+                    width={1000}
+                    height={625}
+                    loading="lazy"
+                    className="w-full aspect-[16/10] object-cover"
+                  />
+                  <div className="p-5">
+                    <h3 className="font-semibold">{e.name}</h3>
+                    <p className="text-sm text-muted-foreground mt-1 leading-relaxed">{e.tagline}</p>
+                  </div>
+                </a>
+              ))}
+            </div>
+            <div className="mt-8 md:hidden">
+              <Link href="/examples">
+                <Button variant="outline" className="w-full border-white/10">
+                  See all three <ArrowRight className="ml-2 w-4 h-4" />
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Features */}
       <section id="features" className="py-32 px-6 border-t border-white/5">

@@ -167,6 +167,29 @@ describe("every example spec", () => {
 });
 
 describe("the examples are reachable", () => {
+  it("is shown on the landing page, which is where people arrive", () => {
+    const home = readFileSync("src/app/HomeClient.tsx", "utf8");
+    expect(home, "the landing page never mentions the examples").toContain("/examples/");
+    expect(home).toContain("/example-previews/");
+  });
+
+  it("reads the manifest on the server, so its notes do not ship to the browser", () => {
+    // Same reason the preset catalogue is read in the shell: HomeClient is a client
+    // component, and the manifest carries palette notes no card renders.
+    const shell = readFileSync("src/app/page.tsx", "utf8");
+    expect(shell).toContain("examples/manifest.json");
+    const home = readFileSync("src/app/HomeClient.tsx", "utf8");
+    expect(home, "the client component imports the manifest directly").not.toContain(
+      "examples/manifest.json"
+    );
+  });
+
+  it("lazy-loads the card art, since it sits well below the fold", () => {
+    const home = readFileSync("src/app/HomeClient.tsx", "utf8");
+    const img = home.slice(home.indexOf("/example-previews/"));
+    expect(img.slice(0, 400), "card art is not deferred").toContain('loading="lazy"');
+  });
+
   it("is linked from the nav and the footer", () => {
     expect(readFileSync("src/components/Navbar.tsx", "utf8")).toContain('href: "/examples"');
     expect(readFileSync("src/components/SiteFooter.tsx", "utf8")).toContain('"/examples"');
