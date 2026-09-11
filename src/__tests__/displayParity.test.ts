@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { DISPLAY_STYLES, displayStyle } from "@/lib/displayStyles";
+import { TYPE_SCALES } from "@/lib/themeCss";
 
 /**
  * The preview has to predict the ZIP.
@@ -16,6 +17,8 @@ import { DISPLAY_STYLES, displayStyle } from "@/lib/displayStyles";
  */
 const PREVIEW = readFileSync("src/components/SiteRenderer.tsx", "utf8");
 const ROUTE = readFileSync("src/app/api/export-site/route.ts", "utf8");
+const BUILD_SITE = readFileSync("plugins/scrollcraft/skills/scrollcraft/scripts/build-site.mjs", "utf8");
+const ENGINE_CSS = readFileSync("plugins/scrollcraft/skills/scrollcraft/engine/scrollcraft.css", "utf8");
 
 describe("the display treatment has one definition", () => {
   it("gives a statement tighter tracking and less weight than an ordinary heading", () => {
@@ -55,5 +58,15 @@ describe("the display treatment has one definition", () => {
     expect(ROUTE).toContain("const H = displayStyle(s.kind);");
     expect(ROUTE).toContain("${DISPLAY_STYLES.statement.letterSpacing}");
     expect(ROUTE).not.toContain("-0.045em");
+  });
+
+  it("bounds every heading by the viewport's height as well as its width", () => {
+    // Sized by width alone, poster and statement headings grew taller than their 100vh
+    // sticky frame on a 1366x768 laptop, which clipped 29 sections across 13 templates.
+    const sizes = [...Object.values(TYPE_SCALES).map((s) => s.heading), DISPLAY_STYLES.heading.fontSize, DISPLAY_STYLES.statement.fontSize];
+    for (const size of sizes) expect(size).toMatch(/min\(\d+(\.\d+)?vw,\d+(\.\d+)?vh\)/);
+    // The plugin engine keeps its own copy of the scales and the statement size.
+    for (const [name, s] of Object.entries(TYPE_SCALES)) expect(BUILD_SITE).toContain(`${name}: { heading: "${s.heading}"`);
+    expect(ENGINE_CSS).toMatch(/\.sc-statement \{\s*font-size: clamp\(2\.75rem, min\(\d+(\.\d+)?vw, \d+(\.\d+)?vh\), 9rem\);/);
   });
 });

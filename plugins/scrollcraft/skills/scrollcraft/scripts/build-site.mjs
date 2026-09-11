@@ -21,9 +21,9 @@ const KINDS = new Set(["text", "statement", "spacer"]);
 const REVEALS = new Set(["rise", "fade", "mask", "stagger", "scale", "none"]);
 
 const TYPE_SCALES = {
-  compact: { heading: "clamp(1.6rem,3.4vw,2.6rem)", body: "1rem", measure: 560 },
-  editorial: { heading: "clamp(2rem,5vw,4rem)", body: "1.125rem", measure: 600 },
-  poster: { heading: "clamp(2.6rem,8vw,6.5rem)", body: "1.25rem", measure: 640 },
+  compact: { heading: "clamp(1.6rem,min(3.4vw,4.08vh),2.6rem)", body: "1rem", measure: 560 },
+  editorial: { heading: "clamp(2rem,min(5vw,6vh),4rem)", body: "1.125rem", measure: 600 },
+  poster: { heading: "clamp(2.6rem,min(8vw,9.6vh),6.5rem)", body: "1.25rem", measure: 640 },
 };
 
 const FONT_RE = /^[A-Za-z0-9][A-Za-z0-9 ]*$/;
@@ -170,7 +170,7 @@ function renderSections(sections, images, specScrim) {
       const hClass = statement ? "sc-display sc-statement" : "sc-display";
       const hStyle = statement
         ? `color:${safeCss(s.headingColor || "var(--sc-ink, #ffffff)")}; margin-bottom:1rem;`
-        : `font-size:var(--sc-heading-size, clamp(2rem,5vw,4rem)); font-weight:var(--sc-display-weight, 900); line-height:1; letter-spacing:var(--sc-display-tracking, -0.03em); text-transform:var(--sc-display-case, none); color:${safeCss(s.headingColor || "var(--sc-ink, #ffffff)")}; margin-bottom:1rem;`;
+        : `font-size:var(--sc-heading-size, clamp(2rem,min(5vw,6vh),4rem)); font-weight:var(--sc-display-weight, 900); line-height:1; letter-spacing:var(--sc-display-tracking, -0.03em); text-transform:var(--sc-display-case, none); color:${safeCss(s.headingColor || "var(--sc-ink, #ffffff)")}; margin-bottom:1rem;`;
       parts.push(`<h2 class="${hClass}" style="${hStyle}">${esc(s.heading)}</h2>`);
     }
     const bodyMargin = L.textAlign === "center" ? "0 auto 1.5rem" : "0 0 1.5rem";
