@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ArrowRight, Search, Eye } from "lucide-react";
 import Navbar from "@/components/Navbar";
-import StylePreview from "@/components/StylePreview";
 import type { Style2D } from "@/lib/generate2DFrames";
 import SiteFooter from "@/components/SiteFooter";
 
@@ -29,8 +28,6 @@ export interface TemplateCard {
 export default function TemplatesClient({ templates, categories: allCategories }: { templates: TemplateCard[]; categories: string[] }) {
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
-  // Only the hovered card animates — sixteen concurrent canvases is not free.
-  const [hovered, setHovered] = useState<string | null>(null);
 
   const categories = useMemo(() => ["All", ...allCategories], [allCategories]);
 
@@ -122,16 +119,21 @@ export default function TemplatesClient({ templates, categories: allCategories }
             {filtered.map((t) => (
               <article
                 key={t.slug}
-                onMouseEnter={() => setHovered(t.slug)}
-                onMouseLeave={() => setHovered((h) => (h === t.slug ? null : h))}
                 className="group rounded-lg border border-border bg-card overflow-hidden flex flex-col focus-within:border-primary-ink/50 hover:border-foreground/25 transition-colors"
               >
                 <div className={`relative aspect-[16/10] bg-gradient-to-br ${t.gradient}`}>
-                  <StylePreview
-                    style={t.style}
-                    colors={t.colors}
-                    paused={hovered !== t.slug}
-                    className="absolute inset-0 w-full h-full"
+                  {/* A still of the template's own first screen. The card used to draw only
+                      its background on a paused canvas, which for the dark particle and
+                      geometric templates was a black rectangle. */}
+                  {/* eslint-disable-next-line @next/next/no-img-element -- captured once by
+                      scripts/capture-template-previews.mjs and committed. */}
+                  <img
+                    src={`/template-previews/${t.slug}.jpg`}
+                    alt={`The ${t.name} template, at its opening heading`}
+                    width={800}
+                    height={500}
+                    loading="lazy"
+                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                   />
                   <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/70 to-transparent">
                     <span className="lc-mono text-[11px] text-white/80">{t.category}</span>

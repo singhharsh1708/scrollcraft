@@ -131,8 +131,17 @@ function PickPanel({ templates, total }: { templates: TemplateSlice[]; total: nu
       <div className="grid grid-cols-2 gap-3 p-4">
         {templates.map((t) => (
           <div key={t.slug} className="overflow-hidden rounded-md border border-border bg-card">
-            <div className="relative aspect-[16/10] bg-black">
-              <StylePreview style={t.style} colors={t.colors} paused className="absolute inset-0 h-full w-full" />
+            <div className="relative aspect-[16/10] overflow-hidden bg-black">
+              {/* eslint-disable-next-line @next/next/no-img-element -- the same committed
+                  still the gallery card uses. */}
+              <img
+                src={`/template-previews/${t.slug}.jpg`}
+                loading="lazy"
+                alt={`The ${t.name} template, at its opening heading`}
+                width={800}
+                height={500}
+                className="absolute inset-0 h-full w-full object-cover"
+              />
             </div>
             <div className="px-3 py-2.5">
               <p className="text-sm text-foreground">{t.name}</p>
