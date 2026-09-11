@@ -140,6 +140,31 @@ describe("skill build-site", () => {
     expect(rise.classes.has("visible")).toBe(false);
   });
 
+  it("shrinks a heading whose widest word is wider than its column", () => {
+    writeFrames(path.join(tmp, "frames"), [0]);
+    writeSpec({ sections: [{ heading: "Decarbonisation", kind: "statement" }] });
+    expect(build().status).toBe(0);
+    const out = html();
+    expect(out).toContain("* var(--sc-fit, 1)");
+    const block = /function fitHeadings\(\) \{[\s\S]*?window\.addEventListener\('resize', scheduleFit\);/.exec(out);
+    expect(block, "no heading fit in the bundle").toBeTruthy();
+
+    const heading = (scrollWidth: number, clientWidth: number) => {
+      const props: Record<string, string> = {};
+      return { scrollWidth, clientWidth, style: { setProperty: (k: string, v: string) => { props[k] = v; } }, props };
+    };
+    const wide = heading(1091, 800);
+    const fits = heading(640, 800);
+    const frames: (() => void)[] = [];
+    new Function("document", "window", "requestAnimationFrame", "cancelAnimationFrame", block![0])(
+      { querySelectorAll: () => [wide, fits] }, { addEventListener: () => {} }, (cb: () => void) => frames.push(cb), () => {}
+    );
+    frames.forEach((f) => f());
+
+    expect(wide.props["--sc-fit"]).toBe((0.98 / (1091 / 800)).toFixed(3));
+    expect(fits.props["--sc-fit"]).toBe("1");
+  });
+
   it("reports hasMobile false when no mobile set is supplied", () => {
     writeFrames(path.join(tmp, "frames"), [0]);
     writeSpec({ sections: [{ heading: "A" }] });

@@ -427,3 +427,29 @@ describe("the exported CTA uses the theme's corner radius", () => {
     expect(html).toContain("--sc-radius:20px");
   });
 });
+
+describe("exported headings fit their column", () => {
+  it("shrinks a heading whose widest word is wider than its column", async () => {
+    // Greenshift's "Decarbonisation" is 1091px at 143px, wider than any column, and its
+    // mask reveal clipped it at the box edge.
+    const html = await exportHtml([{ heading: "Decarbonisation", kind: "statement", scrollHeight: 1000 }]);
+    expect(html).toContain("* var(--sc-fit, 1)");
+    const script = /\(function\(\) \{\s*\/\/ A single word wider than its column[\s\S]*?\}\)\(\);/.exec(html);
+    expect(script, "no heading fit in the export").toBeTruthy();
+
+    const heading = (scrollWidth: number, clientWidth: number) => {
+      const props: Record<string, string> = {};
+      return { scrollWidth, clientWidth, style: { setProperty: (k: string, v: string) => { props[k] = v; } }, props };
+    };
+    const wide = heading(1091, 800);
+    const fits = heading(640, 800);
+    const frames: (() => void)[] = [];
+    new Function("document", "window", "requestAnimationFrame", "cancelAnimationFrame", script![0])(
+      { querySelectorAll: () => [wide, fits] }, { addEventListener: () => {} }, (cb: () => void) => frames.push(cb), () => {}
+    );
+    frames.forEach((f) => f());
+
+    expect(wide.props["--sc-fit"]).toBe((0.98 / (1091 / 800)).toFixed(3));
+    expect(fits.props["--sc-fit"]).toBe("1");
+  });
+});

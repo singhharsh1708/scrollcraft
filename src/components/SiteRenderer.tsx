@@ -97,6 +97,35 @@ export default function SiteRenderer({
     return () => io.disconnect();
   }, [sections]);
 
+  // A single word wider than its column, a long word in a statement at 9rem, runs past
+  // the box, and a mask reveal clips it there. Shrink that heading until it fits.
+  useEffect(() => {
+    const root = stageRef.current;
+    if (!root) return;
+    let live = true;
+    let raf = 0;
+    const fit = () => {
+      root.querySelectorAll<HTMLElement>(".sc-reveal h1, .sc-reveal h2").forEach((h) => {
+        h.style.setProperty("--sc-fit", "1");
+        const over = h.clientWidth ? h.scrollWidth / h.clientWidth : 1;
+        if (over > 1.005) h.style.setProperty("--sc-fit", Math.max(0.5, 0.98 / over).toFixed(3));
+      });
+    };
+    const schedule = () => {
+      if (!live) return;
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(fit);
+    };
+    schedule();
+    document.fonts?.ready.then(schedule);
+    window.addEventListener("resize", schedule);
+    return () => {
+      live = false;
+      cancelAnimationFrame(raf);
+      window.removeEventListener("resize", schedule);
+    };
+  }, [sections, theme]);
+
   const compiled = compileTheme(theme);
   const visible = sections.filter((s) => s.visible !== false);
   const firstHeadingIndex = visible.findIndex((s) => s.heading);

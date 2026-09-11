@@ -67,7 +67,7 @@ describe("the display treatment has one definition", () => {
     for (const size of sizes) expect(size).toMatch(/min\(\d+(\.\d+)?vw,\d+(\.\d+)?vh\)/);
     // The plugin engine keeps its own copy of the scales and the statement size.
     for (const [name, s] of Object.entries(TYPE_SCALES)) expect(BUILD_SITE).toContain(`${name}: { heading: "${s.heading}"`);
-    expect(ENGINE_CSS).toMatch(/\.sc-statement \{\s*font-size: clamp\(2\.75rem, min\(\d+(\.\d+)?vw, \d+(\.\d+)?vh\), 9rem\);/);
+    expect(ENGINE_CSS).toMatch(/\.sc-statement \{\s*font-size: calc\(clamp\(2\.75rem, min\(\d+(\.\d+)?vw, \d+(\.\d+)?vh\), 9rem\) \* var\(--sc-fit, 1\)\);/);
   });
 
   it("gives the copy a column as wide as the layout's max width in every renderer", () => {
@@ -75,5 +75,11 @@ describe("the display treatment has one definition", () => {
     // 1920 wide the copy had 364px and 39 headings across 16 templates ran past their box.
     expect(PREVIEW).toContain('maxWidth: L.maxWidth, boxSizing: "content-box"');
     for (const src of [ROUTE, BUILD_SITE]) expect(src).toContain("max-width:${L.maxWidth}px; box-sizing:content-box;");
+  });
+
+  it("lets every renderer shrink a heading to its column", () => {
+    for (const size of [DISPLAY_STYLES.heading.fontSize, DISPLAY_STYLES.statement.fontSize]) expect(size).toContain("* var(--sc-fit, 1))");
+    expect(BUILD_SITE).toContain("* var(--sc-fit, 1));");
+    expect(PREVIEW).toContain('h.style.setProperty("--sc-fit", Math.max(0.5, 0.98 / over).toFixed(3))');
   });
 });

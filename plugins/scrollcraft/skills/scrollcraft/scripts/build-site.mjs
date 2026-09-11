@@ -170,7 +170,7 @@ function renderSections(sections, images, specScrim) {
       const hClass = statement ? "sc-display sc-statement" : "sc-display";
       const hStyle = statement
         ? `color:${safeCss(s.headingColor || "var(--sc-ink, #ffffff)")}; margin-bottom:1rem;`
-        : `font-size:var(--sc-heading-size, clamp(2rem,min(5vw,6vh),4rem)); font-weight:var(--sc-display-weight, 900); line-height:1; letter-spacing:var(--sc-display-tracking, -0.03em); text-transform:var(--sc-display-case, none); color:${safeCss(s.headingColor || "var(--sc-ink, #ffffff)")}; margin-bottom:1rem;`;
+        : `font-size:calc(var(--sc-heading-size, clamp(2rem,min(5vw,6vh),4rem)) * var(--sc-fit, 1)); font-weight:var(--sc-display-weight, 900); line-height:1; letter-spacing:var(--sc-display-tracking, -0.03em); text-transform:var(--sc-display-case, none); color:${safeCss(s.headingColor || "var(--sc-ink, #ffffff)")}; margin-bottom:1rem;`;
       parts.push(`<h2 class="${hClass}" style="${hStyle}">${esc(s.heading)}</h2>`);
     }
     const bodyMargin = L.textAlign === "center" ? "0 auto 1.5rem" : "0 0 1.5rem";
