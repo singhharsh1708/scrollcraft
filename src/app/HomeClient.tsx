@@ -434,13 +434,17 @@ export default function HomeClient({
 
       {/* Hero */}
       <section className="relative -mt-[76px] flex min-h-[92svh] flex-col overflow-hidden pt-[76px]">
-        <div aria-hidden="true" className="absolute inset-0 opacity-95">
+        <div aria-hidden="true" className="absolute inset-0">
           <HeroPreview />
         </div>
+        {/* Dark behind the copy and open at the edges, so the animation reads as the art
+            around the headline. It used to be the other way round, lightest behind the
+            text and near black everywhere else, which hid the one thing the hero shows. */}
         <div
           aria-hidden="true"
-          className="absolute inset-0 bg-[radial-gradient(ellipse_70%_60%_at_50%_42%,rgba(3,7,16,0.38)_0%,rgba(3,7,16,0.7)_62%,rgba(3,7,16,0.94)_100%)]"
+          className="absolute inset-0 bg-[radial-gradient(ellipse_46%_52%_at_50%_44%,rgba(3,7,16,0.9)_0%,rgba(3,7,16,0.8)_45%,rgba(3,7,16,0.35)_80%,rgba(3,7,16,0.15)_100%)]"
         />
+        <div aria-hidden="true" className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-background" />
 
         <div className="relative mx-auto flex w-full max-w-[1360px] flex-1 flex-col items-center justify-center px-6 pb-12 pt-20 text-center sm:pt-24">
           <h1 className="lc-display text-[2.6rem] sm:text-6xl lg:text-[4.6rem]">
