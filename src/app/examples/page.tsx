@@ -2,8 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import SiteFooter from "@/components/SiteFooter";
@@ -67,14 +65,13 @@ export default function ExamplesPage() {
     <main className="min-h-screen bg-background text-foreground">
       <Navbar />
 
-      <section className="pt-16 pb-10 text-center px-6">
-        <Badge variant="outline" className="mb-5 border-primary/40 text-primary-ink bg-primary/10 px-4 py-1.5">
-          Finished sites
-        </Badge>
-        <h1 className="text-5xl md:text-6xl font-black tracking-tighter mb-4">
-          What you actually get
+      <section className="px-6 pb-12 pt-20 text-center">
+        <p className="lc-mono mb-6 text-sm text-primary-ink">Finished sites</p>
+        <h1 className="lc-display text-5xl md:text-6xl lg:text-7xl">
+          <span className="block">What you</span>
+          <span className="block text-primary-ink">actually get</span>
         </h1>
-        <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+        <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
           Three complete sites. Each link opens the exported bundle itself, not a preview of
           it, so what you scroll is what a download contains.
         </p>
@@ -85,11 +82,11 @@ export default function ExamplesPage() {
           {[
             ["Built from a committed spec", "Every example is one scrollcraft.json in the repository, built by the same scripts the skill ships."],
             ["Checked, not asserted", "verify.mjs drives headless Chrome over each one: the canvas has to advance, and every line of copy has to clear 4.5:1 against the pixels behind it."],
-            ["No external requests", "All CSS and JavaScript inlined. The only files a bundle fetches are its own frames."],
+            ["One outside request", "CSS, JavaScript and frames all ship in the bundle. The only thing it fetches from elsewhere is Google Fonts, for its typefaces."],
           ].map(([title, body]) => (
-            <div key={title} className="rounded-xl border border-white/8 bg-card p-4">
-              <p className="font-medium mb-1.5">{title}</p>
-              <p className="text-xs text-muted-foreground leading-relaxed">{body}</p>
+            <div key={title} className="rounded-lg border border-border bg-card p-5">
+              <p className="lc-mono mb-2 text-sm text-primary-ink">{title}</p>
+              <p className="text-sm leading-relaxed text-muted-foreground">{body}</p>
             </div>
           ))}
         </div>
@@ -102,7 +99,7 @@ export default function ExamplesPage() {
           return (
             <article
               key={e.slug}
-              className="group rounded-2xl border border-white/8 bg-card overflow-hidden md:flex focus-within:border-primary/40 hover:border-white/15 transition-colors"
+              className="group rounded-lg border border-border bg-card overflow-hidden md:flex focus-within:border-primary-ink/50 hover:border-foreground/25 transition-colors"
             >
               <a
                 href={href}
@@ -123,10 +120,8 @@ export default function ExamplesPage() {
 
               <div className="p-6 flex flex-col gap-3 md:w-1/2">
                 <div>
-                  <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                    {e.style} frames
-                  </span>
-                  <h2 className="text-2xl font-bold tracking-tight mt-1">{e.name}</h2>
+                  <span className="lc-mono text-xs text-primary-ink">{e.style} frames</span>
+                  <h2 className="lc-display mt-2 text-4xl">{e.name}</h2>
                   <p className="text-sm text-muted-foreground mt-1">{e.tagline}</p>
                 </div>
 
@@ -141,7 +136,7 @@ export default function ExamplesPage() {
                       ["Scroll track", `${m.scrollHeight.toLocaleString("en-GB")}px over ${m.frameCount} frames`],
                     ].map(([k, v]) => (
                       <div key={k}>
-                        <dt className="text-muted-foreground">{k}</dt>
+                        <dt className="lc-mono text-muted-foreground">{k}</dt>
                         <dd className="tabular-nums">{v}</dd>
                       </div>
                     ))}
@@ -149,19 +144,16 @@ export default function ExamplesPage() {
                 )}
 
                 <div className="flex flex-wrap gap-2 mt-auto pt-2">
-                  <a href={href}>
-                    <Button size="sm" className="text-xs h-8 gap-1.5">
-                      Open the site <ArrowUpRight className="w-3.5 h-3.5" />
-                    </Button>
+                  <a href={href} className="lc-btn lc-btn-solid lc-btn-sm">
+                    Open the site <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
                   </a>
                   <a
                     href={`https://github.com/singhharsh1708/scrollcraft/blob/main/examples/${e.slug}/scrollcraft.json`}
                     target="_blank"
                     rel="noreferrer"
+                    className="lc-btn lc-btn-ghost lc-btn-sm"
                   >
-                    <Button variant="outline" size="sm" className="border-white/10 text-xs h-8 gap-1.5">
-                      Read its spec <ArrowUpRight className="w-3.5 h-3.5" />
-                    </Button>
+                    Read its spec <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
                   </a>
                 </div>
               </div>
@@ -171,22 +163,21 @@ export default function ExamplesPage() {
       </div>
 
       <section className="max-w-5xl mx-auto px-6 pb-24 text-center">
-        <div className="rounded-2xl border border-white/8 bg-card p-10">
-          <h2 className="text-2xl font-bold tracking-tight mb-2">Start from a template instead</h2>
-          <p className="text-sm text-muted-foreground max-w-md mx-auto mb-6">
+        <div className="rounded-lg border border-border bg-card p-10 sm:p-14">
+          <h2 className="lc-display mb-5 text-4xl sm:text-5xl">
+            <span className="block">Start from a</span>
+            <span className="block text-primary-ink">template instead</span>
+          </h2>
+          <p className="mx-auto mb-8 max-w-md text-muted-foreground">
             These three were written from scratch. The library has 21 sites you can edit in
             the browser and export the same way.
           </p>
           <div className="flex flex-wrap gap-3 justify-center">
-            <Link href="/templates">
-              <Button className="gap-1.5">
-                Browse templates <ArrowRight className="w-4 h-4" />
-              </Button>
+            <Link href="/templates" className="lc-btn lc-btn-solid">
+              Browse templates <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </Link>
-            <Link href="/create">
-              <Button variant="outline" className="border-white/10 gap-1.5">
-                Build your own <ArrowRight className="w-4 h-4" />
-              </Button>
+            <Link href="/create" className="lc-btn lc-btn-ghost">
+              Build your own <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </Link>
           </div>
         </div>

@@ -1,11 +1,10 @@
 export const revalidate = 86400; // revalidate once per day
 
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { ArrowRight, Sparkles, Zap, Globe, Users } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Sparkles, Zap, Globe, Users } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import { PRESETS } from "@/lib/presets";
+import { TEMPLATES } from "@/lib/templates";
 import { AUTHOR_NAME, AUTHOR_SITE_URL, GITHUB_PROFILE_URL, LINKEDIN_URL } from "@/lib/links";
 import SiteFooter from "@/components/SiteFooter";
 
@@ -34,72 +33,67 @@ const VALUES = [
 
 export default function AboutPage() {
   return (
-    <main className="relative min-h-screen bg-background text-foreground overflow-x-hidden">
+    <main className="relative min-h-screen overflow-x-clip bg-background text-foreground">
       <Navbar />
 
       {/* Hero */}
-      <section className="pt-24 pb-16 text-center px-6">
-        <div className="absolute left-1/2 -translate-x-1/2 w-[500px] h-[300px] rounded-full bg-primary/8 blur-[100px] pointer-events-none" />
-        <Badge variant="outline" className="mb-5 border-primary/40 text-primary-ink bg-primary/10 px-4 py-1.5">Our story</Badge>
-        <h1 className="text-5xl md:text-6xl font-black tracking-tighter mb-6 max-w-3xl mx-auto">
-          The web should be
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-indigo-400"> cinematic</span>
+      <section className="px-6 pb-20 pt-24 text-center">
+        <p className="lc-mono mb-6 text-sm text-primary-ink">About</p>
+        <h1 className="lc-display mx-auto max-w-4xl text-5xl md:text-6xl lg:text-7xl">
+          <span className="block">The web should move</span>
+          <span className="block text-primary-ink">when you scroll it</span>
         </h1>
-        <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-          We started ScrollCraft because we were tired of flat, boring websites. 
-          Immersive animated scroll experiences existed — but only for teams with six-figure budgets and specialist engineers.
-          We fixed that.
+        <p className="mx-auto mt-8 max-w-2xl text-lg leading-relaxed text-muted-foreground">
+          Scroll-driven sites used to need a studio budget and a specialist who knew WebGL.
+          ScrollCraft puts a library of finished templates, frame extraction and a scroll
+          engine into one tool, and then gets out of your way.
         </p>
       </section>
 
       {/* Mission */}
-      <section className="py-20 px-6 border-t border-white/5">
-        <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-12 items-center">
+      <section className="border-t border-border px-6 py-24">
+        <div className="mx-auto grid max-w-[1200px] items-center gap-14 md:grid-cols-2">
           <div>
-            <Badge variant="outline" className="mb-4 border-white/10">Our mission</Badge>
-            <h2 className="text-3xl font-black tracking-tighter mb-4">
-              Make cinematic websites accessible to everyone
-            </h2>
-            <p className="text-muted-foreground leading-relaxed mb-4">
-              A restaurant owner in Accra shouldn&apos;t need a $4,000 agency to have a world-class website. 
-              A solo founder launching a SaaS shouldn&apos;t have to learn WebGL to make an impression.
+            <p className="lc-mono mb-5 text-sm text-primary-ink">The mission</p>
+            <h2 className="lc-display text-4xl sm:text-5xl">Cinematic sites for people without a studio</h2>
+            <p className="mt-6 leading-relaxed text-muted-foreground">
+              A restaurant owner in Accra shouldn&apos;t need a $4,000 agency to have a
+              world-class website. A solo founder launching a SaaS shouldn&apos;t have to learn
+              WebGL to make an impression.
             </p>
-            <p className="text-muted-foreground leading-relaxed">
-              ScrollCraft puts a library of finished templates, frame extraction, and a production-grade scroll engine 
-              into a single tool — and gets out of your way.
+            <p className="mt-4 leading-relaxed text-muted-foreground">
+              Pick a template, change the words, and export a site you own outright.
             </p>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-border bg-border">
             {[
-              { value: "200", label: "Frames per site" },
-              { value: String(PRESETS.length), label: "Presets & counting" },
+              { value: String(TEMPLATES.length), label: "Finished templates" },
+              { value: String(PRESETS.length), label: "Styles and palettes" },
               { value: "<2s", label: "Load time target" },
               { value: "100%", label: "Code ownership" },
-            ].map(s => (
-              <div key={s.label} className="p-5 rounded-2xl border border-white/8 bg-card text-center">
-                <p className="text-3xl font-black text-primary-ink mb-1">{s.value}</p>
-                <p className="text-xs text-muted-foreground">{s.label}</p>
+            ].map((s) => (
+              <div key={s.label} className="flex flex-col-reverse bg-card p-6">
+                <dt className="lc-mono mt-2 text-xs text-muted-foreground">{s.label}</dt>
+                <dd className="lc-display text-5xl text-primary-ink">{s.value}</dd>
               </div>
             ))}
-          </div>
+          </dl>
         </div>
       </section>
 
       {/* Values */}
-      <section className="py-20 px-6 border-t border-white/5">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-12">
-            <Badge variant="outline" className="mb-4 border-white/10">What we believe</Badge>
-            <h2 className="text-3xl font-black tracking-tighter">Our values</h2>
-          </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-5">
-            {VALUES.map(v => (
-              <div key={v.title} className="p-6 rounded-2xl border border-white/8 bg-card">
-                <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center mb-4">
-                  <v.icon className="w-5 h-5 text-primary-ink" />
-                </div>
-                <h3 className="font-semibold mb-2">{v.title}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">{v.desc}</p>
+      <section className="border-t border-border px-6 py-24">
+        <div className="mx-auto max-w-[1200px]">
+          <h2 className="lc-display text-4xl sm:text-5xl">
+            <span className="block">What we</span>
+            <span className="block text-primary-ink">believe</span>
+          </h2>
+          <div className="mt-14 grid gap-px overflow-hidden rounded-lg border border-border bg-border md:grid-cols-2 lg:grid-cols-4">
+            {VALUES.map((v) => (
+              <div key={v.title} className="bg-card p-7">
+                <v.icon className="h-5 w-5 text-primary-ink" aria-hidden="true" />
+                <h3 className="mt-6 text-lg font-medium tracking-[-0.01em]">{v.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{v.desc}</p>
               </div>
             ))}
           </div>
@@ -107,54 +101,49 @@ export default function AboutPage() {
       </section>
 
       {/* Team */}
-      <section className="py-20 px-6 border-t border-white/5">
-        <div className="max-w-3xl mx-auto">
-          <div className="text-center mb-12">
-            <Badge variant="outline" className="mb-4 border-white/10">The team</Badge>
-            <h2 className="text-3xl font-black tracking-tighter">Built by one person</h2>
-          </div>
-          <div className="grid gap-5 max-w-2xl mx-auto">
-            {TEAM.map(m => (
-              <div key={m.name} className="flex items-start gap-4 p-6 rounded-2xl border border-white/8 bg-card">
-                <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center text-primary-ink font-bold text-sm flex-shrink-0">
-                  {m.avatar}
-                </div>
-                <div>
-                  <p className="font-semibold">{m.name}</p>
-                  <p className="text-xs text-primary-ink mb-2">{m.role}</p>
-                  <p className="text-sm text-muted-foreground mb-3">{m.bio}</p>
-                  <div className="flex flex-wrap gap-3">
-                    {m.links.map((l) => (
-                      <a
-                        key={l.label}
-                        href={l.href}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs text-muted-foreground underline hover:text-foreground transition-colors"
-                      >
-                        {l.label}
-                      </a>
-                    ))}
-                  </div>
+      <section className="border-t border-border px-6 py-24">
+        <div className="mx-auto grid max-w-[1200px] gap-10 lg:grid-cols-[1fr_1.3fr] lg:items-start">
+          <h2 className="lc-display text-4xl sm:text-5xl">
+            <span className="block">Built by</span>
+            <span className="block text-primary-ink">one person</span>
+          </h2>
+          {TEAM.map((m) => (
+            <div key={m.name} className="flex items-start gap-5 rounded-lg border border-border bg-card p-7">
+              <div className="lc-mono flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-primary-ink/40 text-sm text-primary-ink">
+                {m.avatar}
+              </div>
+              <div>
+                <p className="text-lg font-medium">{m.name}</p>
+                <p className="lc-mono mb-3 text-xs text-primary-ink">{m.role}</p>
+                <p className="mb-4 text-sm leading-relaxed text-muted-foreground">{m.bio}</p>
+                <div className="flex flex-wrap gap-5">
+                  {m.links.map((l) => (
+                    <a key={l.label} href={l.href} target="_blank" rel="noopener noreferrer" className="lc-link">
+                      {l.label} <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
+                    </a>
+                  ))}
                 </div>
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
       </section>
 
       {/* CTA */}
-      <section className="py-24 px-6 text-center border-t border-white/5">
-        <h2 className="text-4xl font-black tracking-tighter mb-4">Come build with us</h2>
-        <p className="text-muted-foreground mb-8 max-w-md mx-auto">No account, no install. Pick a template and export a finished site.</p>
-        <Link href="/create">
-          <Button size="lg" className="bg-primary hover:bg-primary/90 text-white px-10 py-6 font-semibold">
-            Start building <ArrowRight className="ml-2 w-4 h-4" />
-          </Button>
+      <section className="border-t border-border px-6 py-28 text-center">
+        <h2 className="lc-display text-5xl sm:text-6xl">
+          <span className="block">Come build</span>
+          <span className="block text-primary-ink">with us</span>
+        </h2>
+        <p className="mx-auto mb-10 mt-6 max-w-md text-lg text-muted-foreground">
+          No account, no install. Pick a template and export a finished site.
+        </p>
+        <Link href="/create" className="lc-btn lc-btn-solid">
+          Start building <ArrowRight className="h-4 w-4" aria-hidden="true" />
         </Link>
       </section>
 
-      <SiteFooter compact />
+      <SiteFooter />
     </main>
   );
 }

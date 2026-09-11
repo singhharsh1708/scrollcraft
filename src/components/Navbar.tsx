@@ -2,120 +2,158 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Sparkles, Menu, X, Heart } from "lucide-react";
+import { ArrowUpRight, Heart, Menu, X } from "lucide-react";
+import BrandMark from "@/components/BrandMark";
 import GitHubMark from "@/components/GitHubMark";
 import { GITHUB_REPO_URL, GITHUB_SPONSORS_URL } from "@/lib/links";
+
+/**
+ * A one-line announcement, then a contained nav that sticks.
+ *
+ * The announcement sits in normal flow so it scrolls away and only the nav pins. The
+ * nav is inset from the edge and bordered rather than full-bleed, so a page's own
+ * artwork shows around it.
+ */
 
 const NAV_LINKS = [
   { href: "/examples",  label: "Examples"  },
   { href: "/templates", label: "Templates" },
   { href: "/presets",   label: "Presets"   },
+  { href: "/changelog", label: "Changelog" },
 ];
+
+const DOCS_URL = `${GITHUB_REPO_URL}#readme`;
 
 export default function Navbar({ position = "sticky" }: { position?: "fixed" | "sticky" | "relative" }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-
-  const posClass = position === "fixed"
-    ? "fixed top-0 left-0 right-0"
-    : position === "sticky"
-    ? "sticky top-0"
-    : "relative";
+  const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
 
   return (
-    <nav className={`${posClass} z-50 bg-background/80 backdrop-blur-xl border-b border-white/5`}>
-      <div className="flex items-center justify-between px-5 sm:px-8 py-3 sm:py-4 max-w-7xl mx-auto">
-        {/* Logo */}
-        <Link href="/" className="flex items-center gap-2 shrink-0">
-          <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
-            <Sparkles className="w-4 h-4 text-white" />
-          </div>
-          <span className="font-semibold text-base sm:text-lg tracking-tight">ScrollCraft</span>
-        </Link>
-
-        {/* Desktop links */}
-        <div className="hidden md:flex items-center gap-5">
-          {NAV_LINKS.map(({ href, label }) => (
-            <Link
-              key={href}
-              href={href}
-              className={`text-sm transition-colors ${pathname === href ? "text-foreground font-medium" : "text-muted-foreground hover:text-foreground"}`}
-            >
-              {label}
-            </Link>
-          ))}
-        </div>
-
-        {/* Desktop CTAs */}
-        <div className="hidden md:flex items-center gap-3">
-          <a
-            href={GITHUB_REPO_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="ScrollCraft on GitHub"
-            title="ScrollCraft on GitHub"
-            className="text-muted-foreground hover:text-foreground transition-colors p-1"
+    <>
+      {pathname !== "/examples" && (
+        <div className="bg-primary text-white">
+          <Link
+            href="/examples"
+            className="group mx-auto flex max-w-[1360px] flex-col items-center justify-center gap-x-10 gap-y-1 px-4 py-2.5 text-center text-sm sm:flex-row"
           >
-            <GitHubMark className="w-[18px] h-[18px]" />
-          </a>
-          <Link href="/create">
-            <Button size="sm" className="bg-primary hover:bg-primary/90 text-white">
-              Start Building
-            </Button>
+            <span>Three finished sites, served as the exact bundles they export to.</span>
+            <span className="lc-mono inline-flex items-center gap-2 text-white/85 transition-colors group-hover:text-white">
+              See the examples <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
+            </span>
           </Link>
         </div>
-
-        {/* Mobile hamburger */}
-        <button
-          className="md:hidden p-2 rounded-md text-muted-foreground hover:text-foreground cursor-pointer"
-          onClick={() => setOpen((v) => !v)}
-          aria-label="Toggle menu"
-          aria-expanded={open}
-          aria-controls="mobile-menu"
-        >
-          {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-        </button>
-      </div>
-
-      {/* Mobile drawer */}
-      {open && (
-        <div id="mobile-menu" className="md:hidden border-t border-white/5 bg-background/95 backdrop-blur-xl px-5 py-4 flex flex-col gap-3">
-          {NAV_LINKS.map(({ href, label }) => (
-            <Link
-              key={href}
-              href={href}
-              onClick={() => setOpen(false)}
-              className={`text-sm py-1.5 transition-colors ${pathname === href ? "text-foreground font-medium" : "text-muted-foreground"}`}
-            >
-              {label}
-            </Link>
-          ))}
-          <a
-            href={GITHUB_REPO_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={() => setOpen(false)}
-            className="flex items-center gap-2 text-sm py-1.5 text-muted-foreground"
-          >
-            <GitHubMark className="w-4 h-4" /> GitHub
-          </a>
-          <a
-            href={GITHUB_SPONSORS_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={() => setOpen(false)}
-            className="flex items-center gap-2 text-sm py-1.5 text-muted-foreground"
-          >
-            <Heart className="w-4 h-4" /> Sponsor
-          </a>
-          <div className="border-t border-white/5 pt-3 mt-1 flex flex-col gap-2">
-            <Link href="/create" onClick={() => setOpen(false)}>
-              <Button size="sm" className="w-full bg-primary hover:bg-primary/90 text-white">Start Building</Button>
-            </Link>
-          </div>
-        </div>
       )}
-    </nav>
+
+      <div className={`${position === "relative" ? "relative" : "sticky top-0"} z-50 px-3 pt-3 sm:px-6`}>
+        <nav
+          aria-label="Main"
+          className="mx-auto max-w-[1360px] rounded-md border border-border bg-background/80 backdrop-blur-xl"
+        >
+          <div className="flex h-16 items-center justify-between gap-4 pl-5 pr-2.5">
+            <Link href="/" aria-label="ScrollCraft home" className="flex shrink-0 items-center gap-2 text-foreground">
+              <BrandMark className="h-5 w-5 text-primary-ink" />
+              <span className="text-[1.1rem] font-medium tracking-[-0.02em]">ScrollCraft</span>
+            </Link>
+
+            <div className="hidden items-center gap-8 md:flex">
+              {NAV_LINKS.map(({ href, label }) => (
+                <Link
+                  key={href}
+                  href={href}
+                  aria-current={isActive(href) ? "page" : undefined}
+                  className={`lc-mono text-sm transition-colors ${
+                    isActive(href) ? "text-foreground" : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {label}
+                </Link>
+              ))}
+              <a
+                href={DOCS_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="lc-mono text-sm text-muted-foreground transition-colors hover:text-foreground"
+              >
+                Docs
+              </a>
+            </div>
+
+            <div className="hidden items-center gap-2 md:flex">
+              <Link href="/create" className="lc-btn lc-btn-solid lc-btn-sm">
+                Start building
+              </Link>
+              <a
+                href={GITHUB_REPO_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="lc-btn lc-btn-ghost lc-btn-sm"
+              >
+                <GitHubMark className="h-4 w-4" /> GitHub
+              </a>
+            </div>
+
+            <button
+              type="button"
+              className="flex h-11 w-11 items-center justify-center rounded-md text-foreground md:hidden"
+              onClick={() => setOpen((v) => !v)}
+              aria-label="Toggle menu"
+              aria-expanded={open}
+              aria-controls="mobile-menu"
+            >
+              {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            </button>
+          </div>
+
+          {open && (
+            <div id="mobile-menu" className="flex flex-col border-t border-border px-5 pb-5 pt-3 md:hidden">
+              {NAV_LINKS.map(({ href, label }) => (
+                <Link
+                  key={href}
+                  href={href}
+                  onClick={() => setOpen(false)}
+                  aria-current={isActive(href) ? "page" : undefined}
+                  className={`lc-mono py-2.5 text-[0.95rem] ${isActive(href) ? "text-foreground" : "text-muted-foreground"}`}
+                >
+                  {label}
+                </Link>
+              ))}
+              <a
+                href={DOCS_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setOpen(false)}
+                className="lc-mono py-2.5 text-[0.95rem] text-muted-foreground"
+              >
+                Docs
+              </a>
+              <a
+                href={GITHUB_SPONSORS_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setOpen(false)}
+                className="lc-mono flex items-center gap-2 py-2.5 text-[0.95rem] text-muted-foreground"
+              >
+                <Heart className="h-4 w-4" aria-hidden="true" /> Sponsor
+              </a>
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <Link href="/create" onClick={() => setOpen(false)} className="lc-btn lc-btn-solid lc-btn-sm">
+                  Start building
+                </Link>
+                <a
+                  href={GITHUB_REPO_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setOpen(false)}
+                  className="lc-btn lc-btn-ghost lc-btn-sm"
+                >
+                  <GitHubMark className="h-4 w-4" /> GitHub
+                </a>
+              </div>
+            </div>
+          )}
+        </nav>
+      </div>
+    </>
   );
 }

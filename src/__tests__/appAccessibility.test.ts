@@ -63,9 +63,9 @@ function readOklchToken(name: string): [number, number, number] {
   return [Number(m![1]), Number(m![2]), Number(m![3])];
 }
 
-// The darkest surface accent text sits on.
-const DARKEST_SURFACE: [number, number, number] = [0x03 / 255, 0x03 / 255, 0x03 / 255];
-const CARD_SURFACE: [number, number, number] = [0x0d / 255, 0x0d / 255, 0x0d / 255];
+// The surfaces accent text actually sits on: the page ground and a card.
+const DARKEST_SURFACE: [number, number, number] = [0x03 / 255, 0x07 / 255, 0x10 / 255];
+const CARD_SURFACE: [number, number, number] = [0x0a / 255, 0x11 / 255, 0x22 / 255];
 
 describe("accent colours meet WCAG AA where they are used", () => {
   it("has a separate ink token for accent text", () => {
@@ -98,21 +98,14 @@ describe("accent colours meet WCAG AA where they are used", () => {
 });
 
 describe("decoration is not presented as text", () => {
-  it("draws the ornamental numerals as generated content", () => {
-    // At the opacity the design calls for, these could never meet a contrast floor, and
-    // they carry no meaning. WCAG 1.4.3 exempts pure decoration; a pseudo-element is how
-    // that is expressed so a checker agrees.
-    expect(CSS).toContain(".sc-ornament::before");
-
-    // Located by content rather than by filename, so moving the markup between files
-    // cannot quietly turn this check off.
-    const users = sourceFiles([".tsx"]).filter((f) => readFileSync(f, "utf8").includes("sc-ornament"));
-    expect(users.length, "nothing uses the ornament class").toBeGreaterThan(0);
-
+  it("renders no ornamental numeral as low-opacity text", () => {
+    // The pipeline and feature cards once drew faint step numbers as text, which no
+    // contrast floor can pass. Those sections went with the redesign, and the
+    // generated-content class with them; this keeps the pattern from coming back as text.
     const offenders = sourceFiles([".tsx"]).filter((f) =>
       /text-white\/4[^"]*">\{(p\.step|i \+ 1)\}/.test(readFileSync(f, "utf8"))
     );
-    expect(offenders, "an ornamental numeral is still rendered as text").toEqual([]);
+    expect(offenders, "an ornamental numeral is rendered as text").toEqual([]);
   });
 });
 

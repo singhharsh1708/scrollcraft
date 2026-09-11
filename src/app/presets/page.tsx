@@ -3,9 +3,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { TEMPLATES } from "@/lib/templates";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { ArrowRight, Search, Sparkles, Eye } from "lucide-react";
+import { ArrowRight, Search, Eye } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import StylePreview from "@/components/StylePreview";
 import { PRESETS } from "@/lib/presets";
@@ -40,14 +39,13 @@ export default function PresetsPage() {
       <Navbar />
 
       {/* Header */}
-      <section className="pt-16 pb-10 text-center px-6">
-        <Badge variant="outline" className="mb-5 border-primary/40 text-primary-ink bg-primary/10 px-4 py-1.5">
-          <Sparkles className="w-3 h-3 mr-1.5" /> {PRESETS.length} production-ready presets
-        </Badge>
-        <h1 className="text-5xl md:text-6xl font-black tracking-tighter mb-4">
-          Start from a preset
+      <section className="px-6 pb-12 pt-20 text-center">
+        <p className="lc-mono mb-6 text-sm text-primary-ink">{PRESETS.length} styles and palettes</p>
+        <h1 className="lc-display text-5xl md:text-6xl lg:text-7xl">
+          <span className="block">Start from</span>
+          <span className="block text-primary-ink">a preset</span>
         </h1>
-        <p className="text-muted-foreground text-lg max-w-xl mx-auto">
+        <p className="mx-auto mt-6 max-w-xl text-lg text-muted-foreground">
           Every preset carries a style and palette. For finished sites with copy, browse the templates.
         </p>
       </section>
@@ -62,25 +60,27 @@ export default function PresetsPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search presets…"
-            className="pl-9 bg-card border-white/10 focus:border-primary/50"
+            className="lc-mono h-11 pl-9 bg-card border-border focus:border-primary-ink/50"
           />
         </div>
         <div className="flex flex-wrap gap-2 justify-center">
           {CATEGORIES.map((cat) => (
             <button
               key={cat}
+              type="button"
               onClick={() => setActiveCategory(cat)}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all cursor-pointer ${
+              aria-pressed={activeCategory === cat}
+              className={`lc-mono h-9 px-4 rounded-full text-[0.8rem] border transition-colors cursor-pointer ${
                 activeCategory === cat
-                  ? "bg-primary text-white border-primary"
-                  : "border-white/10 text-muted-foreground hover:border-white/20 hover:text-foreground"
+                  ? "border-primary-ink/60 bg-primary-ink/15 text-foreground"
+                  : "border-border text-muted-foreground hover:border-foreground/30 hover:text-foreground"
               }`}
             >
               {cat}
             </button>
           ))}
         </div>
-        <p className="text-center text-xs text-muted-foreground">
+        <p className="lc-mono text-center text-xs text-muted-foreground">
           {filtered.length} preset{filtered.length !== 1 ? "s" : ""}
           {activeCategory !== "All" ? ` in ${activeCategory}` : ""}
           {search ? ` matching "${search}"` : ""}
@@ -99,7 +99,7 @@ export default function PresetsPage() {
             {filtered.map((preset) => (
               <div
                 key={preset.name}
-                className="group relative rounded-2xl border border-white/8 overflow-hidden hover:border-white/20 transition-all hover:-translate-y-1 cursor-pointer"
+                className="group relative rounded-lg border border-border overflow-hidden hover:border-foreground/25 transition-all hover:-translate-y-1 cursor-pointer"
                 onMouseEnter={() => setHovered(preset.name)}
                 onMouseLeave={() => setHovered((h) => (h === preset.name ? null : h))}
               >
@@ -117,18 +117,18 @@ export default function PresetsPage() {
                   <div className="relative z-10">
                     <div className="flex flex-wrap gap-1 mb-2">
                       {preset.tags.slice(0, 3).map((tag) => (
-                        <span key={tag} className="text-xs px-2 py-0.5 rounded-full bg-white/10 backdrop-blur-sm font-medium">
+                        <span key={tag} className="lc-mono text-[11px] px-2 py-0.5 rounded bg-black/40 backdrop-blur-sm">
                           {tag}
                         </span>
                       ))}
                     </div>
-                    <p className="font-bold text-base text-white leading-tight">{preset.name}</p>
+                    <p className="text-base font-medium text-white leading-tight">{preset.name}</p>
                     <p className="text-xs text-white/60">{preset.category}</p>
                   </div>
                   {/* Hover overlay — z-20 keeps it above the tags row (z-10) */}
                   <div className="absolute inset-0 z-20 flex items-center justify-center gap-2 opacity-100 [@media(hover:hover)]:opacity-0 group-hover:[@media(hover:hover)]:opacity-100 group-focus-within:opacity-100 transition-opacity bg-black/60 backdrop-blur-sm">
                     <Link href={`/create?template=${encodeURIComponent(preset.name)}`}>
-                      <Button size="sm" className="bg-primary text-white shadow-lg shadow-primary/30 text-xs h-8 px-3">
+                      <Button size="sm" className="lc-mono bg-primary text-white text-xs h-9 px-3">
                         Use preset <ArrowRight className="ml-1 w-3 h-3" />
                       </Button>
                     </Link>
@@ -142,7 +142,7 @@ export default function PresetsPage() {
                       if (!demoSlug) return null;
                       return (
                         <Link href={`/templates/${demoSlug}`}>
-                          <Button size="sm" variant="outline" className="border-white/20 bg-white/10 backdrop-blur-sm hover:bg-white/20 text-xs h-8 px-3">
+                          <Button size="sm" variant="outline" className="lc-mono border-white/25 bg-white/10 backdrop-blur-sm hover:bg-white/20 text-xs h-9 px-3">
                             <Eye className="w-3 h-3 mr-1" /> Preview
                           </Button>
                         </Link>
@@ -153,7 +153,7 @@ export default function PresetsPage() {
 
                 {/* Info */}
                 <div className="p-3 bg-card">
-                  <p className="font-semibold text-sm mb-0.5">{preset.name}</p>
+                  <p className="font-medium text-sm mb-0.5">{preset.name}</p>
                   <p className="text-xs text-muted-foreground leading-snug">{preset.description}</p>
                 </div>
               </div>
@@ -163,19 +163,20 @@ export default function PresetsPage() {
       </section>
 
       {/* Bottom CTA */}
-      <section className="pb-24 px-6 text-center border-t border-white/5 pt-20">
-        <h2 className="text-3xl font-black tracking-tighter mb-4">Don&apos;t see what you need?</h2>
-        <p className="text-muted-foreground mb-8 max-w-md mx-auto">
-          Start from scratch — pick a style and a palette, or bring your own video, and the frames render in your browser.
+      <section className="border-t border-border px-6 pb-28 pt-24 text-center">
+        <h2 className="lc-display text-4xl sm:text-5xl">
+          <span className="block">Don&apos;t see</span>
+          <span className="block text-primary-ink">what you need?</span>
+        </h2>
+        <p className="mx-auto mb-10 mt-6 max-w-md text-lg text-muted-foreground">
+          Start from scratch: pick a style and a palette, or bring your own video, and the frames render in your browser.
         </p>
-        <Link href="/create">
-          <Button size="lg" className="bg-primary hover:bg-primary/90 text-white px-10 py-6 text-base font-semibold shadow-xl shadow-primary/30">
-            Create from scratch <Sparkles className="ml-2 w-4 h-4" />
-          </Button>
+        <Link href="/create" className="lc-btn lc-btn-solid">
+          Create from scratch <ArrowRight className="h-4 w-4" aria-hidden="true" />
         </Link>
       </section>
 
-      <SiteFooter compact />
+      <SiteFooter />
     </main>
   );
 }

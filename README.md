@@ -25,8 +25,8 @@ those sites without WebGL, an animation library, or a render farm.
    maps it to scroll position.
 3. **Edit it.** Sections, copy, buttons, colours, audio, custom CSS.
 4. **Export it.** A self-contained ZIP with a 404 page, favicon, social card,
-   `robots.txt` and host config for Netlify, Vercel, GitHub Pages and Cloudflare.
-   Deploying is dragging a folder.
+   `robots.txt`, config for Netlify, Vercel and GitHub Pages, and steps for
+   Cloudflare Pages. Deploying is dragging a folder.
 
 Everything runs in the browser. There is no account, no database and nothing to buy. The
 one exception is the copy assistant below, which is off unless you configure a key.

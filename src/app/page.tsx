@@ -1,18 +1,19 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { findPreset, PRESETS } from "@/lib/presets";
-import HomeClient, { type FeaturedPreset, type ExampleCard } from "./HomeClient";
+import { TEMPLATES, templateCategories } from "@/lib/templates";
+import HomeClient, { type EditorSample, type ExampleCard, type TemplateSlice } from "./HomeClient";
 
 /**
  * Server shell for the landing page.
  *
- * The page needs a preset count and four fields from six presets. Importing the
- * catalogue from a client component shipped all 57 entries — 686 lines — into the
- * browser bundle to produce a number and six cards. Reading it here keeps it on the
- * server and passes down only what is rendered. The example manifest is read the same
- * way: three of its fields are on the page, and its palette notes are not.
+ * The page draws four template cards, one template's section list and two counts.
+ * Importing the catalogue from a client component would ship every template's full copy
+ * to the browser to produce that, so it is read here and only what is drawn is passed
+ * down. The example manifest is read the same way: three of its fields are on the page,
+ * and its palette notes are not.
  */
-const FEATURED_PRESET_NAMES = ["OrbitCRM", "TripVault", "Shopnest", "VisionForge", "StackForge", "Meridian"];
+const PICK_SLUGS = ["aurabeauty", "ledger-fintech", "kiln-coffee", "northlight"];
+const EDITOR_SLUG = "aurabeauty";
 
 function examples(): ExampleCard[] {
   try {
@@ -26,10 +27,31 @@ function examples(): ExampleCard[] {
 }
 
 export default function Home() {
-  const featured: FeaturedPreset[] = FEATURED_PRESET_NAMES
-    .map((n) => findPreset(n))
-    .filter((p): p is NonNullable<typeof p> => Boolean(p))
-    .map((p) => ({ name: p.name, category: p.category, style: p.style, colors: p.colors }));
+  const templates = PICK_SLUGS.map((slug) => TEMPLATES.find((t) => t.slug === slug))
+    .filter((t): t is NonNullable<typeof t> => Boolean(t))
+    .map((t): TemplateSlice => ({ slug: t.slug, name: t.name, category: t.category, style: t.style, colors: t.colors }));
 
-  return <HomeClient presetCount={PRESETS.length} featured={featured} examples={examples()} />;
+  const sample = TEMPLATES.find((t) => t.slug === EDITOR_SLUG);
+  const editorSample: EditorSample | null = sample
+    ? {
+        name: sample.name,
+        slug: sample.slug,
+        style: sample.style,
+        colors: sample.colors,
+        sections: sample.sections.map((s) => ({
+          kind: s.kind ?? "text",
+          heading: s.heading ?? "",
+          eyebrow: s.eyebrow ?? "",
+        })),
+      }
+    : null;
+
+  return (
+    <HomeClient
+      templates={templates}
+      editorSample={editorSample}
+      examples={examples()}
+      stats={{ templates: TEMPLATES.length, categories: templateCategories().length }}
+    />
+  );
 }

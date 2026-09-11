@@ -10,9 +10,9 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-heading: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -43,6 +43,10 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-band: var(--band);
+  --color-band-ink: var(--band-ink);
+  --color-band-muted: var(--band-muted);
+  --color-band-line: var(--band-line);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -52,75 +56,96 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/*
+ * Deep navy ground, pale blue ink, one cyan for accent text and one saturated blue
+ * for fills. Every pairing below was measured with the same oklch -> sRGB -> WCAG
+ * path the accessibility test uses: foreground on the page 17.95:1, muted text 8.34:1,
+ * cyan on the page 11.15:1 and on a card 10.40:1, white on the blue fill 4.96:1.
+ */
 :root {
-  --background: oklch(0.06 0 0);
-  --foreground: oklch(0.98 0 0);
-  --card: oklch(0.1 0 0);
-  --card-foreground: oklch(0.98 0 0);
-  --popover: oklch(0.1 0 0);
-  --popover-foreground: oklch(0.98 0 0);
-  --primary: oklch(0.52 0.22 290);
-  --primary-foreground: oklch(0.98 0 0);
-  /* Accent text on a dark surface. --primary itself is a fill colour and is too dark
-     to read at small sizes: it measures 3.18:1, below the 4.5:1 AA floor. */
-  --primary-ink: oklch(0.66 0.18 290);
-  --secondary: oklch(0.14 0 0);
-  --secondary-foreground: oklch(0.98 0 0);
-  --muted: oklch(0.14 0 0);
-  --muted-foreground: oklch(0.6 0 0);
-  --accent: oklch(0.65 0.22 290);
-  --accent-foreground: oklch(0.98 0 0);
+  --background: oklch(0.128 0.023 258.4);
+  --foreground: oklch(0.959 0.022 239.4);
+  --card: oklch(0.181 0.037 265.9);
+  --card-foreground: oklch(0.959 0.022 239.4);
+  --popover: oklch(0.181 0.037 265.9);
+  --popover-foreground: oklch(0.959 0.022 239.4);
+  --primary: oklch(0.55 0.19 256.4);
+  --primary-foreground: oklch(1 0 0);
+  /* Accent text on a dark surface. --primary is a fill colour, too dark to read as
+     small text on the page, so text takes this token instead. */
+  --primary-ink: oklch(0.806 0.107 242.3);
+  --secondary: oklch(0.22 0.042 264.8);
+  --secondary-foreground: oklch(0.959 0.022 239.4);
+  --muted: oklch(0.22 0.042 264.8);
+  --muted-foreground: oklch(0.726 0.042 249.6);
+  --accent: oklch(0.26 0.05 262);
+  --accent-foreground: oklch(0.959 0.022 239.4);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 12%);
-  --ring: oklch(0.65 0.22 290);
-  --chart-1: oklch(0.65 0.22 290);
-  --chart-2: oklch(0.7 0.18 200);
-  --chart-3: oklch(0.75 0.15 140);
-  --chart-4: oklch(0.8 0.12 60);
-  --chart-5: oklch(0.6 0.2 330);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.1 0 0);
-  --sidebar-foreground: oklch(0.98 0 0);
-  --sidebar-primary: oklch(0.65 0.22 290);
-  --sidebar-primary-foreground: oklch(0.98 0 0);
-  --sidebar-accent: oklch(0.14 0 0);
-  --sidebar-accent-foreground: oklch(0.98 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.65 0.22 290);
+  --border: oklch(0.93 0.03 240 / 13%);
+  --input: oklch(0.93 0.03 240 / 16%);
+  --ring: oklch(0.806 0.107 242.3);
+  --chart-1: oklch(0.806 0.107 242.3);
+  --chart-2: oklch(0.55 0.19 256.4);
+  --chart-3: oklch(0.72 0.12 200);
+  --chart-4: oklch(0.62 0.14 280);
+  --chart-5: oklch(0.85 0.06 230);
+  --radius: 0.375rem;
+  --sidebar: oklch(0.181 0.037 265.9);
+  --sidebar-foreground: oklch(0.959 0.022 239.4);
+  --sidebar-primary: oklch(0.55 0.19 256.4);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.22 0.042 264.8);
+  --sidebar-accent-foreground: oklch(0.959 0.022 239.4);
+  --sidebar-border: oklch(0.93 0.03 240 / 13%);
+  --sidebar-ring: oklch(0.806 0.107 242.3);
+
+  /* The pale band that alternates with the navy. Ink on it measures 19.12:1, muted
+     text 7.28:1. */
+  --band: oklch(0.981 0.011 234.8);
+  --band-ink: oklch(0.128 0.023 258.4);
+  --band-muted: oklch(0.442 0.035 248.6);
+  --band-line: oklch(0.9 0.012 240);
+
+  /* Button surfaces, stated outright rather than mixed, so they need no color-mix()
+     support and flip cleanly inside a light band. */
+  --solid-bg: oklch(0.959 0.022 239.4);
+  --solid-fg: oklch(0.128 0.023 258.4);
+  --solid-hover: oklch(1 0 0);
+  --line-strong: oklch(0.93 0.03 240 / 34%);
+  --wash: oklch(0.93 0.03 240 / 7%);
 }
 
 /* app is always dark */
 .dark, html {
-  --background: oklch(0.06 0 0);
-  --foreground: oklch(0.98 0 0);
-  --card: oklch(0.1 0 0);
-  --card-foreground: oklch(0.98 0 0);
-  --popover: oklch(0.1 0 0);
-  --popover-foreground: oklch(0.98 0 0);
-  --primary: oklch(0.52 0.22 290);
-  --primary-foreground: oklch(0.98 0 0);
-  /* Accent text on a dark surface. --primary itself is a fill colour and is too dark
-     to read at small sizes: it measures 3.18:1, below the 4.5:1 AA floor. */
-  --primary-ink: oklch(0.66 0.18 290);
-  --secondary: oklch(0.14 0 0);
-  --secondary-foreground: oklch(0.98 0 0);
-  --muted: oklch(0.14 0 0);
-  --muted-foreground: oklch(0.6 0 0);
-  --accent: oklch(0.65 0.22 290);
-  --accent-foreground: oklch(0.98 0 0);
+  --background: oklch(0.128 0.023 258.4);
+  --foreground: oklch(0.959 0.022 239.4);
+  --card: oklch(0.181 0.037 265.9);
+  --card-foreground: oklch(0.959 0.022 239.4);
+  --popover: oklch(0.181 0.037 265.9);
+  --popover-foreground: oklch(0.959 0.022 239.4);
+  --primary: oklch(0.55 0.19 256.4);
+  --primary-foreground: oklch(1 0 0);
+  /* Accent text on a dark surface. --primary is a fill colour, too dark to read as
+     small text on the page, so text takes this token instead. */
+  --primary-ink: oklch(0.806 0.107 242.3);
+  --secondary: oklch(0.22 0.042 264.8);
+  --secondary-foreground: oklch(0.959 0.022 239.4);
+  --muted: oklch(0.22 0.042 264.8);
+  --muted-foreground: oklch(0.726 0.042 249.6);
+  --accent: oklch(0.26 0.05 262);
+  --accent-foreground: oklch(0.959 0.022 239.4);
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 12%);
-  --ring: oklch(0.65 0.22 290);
-  --sidebar: oklch(0.1 0 0);
-  --sidebar-foreground: oklch(0.98 0 0);
-  --sidebar-primary: oklch(0.65 0.22 290);
-  --sidebar-primary-foreground: oklch(0.98 0 0);
-  --sidebar-accent: oklch(0.14 0 0);
-  --sidebar-accent-foreground: oklch(0.98 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.65 0.22 290);
+  --border: oklch(0.93 0.03 240 / 13%);
+  --input: oklch(0.93 0.03 240 / 16%);
+  --ring: oklch(0.806 0.107 242.3);
+  --sidebar: oklch(0.181 0.037 265.9);
+  --sidebar-foreground: oklch(0.959 0.022 239.4);
+  --sidebar-primary: oklch(0.55 0.19 256.4);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.22 0.042 264.8);
+  --sidebar-accent-foreground: oklch(0.959 0.022 239.4);
+  --sidebar-border: oklch(0.93 0.03 240 / 13%);
+  --sidebar-ring: oklch(0.806 0.107 242.3);
 }
 
 @layer base {
@@ -132,6 +157,103 @@
   }
   html {
     @apply font-sans;
+    /* The nav sticks, so an in-page anchor would otherwise land under it. */
+    scroll-padding-top: 6rem;
+  }
+  ::selection {
+    background: oklch(0.806 0.107 242.3 / 35%);
+    color: var(--foreground);
+  }
+}
+
+@layer components {
+  /* Large display type: light weight, tight tracking, balanced lines. */
+  .lc-display {
+    font-weight: 300;
+    letter-spacing: -0.035em;
+    line-height: 1.06;
+    text-wrap: balance;
+  }
+
+  .lc-mono {
+    font-family: var(--font-mono);
+  }
+
+  /* Rectangular buttons set in mono. Solid is the pale fill; ghost is an outline. */
+  .lc-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.625rem;
+    height: 3rem;
+    padding: 0 1.5rem;
+    border-radius: 4px;
+    border: 1px solid transparent;
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    line-height: 1;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+  }
+  .lc-btn:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+  .lc-btn-sm {
+    height: 2.5rem;
+    padding: 0 1rem;
+    font-size: 0.8125rem;
+  }
+  .lc-btn-solid {
+    background: var(--solid-bg);
+    color: var(--solid-fg);
+  }
+  .lc-btn-solid:hover {
+    background: var(--solid-hover);
+  }
+  .lc-btn-ghost {
+    background: transparent;
+    color: var(--foreground);
+    border-color: var(--line-strong);
+  }
+  .lc-btn-ghost:hover {
+    background: var(--wash);
+  }
+
+  /* "Explore something ↗": mono, muted, brightens on hover. */
+  .lc-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    color: var(--muted-foreground);
+    transition: color 0.15s;
+  }
+  .lc-link:hover {
+    color: var(--foreground);
+  }
+
+  /*
+   * A pale band. Redefining the tokens here, rather than restyling each child, means
+   * every component inside reads correctly on the light ground without knowing it is
+   * there: text, borders, cards, and the solid button, which inverts to navy.
+   */
+  .band-light {
+    --background: var(--band);
+    --foreground: var(--band-ink);
+    --muted-foreground: var(--band-muted);
+    --border: var(--band-line);
+    --card: oklch(1 0 0);
+    --card-foreground: var(--band-ink);
+    --solid-bg: var(--band-ink);
+    --solid-fg: oklch(0.959 0.022 239.4);
+    --solid-hover: oklch(0.24 0.045 262);
+    --line-strong: oklch(0.128 0.023 258.4 / 26%);
+    --wash: oklch(0.128 0.023 258.4 / 5%);
+    background: var(--band);
+    color: var(--band-ink);
   }
 }
 
@@ -142,12 +264,4 @@
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
-}
-
-/* Decorative numerals behind the pipeline and feature cards. Pure ornament under
-   WCAG 1.4.3, so it is drawn as generated content instead of text: at the opacity the
-   design calls for it could never meet a contrast floor, and it carries no meaning a
-   reader would miss. The value comes from --ornament on the element. */
-.sc-ornament::before {
-  content: var(--ornament, "");
 }
