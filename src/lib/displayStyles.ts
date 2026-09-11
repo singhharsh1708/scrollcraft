@@ -19,13 +19,13 @@ export interface DisplayStyle {
 
 export const DISPLAY_STYLES: Record<"heading" | "statement", DisplayStyle> = {
   heading: {
-    fontSize: "var(--sc-heading-size, clamp(2rem,5vw,4rem))",
+    fontSize: "var(--sc-heading-size, clamp(2rem,min(5vw,6vh),4rem))",
     fontWeight: "var(--sc-display-weight, 900)",
     lineHeight: 1,
     letterSpacing: "var(--sc-display-tracking, -0.03em)",
   },
   statement: {
-    fontSize: "clamp(2.75rem,11vw,9rem)",
+    fontSize: "clamp(2.75rem,min(11vw,13.2vh),9rem)",
     fontWeight: "var(--sc-display-weight, 800)",
     lineHeight: 0.92,
     letterSpacing: "var(--sc-display-tracking, -0.045em)",

@@ -6,10 +6,12 @@ export interface TypeScale {
   measure: number;
 }
 
+// The vh term keeps a heading inside its 100vh sticky frame on a short laptop screen,
+// where width alone set it taller than the frame and the frame clipped it.
 export const TYPE_SCALES: Record<"compact" | "editorial" | "poster", TypeScale> = {
-  compact: { heading: "clamp(1.6rem,3.4vw,2.6rem)", body: "1rem", measure: 560 },
-  editorial: { heading: "clamp(2rem,5vw,4rem)", body: "1.125rem", measure: 600 },
-  poster: { heading: "clamp(2.6rem,8vw,6.5rem)", body: "1.25rem", measure: 640 },
+  compact: { heading: "clamp(1.6rem,min(3.4vw,4.08vh),2.6rem)", body: "1rem", measure: 560 },
+  editorial: { heading: "clamp(2rem,min(5vw,6vh),4rem)", body: "1.125rem", measure: 600 },
+  poster: { heading: "clamp(2.6rem,min(8vw,9.6vh),6.5rem)", body: "1.25rem", measure: 640 },
 };
 
 export interface CompiledTheme {
