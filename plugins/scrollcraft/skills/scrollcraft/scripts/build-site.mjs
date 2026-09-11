@@ -189,7 +189,7 @@ function renderSections(sections, images, specScrim) {
     const scrim = Number.isFinite(scrimRaw) ? Math.min(Math.max(scrimRaw, 0), 1) : 0;
     return `    <section class="scroll-section" style="height:${height}px; position:relative; z-index:10;">
       <div class="section-sticky" style="position:sticky; top:0; height:100vh; display:flex; align-items:${safeCss(s.align || L.align)}; justify-content:${safeCss(s.justify || L.justify)}; overflow:hidden;">
-        <div class="section-content" data-reveal="${reveal}" style="${scrim > 0 ? `background:radial-gradient(ellipse 120% 100% at 50% 50%, rgba(0,0,0,${scrim}) 0%, rgba(0,0,0,${(scrim * 0.72).toFixed(3)}) 45%, rgba(0,0,0,0) 78%); ` : ""}text-align:${safeCss(s.textAlign || L.textAlign)}; padding:${L.pad}; max-width:${L.maxWidth}px; transition:opacity 0.6s cubic-bezier(0.25,0.46,0.45,0.94),transform 0.6s cubic-bezier(0.25,0.46,0.45,0.94),clip-path 0.7s cubic-bezier(0.25,0.46,0.45,0.94);">
+        <div class="section-content" data-reveal="${reveal}" style="${scrim > 0 ? `background:radial-gradient(ellipse 120% 100% at 50% 50%, rgba(0,0,0,${scrim}) 0%, rgba(0,0,0,${(scrim * 0.72).toFixed(3)}) 45%, rgba(0,0,0,0) 78%); ` : ""}text-align:${safeCss(s.textAlign || L.textAlign)}; padding:${L.pad}; max-width:${L.maxWidth}px; box-sizing:content-box; transition:opacity 0.6s cubic-bezier(0.25,0.46,0.45,0.94),transform 0.6s cubic-bezier(0.25,0.46,0.45,0.94),clip-path 0.7s cubic-bezier(0.25,0.46,0.45,0.94);">
 ${parts.map((p) => "          " + p).join("\n")}
         </div>
       </div>

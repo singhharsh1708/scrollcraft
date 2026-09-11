@@ -257,7 +257,7 @@ export default function SiteRenderer({
                   className="pointer-events-auto sc-reveal"
                   data-reveal={s.reveal ?? "rise"}
                   style={{
-                    textAlign: align, padding: L.pad, maxWidth: L.maxWidth,
+                    textAlign: align, padding: L.pad, maxWidth: L.maxWidth, boxSizing: "content-box",
                     ...(scrim > 0 ? { background: `radial-gradient(ellipse 120% 100% at 50% 50%, rgba(0,0,0,${scrim}) 0%, rgba(0,0,0,${(scrim * 0.72).toFixed(3)}) 45%, rgba(0,0,0,0) 78%)` } : {}),
                   }}
                 >
