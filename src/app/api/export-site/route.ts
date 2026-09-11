@@ -671,14 +671,18 @@ export async function POST(req: NextRequest) {
     (function() {
       // Observe the section-content divs (inside sticky wrappers) for entrance animations.
       const contents = document.querySelectorAll('.section-content');
+      // A mask reveal starts clipped to nothing, and an observer never reports a
+      // zero-area target as intersecting, so watch its sticky wrapper instead.
+      function watched(el) { return el.getAttribute('data-reveal') === 'mask' && el.parentElement ? el.parentElement : el; }
       // Add only, and the same rootMargin SiteRenderer uses, so a section reveals once
       // here as it does in the preview rather than replaying on every pass.
       const observer = new IntersectionObserver(function(entries) {
         entries.forEach(function(entry) {
-          if (entry.isIntersecting) entry.target.classList.add('visible');
+          if (!entry.isIntersecting) return;
+          contents.forEach(function(el) { if (watched(el) === entry.target) el.classList.add('visible'); });
         });
       }, { threshold: 0.1, rootMargin: '0px 0px -8% 0px' });
-      contents.forEach(function(el) { observer.observe(el); });
+      contents.forEach(function(el) { observer.observe(watched(el)); });
     })();
   </script>
 </body>

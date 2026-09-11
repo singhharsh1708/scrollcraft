@@ -109,6 +109,37 @@ describe("skill build-site", () => {
     expect(out).toContain("var hasMobile = true;");
   });
 
+  it("reveals a mask section by watching its sticky wrapper", () => {
+    // The mask's clipped box has no area, so an observer on it never fires. Both example
+    // sites that use a mask shipped with that section invisible.
+    writeFrames(path.join(tmp, "frames"), [0]);
+    writeSpec({ sections: [{ heading: "A", reveal: "mask" }] });
+    expect(build().status).toBe(0);
+    const block = /var reveal = document\.querySelectorAll\('\.section-content'\);[\s\S]*?function \(el\) \{ el\.classList\.add\('visible'\); \}\);\n\s*\}/.exec(html());
+    expect(block, "no reveal observer in the bundle").toBeTruthy();
+
+    const el = (reveal: string) => {
+      const classes = new Set<string>();
+      return { parentElement: { reveal }, getAttribute: () => reveal, classList: { add: (c: string) => classes.add(c) }, classes };
+    };
+    const mask = el("mask");
+    const rise = el("rise");
+    const observed: unknown[] = [];
+    let fire: (entries: unknown[]) => void = () => {};
+    class FakeObserver {
+      constructor(cb: (entries: unknown[]) => void) { fire = cb; }
+      observe(target: unknown) { observed.push(target); }
+    }
+    new Function("document", "window", "IntersectionObserver", block![0])(
+      { querySelectorAll: () => [mask, rise] }, { IntersectionObserver: FakeObserver }, FakeObserver
+    );
+
+    expect(observed).toEqual([mask.parentElement, rise]);
+    fire([{ isIntersecting: true, target: mask.parentElement }]);
+    expect(mask.classes.has("visible")).toBe(true);
+    expect(rise.classes.has("visible")).toBe(false);
+  });
+
   it("reports hasMobile false when no mobile set is supplied", () => {
     writeFrames(path.join(tmp, "frames"), [0]);
     writeSpec({ sections: [{ heading: "A" }] });

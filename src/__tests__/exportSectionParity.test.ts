@@ -376,6 +376,39 @@ describe("exported reveals behave like the preview's", () => {
     expect(html).not.toContain("classList.remove('visible')");
     expect(html).toContain("rootMargin: '0px 0px -8% 0px'");
   });
+
+  it("reveals a mask section by watching its sticky wrapper", async () => {
+    // A mask reveal starts at clip-path: inset(0 0 100% 0), and an observer never reports
+    // that zero-area box as intersecting, so watching it directly left the section blank.
+    const html = await exportHtml([{ heading: "A", reveal: "mask", scrollHeight: 1000 }]);
+    const script = /\(function\(\) \{\s*\/\/ Observe the section-content divs[\s\S]*?\}\)\(\);/.exec(html);
+    expect(script, "no reveal observer in the export").toBeTruthy();
+
+    const el = (reveal: string) => {
+      const classes = new Set<string>();
+      return { parentElement: { reveal }, getAttribute: () => reveal, classList: { add: (c: string) => classes.add(c) }, classes };
+    };
+    const mask = el("mask");
+    const rise = el("rise");
+    const observed: unknown[] = [];
+    let fire: (entries: unknown[]) => void = () => {};
+    class FakeObserver {
+      constructor(cb: (entries: unknown[]) => void) { fire = cb; }
+      observe(target: unknown) { observed.push(target); }
+    }
+    new Function("document", "IntersectionObserver", script![0])({ querySelectorAll: () => [mask, rise] }, FakeObserver);
+
+    expect(observed).toEqual([mask.parentElement, rise]);
+    fire([{ isIntersecting: true, target: mask.parentElement }]);
+    expect(mask.classes.has("visible")).toBe(true);
+    expect(rise.classes.has("visible")).toBe(false);
+  });
+
+  it("watches the same element for a mask reveal as the preview does", () => {
+    const preview = readFileSync("src/components/SiteRenderer.tsx", "utf8");
+    expect(preview).toContain('el.dataset.reveal === "mask" && el.parentElement ? el.parentElement : el');
+    expect(preview).not.toContain("targets.forEach((el) => io.observe(el))");
+  });
 });
 
 describe("the exported CTA uses the theme's corner radius", () => {

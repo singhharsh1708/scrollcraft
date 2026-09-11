@@ -142,13 +142,21 @@
   }
 
   var reveal = document.querySelectorAll('.section-content');
+  // A mask reveal starts clipped to nothing, and an observer never reports a zero-area
+  // target as intersecting, so watch its sticky wrapper instead.
+  function watched(el) {
+    return el.getAttribute('data-reveal') === 'mask' && el.parentElement ? el.parentElement : el;
+  }
   if ('IntersectionObserver' in window) {
     var io = new IntersectionObserver(function (entries) {
       entries.forEach(function (entry) {
-        if (entry.isIntersecting) entry.target.classList.add('visible');
+        if (!entry.isIntersecting) return;
+        Array.prototype.forEach.call(reveal, function (el) {
+          if (watched(el) === entry.target) el.classList.add('visible');
+        });
       });
     }, { threshold: 0.25 });
-    Array.prototype.forEach.call(reveal, function (el) { io.observe(el); });
+    Array.prototype.forEach.call(reveal, function (el) { io.observe(watched(el)); });
   } else {
     Array.prototype.forEach.call(reveal, function (el) { el.classList.add('visible'); });
   }
