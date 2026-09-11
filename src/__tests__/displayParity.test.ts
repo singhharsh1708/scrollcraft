@@ -69,4 +69,11 @@ describe("the display treatment has one definition", () => {
     for (const [name, s] of Object.entries(TYPE_SCALES)) expect(BUILD_SITE).toContain(`${name}: { heading: "${s.heading}"`);
     expect(ENGINE_CSS).toMatch(/\.sc-statement \{\s*font-size: clamp\(2\.75rem, min\(\d+(\.\d+)?vw, \d+(\.\d+)?vh\), 9rem\);/);
   });
+
+  it("gives the copy a column as wide as the layout's max width in every renderer", () => {
+    // Under border-box the left layout's 8rem side padding came out of its 620px, so at
+    // 1920 wide the copy had 364px and 39 headings across 16 templates ran past their box.
+    expect(PREVIEW).toContain('maxWidth: L.maxWidth, boxSizing: "content-box"');
+    for (const src of [ROUTE, BUILD_SITE]) expect(src).toContain("max-width:${L.maxWidth}px; box-sizing:content-box;");
+  });
 });

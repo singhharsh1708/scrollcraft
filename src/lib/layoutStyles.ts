@@ -4,6 +4,7 @@ export interface LayoutStyle {
   align: string;
   justify: string;
   textAlign: "left" | "center" | "right";
+  /** Width of the copy itself. The renderers size the box content-box, so pad sits outside it. */
   maxWidth: number;
   pad: string;
 }
