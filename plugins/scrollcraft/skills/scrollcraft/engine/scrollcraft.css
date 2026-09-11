@@ -57,7 +57,7 @@ body {
 .section-content[data-reveal="stagger"].visible > *:nth-child(n+5) { transition-delay: 360ms; }
 
 .sc-statement {
-  font-size: clamp(2.75rem, min(11vw, 13.2vh), 9rem);
+  font-size: calc(clamp(2.75rem, min(11vw, 13.2vh), 9rem) * var(--sc-fit, 1));
   font-weight: var(--sc-display-weight, 800);
   line-height: 0.92;
   letter-spacing: var(--sc-display-tracking, -0.045em);

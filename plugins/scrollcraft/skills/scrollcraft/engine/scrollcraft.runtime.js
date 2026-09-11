@@ -161,6 +161,21 @@
     Array.prototype.forEach.call(reveal, function (el) { el.classList.add('visible'); });
   }
 
+  // A single word wider than its column runs past the box, and a mask reveal clips it
+  // there. Shrink that heading until it fits.
+  function fitHeadings() {
+    Array.prototype.forEach.call(document.querySelectorAll('.section-content h1, .section-content h2'), function (h) {
+      h.style.setProperty('--sc-fit', '1');
+      var over = h.clientWidth ? h.scrollWidth / h.clientWidth : 1;
+      if (over > 1.005) h.style.setProperty('--sc-fit', Math.max(0.5, 0.98 / over).toFixed(3));
+    });
+  }
+  var fitFrame = 0;
+  function scheduleFit() { cancelAnimationFrame(fitFrame); fitFrame = requestAnimationFrame(fitHeadings); }
+  scheduleFit();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(scheduleFit);
+  window.addEventListener('resize', scheduleFit);
+
   if (__HAS_AUDIO__) {
     var audio = new Audio('__AUDIO_SRC__');
     audio.loop = true;

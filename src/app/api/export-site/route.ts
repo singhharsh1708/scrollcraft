@@ -684,6 +684,22 @@ export async function POST(req: NextRequest) {
       }, { threshold: 0.1, rootMargin: '0px 0px -8% 0px' });
       contents.forEach(function(el) { observer.observe(watched(el)); });
     })();
+    (function() {
+      // A single word wider than its column runs past the box, and a mask reveal clips it
+      // there. Shrink that heading until it fits, as the preview does.
+      function fit() {
+        document.querySelectorAll('.section-content h1, .section-content h2').forEach(function(h) {
+          h.style.setProperty('--sc-fit', '1');
+          var over = h.clientWidth ? h.scrollWidth / h.clientWidth : 1;
+          if (over > 1.005) h.style.setProperty('--sc-fit', Math.max(0.5, 0.98 / over).toFixed(3));
+        });
+      }
+      var raf = 0;
+      function schedule() { cancelAnimationFrame(raf); raf = requestAnimationFrame(fit); }
+      schedule();
+      if (document.fonts && document.fonts.ready) document.fonts.ready.then(schedule);
+      window.addEventListener('resize', schedule);
+    })();
   </script>
 </body>
 </html>`;
