@@ -634,9 +634,10 @@ export default function HomeClient({
       <section className="border-t border-border px-6">
         <div className="mx-auto grid max-w-[1360px] items-center gap-12 py-24 sm:py-32 lg:grid-cols-2">
           <div aria-hidden="true" className="relative aspect-[4/3] w-full overflow-hidden rounded-xl bg-black">
-            {/* Held to the start of its range: particles lerp toward the palette's dark
-                third colour as progress rises, and the far end read as an empty frame. */}
-            <StylePreview style="particles" colors={FROST_COLORS} paused={reduced} maxProgress={0.3} className="absolute inset-0 h-full w-full" />
+            {/* Waves rather than particles: particles are a sparse field of small dots, and as
+                the last image on the page it read as an empty frame. Held to the bright start
+                of its range, since every style lerps toward the palette's dark third colour. */}
+            <StylePreview style="wave" colors={FROST_COLORS} paused={reduced} maxProgress={0.35} className="absolute inset-0 h-full w-full" />
           </div>
           <div>
             <h2 className="lc-display text-5xl text-primary-ink sm:text-6xl lg:text-[4.2rem]">
