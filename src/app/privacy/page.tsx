@@ -9,7 +9,7 @@ export default function PrivacyPage() {
   return (
     <main className="min-h-screen bg-background text-foreground">
       <Navbar />
-      <article className="max-w-3xl mx-auto px-6 py-16 prose prose-invert prose-sm">
+      <article className="max-w-3xl mx-auto px-6 py-20 prose prose-invert prose-sm prose-headings:font-light prose-headings:tracking-[-0.03em] prose-h1:text-5xl prose-a:text-primary-ink">
         <h1>Privacy Policy</h1>
         <p className="text-muted-foreground">Last updated: September 2026</p>
 
@@ -80,7 +80,7 @@ export default function PrivacyPage() {
           Questions? Email <a href={`mailto:${CONTACT_EMAIL}`} className="underline">{CONTACT_EMAIL}</a>.
         </p>
       </article>
-      <SiteFooter compact />
+      <SiteFooter />
     </main>
   );
 }

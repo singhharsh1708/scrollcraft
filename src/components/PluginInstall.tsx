@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Check, Copy, Terminal } from "lucide-react";
+import { ArrowUpRight, Check, Copy, Terminal } from "lucide-react";
 import { GITHUB_REPO_URL } from "@/lib/links";
 
 /**
@@ -30,50 +30,52 @@ export default function PluginInstall() {
   };
 
   return (
-    <div className="rounded-2xl border border-white/8 bg-card p-6 sm:p-8">
-      <div className="flex items-center gap-2 mb-2 text-primary-ink">
-        <Terminal className="w-4 h-4" aria-hidden="true" />
-        <span className="text-xs uppercase tracking-widest font-medium">Or build it from your editor</span>
+    <div id="plugin" className="rounded-lg border border-border bg-card p-6 sm:p-10">
+      <div className="grid gap-10 lg:grid-cols-[1fr_1.1fr] lg:items-center">
+        <div>
+          <p className="lc-mono mb-5 flex items-center gap-2 text-sm text-primary-ink">
+            <Terminal className="h-4 w-4" aria-hidden="true" /> Or build it from your editor
+          </p>
+          <h3 className="lc-display text-3xl sm:text-4xl">ScrollCraft as a Claude Code plugin</h3>
+          <p className="mt-4 max-w-xl leading-relaxed text-muted-foreground">
+            Scaffold a spec, render a background and build the site from the command line.
+            The only thing it needs installed is <code className="lc-mono text-foreground">ffmpeg</code>.
+          </p>
+          <a
+            href={`${GITHUB_REPO_URL}#installing-the-skill`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="lc-link mt-6"
+          >
+            What the plugin does <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
+          </a>
+        </div>
+
+        <ul className="space-y-2">
+          {COMMANDS.map((cmd) => (
+            <li key={cmd}>
+              <button
+                type="button"
+                onClick={() => copy(cmd)}
+                aria-label={`Copy command: ${cmd}`}
+                className="group flex w-full items-center justify-between gap-3 rounded-md border border-border bg-background px-4 py-3.5 text-left transition-colors hover:border-foreground/30"
+              >
+                <code className="lc-mono truncate text-xs text-foreground sm:text-sm">{cmd}</code>
+                {copied === cmd ? (
+                  <span className="lc-mono flex flex-shrink-0 items-center gap-1.5 text-xs text-primary-ink">
+                    <Check className="h-3.5 w-3.5" aria-hidden="true" /> Copied
+                  </span>
+                ) : (
+                  <Copy
+                    className="h-3.5 w-3.5 flex-shrink-0 text-muted-foreground transition-colors group-hover:text-foreground"
+                    aria-hidden="true"
+                  />
+                )}
+              </button>
+            </li>
+          ))}
+        </ul>
       </div>
-      <h3 className="text-2xl font-bold tracking-tight mb-2">ScrollCraft as a Claude Code plugin</h3>
-      <p className="text-sm text-muted-foreground mb-5 max-w-xl">
-        Scaffold a spec, render a background and build the site from the command line.
-        The only thing it needs installed is <code className="text-foreground">ffmpeg</code>.
-      </p>
-
-      <ul className="space-y-2">
-        {COMMANDS.map((cmd) => (
-          <li key={cmd}>
-            <button
-              type="button"
-              onClick={() => copy(cmd)}
-              aria-label={`Copy command: ${cmd}`}
-              className="group w-full flex items-center justify-between gap-3 rounded-lg border border-white/10 bg-black/40 px-4 py-2.5 text-left transition-colors hover:border-white/20"
-            >
-              <code className="text-xs sm:text-sm font-mono text-foreground/90 truncate">{cmd}</code>
-              {copied === cmd ? (
-                <span className="flex items-center gap-1.5 text-xs text-primary-ink flex-shrink-0">
-                  <Check className="w-3.5 h-3.5" aria-hidden="true" /> Copied
-                </span>
-              ) : (
-                <Copy
-                  className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground flex-shrink-0 transition-colors"
-                  aria-hidden="true"
-                />
-              )}
-            </button>
-          </li>
-        ))}
-      </ul>
-
-      <a
-        href={`${GITHUB_REPO_URL}#install-the-claude-code-plugin`}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="inline-block mt-4 text-sm text-muted-foreground hover:text-foreground transition-colors"
-      >
-        What the plugin does →
-      </a>
     </div>
   );
 }

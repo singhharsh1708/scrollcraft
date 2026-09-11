@@ -2,9 +2,8 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { ArrowRight, Search, Layers, Eye } from "lucide-react";
+import { ArrowRight, Search, Eye } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import StylePreview from "@/components/StylePreview";
 import type { Style2D } from "@/lib/generate2DFrames";
@@ -54,14 +53,13 @@ export default function TemplatesClient({ templates, categories: allCategories }
     <main className="min-h-screen bg-background text-foreground">
       <Navbar />
 
-      <section className="pt-16 pb-10 text-center px-6">
-        <Badge variant="outline" className="mb-5 border-primary/40 text-primary-ink bg-primary/10 px-4 py-1.5">
-          <Layers className="w-3 h-3 mr-1.5" /> {templates.length} templates, all free
-        </Badge>
-        <h1 className="text-5xl md:text-6xl font-black tracking-tighter mb-4">
-          Start from a finished site
+      <section className="px-6 pb-12 pt-20 text-center">
+        <p className="lc-mono mb-6 text-sm text-primary-ink">{templates.length} templates, all free</p>
+        <h1 className="lc-display text-5xl md:text-6xl lg:text-7xl">
+          <span className="block">Start from a</span>
+          <span className="block text-primary-ink">finished site</span>
         </h1>
-        <p className="text-muted-foreground text-lg max-w-xl mx-auto">
+        <p className="mx-auto mt-6 max-w-xl text-lg text-muted-foreground">
           Every template ships with its own palette, typography, pacing and copy structure.
           Open one, change the words, export it.
         </p>
@@ -75,8 +73,8 @@ export default function TemplatesClient({ templates, categories: allCategories }
             id="template-search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by name, category or tag"
-            className="pl-9 bg-card border-white/10"
+            placeholder="Search templates"
+            className="lc-mono h-11 pl-9 bg-card border-border"
           />
         </div>
 
@@ -87,10 +85,10 @@ export default function TemplatesClient({ templates, categories: allCategories }
               type="button"
               onClick={() => setActiveCategory(c)}
               aria-pressed={activeCategory === c}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+              className={`lc-mono h-9 px-4 rounded-full text-[0.8rem] border transition-colors ${
                 activeCategory === c
-                  ? "border-primary/50 bg-primary/15 text-primary-ink"
-                  : "border-white/10 text-muted-foreground hover:text-foreground hover:border-white/20"
+                  ? "border-primary-ink/60 bg-primary-ink/15 text-foreground"
+                  : "border-border text-muted-foreground hover:text-foreground hover:border-foreground/30"
               }`}
             >
               {c}
@@ -98,14 +96,14 @@ export default function TemplatesClient({ templates, categories: allCategories }
           ))}
         </div>
 
-        <p className="text-center text-xs text-muted-foreground" aria-live="polite">
+        <p className="lc-mono text-center text-xs text-muted-foreground" aria-live="polite">
           {filtered.length} of {templates.length} templates
         </p>
       </div>
 
       <section className="px-6 pb-24 max-w-7xl mx-auto">
         {filtered.length === 0 ? (
-          <div className="text-center py-20 border border-white/8 rounded-2xl bg-card">
+          <div className="text-center py-20 border border-border rounded-lg bg-card">
             <p className="font-medium mb-1">Nothing matches “{search}”</p>
             <p className="text-sm text-muted-foreground mb-5">
               Try a category instead, or clear the search.
@@ -113,7 +111,7 @@ export default function TemplatesClient({ templates, categories: allCategories }
             <Button
               variant="outline"
               size="sm"
-              className="border-white/10"
+              className="border-border"
               onClick={() => { setSearch(""); setActiveCategory("All"); }}
             >
               Show all templates
@@ -126,7 +124,7 @@ export default function TemplatesClient({ templates, categories: allCategories }
                 key={t.slug}
                 onMouseEnter={() => setHovered(t.slug)}
                 onMouseLeave={() => setHovered((h) => (h === t.slug ? null : h))}
-                className="group rounded-2xl border border-white/8 bg-card overflow-hidden flex flex-col focus-within:border-primary/40 hover:border-white/15 transition-colors"
+                className="group rounded-lg border border-border bg-card overflow-hidden flex flex-col focus-within:border-primary-ink/50 hover:border-foreground/25 transition-colors"
               >
                 <div className={`relative aspect-[16/10] bg-gradient-to-br ${t.gradient}`}>
                   <StylePreview
@@ -136,37 +134,37 @@ export default function TemplatesClient({ templates, categories: allCategories }
                     className="absolute inset-0 w-full h-full"
                   />
                   <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/70 to-transparent">
-                    <span className="text-[10px] uppercase tracking-widest text-white/70">{t.category}</span>
+                    <span className="lc-mono text-[11px] text-white/80">{t.category}</span>
                   </div>
                 </div>
 
                 <div className="p-4 flex flex-col gap-3 flex-1">
                   <div className="space-y-1">
-                    <h2 className="font-bold tracking-tight">{t.name}</h2>
+                    <h2 className="text-lg font-medium tracking-[-0.02em]">{t.name}</h2>
                     <p className="text-xs text-muted-foreground leading-relaxed">{t.tagline}</p>
                   </div>
 
                   <div className="flex flex-wrap gap-1.5">
                     {t.tags.map((tag) => (
-                      <span key={tag} className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-muted-foreground">
+                      <span key={tag} className="lc-mono text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
                         {tag}
                       </span>
                     ))}
                   </div>
 
-                  <p className="text-[11px] text-muted-foreground mt-auto">
+                  <p className="lc-mono text-[11px] text-muted-foreground mt-auto">
                     {t.sectionCount} sections ·{" "}
                     {t.scrollHeight.toLocaleString()}px of scroll
                   </p>
 
                   <div className="flex gap-2">
                     <Link href={`/templates/${t.slug}`} className="flex-1">
-                      <Button variant="outline" size="sm" className="w-full border-white/10 text-xs h-8 gap-1.5">
+                      <Button variant="outline" size="sm" className="lc-mono w-full border-border text-xs h-9 gap-1.5">
                         <Eye className="w-3.5 h-3.5" /> Preview
                       </Button>
                     </Link>
                     <Link href={`/editor?template=${t.slug}`} className="flex-1">
-                      <Button size="sm" className="w-full text-xs h-8 gap-1.5">
+                      <Button size="sm" className="lc-mono w-full text-xs h-9 gap-1.5">
                         Use <ArrowRight className="w-3.5 h-3.5" />
                       </Button>
                     </Link>
@@ -177,7 +175,7 @@ export default function TemplatesClient({ templates, categories: allCategories }
           </div>
         )}
       </section>
-      <SiteFooter compact />
+      <SiteFooter />
     </main>
   );
 }

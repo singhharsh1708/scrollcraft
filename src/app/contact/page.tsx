@@ -1,7 +1,6 @@
 "use client";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Mail, CheckCircle2 } from "lucide-react";
@@ -58,9 +57,9 @@ export default function ContactPage() {
       <Navbar />
 
       <section className="pt-20 pb-16 px-6 max-w-5xl mx-auto">
-        <div className="text-center mb-14">
-          <Badge variant="outline" className="mb-5 border-primary/40 text-primary-ink bg-primary/10 px-4 py-1.5">Get in touch</Badge>
-          <h1 className="text-5xl font-black tracking-tighter mb-4">How can we help?</h1>
+        <div className="text-center mb-16">
+          <p className="lc-mono mb-6 text-sm text-primary-ink">Get in touch</p>
+          <h1 className="lc-display mb-6 text-5xl md:text-6xl">How can <span className="text-primary-ink">we help?</span></h1>
           <p className="text-muted-foreground text-lg max-w-lg mx-auto">
             Messages come straight to me. Bugs and feature requests are usually better as
             a GitHub issue, where anyone hitting the same thing can follow along.
@@ -79,73 +78,73 @@ export default function ContactPage() {
                 key={c.title}
                 href={c.href}
                 {...(c.href.startsWith("http") ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-                className="block p-5 rounded-2xl border border-white/8 bg-card hover:border-white/15 transition-colors"
+                className="block p-5 rounded-lg border border-border bg-card hover:border-foreground/25 transition-colors"
               >
-                <div className="w-9 h-9 rounded-xl bg-primary/15 flex items-center justify-center mb-3">
+                <div className="w-9 h-9 rounded-md bg-primary/15 flex items-center justify-center mb-3">
                   <c.icon className="w-4 h-4 text-primary-ink" />
                 </div>
-                <p className="font-semibold text-sm mb-0.5">{c.title}</p>
-                <p className="text-xs text-primary-ink mb-0.5">{c.desc}</p>
-                <p className="text-xs text-muted-foreground">{c.sub}</p>
+                <p className="font-medium text-sm mb-0.5">{c.title}</p>
+                <p className="lc-mono text-xs text-primary-ink mb-0.5">{c.desc}</p>
+                <p className="lc-mono text-xs text-muted-foreground">{c.sub}</p>
               </a>
             ))}
           </div>
 
           {/* Form */}
-          <div className="md:col-span-2 p-6 rounded-2xl border border-white/8 bg-card">
+          <div className="md:col-span-2 p-6 sm:p-8 rounded-lg border border-border bg-card">
             {sent ? (
               <div className="h-full flex flex-col items-center justify-center text-center gap-4 py-8">
                 <div className="w-14 h-14 rounded-full bg-primary/15 flex items-center justify-center">
                   <CheckCircle2 className="w-7 h-7 text-primary-ink" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-lg mb-1">Your mail app should be open</h3>
+                  <h3 className="lc-display text-2xl mb-2">Your mail app should be open</h3>
                   <p className="text-muted-foreground text-sm">
                     Nothing is sent until you press send there. If it did not open, email{" "}
                     {CONTACT_EMAIL} directly.
                   </p>
                 </div>
-                <Button onClick={() => setSent(false)} variant="outline" className="border-white/10 mt-2">Write another</Button>
+                <Button onClick={() => setSent(false)} variant="outline" className="border-border mt-2">Write another</Button>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label htmlFor="contact-name" className="text-xs text-muted-foreground">Name</label>
-                    <Input id="contact-name" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Your name" className="bg-white/5 border-white/10" />
+                    <label htmlFor="contact-name" className="lc-mono text-xs text-muted-foreground">Name</label>
+                    <Input id="contact-name" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Your name" className="bg-background border-border" />
                   </div>
                   <div className="space-y-1.5">
-                    <label htmlFor="contact-email" className="text-xs text-muted-foreground">Email</label>
-                    <Input id="contact-email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} placeholder="you@example.com" type="email" className="bg-white/5 border-white/10" />
+                    <label htmlFor="contact-email" className="lc-mono text-xs text-muted-foreground">Email</label>
+                    <Input id="contact-email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} placeholder="you@example.com" type="email" className="bg-background border-border" />
                   </div>
                 </div>
                 <div className="space-y-1.5">
                   {/* A pill group, not a text field: named as a group so a screen reader
                       announces what the pressed state belongs to. */}
-                  <span id="contact-topic-label" className="block text-xs text-muted-foreground">Topic</span>
+                  <span id="contact-topic-label" className="lc-mono block text-xs text-muted-foreground">Topic</span>
                   <div role="group" aria-labelledby="contact-topic-label" className="flex flex-wrap gap-2">
                     {TOPICS.map(t => (
                       <button key={t} type="button" onClick={() => setForm(f => ({ ...f, topic: t }))}
                         aria-pressed={form.topic === t}
-                        className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${form.topic === t ? "bg-primary text-white border-primary" : "border-white/10 text-muted-foreground hover:border-white/20"}`}
+                        className={`lc-mono h-9 px-4 rounded-full text-[0.8rem] border transition-colors ${form.topic === t ? "border-primary-ink/60 bg-primary-ink/15 text-foreground" : "border-border text-muted-foreground hover:border-foreground/30"}`}
                       >{t}</button>
                     ))}
                   </div>
                 </div>
                 <div className="space-y-1.5">
-                  <label htmlFor="contact-message" className="text-xs text-muted-foreground">Message</label>
-                  <Textarea id="contact-message" value={form.message} onChange={e => setForm(f => ({ ...f, message: e.target.value }))} placeholder="Tell us what's on your mind..." className="bg-white/5 border-white/10 min-h-[140px] resize-none" />
+                  <label htmlFor="contact-message" className="lc-mono text-xs text-muted-foreground">Message</label>
+                  <Textarea id="contact-message" value={form.message} onChange={e => setForm(f => ({ ...f, message: e.target.value }))} placeholder="Tell us what's on your mind..." className="bg-background border-border min-h-[140px] resize-none" />
                 </div>
-                <Button type="submit" disabled={loading} className="w-full bg-primary hover:bg-primary/90 text-white font-semibold py-5">
+                <button type="submit" disabled={loading} className="lc-btn lc-btn-solid w-full disabled:opacity-60">
                   {loading ? "Opening…" : "Compose message"}
-                </Button>
+                </button>
               </form>
             )}
           </div>
         </div>
       </section>
 
-      <SiteFooter compact />
+      <SiteFooter />
     </main>
   );
 }

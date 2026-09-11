@@ -8,7 +8,7 @@ export default function CookiesPage() {
   return (
     <main className="min-h-screen bg-background text-foreground">
       <Navbar />
-      <article className="max-w-3xl mx-auto px-6 py-16 prose prose-invert prose-sm">
+      <article className="max-w-3xl mx-auto px-6 py-20 prose prose-invert prose-sm prose-headings:font-light prose-headings:tracking-[-0.03em] prose-h1:text-5xl prose-a:text-primary-ink">
         <h1>Cookie Policy</h1>
         <p className="text-muted-foreground">Last updated: August 2026</p>
 
@@ -40,7 +40,7 @@ export default function CookiesPage() {
         <h2>Contact</h2>
         <p>Questions? Email <a href="mailto:hs1663531@gmail.com" className="underline">hs1663531@gmail.com</a>. See also our <Link href="/privacy" className="underline">Privacy Policy</Link>.</p>
       </article>
-      <SiteFooter compact />
+      <SiteFooter />
     </main>
   );
 }

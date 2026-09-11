@@ -6,13 +6,14 @@ import { findPreset } from "@/lib/presets";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { ArrowLeft, ArrowRight, Sparkles, Upload, CheckCircle2, Loader2, Layers, Zap, Waves, Circle } from "lucide-react";
+import { ArrowLeft, ArrowRight, Sparkles, Upload, CheckCircle2, Loader2, Layers, Waves, Circle } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { generate2DFrames, type Style2D } from "@/lib/generate2DFrames";
 import { storeFrames, deleteFrames } from "@/lib/frameStorage";
 import { extractFramesInBrowser } from "@/lib/extractFramesInBrowser";
 import StylePreview from "@/components/StylePreview";
+import BrandMark from "@/components/BrandMark";
 
 const STYLES: { id: Style2D; label: string; description: string; icon: React.ReactNode; colors: [string, string, string] }[] = [
   { id: "gradient",  label: "Gradient Flow",  description: "Smooth color morphing with floating light orbs", icon: <Circle className="w-5 h-5" />,  colors: ["#7c3aed", "#2563eb", "#0f172a"] },
@@ -203,9 +204,7 @@ function CreatePageInner() {
           <ArrowLeft className="w-4 h-4" /> Back
         </Link>
         <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded bg-primary/20 flex items-center justify-center">
-            <Zap className="w-3.5 h-3.5 text-primary-ink" />
-          </div>
+          <BrandMark className="h-5 w-5 text-primary-ink" />
           <span className="font-semibold">ScrollCraft</span>
         </div>
         <div className="flex items-center gap-4">
@@ -242,7 +241,7 @@ function CreatePageInner() {
         {step === 0 && (
           <div className="w-full max-w-2xl space-y-6">
             <div className="text-center">
-              <h1 className="text-3xl font-black tracking-tighter mb-2">Choose your style</h1>
+              <h1 className="lc-display text-4xl mb-3">Choose your style</h1>
               <p className="text-muted-foreground">Pick an animation style for your scroll background</p>
             </div>
             <div className="grid grid-cols-2 gap-3">
@@ -293,7 +292,7 @@ function CreatePageInner() {
         {step === 1 && (
           <div className="w-full max-w-2xl space-y-8">
             <div className="text-center">
-              <h1 className="text-3xl font-black tracking-tighter mb-2">Configure</h1>
+              <h1 className="lc-display text-4xl mb-3">Configure</h1>
               <p className="text-muted-foreground">Pick a color palette and frame count</p>
             </div>
 

@@ -49,8 +49,13 @@ describe("the hero draws its animation instead of fetching it", () => {
 });
 
 describe("the landing page shows the product before it describes it", () => {
-  it("puts the copy and the demo in one row rather than stacking them", () => {
-    expect(HOME).toContain("grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]");
+  it("makes the animation the hero's backdrop, so all of it is in view at first paint", () => {
+    // It was once a box 733px down a 900px viewport, then the right half of a two-column
+    // row. As the full-bleed backdrop of the hero it starts at the top edge, which is
+    // what "the product before the description" actually requires.
+    const hero = HOME.slice(HOME.indexOf("{/* Hero */}"), HOME.indexOf("{/* Social proof strip */}"));
+    expect(hero).toContain("<HeroPreview />");
+    expect(hero).toMatch(/className="[^"]*\babsolute inset-0\b[^"]*"[^>]*>\s*<HeroPreview \/>/);
   });
 
   it("no longer veils the demo behind a fade to the page background", () => {

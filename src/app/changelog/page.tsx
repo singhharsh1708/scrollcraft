@@ -4,6 +4,18 @@ import SiteFooter from "@/components/SiteFooter";
 
 const ENTRIES = [
   {
+    version: "v1.3.0",
+    date: "September 11, 2026",
+    tag: "Minor",
+    tagColor: "bg-white/8 text-foreground border-white/15",
+    changes: [
+      { type: "improved", text: "A redesigned site: deep navy and pale blue, light display type, and monospaced labels for every piece of navigation" },
+      { type: "improved", text: "The landing page walks through the whole path from template to live site, stage by stage, using the product's own templates, editor copy and export contents in each panel" },
+      { type: "new", text: "One full footer on every page, with the documentation, source and plugin a click away" },
+      { type: "fixed", text: "The plugin link pointed at a README heading that no longer existed" },
+    ],
+  },
+  {
     version: "v1.2.0",
     date: "September 7, 2026",
     tag: "Minor",
@@ -126,20 +138,18 @@ export default function ChangelogPage() {
     <main className="min-h-screen bg-background text-foreground">
       <Navbar />
 
-      <section className="pt-20 pb-8 text-center px-6">
-        <Badge variant="outline" className="mb-5 border-primary/40 text-primary-ink bg-primary/10 px-4 py-1.5">
-          What&apos;s new
-        </Badge>
-        <h1 className="text-5xl font-black tracking-tighter mb-4">Changelog</h1>
-        <p className="text-muted-foreground text-lg max-w-md mx-auto">
-          Every update, every improvement — logged here.
+      <section className="px-6 pb-12 pt-20 text-center">
+        <p className="lc-mono mb-6 text-sm text-primary-ink">What&apos;s new</p>
+        <h1 className="lc-display text-5xl md:text-6xl lg:text-7xl">Changelog</h1>
+        <p className="mx-auto mt-6 max-w-md text-lg text-muted-foreground">
+          Every release, what changed in it, and why.
         </p>
       </section>
 
       <section className="px-6 pb-24 max-w-2xl mx-auto">
         <div className="relative">
           {/* Timeline line */}
-          <div className="absolute left-[7px] top-4 bottom-4 w-px bg-white/8" />
+          <div className="absolute left-[7px] top-4 bottom-4 w-px bg-border" />
 
           <div className="space-y-12">
             {ENTRIES.map((entry, i) => (
@@ -149,15 +159,15 @@ export default function ChangelogPage() {
 
                 <div className="space-y-4">
                   <div className="flex items-center gap-3 flex-wrap">
-                    <h2 className="text-lg font-black tracking-tight">{entry.version}</h2>
+                    <h2 className="lc-display text-2xl">{entry.version}</h2>
                     <Badge variant="outline" className={`text-xs px-2 py-0.5 border ${entry.tagColor}`}>{entry.tag}</Badge>
-                    <span className="text-xs text-muted-foreground">{entry.date}</span>
+                    <span className="lc-mono text-xs text-muted-foreground">{entry.date}</span>
                   </div>
 
                   <div className="space-y-2">
                     {entry.changes.map((c, j) => (
                       <div key={j} className="flex items-start gap-2.5">
-                        <span className={`text-xs px-1.5 py-0.5 rounded font-medium flex-shrink-0 mt-0.5 ${TYPE_STYLES[c.type] || TYPE_STYLES.new}`}>
+                        <span className={`lc-mono text-[11px] px-1.5 py-0.5 rounded flex-shrink-0 mt-0.5 ${TYPE_STYLES[c.type] || TYPE_STYLES.new}`}>
                           {c.type}
                         </span>
                         <p className="text-sm text-muted-foreground leading-relaxed">{c.text}</p>
@@ -171,7 +181,7 @@ export default function ChangelogPage() {
         </div>
       </section>
 
-      <SiteFooter compact />
+      <SiteFooter />
     </main>
   );
 }
