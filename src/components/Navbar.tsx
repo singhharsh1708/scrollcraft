@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ArrowUpRight, Heart, Menu, X } from "lucide-react";
@@ -29,6 +29,37 @@ export default function Navbar({ position = "sticky" }: { position?: "fixed" | "
   const [open, setOpen] = useState(false);
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
 
+  // Whether a pale band is under the nav's midline right now. Checked on scroll and
+  // resize, at most once a frame, and only against the handful of bands on the page.
+  const navRef = useRef<HTMLElement>(null);
+  const [onLight, setOnLight] = useState(false);
+  useEffect(() => {
+    let raf = 0;
+    const check = () => {
+      raf = 0;
+      const nav = navRef.current;
+      if (!nav) return;
+      const r = nav.getBoundingClientRect();
+      const y = r.top + r.height / 2;
+      const light = Array.from(document.querySelectorAll<HTMLElement>(".band-light")).some((band) => {
+        const b = band.getBoundingClientRect();
+        return b.top <= y && b.bottom >= y;
+      });
+      setOnLight((prev) => (prev === light ? prev : light));
+    };
+    const schedule = () => {
+      if (!raf) raf = requestAnimationFrame(check);
+    };
+    schedule();
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
+    return () => {
+      window.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, [pathname]);
+
   return (
     <>
       {pathname !== "/examples" && (
@@ -47,8 +78,14 @@ export default function Navbar({ position = "sticky" }: { position?: "fixed" | "
 
       <div className={`${position === "relative" ? "relative" : "sticky top-0"} z-50 px-3 pt-3 sm:px-6`}>
         <nav
+          ref={navRef}
           aria-label="Main"
-          className="mx-auto max-w-[1360px] rounded-md border border-border bg-background/80 backdrop-blur-xl"
+          data-surface={onLight ? "light" : "dark"}
+          // Near-opaque on the pale band: at 80% it borrowed the darkness of the dark card
+          // panels inside the band, which took the muted links down to 4.69:1.
+          className={`mx-auto max-w-[1360px] rounded-md border border-border backdrop-blur-xl transition-colors duration-300 ${
+            onLight ? "nav-on-light bg-band/95" : "bg-background/80"
+          }`}
         >
           <div className="flex h-16 items-center justify-between gap-4 pl-5 pr-2.5">
             <Link href="/" aria-label="ScrollCraft home" className="flex shrink-0 items-center gap-2 text-foreground">

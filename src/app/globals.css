@@ -240,7 +240,8 @@
    * every component inside reads correctly on the light ground without knowing it is
    * there: text, borders, cards, and the solid button, which inverts to navy.
    */
-  .band-light {
+  .band-light,
+  .nav-on-light {
     --background: var(--band);
     --foreground: var(--band-ink);
     --muted-foreground: var(--band-muted);
@@ -252,8 +253,17 @@
     --solid-hover: oklch(0.24 0.045 262);
     --line-strong: oklch(0.128 0.023 258.4 / 26%);
     --wash: oklch(0.128 0.023 258.4 / 5%);
+  }
+  .band-light {
     background: var(--band);
     color: var(--band-ink);
+  }
+  /* The sticky nav over a pale band takes the same tokens, so it turns light the way
+     the reference does instead of sitting there as a dark slab. The mark moves from cyan
+     to the fill blue, which holds 4.70:1 on the pale ground where cyan does not. */
+  .nav-on-light {
+    color: var(--band-ink);
+    --primary-ink: oklch(0.55 0.19 256.4);
   }
 }
 
