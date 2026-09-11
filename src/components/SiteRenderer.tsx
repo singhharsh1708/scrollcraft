@@ -83,10 +83,17 @@ export default function SiteRenderer({
       targets.forEach((el) => el.classList.add("sc-visible"));
       return;
     }
+    // A mask reveal starts clipped to nothing, and an observer never reports a zero-area
+    // target as intersecting, so watch its sticky wrapper instead.
+    const revealFor = new Map<Element, HTMLElement>();
     const io = new IntersectionObserver((entries) => {
-      entries.forEach((e) => { if (e.isIntersecting) e.target.classList.add("sc-visible"); });
+      entries.forEach((e) => { if (e.isIntersecting) revealFor.get(e.target)?.classList.add("sc-visible"); });
     }, { threshold: 0.1, rootMargin: "0px 0px -8% 0px" });
-    targets.forEach((el) => io.observe(el));
+    targets.forEach((el) => {
+      const observed = el.dataset.reveal === "mask" && el.parentElement ? el.parentElement : el;
+      revealFor.set(observed, el);
+      io.observe(observed);
+    });
     return () => io.disconnect();
   }, [sections]);
 
