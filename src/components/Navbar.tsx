@@ -81,8 +81,10 @@ export default function Navbar({ position = "sticky" }: { position?: "fixed" | "
           ref={navRef}
           aria-label="Main"
           data-surface={onLight ? "light" : "dark"}
-          className={`mx-auto max-w-[1360px] rounded-md border border-border bg-background/80 backdrop-blur-xl transition-colors duration-300 ${
-            onLight ? "nav-on-light" : ""
+          // Near-opaque on the pale band: at 80% it borrowed the darkness of the dark card
+          // panels inside the band, which took the muted links down to 4.69:1.
+          className={`mx-auto max-w-[1360px] rounded-md border border-border backdrop-blur-xl transition-colors duration-300 ${
+            onLight ? "nav-on-light bg-band/95" : "bg-background/80"
           }`}
         >
           <div className="flex h-16 items-center justify-between gap-4 pl-5 pr-2.5">

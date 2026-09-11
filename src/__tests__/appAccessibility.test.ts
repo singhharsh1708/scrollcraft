@@ -346,7 +346,7 @@ describe("the sticky nav reads on both grounds", () => {
   it("turns light over a pale band instead of staying a dark slab", () => {
     const navbar = readFileSync("src/components/Navbar.tsx", "utf8");
     expect(navbar).toContain('".band-light"');
-    expect(navbar).toContain('onLight ? "nav-on-light" : ""');
+    expect(navbar).toContain('onLight ? "nav-on-light bg-band/95" : "bg-background/80"');
     // Same token set as the band itself, so nothing inside the nav needs its own rule.
     expect(CSS).toMatch(/\.band-light,\s*\.nav-on-light\s*\{/);
   });
