@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useRef, useCallback, useSyncExternalStore, Suspense } from "react";
+import { shouldExportProcedurally } from "@/lib/exportMode";
 import { loadFrames, storeFrames, deleteFrames, storeDocument, loadDocument } from "@/lib/frameStorage";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -222,6 +223,11 @@ function EditorInner() {
     const parsedStyle = siteStyleSchema.safeParse({ style: styleParam, colors: colorParams });
     return parsedStyle.success ? parsedStyle.data : null;
   });
+  // Whether what is on screen is the recipe's own work. A video upload's frames are
+  // data: URIs too, so only provenance separates them, and the export needs to know.
+  const [framesFromRecipe, setFramesFromRecipe] = useState<boolean>(
+    () => !!pickedTemplate || siteStyleSchema.safeParse({ style: styleParam, colors: colorParams }).success
+  );
   const [siteTheme, setSiteTheme] = useState<Theme | null>(() =>
     pickedTemplate ? themeSchema.parse(pickedTemplate.theme) : null
   );
@@ -277,6 +283,7 @@ function EditorInner() {
           setFrames(regen);
           setFrameCount(regen.length);
           setIsDemo(false);
+          setFramesFromRecipe(true);
           toast.info("Redrew the background from its style - this browser no longer had the frames");
           return;
         }
@@ -310,6 +317,7 @@ function EditorInner() {
       setFrames(generated);
       setFrameCount(generated.length);
       setIsDemo(false);
+      setFramesFromRecipe(true);
     }).catch(() => {});
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -380,6 +388,7 @@ function EditorInner() {
           setFrames(storedFrames);
           setFrameCount(storedFrames.length);
           setIsDemo(false);
+          setFramesFromRecipe(doc.framesFromRecipe === true);
           backgroundRestored = true;
           if (storedMobile?.length) setMobileFrames(storedMobile);
         } else if (recipe) {
@@ -393,6 +402,7 @@ function EditorInner() {
             setFrames(regen);
             setFrameCount(regen.length);
             setIsDemo(false);
+            setFramesFromRecipe(true);
             backgroundRestored = true;
           }
         }
@@ -554,10 +564,12 @@ function EditorInner() {
   };
 
   // Export from the background recipe only when what is on screen is what that recipe
-  // draws. Locally generated frames are data: URIs; a video upload's frames are hosted
-  // URLs, and no recipe can reproduce someone's footage.
-  const exportProcedurally =
-    !!styleSpec && frames.length > 0 && frames.every((f) => f.startsWith("data:"));
+  // drew. No recipe can reproduce someone's footage.
+  const exportProcedurally = shouldExportProcedurally({
+    hasStyle: !!styleSpec,
+    framesFromRecipe,
+    frames,
+  });
 
   const handleExport = async () => {
     if (isDemo) {
@@ -804,6 +816,7 @@ function EditorInner() {
       customHead,
       customCss,
       fps,
+      framesFromRecipe,
       framesKey: framesCached ? SAVED_FRAMES_KEY : undefined,
       savedAt: new Date().toISOString(),
     });
