@@ -101,6 +101,8 @@ export interface StoredDocument {
   customCss?: string;
   fps?: number;
   framesKey?: string;
+  /** Frames the background recipe drew itself, so an export may redraw instead of ship them. */
+  framesFromRecipe?: boolean;
   savedAt: string;
 }
 

@@ -592,6 +592,8 @@ export async function POST(req: NextRequest) {
       var audio = new Audio('audio/track.${audioExt}');
       audio.loop = true;
       var lastScrollY = 0, lastScrollTime = 0, idleTimer = null, fadeRaf = null;
+      // Scrolling slowly held the track at 0.08, which is not audible on a laptop speaker.
+      var FLOOR = 0.3;
 
       // iOS Safari ignores writes to HTMLMediaElement.volume — it is fixed at 1 — so the
       // velocity ramp and the idle fade were silent no-ops there and the track played at
@@ -626,6 +628,11 @@ export async function POST(req: NextRequest) {
         fadeRaf = requestAnimationFrame(tick);
       }
 
+      function armIdle() {
+        clearTimeout(idleTimer);
+        idleTimer = setTimeout(function() { fadeVolume(0, 600); }, 2000);
+      }
+
       // Scrolling is not a user-activation gesture, so the play() attempted from the
       // scroll handler below always rejected with NotAllowedError and was swallowed —
       // exported audio never played at all. A click is a gesture, so start playback
@@ -634,7 +641,14 @@ export async function POST(req: NextRequest) {
       function startAudio() {
         if (started) return;
         started = true;
-        audio.play().catch(function() { started = false; });
+        audio.play().then(function() {
+          // The gesture that unblocks playback lands after the visitor has already
+          // scrolled, and the idle timer that scrolling armed would fade the track out
+          // about a second after it finally became audible.
+          cancelAnimationFrame(fadeRaf);
+          setVol(FLOOR);
+          armIdle();
+        }).catch(function() { started = false; });
       }
 
       var muteBtn = document.getElementById('audio-mute');
@@ -655,7 +669,7 @@ export async function POST(req: NextRequest) {
         var dt = now - lastScrollTime;
         var velocity = dt > 0 ? Math.abs(scrollY - lastScrollY) / dt : 0;
         lastScrollY = scrollY; lastScrollTime = now;
-        var targetVol = Math.min(Math.max(velocity / 0.5, 0.08), 1);
+        var targetVol = Math.min(Math.max(velocity / 0.5, FLOOR), 1);
         if (audio.paused) {
           setVol(targetVol);
           // A context created before a gesture starts suspended; resume on first scroll.
@@ -663,8 +677,7 @@ export async function POST(req: NextRequest) {
           audio.play().catch(function(){});
         }
         else { cancelAnimationFrame(fadeRaf); setVol(targetVol); }
-        clearTimeout(idleTimer);
-        idleTimer = setTimeout(function() { fadeVolume(0, 600); }, 2000);
+        armIdle();
       }, { passive: true });
     })();
     ` : ""}
