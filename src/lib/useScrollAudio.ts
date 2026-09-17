@@ -13,6 +13,9 @@ interface ScrollAudioOptions {
   rebindKey?: unknown;
 }
 
+/** Slow scrolling held the track at 0.08, which is not audible on a laptop speaker. */
+const FLOOR = 0.3;
+
 export function useScrollAudio({ audioSrc, scrollEl, muted = false, rebindKey }: ScrollAudioOptions) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const lastScrollY = useRef(0);
@@ -32,6 +35,13 @@ export function useScrollAudio({ audioSrc, scrollEl, muted = false, rebindKey }:
     }
     fadeRaf.current = requestAnimationFrame(tick);
   }, []);
+
+  const armIdle = useCallback(() => {
+    if (idleTimer.current) clearTimeout(idleTimer.current);
+    idleTimer.current = setTimeout(() => {
+      if (audioRef.current) fadeVolume(audioRef.current, 0);
+    }, 2000);
+  }, [fadeVolume]);
 
   useEffect(() => {
     if (!audioSrc) {
@@ -80,21 +90,20 @@ export function useScrollAudio({ audioSrc, scrollEl, muted = false, rebindKey }:
       lastScrollTime.current = now;
 
       // Map velocity (px/ms) to volume: 0.05 → quiet, 0.5 → full
-      const targetVolume = Math.min(Math.max(velocity / 0.5, 0.08), 1);
+      const targetVolume = Math.min(Math.max(velocity / 0.5, FLOOR), 1);
 
       if (audio.paused) {
         audio.volume = targetVolume;
-        audio.play().catch(() => {/* autoplay blocked — user must interact first */});
+        // Re-armed from when the track actually started: a blocked play resolves only
+        // once the visitor interacts, by which time this scroll's timer is nearly up.
+        audio.play().then(armIdle).catch(() => {/* autoplay blocked — user must interact first */});
       } else {
         cancelAnimationFrame(fadeRaf.current);
         audio.volume = targetVolume;
       }
 
       // Idle fade-out after 2s without scrolling
-      if (idleTimer.current) clearTimeout(idleTimer.current);
-      idleTimer.current = setTimeout(() => {
-        if (audioRef.current) fadeVolume(audioRef.current, 0);
-      }, 2000);
+      armIdle();
     };
 
     el.addEventListener("scroll", onScroll, { passive: true });
@@ -103,5 +112,5 @@ export function useScrollAudio({ audioSrc, scrollEl, muted = false, rebindKey }:
       if (idleTimer.current) clearTimeout(idleTimer.current);
       cancelAnimationFrame(fadeRaf.current);
     };
-  }, [audioSrc, scrollEl, fadeVolume, rebindKey]);
+  }, [audioSrc, scrollEl, fadeVolume, armIdle, rebindKey]);
 }
