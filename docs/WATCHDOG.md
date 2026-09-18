@@ -55,4 +55,4 @@ node .github/watchdog/run.mjs production | WATCHDOG_DRY_RUN=1 node .github/watch
 
 Runs on the workflow's built-in `GITHUB_TOKEN` (needs `issues: write`, already granted in the
 workflow). No extra secret. Set the repo variable `WATCHDOG_BASE_URL` if the production URL is
-not `https://scrollcraft-gilt.vercel.app`.
+not `https://scrollcraft.space`.

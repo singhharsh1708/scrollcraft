@@ -116,7 +116,7 @@ describe("a fork resolves its own origin", () => {
     // may name a specific deployment.
     const offenders = FILES.filter((f) => {
       if (f.endsWith("src/lib/env.ts")) return false;
-      return /scrollcraft-gilt\.vercel\.app/.test(readFileSync(f, "utf8"));
+      return /scrollcraft\.space/.test(readFileSync(f, "utf8"));
     });
     expect(offenders, "found a hardcoded deployment URL").toEqual([]);
   });

@@ -81,7 +81,7 @@ export const env = parseEnv();
 
 // Last resort only. Anyone who forks this and deploys it gets their own origin from
 // SITE_URL or from Vercel, so this is what a build with neither falls back to.
-const CANONICAL_FALLBACK_URL = "https://scrollcraft-gilt.vercel.app";
+const CANONICAL_FALLBACK_URL = "https://scrollcraft.space";
 
 /**
  * Public origin for robots.txt, the sitemap and canonical URLs.

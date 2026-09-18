@@ -58,7 +58,7 @@ jobs:
 
       - name: Run checks
         env:
-          WATCHDOG_BASE_URL: ${{ vars.WATCHDOG_BASE_URL || 'https://scrollcraft-gilt.vercel.app' }}
+          WATCHDOG_BASE_URL: ${{ vars.WATCHDOG_BASE_URL || 'https://scrollcraft.space' }}
           # A placeholder so `next build` in the code checks does not fail env validation;
           # the build never connects, and production checks probe the real deployment.
           AUTH_SECRET: "placeholder-build-only-secret"
