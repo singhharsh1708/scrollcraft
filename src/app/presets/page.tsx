@@ -170,9 +170,14 @@ export default function PresetsPage() {
         <p className="mx-auto mb-10 mt-6 max-w-md text-lg text-muted-foreground">
           Start from scratch: pick a style and a palette, or bring your own video, and the frames render in your browser.
         </p>
-        <Link href="/create" className="lc-btn lc-btn-solid">
-          Create from scratch <ArrowRight className="h-4 w-4" aria-hidden="true" />
-        </Link>
+        <div className="flex flex-wrap justify-center gap-3">
+          <Link href="/create" className="lc-btn lc-btn-solid">
+            Create from scratch <ArrowRight className="h-4 w-4" aria-hidden="true" />
+          </Link>
+          <Link href="/contact?topic=custom" className="lc-btn lc-btn-ghost">
+            Ask for a custom build
+          </Link>
+        </div>
       </section>
 
       <SiteFooter />
