@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
 import { ArrowUpRight, Film, LayoutTemplate, Terminal } from "lucide-react";
-import HeroScreens from "@/components/HeroScreens";
+import HeroSequence, { type HeroTemplate } from "@/components/HeroSequence";
 import Navbar from "@/components/Navbar";
 import StylePreview from "@/components/StylePreview";
 import type { Style2D } from "@/lib/generate2DFrames";
@@ -12,16 +12,6 @@ import SiteFooter from "@/components/SiteFooter";
 import Lifecycle, { type LifecycleStep } from "@/components/Lifecycle";
 import { GITHUB_REPO_URL } from "@/lib/links";
 
-/**
- * The hero animation, drawn rather than fetched.
- *
- * Same drawFrame2D the product itself uses, on a canvas, for no network requests. It is
- * the hero's backdrop rather than a box beside the copy, so all of it is in view at
- * first paint.
- */
-const HERO_STYLE: Style2D = "gradient";
-/** TripVault's own palette: the catalogue's closest match to the page's navy and cyan. */
-const HERO_COLORS: [string, string, string] = ["#0284c7", "#0891b2", "#020c1a"];
 /** NeuralPath and Halo, for the canvases further down. Both from the catalogue. */
 const PARTICLE_COLORS: [string, string, string] = ["#2563eb", "#0891b2", "#02101c"];
 const WAVE_COLORS: [string, string, string] = ["#3b82f6", "#4338ca", "#040a1a"];
@@ -98,20 +88,6 @@ const FAQ = [
   { q: "Where can I host the exported site?", a: "Anywhere that serves static files: Netlify, Vercel, Cloudflare Pages, GitHub Pages or your own server. Unzip it and upload the folder." },
   { q: "How are the frames generated?", a: "They are drawn in your browser from the style and palette the template carries. Nothing is sent to a server to make them." },
 ];
-
-function HeroPreview() {
-  const reducedMotion = useReducedMotion();
-  return (
-    <StylePreview
-      style={HERO_STYLE}
-      colors={HERO_COLORS}
-      paused={reducedMotion}
-      durationSec={9}
-      maxProgress={0.55}
-      className="h-full w-full"
-    />
-  );
-}
 
 function PanelFrame({ label, meta, children }: { label: string; meta?: string; children: ReactNode }) {
   return (
@@ -312,11 +288,13 @@ function InlineLink({ label, href, external, className = "" }: { label: string; 
 }
 
 export default function HomeClient({
+  heroTemplate,
   templates,
   editorSample,
   examples,
   stats,
 }: {
+  heroTemplate: HeroTemplate;
   templates: TemplateSlice[];
   editorSample: EditorSample | null;
   examples: ExampleCard[];
@@ -444,56 +422,40 @@ export default function HomeClient({
       <Navbar />
 
       {/* Hero */}
-      <section className="relative -mt-[76px] flex min-h-[92svh] flex-col overflow-hidden pt-[76px]">
-        <div aria-hidden="true" className="absolute inset-0">
-          <HeroPreview />
+      <HeroSequence template={heroTemplate} templateCount={stats.templates} reducedMotion={reduced}>
+        <h1 className="lc-display text-[2.6rem] sm:text-6xl lg:text-[3.9rem]">
+          <span className="block text-foreground">Cinematic scroll websites</span>
+          <span className="block text-primary-ink">exported as plain HTML</span>
+        </h1>
+        <p className="mt-7 max-w-xl text-lg leading-relaxed text-muted-foreground sm:text-xl">
+          Pick a finished template, change the words, download a ZIP. The background moves
+          as your reader scrolls, and nothing needs installing.
+        </p>
+        <div className="mt-10 grid w-full max-w-sm grid-cols-2 gap-3 sm:flex sm:w-auto sm:max-w-none">
+          <Link href="/create" className="lc-btn lc-btn-solid">
+            Start building
+          </Link>
+          <Link href="/examples" className="lc-btn lc-btn-ghost">
+            See examples
+          </Link>
         </div>
-        {/* Dark behind the copy and open at the edges, so the animation reads as the art
-            around the headline. It used to be the other way round, lightest behind the
-            text and near black everywhere else, which hid the one thing the hero shows. */}
-        <div
-          aria-hidden="true"
-          className="absolute inset-0 bg-[radial-gradient(ellipse_52%_56%_at_50%_44%,rgba(3,7,16,0.9)_0%,rgba(3,7,16,0.8)_45%,rgba(3,7,16,0.35)_80%,rgba(3,7,16,0.15)_100%)] lg:bg-[radial-gradient(ellipse_46%_60%_at_32%_50%,rgba(3,7,16,0.92)_0%,rgba(3,7,16,0.78)_45%,rgba(3,7,16,0.3)_80%,rgba(3,7,16,0.12)_100%)]"
-        />
-        <div aria-hidden="true" className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-background" />
+        <p className="lc-mono mt-8 text-sm text-muted-foreground">No account · Runs in your browser · MIT licensed</p>
+        <p className="lc-mono mt-12 hidden text-sm text-primary-ink lg:block">Scroll, and the screen plays the site</p>
+      </HeroSequence>
 
-        <div className="relative mx-auto grid w-full max-w-[1360px] flex-1 grid-cols-1 items-center gap-9 px-6 pb-12 pt-20 text-center sm:gap-14 sm:pt-24 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:gap-16 lg:text-left">
-          <div className="flex flex-col items-center lg:items-start">
-            <h1 className="lc-display text-[2.6rem] sm:text-6xl lg:text-[3.9rem]">
-              <span className="block text-foreground">Cinematic scroll websites</span>
-              <span className="block text-primary-ink">exported as plain HTML</span>
-            </h1>
-            <p className="mt-7 max-w-xl text-lg leading-relaxed text-muted-foreground sm:text-xl">
-              Pick a finished template, change the words, download a ZIP. The background moves
-              as your reader scrolls, and nothing needs installing.
-            </p>
-            <div className="mt-10 grid w-full max-w-sm grid-cols-2 gap-3 sm:flex sm:w-auto sm:max-w-none">
-              <Link href="/create" className="lc-btn lc-btn-solid">
-                Start building
-              </Link>
-              <Link href="/examples" className="lc-btn lc-btn-ghost">
-                See examples
-              </Link>
-            </div>
-            <p className="lc-mono mt-8 text-sm text-muted-foreground">No account · Runs in your browser · MIT licensed</p>
-          </div>
-          <HeroScreens />
+      {/* Social proof strip */}
+      <div className="relative border-t border-border bg-background">
+        <div className="mx-auto flex max-w-[1360px] flex-col items-center gap-5 px-6 py-8 lg:flex-row lg:justify-between">
+          <p className="lc-mono shrink-0 text-xs uppercase tracking-[0.16em] text-muted-foreground">Exports deploy to</p>
+          <ul className="flex flex-wrap items-center justify-center gap-x-10 gap-y-3 lg:justify-end">
+            {DEPLOY_TARGETS.map((t) => (
+              <li key={t} className="text-lg font-light tracking-[-0.01em] text-foreground/85 sm:text-xl">
+                {t}
+              </li>
+            ))}
+          </ul>
         </div>
-
-        {/* Social proof strip */}
-        <div className="relative border-t border-border bg-background/50 backdrop-blur-sm">
-          <div className="mx-auto flex max-w-[1360px] flex-col items-center gap-5 px-6 py-8 lg:flex-row lg:justify-between">
-            <p className="lc-mono shrink-0 text-xs uppercase tracking-[0.16em] text-muted-foreground">Exports deploy to</p>
-            <ul className="flex flex-wrap items-center justify-center gap-x-10 gap-y-3 lg:justify-end">
-              {DEPLOY_TARGETS.map((t) => (
-                <li key={t} className="text-lg font-light tracking-[-0.01em] text-foreground/85 sm:text-xl">
-                  {t}
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      </section>
+      </div>
 
       {/* Lifecycle */}
       <section className="px-6 pb-16 pt-28 sm:pt-36">
