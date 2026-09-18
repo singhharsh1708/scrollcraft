@@ -23,6 +23,7 @@ export const metadata: Metadata = {
   title: "Examples — three finished ScrollCraft sites",
   description:
     "Three complete scroll sites, each served as the exported bundle it produces: an architecture practice, a distillery and a deep-ocean survey programme.",
+  alternates: { canonical: "/examples" },
 };
 
 type Example = {

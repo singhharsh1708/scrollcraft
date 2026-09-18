@@ -2,7 +2,7 @@ import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import SiteFooter from "@/components/SiteFooter";
 
-export const metadata = { title: "Cookie Policy" };
+export const metadata = { title: "Cookie Policy", alternates: { canonical: "/cookies" } };
 
 export default function CookiesPage() {
   return (
