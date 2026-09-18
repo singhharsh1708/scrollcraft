@@ -130,8 +130,9 @@ npx serve .
 \`\`\`
 Then open the address it prints.
 
-Do **not** open \`index.html\` by double-clicking it. Browsers block a page loaded over
-\`file://\` from reading its own neighbouring files, so the background will not appear.
+Extract the whole ZIP before opening anything. Opening \`index.html\` from inside the ZIP
+copies only that one file somewhere temporary, so the page loads without its \`frames\`
+folder and the background stays black. The page tells you when that has happened.
 
 ## What is in here
 
