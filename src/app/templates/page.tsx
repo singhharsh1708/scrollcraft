@@ -1,5 +1,12 @@
+import type { Metadata } from "next";
 import { TEMPLATES, templateCategories, templateScrollHeight, templateSectionCount } from "@/lib/templates";
 import TemplatesClient, { type TemplateCard } from "./TemplatesClient";
+
+export const metadata: Metadata = {
+  title: "Templates",
+  description: "Twenty-one finished scroll sites across sixteen categories. Open one in the editor, change the words and export it as plain HTML.",
+  alternates: { canonical: "/templates" },
+};
 
 /**
  * Server shell for the gallery.

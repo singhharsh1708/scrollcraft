@@ -1,7 +1,11 @@
+import type { Metadata } from "next";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { TEMPLATES, templateCategories } from "@/lib/templates";
 import HomeClient, { type EditorSample, type ExampleCard, type TemplateSlice } from "./HomeClient";
+
+// The root layout owns this page's title and share card; it only needs its address.
+export const metadata: Metadata = { alternates: { canonical: "/" } };
 
 /**
  * Server shell for the landing page.
