@@ -483,11 +483,26 @@ export async function POST(req: NextRequest) {
       `}
 
       ${styleSpec ? "" : `
+      // Every keyframe failing means the frames folder is not beside this page. On Windows,
+      // opening index.html from inside the ZIP does exactly that: it copies the one file
+      // somewhere temporary and leaves the frames behind. Say so instead of showing a black
+      // page with nothing to go on.
+      function showMissingFrames() {
+        if (document.getElementById('sc-missing-frames')) return;
+        var box = document.createElement('div');
+        box.id = 'sc-missing-frames';
+        box.setAttribute('role', 'alert');
+        box.style.cssText = 'position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:9999;max-width:min(560px,calc(100% - 32px));padding:16px 20px;border-radius:12px;background:#111827;color:#f9fafb;border:1px solid rgba(255,255,255,0.18);font:15px/1.5 system-ui,-apple-system,sans-serif;box-shadow:0 20px 50px rgba(0,0,0,0.5)';
+        box.textContent = 'The background did not load: the frames folder is not next to this page. If you opened index.html from inside the ZIP, extract the whole ZIP first, then open index.html from the extracted folder.';
+        document.body.appendChild(box);
+      }
+
       function preloadSet(count, folder, target, isPrimary) {
         var STEP = 5;
         var keyframes = [];
         for (var i = 0; i < count; i += STEP) keyframes.push(i);
         var settled = 0; // counts successes + failures so the chain never hangs
+        var failed = 0;
 
         function loadFrame(idx) {
           var img = new Image();
@@ -510,6 +525,7 @@ export async function POST(req: NextRequest) {
           function advance() {
             settled++;
             if (settled === keyframes.length) {
+              if (isPrimary && failed === keyframes.length) { showMissingFrames(); return; }
               for (var j = 0; j < count; j++) {
                 if (j % STEP !== 0) loadFrame(j);
               }
@@ -525,7 +541,7 @@ export async function POST(req: NextRequest) {
             if (img.decode) { img.decode().then(put).catch(put); } else { put(); }
             advance();
           };
-          img.onerror = advance; // count failure so we don't hang
+          img.onerror = function() { failed++; advance(); }; // count failure so we don't hang
         });
       }
 
