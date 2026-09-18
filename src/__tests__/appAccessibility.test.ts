@@ -284,6 +284,18 @@ describe("every form control has a name a screen reader can read", () => {
     expect(presets).toContain('id="preset-search"');
   });
 
+  it("keeps every preset card legible and its actions reachable on a touch screen", () => {
+    // The actions sat in an overlay that was hidden only where hover exists, so on a
+    // phone all 57 cards carried a 60% black layer over a blurred name. Measured on the
+    // live page with hover:none: 57 of 57 overlays showing, and 30 of the 57 previews
+    // under 8/255 mean luma, which is why the frame now carries the name and palette.
+    const presets = readFileSync("src/app/presets/page.tsx", "utf8");
+    expect(presets, "the hover-only overlay is back").not.toContain("[@media(hover:hover)]:opacity-0");
+    expect(presets, "text under 12px is back").not.toContain("text-[11px]");
+    expect(presets, "the palette is not shown").toContain("preset.colors.map(");
+    expect(presets).toContain("href={`/create?template=${encodeURIComponent(preset.name)}`}");
+  });
+
   it("names the mobile-variant switch", () => {
     // role="switch" with aria-checked and no name announces only its state.
     const create = readFileSync("src/app/create/page.tsx", "utf8");

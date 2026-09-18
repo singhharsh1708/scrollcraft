@@ -2,7 +2,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import { TEMPLATES } from "@/lib/templates";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ArrowRight, Search, Eye } from "lucide-react";
 import Navbar from "@/components/Navbar";
@@ -95,69 +94,69 @@ export default function PresetsPage() {
             <p className="text-sm mt-1">Try a different search or category</p>
           </div>
         ) : (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-            {filtered.map((preset) => (
-              <div
-                key={preset.name}
-                className="group relative rounded-lg border border-border overflow-hidden hover:border-foreground/25 transition-all hover:-translate-y-1 cursor-pointer"
-                onMouseEnter={() => setHovered(preset.name)}
-                onMouseLeave={() => setHovered((h) => (h === preset.name ? null : h))}
-              >
-                {/* Visual preview — the actual renderer, so the card shows what this
-                    preset really generates. Only the hovered card animates. */}
-                <div className="aspect-video relative flex items-end p-4 bg-black">
-                  <StylePreview
-                    style={preset.style}
-                    colors={preset.colors}
-                    paused={hovered !== preset.name}
-                    className="absolute inset-0 w-full h-full"
-                  />
-                  {/* Scrim keeps the tag row and name legible over any frame */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
-                  <div className="relative z-10">
-                    <div className="flex flex-wrap gap-1 mb-2">
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {filtered.map((preset) => {
+              // Only offer a walkthrough where a real one exists.
+              const demoSlug = TEMPLATES.find((d) => d.name.toLowerCase() === preset.name.toLowerCase())?.slug;
+              return (
+                <article
+                  key={preset.name}
+                  className="flex flex-col overflow-hidden rounded-lg border border-border bg-card transition-colors hover:border-foreground/25"
+                  onMouseEnter={() => setHovered(preset.name)}
+                  onMouseLeave={() => setHovered((h) => (h === preset.name ? null : h))}
+                >
+                  {/* The renderer itself, so the card shows what this preset generates.
+                      The particle and geometric styles are near black with small points of
+                      colour, so the frame names itself and shows its palette rather than
+                      leaving a visitor to read an unlit rectangle. */}
+                  <div className="relative aspect-video overflow-hidden bg-black">
+                    <StylePreview
+                      style={preset.style}
+                      colors={preset.colors}
+                      paused={hovered !== preset.name}
+                      className="absolute inset-0 h-full w-full"
+                    />
+                    <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent" />
+                    <div aria-hidden="true" className="absolute right-3 top-3 flex gap-1.5">
+                      {preset.colors.map((c, i) => (
+                        <span key={i} className="h-3 w-3 rounded-full ring-1 ring-white/25" style={{ background: c }} />
+                      ))}
+                    </div>
+                    <div className="absolute inset-x-4 bottom-4">
+                      <p className="lc-mono text-xs text-white/70">{preset.category}</p>
+                      <h2 className="lc-display mt-0.5 text-xl text-white">{preset.name}</h2>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-1 flex-col gap-3 p-4">
+                    <p className="text-sm leading-snug text-muted-foreground">{preset.description}</p>
+                    <div className="flex flex-wrap gap-1.5">
                       {preset.tags.slice(0, 3).map((tag) => (
-                        <span key={tag} className="lc-mono text-[11px] px-2 py-0.5 rounded bg-black/40 backdrop-blur-sm">
+                        <span key={tag} className="lc-mono rounded border border-border px-2 py-0.5 text-xs text-muted-foreground">
                           {tag}
                         </span>
                       ))}
                     </div>
-                    <p className="text-base font-medium text-white leading-tight">{preset.name}</p>
-                    <p className="text-xs text-white/60">{preset.category}</p>
-                  </div>
-                  {/* Hover overlay — z-20 keeps it above the tags row (z-10) */}
-                  <div className="absolute inset-0 z-20 flex items-center justify-center gap-2 opacity-100 [@media(hover:hover)]:opacity-0 group-hover:[@media(hover:hover)]:opacity-100 group-focus-within:opacity-100 transition-opacity bg-black/60 backdrop-blur-sm">
-                    <Link href={`/create?template=${encodeURIComponent(preset.name)}`}>
-                      <Button size="sm" className="lc-mono bg-primary text-white text-xs h-9 px-3">
-                        Use preset <ArrowRight className="ml-1 w-3 h-3" />
-                      </Button>
-                    </Link>
-                    {(() => {
-                      // Only offer a walkthrough where a real one exists. The rest previewed
-                      // themselves by linking to /create, which is not a preview — the card's
-                      // own animation now fills that role.
-                      const demoSlug = TEMPLATES.find(
-                        (d) => d.name.toLowerCase() === preset.name.toLowerCase()
-                      )?.slug;
-                      if (!demoSlug) return null;
-                      return (
-                        <Link href={`/templates/${demoSlug}`}>
-                          <Button size="sm" variant="outline" className="lc-mono border-white/25 bg-white/10 backdrop-blur-sm hover:bg-white/20 text-xs h-9 px-3">
-                            <Eye className="w-3 h-3 mr-1" /> Preview
-                          </Button>
+                    <div className="mt-auto flex items-center gap-5">
+                      <Link
+                        href={`/create?template=${encodeURIComponent(preset.name)}`}
+                        className="lc-mono inline-flex h-9 items-center gap-1.5 text-sm text-primary-ink hover:underline"
+                      >
+                        Use preset <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+                      </Link>
+                      {demoSlug && (
+                        <Link
+                          href={`/templates/${demoSlug}`}
+                          className="lc-mono inline-flex h-9 items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+                        >
+                          <Eye className="h-3.5 w-3.5" aria-hidden="true" /> Preview
                         </Link>
-                      );
-                    })()}
+                      )}
+                    </div>
                   </div>
-                </div>
-
-                {/* Info */}
-                <div className="p-3 bg-card">
-                  <p className="font-medium text-sm mb-0.5">{preset.name}</p>
-                  <p className="text-xs text-muted-foreground leading-snug">{preset.description}</p>
-                </div>
-              </div>
-            ))}
+                </article>
+              );
+            })}
           </div>
         )}
       </section>
