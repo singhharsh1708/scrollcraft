@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,12 +11,22 @@ import GitHubMark from "@/components/GitHubMark";
 import LinkedInMark from "@/components/LinkedInMark";
 import SiteFooter from "@/components/SiteFooter";
 
-const TOPICS = ["General question", "Bug report", "Feature request", "Enterprise inquiry", "Partnership"];
+const TOPICS = ["General question", "Custom build", "Bug report", "Feature request", "Enterprise inquiry", "Partnership"];
 
 export default function ContactPage() {
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", topic: TOPICS[0], message: "" });
+
+  // "Describe your project" links arrive with ?topic=custom, so the right topic is already
+  // chosen. Read after mount: the page is prerendered without the query string.
+  useEffect(() => {
+    const wanted = new URLSearchParams(window.location.search).get("topic")?.toLowerCase();
+    const match = wanted ? TOPICS.find((t) => t.toLowerCase().startsWith(wanted)) : undefined;
+    if (!match) return;
+    const raf = requestAnimationFrame(() => setForm((f) => ({ ...f, topic: match })));
+    return () => cancelAnimationFrame(raf);
+  }, []);
 
   /**
    * Composes the message in the visitor's own mail client.
@@ -133,7 +143,7 @@ export default function ContactPage() {
                 </div>
                 <div className="space-y-1.5">
                   <label htmlFor="contact-message" className="lc-mono text-xs text-muted-foreground">Message</label>
-                  <Textarea id="contact-message" value={form.message} onChange={e => setForm(f => ({ ...f, message: e.target.value }))} placeholder="Tell us what's on your mind..." className="bg-background border-border min-h-[140px] resize-none" />
+                  <Textarea id="contact-message" value={form.message} onChange={e => setForm(f => ({ ...f, message: e.target.value }))} placeholder={form.topic === "Custom build" ? "What is the site for, what do you already have (footage, copy, brand), and when do you need it?" : "Tell us what's on your mind..."} className="bg-background border-border min-h-[140px] resize-none" />
                 </div>
                 <button type="submit" disabled={loading} className="lc-btn lc-btn-solid w-full disabled:opacity-60">
                   {loading ? "Opening…" : "Compose message"}

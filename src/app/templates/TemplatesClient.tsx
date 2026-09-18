@@ -177,6 +177,21 @@ export default function TemplatesClient({ templates, categories: allCategories }
           </div>
         )}
       </section>
+
+      <section className="border-t border-border px-6 pb-28 pt-24 text-center">
+        <h2 className="lc-display text-4xl sm:text-5xl">None of these fit?</h2>
+        <p className="mx-auto mb-10 mt-6 max-w-md text-lg text-muted-foreground">
+          Start from a blank page with your own style or footage, or ask for a site built for you.
+        </p>
+        <div className="flex flex-wrap justify-center gap-3">
+          <Link href="/create" className="lc-btn lc-btn-solid">
+            Create from scratch
+          </Link>
+          <Link href="/contact?topic=custom" className="lc-btn lc-btn-ghost">
+            Ask for a custom build
+          </Link>
+        </div>
+      </section>
       <SiteFooter />
     </main>
   );

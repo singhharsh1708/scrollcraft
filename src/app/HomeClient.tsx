@@ -7,6 +7,7 @@ import Navbar from "@/components/Navbar";
 import StylePreview from "@/components/StylePreview";
 import type { Style2D } from "@/lib/generate2DFrames";
 import PluginInstall from "@/components/PluginInstall";
+import { CONTACT_EMAIL } from "@/lib/links";
 import SiteFooter from "@/components/SiteFooter";
 import Lifecycle, { type LifecycleStep } from "@/components/Lifecycle";
 import { GITHUB_REPO_URL } from "@/lib/links";
@@ -644,6 +645,30 @@ export default function HomeClient({
       <section className="px-6 pb-28">
         <div className="mx-auto max-w-[1360px]">
           <PluginInstall />
+        </div>
+      </section>
+
+      {/* Custom work: the library covers the common shapes, not every brief. */}
+      <section className="border-t border-border px-6">
+        <div className="mx-auto flex max-w-[1360px] flex-col gap-10 py-20 sm:py-24 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-2xl">
+            <h2 className="lc-display text-4xl sm:text-5xl">
+              <span className="block">Need more than</span>
+              <span className="block text-primary-ink">a template?</span>
+            </h2>
+            <p className="mt-6 text-lg leading-relaxed text-muted-foreground">
+              The library covers the common shapes. If you want a site built around your own
+              footage, sections or brand, send the details and we will take a look.
+            </p>
+          </div>
+          <div className="flex shrink-0 flex-col gap-4 lg:items-end">
+            <Link href="/contact?topic=custom" className="lc-btn lc-btn-solid w-fit">
+              Describe your project
+            </Link>
+            <a href={`mailto:${CONTACT_EMAIL}`} className="lc-mono text-sm text-muted-foreground hover:text-foreground">
+              or email {CONTACT_EMAIL}
+            </a>
+          </div>
         </div>
       </section>
 
