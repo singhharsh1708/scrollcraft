@@ -14,7 +14,8 @@ import { readFileSync, statSync } from "node:fs";
  */
 const HOME = readFileSync("src/app/HomeClient.tsx", "utf8");
 const PREVIEW = readFileSync("src/components/StylePreview.tsx", "utf8");
-const HERO_SHOT = readFileSync("src/components/HeroScreens.tsx", "utf8");
+const HERO = readFileSync("src/components/HeroSequence.tsx", "utf8");
+const PAGE = readFileSync("src/app/page.tsx", "utf8");
 
 describe("the hero draws its animation instead of fetching it", () => {
   it("no longer builds a list of demo-frame URLs", () => {
@@ -28,11 +29,11 @@ describe("the hero draws its animation instead of fetching it", () => {
   });
 
   it("uses a palette from the catalogue rather than an invented one", async () => {
-    const { PRESETS } = await import("@/lib/presets");
-    const colors = /const HERO_COLORS: \[string, string, string\] = (\[[^\]]*\])/.exec(HOME);
-    expect(colors, "the hero palette is gone").toBeTruthy();
-    const hero: string[] = JSON.parse(colors![1].replace(/'/g, '"'));
-    expect(PRESETS.some((p) => JSON.stringify(p.colors) === JSON.stringify(hero))).toBe(true);
+    const { TEMPLATES } = await import("@/lib/templates");
+    const slug = /const HERO_SLUG = "([a-z-]+)";/.exec(PAGE)?.[1];
+    expect(slug, "the hero names no template").toBeTruthy();
+    expect(TEMPLATES.some((t) => t.slug === slug), `${slug} is not in the catalogue`).toBe(true);
+    expect(PAGE).toContain("colors: heroSource.colors,");
   });
 
   it("stops short of the range where every palette goes black", () => {
@@ -41,22 +42,27 @@ describe("the hero draws its animation instead of fetching it", () => {
     expect(HOME).toMatch(/maxProgress=\{0?\.\d+\}/);
     expect(PREVIEW).toContain("maxProgress = 1");
     expect(PREVIEW).toContain("* maxProgress");
+    const from = Number(/const CANVAS_FROM = ([\d.]+);/.exec(HERO)?.[1]);
+    const span = Number(/const CANVAS_SPAN = ([\d.]+);/.exec(HERO)?.[1]);
+    expect(from + span, "the hero scrubs into the dark end of the range").toBeLessThanOrEqual(0.55);
   });
 
   it("holds still for a visitor who asked for less motion", () => {
     expect(HOME).toContain('const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";');
-    expect(HOME).toContain("paused={reducedMotion}");
+    expect(HOME).toContain("reducedMotion={reduced}");
+    // No pinned track and no scroll listener: the screen sits still beside the copy.
+    expect(HERO).toContain('reducedMotion ? "relative" : "sticky top-0"');
+    expect(HERO).toContain('if (!reducedMotion) window.addEventListener("scroll", schedule');
   });
 });
 
 describe("the landing page shows the product before it describes it", () => {
-  it("makes the animation the hero's backdrop, so all of it is in view at first paint", () => {
-    // It was once a box 733px down a 900px viewport, then the right half of a two-column
-    // row. As the full-bleed backdrop of the hero it starts at the top edge, which is
-    // what "the product before the description" actually requires.
+  it("opens on the product playing itself rather than a description of it", () => {
+    // It was once a box 733px down a 900px viewport, then a backdrop behind the copy, then
+    // a still of a template beside it. The hero is now a template that plays as the
+    // visitor scrolls, which is the product doing the one thing it does.
     const hero = HOME.slice(HOME.indexOf("{/* Hero */}"), HOME.indexOf("{/* Social proof strip */}"));
-    expect(hero).toContain("<HeroPreview />");
-    expect(hero).toMatch(/className="[^"]*\babsolute inset-0\b[^"]*"[^>]*>\s*<HeroPreview \/>/);
+    expect(hero).toContain("<HeroSequence");
   });
 
   it("no longer veils the demo behind a fade to the page background", () => {
@@ -139,27 +145,25 @@ describe("the README reads like a person wrote it", () => {
   });
 });
 
-describe("the hero shows what the product makes", () => {
-  it("renders the opening screen of a template that is really in the library", () => {
-    // Copy on a gradient said what the product does and showed none of it. The still is
-    // the one the gallery serves, so the picture cannot drift from the template.
-    const src = /src="\/template-previews\/([a-z-]+)\.jpg"/.exec(HERO_SHOT);
-    expect(src, "the hero carries no template still").toBeTruthy();
-    expect(statSync(`public/template-previews/${src![1]}.jpg`).size).toBeGreaterThan(5000);
+describe("the hero plays a real template", () => {
+  it("draws it rather than downloading it", () => {
+    // The first hero fetched 60 JPEGs, 87 requests and 130.3 KiB, to animate.
+    expect(HERO).toContain("drawFrame2D(ctx, W, H, q, opts)");
+    expect(HERO).not.toMatch(/fetch\(|<img/);
   });
 
-  it("belongs to a slug the catalogue knows", async () => {
-    const { TEMPLATES } = await import("@/lib/templates");
-    const slug = /src="\/template-previews\/([a-z-]+)\.jpg"/.exec(HERO_SHOT)![1];
-    expect(TEMPLATES.some((t) => t.slug === slug), `${slug} is not a template`).toBe(true);
+  it("holds the canvas to a pixel budget", () => {
+    // Capping only its width let a 3x portrait phone redraw 1170x2532 every frame, which
+    // measured at 30fps while scrolling.
+    const budget = Number(/const PIXEL_BUDGET = ([\d_]+);/.exec(HERO)?.[1].replace(/_/g, ""));
+    expect(budget).toBeLessThanOrEqual(1_200_000);
+    expect(HERO).toContain("Math.sqrt(PIXEL_BUDGET / Math.max(W * H, 1))");
   });
 
-  it("names the screen for anyone who cannot see it", () => {
-    expect(HERO_SHOT).toMatch(/alt="The opening screen of [^"]+"/);
-  });
-
-  it("sits beside the copy rather than under the fold", () => {
-    expect(HOME).toContain("<HeroScreens />");
-    expect(HOME).toContain("lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]");
+  it("keeps the demo out of the reading order and names it in words", () => {
+    // Three headings from somebody else's site would be read out as if they were ours.
+    expect(HERO).toMatch(/ref=\{screenRef\}\s*aria-hidden="true"/);
+    expect(HERO).toContain("That was {template.name}, one of {templateCount} templates");
+    expect(HERO).toContain("href={`/templates/${template.slug}`}");
   });
 });

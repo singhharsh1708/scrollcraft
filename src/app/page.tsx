@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { TEMPLATES, templateCategories } from "@/lib/templates";
 import HomeClient, { type EditorSample, type ExampleCard, type TemplateSlice } from "./HomeClient";
+import type { HeroTemplate } from "@/components/HeroSequence";
 
 // The root layout owns this page's title and share card; it only needs its address.
 export const metadata: Metadata = { alternates: { canonical: "/" } };
@@ -18,6 +19,13 @@ export const metadata: Metadata = { alternates: { canonical: "/" } };
  */
 const PICK_SLUGS = ["aurabeauty", "ledger-fintech", "kiln-coffee", "northlight"];
 const EDITOR_SLUG = "aurabeauty";
+/**
+ * The template the hero plays. Measured on the preview pages over the range the hero
+ * scrubs, TripVault's background is the brightest in the catalogue (mean luma 46.7 of
+ * 255, against 12.4 for Harbour) and changes the most per scroll step of any template in
+ * the page's colours (6.4, against 2.5). The hero sets TripVault's display face.
+ */
+const HERO_SLUG = "tripvault";
 
 function examples(): ExampleCard[] {
   try {
@@ -50,8 +58,23 @@ export default function Home() {
       }
     : null;
 
+  const heroSource = TEMPLATES.find((t) => t.slug === HERO_SLUG) ?? TEMPLATES[0];
+  const heroTemplate: HeroTemplate = {
+    slug: heroSource.slug,
+    name: heroSource.name,
+    style: heroSource.style,
+    colors: heroSource.colors,
+    ink: heroSource.theme?.ink ?? "#f0f5f8",
+    muted: heroSource.theme?.muted ?? "rgba(240,245,248,0.72)",
+    scenes: heroSource.sections
+      .filter((s) => s.kind !== "spacer" && s.heading)
+      .slice(0, 3)
+      .map((s) => ({ eyebrow: s.eyebrow ?? "", heading: s.heading ?? "" })),
+  };
+
   return (
     <HomeClient
+      heroTemplate={heroTemplate}
       templates={templates}
       editorSample={editorSample}
       examples={examples()}
