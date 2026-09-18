@@ -7,7 +7,7 @@
 Pick a template, change the words, download a ZIP, put it anywhere. The editor, every
 template and the export are free and open source.
 
-[Live demo](https://scrollcraft-gilt.vercel.app) · [Examples](https://scrollcraft-gilt.vercel.app/examples) · [Report a bug](https://github.com/singhharsh1708/scrollcraft/issues) · [Request a feature](https://github.com/singhharsh1708/scrollcraft/issues)
+[Live demo](https://scrollcraft.space) · [Examples](https://scrollcraft.space/examples) · [Report a bug](https://github.com/singhharsh1708/scrollcraft/issues) · [Request a feature](https://github.com/singhharsh1708/scrollcraft/issues)
 
 </div>
 
@@ -52,7 +52,7 @@ one exception is the copy assistant below, which is off unless you configure a k
 
 ## Examples
 
-Three finished sites live at [/examples](https://scrollcraft-gilt.vercel.app/examples):
+Three finished sites live at [/examples](https://scrollcraft.space/examples):
 an architecture practice, a distillery and a deep-ocean survey programme. Each link opens
 the exported bundle itself rather than a preview of it, so what you scroll is what a
 download contains.

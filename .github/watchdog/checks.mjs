@@ -7,7 +7,7 @@
 
 import { spawnSync } from "node:child_process";
 
-const BASE = process.env.WATCHDOG_BASE_URL || "https://scrollcraft-gilt.vercel.app";
+const BASE = process.env.WATCHDOG_BASE_URL || "https://scrollcraft.space";
 
 async function get(path, { timeoutMs = 15000 } = {}) {
   const ctrl = new AbortController();
