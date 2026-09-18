@@ -14,6 +14,7 @@ import { readFileSync, statSync } from "node:fs";
  */
 const HOME = readFileSync("src/app/HomeClient.tsx", "utf8");
 const PREVIEW = readFileSync("src/components/StylePreview.tsx", "utf8");
+const HERO_SHOT = readFileSync("src/components/HeroScreens.tsx", "utf8");
 
 describe("the hero draws its animation instead of fetching it", () => {
   it("no longer builds a list of demo-frame URLs", () => {
@@ -135,5 +136,30 @@ describe("the README reads like a person wrote it", () => {
   it("makes the no-account point once instead of four times", () => {
     const mentions = (README.match(/no account/gi) ?? []).length;
     expect(mentions, `"no account" appears ${mentions} times`).toBeLessThanOrEqual(2);
+  });
+});
+
+describe("the hero shows what the product makes", () => {
+  it("renders the opening screen of a template that is really in the library", () => {
+    // Copy on a gradient said what the product does and showed none of it. The still is
+    // the one the gallery serves, so the picture cannot drift from the template.
+    const src = /src="\/template-previews\/([a-z-]+)\.jpg"/.exec(HERO_SHOT);
+    expect(src, "the hero carries no template still").toBeTruthy();
+    expect(statSync(`public/template-previews/${src![1]}.jpg`).size).toBeGreaterThan(5000);
+  });
+
+  it("belongs to a slug the catalogue knows", async () => {
+    const { TEMPLATES } = await import("@/lib/templates");
+    const slug = /src="\/template-previews\/([a-z-]+)\.jpg"/.exec(HERO_SHOT)![1];
+    expect(TEMPLATES.some((t) => t.slug === slug), `${slug} is not a template`).toBe(true);
+  });
+
+  it("names the screen for anyone who cannot see it", () => {
+    expect(HERO_SHOT).toMatch(/alt="The opening screen of [^"]+"/);
+  });
+
+  it("sits beside the copy rather than under the fold", () => {
+    expect(HOME).toContain("<HeroScreens />");
+    expect(HOME).toContain("lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]");
   });
 });

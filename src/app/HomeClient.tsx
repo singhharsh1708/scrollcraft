@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
 import { ArrowUpRight, Film, LayoutTemplate, Terminal } from "lucide-react";
+import HeroScreens from "@/components/HeroScreens";
 import Navbar from "@/components/Navbar";
 import StylePreview from "@/components/StylePreview";
 import type { Style2D } from "@/lib/generate2DFrames";
@@ -451,28 +452,31 @@ export default function HomeClient({
             text and near black everywhere else, which hid the one thing the hero shows. */}
         <div
           aria-hidden="true"
-          className="absolute inset-0 bg-[radial-gradient(ellipse_46%_52%_at_50%_44%,rgba(3,7,16,0.9)_0%,rgba(3,7,16,0.8)_45%,rgba(3,7,16,0.35)_80%,rgba(3,7,16,0.15)_100%)]"
+          className="absolute inset-0 bg-[radial-gradient(ellipse_52%_56%_at_50%_44%,rgba(3,7,16,0.9)_0%,rgba(3,7,16,0.8)_45%,rgba(3,7,16,0.35)_80%,rgba(3,7,16,0.15)_100%)] lg:bg-[radial-gradient(ellipse_46%_60%_at_32%_50%,rgba(3,7,16,0.92)_0%,rgba(3,7,16,0.78)_45%,rgba(3,7,16,0.3)_80%,rgba(3,7,16,0.12)_100%)]"
         />
         <div aria-hidden="true" className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-background" />
 
-        <div className="relative mx-auto flex w-full max-w-[1360px] flex-1 flex-col items-center justify-center px-6 pb-12 pt-20 text-center sm:pt-24">
-          <h1 className="lc-display text-[2.6rem] sm:text-6xl lg:text-[4.6rem]">
-            <span className="block text-foreground">Cinematic scroll websites</span>
-            <span className="block text-primary-ink">exported as plain HTML</span>
-          </h1>
-          <p className="mx-auto mt-7 max-w-xl text-lg leading-relaxed text-muted-foreground sm:text-xl">
-            Pick a finished template, change the words, download a ZIP. The background moves
-            as your reader scrolls, and nothing needs installing.
-          </p>
-          <div className="mt-10 grid w-full max-w-sm grid-cols-2 gap-3 sm:flex sm:w-auto sm:max-w-none">
-            <Link href="/create" className="lc-btn lc-btn-solid">
-              Start building
-            </Link>
-            <Link href="/examples" className="lc-btn lc-btn-ghost">
-              See examples
-            </Link>
+        <div className="relative mx-auto grid w-full max-w-[1360px] flex-1 grid-cols-1 items-center gap-9 px-6 pb-12 pt-20 text-center sm:gap-14 sm:pt-24 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:gap-16 lg:text-left">
+          <div className="flex flex-col items-center lg:items-start">
+            <h1 className="lc-display text-[2.6rem] sm:text-6xl lg:text-[3.9rem]">
+              <span className="block text-foreground">Cinematic scroll websites</span>
+              <span className="block text-primary-ink">exported as plain HTML</span>
+            </h1>
+            <p className="mt-7 max-w-xl text-lg leading-relaxed text-muted-foreground sm:text-xl">
+              Pick a finished template, change the words, download a ZIP. The background moves
+              as your reader scrolls, and nothing needs installing.
+            </p>
+            <div className="mt-10 grid w-full max-w-sm grid-cols-2 gap-3 sm:flex sm:w-auto sm:max-w-none">
+              <Link href="/create" className="lc-btn lc-btn-solid">
+                Start building
+              </Link>
+              <Link href="/examples" className="lc-btn lc-btn-ghost">
+                See examples
+              </Link>
+            </div>
+            <p className="lc-mono mt-8 text-sm text-muted-foreground">No account · Runs in your browser · MIT licensed</p>
           </div>
-          <p className="lc-mono mt-8 text-sm text-muted-foreground">No account · Runs in your browser · MIT licensed</p>
+          <HeroScreens />
         </div>
 
         {/* Social proof strip */}
