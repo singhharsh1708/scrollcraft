@@ -160,6 +160,14 @@ describe("the hero plays a real template", () => {
     expect(HERO).toContain("Math.sqrt(PIXEL_BUDGET / Math.max(W * H, 1))");
   });
 
+  it("pins a phone for at most one screen before the page moves on", () => {
+    // At 280svh a 390x844 phone scrolled 1519px, 1.8 screens, through the demo before
+    // reaching anything it could read. Measured after: 844px, one screen, same sequence.
+    const [, phone, desktop] = /h-\[(\d+)svh\] lg:h-\[(\d+)svh\]/.exec(HERO) ?? [];
+    expect(Number(phone) - 100).toBeLessThanOrEqual(100);
+    expect(Number(desktop)).toBeGreaterThan(Number(phone));
+  });
+
   it("keeps the demo out of the reading order and names it in words", () => {
     // Three headings from somebody else's site would be read out as if they were ours.
     expect(HERO).toMatch(/ref=\{screenRef\}\s*aria-hidden="true"/);
