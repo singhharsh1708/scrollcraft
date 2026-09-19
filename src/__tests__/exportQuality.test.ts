@@ -317,10 +317,8 @@ describe("the export README describes the ZIP it is in", () => {
   });
 
   it("does not call a 580 KB ZIP 'a few kilobytes'", () => {
-    // Measured: index.html 19.5 KB + lenis 11.6 KB, plus the card. The old sentence was
-    // written before the card existed.
     const readme = exportReadme("Site", true, "https://example.test");
     expect(readme).not.toMatch(/few kilobytes/);
-    expect(readme).toMatch(/about 35 KB/);
+    expect(readme).toMatch(/about 30 KB/);
   });
 });

@@ -654,18 +654,6 @@ function EditorInner() {
       const zip = new JSZip();
       zip.file("index.html", html);
 
-      // Ship Lenis inside the ZIP. index.html used to load it from jsDelivr with no
-      // integrity hash, so a CDN compromise would have run arbitrary JS on every
-      // exported customer site, and a network that blocks jsDelivr lost smooth
-      // scrolling silently. Exports stay self-contained.
-      try {
-        const lenisRes = await fetch("/lenis.min.js");
-        if (lenisRes.ok) zip.file("lenis.min.js", await lenisRes.text());
-      } catch {
-        // Non-fatal: the generated page feature-detects window.Lenis and falls back
-        // to a native scroll listener.
-      }
-
       // Everything below turns the ZIP from "an index.html" into something a
       // non-technical owner can actually put online: an icon, a social card, a 404,
       // a robots.txt, and config so one drag-and-drop deploys correctly on the
@@ -1114,7 +1102,7 @@ function EditorInner() {
               <Plus className="w-3.5 h-3.5" />
             </Button>
           </div>
-          <div className="flex-1 overflow-y-auto p-2 space-y-1" data-lenis-prevent>
+          <div className="flex-1 overflow-y-auto p-2 space-y-1">
             {sections.map((s, i) => (
               <div
                 key={s.id}
@@ -1167,10 +1155,6 @@ function EditorInner() {
             {frames.length > 0 && (
               <div
                 ref={previewScrollRef}
-                // Lenis is mounted app-wide and preventDefault()s every wheel event to
-                // scroll the window, which has no scroll range here — without this the
-                // preview cannot be scrubbed by wheel or trackpad at all.
-                data-lenis-prevent
                 style={{
                   // Desktop: fill parent absolutely and scroll the *content* inside, not the container itself.
                   // Mobile/tablet: fixed viewport size with overflow-y:scroll so the inner content scrolls.
@@ -1274,7 +1258,7 @@ function EditorInner() {
 
         {/* Right panel: section editor */}
         {selectedSectionData && (
-          <div className="w-full md:w-72 border-t md:border-t-0 md:border-l border-white/5 flex flex-col bg-card/30 flex-shrink-0 md:overflow-y-auto" data-lenis-prevent>
+          <div className="w-full md:w-72 border-t md:border-t-0 md:border-l border-white/5 flex flex-col bg-card/30 flex-shrink-0 md:overflow-y-auto">
             <Tabs defaultValue="content">
               <div className="p-3 border-b border-white/5">
                 {/* Five icon-and-label tabs did not fit the panel at any width: Content

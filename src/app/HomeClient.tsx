@@ -53,7 +53,6 @@ const DEPLOY_TARGETS = ["Netlify", "Vercel", "GitHub Pages", "Cloudflare Pages",
 /** Every entry an export writes, in the order the editor adds them. */
 const EXPORT_FILES: Array<[string, string]> = [
   ["index.html", "your page"],
-  ["lenis.min.js", "smooth scroll"],
   ["404.html", "not-found page"],
   ["favicon.svg", "tab icon"],
   ["apple-touch-icon.png", "home-screen icon"],
@@ -84,6 +83,7 @@ const BARS = Array.from({ length: 48 }, (_, i) =>
 const FAQ = [
   { q: "Do I need to know how to code?", a: "No. Pick a template, change the copy and colours, and export. What you download is plain HTML, CSS and JavaScript that any host will serve." },
   { q: "How does the scroll animation work?", a: "ScrollCraft draws a sequence of frames on a canvas, and the page shows the frame that matches how far the reader has scrolled. There is no WebGL and no animation library." },
+  { q: "Does it take over my visitors' scrolling?", a: "No. The page scrolls exactly the way the visitor's wheel, trackpad or finger normally scrolls it, and the background follows along. Nothing slows, smooths or snaps the scroll, and visitors who ask their system for less motion get a still page." },
   { q: "Can I use my own video?", a: "Yes. On the create page you can upload an MP4, MOV or WebM. Its frames are extracted in your browser, and the file never leaves your device." },
   { q: "Where can I host the exported site?", a: "Anywhere that serves static files: Netlify, Vercel, Cloudflare Pages, GitHub Pages or your own server. Unzip it and upload the folder." },
   { q: "How are the frames generated?", a: "They are drawn in your browser from the style and palette the template carries. Nothing is sent to a server to make them." },
