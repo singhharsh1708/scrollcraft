@@ -4,9 +4,12 @@ import TemplatesClient, { type TemplateCard } from "./TemplatesClient";
 
 export const metadata: Metadata = {
   title: "Templates",
-  description: "Twenty-one finished scroll sites across sixteen categories. Open one in the editor, change the words and export it as plain HTML.",
+  description: `${TEMPLATES.length} finished scroll sites across ${templateCategories().length} categories. Open one in the editor, change the words and export it as plain HTML.`,
   alternates: { canonical: "/templates" },
 };
+
+/** Launch pages are among the most asked-for kinds of site, so the one that is leads the gallery. */
+const LEAD_SLUG = "kept";
 
 /**
  * Server shell for the gallery.
@@ -17,7 +20,8 @@ export const metadata: Metadata = {
  * server and sends down only what a card renders.
  */
 export default function TemplatesPage() {
-  const templates: TemplateCard[] = TEMPLATES.map((t) => ({
+  const ordered = [...TEMPLATES].sort((a, b) => Number(b.slug === LEAD_SLUG) - Number(a.slug === LEAD_SLUG));
+  const templates: TemplateCard[] = ordered.map((t) => ({
     slug: t.slug,
     name: t.name,
     tagline: t.tagline,

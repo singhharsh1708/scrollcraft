@@ -19,7 +19,7 @@ A scroll-scrubbed site plays through a sequence of frames as the reader scrolls,
 background moves with them instead of sitting still behind the text. ScrollCraft builds
 those sites without WebGL, an animation library, or a render farm.
 
-1. **Start from a template.** Twenty-one finished sites, each with its own palette,
+1. **Start from a template.** 22 finished sites, each with its own palette,
    typography, pacing and copy. Or upload a video and use your own footage.
 2. **Get frames.** The engine draws the frame sequence on a canvas in your browser and
    maps it to scroll position.
