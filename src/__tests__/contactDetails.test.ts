@@ -157,6 +157,17 @@ describe("what the site claims about itself is true", () => {
     expect(line).toContain(`${categoryCount} categories`);
   });
 
+  it("quotes the same count everywhere it states one", () => {
+    // Kept made it 22 while the README's steps and the gallery's description still said
+    // twenty-one, spelled out where the check above could not see it.
+    const counts = [...README.matchAll(/(\d+) finished (?:scroll )?sites/g)].map((m) => Number(m[1]));
+    expect(counts.length).toBeGreaterThan(1);
+    for (const n of counts) expect(n).toBe(templateCount);
+    expect(README).not.toMatch(/\b(?:twenty|thirty)[- ]\w+ finished/i);
+    const gallery = readFileSync("src/app/templates/page.tsx", "utf8");
+    expect(gallery).toContain("${TEMPLATES.length} finished scroll sites across ${templateCategories().length} categories");
+  });
+
   it("sells nothing, anywhere", () => {
     for (const [label, text] of [
       ["README", README],
