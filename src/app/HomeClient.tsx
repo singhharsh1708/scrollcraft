@@ -50,6 +50,21 @@ export type HomeStats = { templates: number; categories: number };
 
 const DEPLOY_TARGETS = ["Netlify", "Vercel", "GitHub Pages", "Cloudflare Pages", "Any static host"];
 
+/**
+ * Whether a site made with each tool can be downloaded and hosted anywhere, and what that
+ * costs. Every row was read off the company's own help or pricing page on the date below;
+ * lock-in and subscription creep are the complaints that come up most about site builders.
+ */
+export const OWNERSHIP_CHECKED = "19 September 2026";
+export const OWNERSHIP: { tool: string; answer: string; cost: string; source?: string }[] = [
+  { tool: "ScrollCraft", answer: "Yes, as a plain HTML ZIP", cost: "Free, no account" },
+  { tool: "Webflow", answer: "HTML and CSS; CMS content stays behind", cost: "Core Workspace plan, $19/mo billed yearly", source: "https://webflow.com/pricing" },
+  { tool: "Carrd", answer: "Yes", cost: "Pro Plus plan, $49/yr", source: "https://carrd.com/pro" },
+  { tool: "Squarespace", answer: "Content only, as XML for WordPress", cost: "Not offered for the design", source: "https://support.squarespace.com/hc/en-us/articles/206566687-Exporting-your-site" },
+  { tool: "Framer", answer: "No", cost: "Not offered", source: "https://www.framer.com/help/articles/can-i-export-my-website-to-html-and-self-host-it/" },
+  { tool: "Wix", answer: "No, sites run on Wix's servers", cost: "Not offered", source: "https://support.wix.com/en/article/exporting-or-embedding-your-wix-site-elsewhere" },
+];
+
 /** Every entry an export writes, in the order the editor adds them. */
 const EXPORT_FILES: Array<[string, string]> = [
   ["index.html", "your page"],
@@ -563,6 +578,41 @@ export default function HomeClient({
               </div>
             ))}
           </dl>
+
+          <div className="mt-24 lg:pl-[14%]">
+            <h3 className="lc-display max-w-2xl text-3xl sm:text-4xl">Can you download your site and host it anywhere?</h3>
+            <div className="mt-10 overflow-x-auto">
+              <table className="w-full min-w-0 border-collapse text-left text-sm sm:text-base">
+                <thead>
+                  <tr className="lc-mono border-b border-border text-xs text-muted-foreground sm:text-sm">
+                    <th scope="col" className="py-3 pr-4 font-normal">Tool</th>
+                    <th scope="col" className="py-3 pr-4 font-normal">Download and host anywhere</th>
+                    <th scope="col" className="py-3 font-normal">What it takes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {OWNERSHIP.map((row) => (
+                    <tr key={row.tool} className={`border-b border-border align-top ${row.source ? "" : "font-medium"}`}>
+                      <th scope="row" className="py-4 pr-4 font-medium">{row.tool}</th>
+                      <td className="py-4 pr-4">{row.answer}</td>
+                      <td className="py-4 text-muted-foreground">{row.cost}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p className="mt-6 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+              Checked on {OWNERSHIP_CHECKED} against each company&apos;s own pages:{" "}
+              {OWNERSHIP.filter((r) => r.source).map((r, i, all) => (
+                <span key={r.tool}>
+                  <a href={r.source} target="_blank" rel="noopener noreferrer" className="underline underline-offset-4 hover:text-foreground">
+                    {r.tool}
+                  </a>
+                  {i < all.length - 1 ? ", " : "."}
+                </span>
+              ))}
+            </p>
+          </div>
         </div>
       </section>
 
