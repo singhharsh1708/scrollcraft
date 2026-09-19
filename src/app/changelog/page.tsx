@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
+import { pageMeta } from "@/lib/pageMeta";
 import { Badge } from "@/components/ui/badge";
 import Navbar from "@/components/Navbar";
 import SiteFooter from "@/components/SiteFooter";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMeta({
   title: "Changelog",
   description: "Every release of ScrollCraft, what changed in it, and why.",
-  alternates: { canonical: "/changelog" },
-};
+  path: "/changelog",
+});
 
 const ENTRIES = [
   {

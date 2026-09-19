@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
+import { pageMeta } from "@/lib/pageMeta";
 import { TEMPLATES, templateCategories, templateScrollHeight, templateSectionCount } from "@/lib/templates";
 import TemplatesClient, { type TemplateCard } from "./TemplatesClient";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMeta({
   title: "Templates",
   description: `${TEMPLATES.length} finished scroll sites across ${templateCategories().length} categories. Open one in the editor, change the words and export it as plain HTML.`,
-  alternates: { canonical: "/templates" },
-};
+  path: "/templates",
+});
 
 /** Launch pages are among the most asked-for kinds of site, so the one that is leads the gallery. */
 const LEAD_SLUG = "kept";

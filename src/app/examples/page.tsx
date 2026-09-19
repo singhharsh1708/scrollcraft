@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageMeta } from "@/lib/pageMeta";
 import Link from "next/link";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -19,12 +20,12 @@ import SiteFooter from "@/components/SiteFooter";
  * JavaScript of its own.
  */
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMeta({
   title: "Examples — three finished ScrollCraft sites",
   description:
     "Three complete scroll sites, each served as the exported bundle it produces: an architecture practice, a distillery and a deep-ocean survey programme.",
-  alternates: { canonical: "/examples" },
-};
+  path: "/examples",
+});
 
 type Example = {
   slug: string;

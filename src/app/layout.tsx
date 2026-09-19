@@ -1,3 +1,4 @@
+import { SHARE_BASE } from "@/lib/pageMeta";
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
@@ -25,9 +26,7 @@ export const metadata: Metadata = {
   keywords: ["scroll website builder", "animated canvas", "scrollytelling", "no-code", "scroll animation"],
   authors: [{ name: "ScrollCraft" }],
   openGraph: {
-    type: "website",
-    locale: "en_US",
-    siteName: "ScrollCraft",
+    ...SHARE_BASE,
     title: "ScrollCraft — Cinematic Scroll Sites",
     description: "Build immersive 2D scroll websites with animated canvas backgrounds. No code needed.",
     // No images key: src/app/opengraph-image.tsx generates the real 1200x630 card and
