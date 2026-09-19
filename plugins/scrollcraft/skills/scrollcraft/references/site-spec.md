@@ -53,6 +53,8 @@ spec file, not the working directory.
 | `eyebrow` | string | none | Small uppercase label above the heading. |
 | `ctaLabel` | string | none | Renders a button-styled link. Needs `ctaHref` to go anywhere. |
 | `ctaHref` | string | `"#"` | `http(s)://`, `mailto:`, `tel:`, an in-page `#anchor`, or a local `/`, `./`, `../` path. Anything else, including `javascript:` and protocol-relative `//host`, becomes `#`. |
+| `signupUrl` | string | none | An email provider's form URL, `https://` only. Replaces the button with an email field that posts straight to the provider, with no script. Mailchimp, Kit, Buttondown, Formspree and Loops are recognised and get the field names they expect; beehiiv only offers a script embed, so its URLs are ignored. Any other `https://` URL receives a field called `email`. |
+| `signupButton` | string | `"Join the waitlist"` | The signup form's button text. |
 | `scrollHeight` | number | `1000` | Scroll track in px this section occupies. Drives pacing. |
 | `scrim` | number | `0` | 0-1. Darkens a radial patch behind the copy so text stays readable over a busy frame. `theme.scrim` sets it for every section; this overrides per section. |
 | `align` | string | from `layout` | Flex `align-items` on the sticky wrapper. Overrides the layout. |

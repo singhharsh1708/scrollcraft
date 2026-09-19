@@ -150,6 +150,42 @@ function copyFrames(srcDir, outDir) {
   }
 }
 
+// The same provider rules as src/lib/signupForm.ts. signupForm.test.ts builds a site with
+// this script and an export with the web app from the same URLs and compares the forms.
+const SIGNUP_PROVIDERS = [
+  {
+    match: (u) => u.hostname.endsWith(".list-manage.com") && u.pathname.startsWith("/subscribe/post"),
+    emailName: "EMAIL",
+    hidden: (u) => ["u", "id"].flatMap((k) => (u.searchParams.get(k) ? [[k, u.searchParams.get(k)]] : [])),
+  },
+  { match: (u) => /^app\.(convertkit|kit)\.com$/.test(u.hostname) && /^\/forms\/[^/]+\/subscriptions\/?$/.test(u.pathname), emailName: "email_address" },
+  { match: (u) => u.hostname === "buttondown.com" && u.pathname.startsWith("/api/emails/embed-subscribe/"), emailName: "email", hidden: () => [["embed", "1"]] },
+  { match: (u) => u.hostname === "formspree.io" && u.pathname.startsWith("/f/"), emailName: "email" },
+  { match: (u) => u.hostname === "app.loops.so" && u.pathname.startsWith("/api/newsletter-form/"), emailName: "email" },
+  { match: (u) => u.hostname === "beehiiv.com" || u.hostname.endsWith(".beehiiv.com"), unsupported: true },
+];
+
+function signupForm(url) {
+  if (typeof url !== "string" || !url.trim()) return null;
+  let u;
+  try {
+    u = new URL(url.trim());
+  } catch {
+    return null;
+  }
+  if (u.protocol !== "https:") return null;
+  const p = SIGNUP_PROVIDERS.find((x) => x.match(u));
+  if (p && p.unsupported) return null;
+  return { action: u.toString(), emailName: (p && p.emailName) || "email", hidden: (p && p.hidden && p.hidden(u)) || [] };
+}
+
+function signupFormHtml(f, s, idx, centered) {
+  const id = `sc-email-${idx}`;
+  const radius = "var(--sc-radius, 0.5rem)";
+  const hidden = f.hidden.map(([k, v]) => `<input type="hidden" name="${esc(k)}" value="${esc(v)}" />`).join("");
+  return `<form class="sc-signup" method="post" action="${esc(f.action)}" target="_blank" rel="noopener" style="display:flex; flex-wrap:wrap; gap:0.5rem; justify-content:${centered ? "center" : "flex-start"}; margin-top:0.5rem;"><label for="${id}" class="sc-visually-hidden">Email address</label><input id="${id}" type="email" name="${esc(f.emailName)}" required autocomplete="email" placeholder="you@example.com" style="flex:1 1 220px; max-width:320px; min-height:48px; padding:0 1rem; border-radius:${radius}; border:1px solid rgba(255,255,255,0.35); background:rgba(0,0,0,0.35); color:inherit; font:inherit; font-size:1rem;" />${hidden}<button type="submit" style="min-height:48px; padding:0 1.5rem; border:0; border-radius:${radius}; background:${safeCss(s.accentColor || "var(--sc-accent, #7c3aed)")}; color:#fff; font:inherit; font-weight:600; font-size:1rem; cursor:pointer;">${esc(s.signupButton || "Join the waitlist")}</button></form>`;
+}
+
 function renderSections(sections, images, specScrim) {
   return sections.map((s, idx) => {
     const height = Number(s.scrollHeight) || 1000;
@@ -177,7 +213,10 @@ function renderSections(sections, images, specScrim) {
     if (s.body) {
       parts.push(`<p style="font-size:var(--sc-body-size, 1.125rem); line-height:1.7; color:${safeCss(s.bodyColor || "var(--sc-muted, rgba(255,255,255,0.72))")}; max-width:var(--sc-measure, 600px); margin:${bodyMargin};">${esc(s.body)}</p>`);
     }
-    if (s.ctaLabel) {
+    const signup = signupForm(s.signupUrl);
+    if (signup) {
+      parts.push(signupFormHtml(signup, s, idx, (s.textAlign || L.textAlign) === "center"));
+    } else if (s.ctaLabel) {
       parts.push(`<a href="${esc(safeHref(s.ctaHref || "#"))}" style="display:inline-block; background:${safeCss(s.accentColor || "var(--sc-accent, #7c3aed)")}; color:#fff; padding:0.875rem 2rem; border-radius:var(--sc-radius, 0.5rem); font-weight:600; text-decoration:none; font-size:1rem;">${esc(s.ctaLabel)}</a>`);
     }
     if (s.kind === "spacer") {

@@ -26,6 +26,7 @@ import { layoutStyle } from "@/lib/layoutStyles";
 import { faviconSvg, notFoundHtml, exportReadme, renderSocialCard, renderTouchIcon } from "@/lib/exportAssets";
 import { generate2DFrames } from "@/lib/generate2DFrames";
 import { AUTOSAVE_DEBOUNCE_MS, saveStatusLabel, type SaveState } from "@/lib/saveStatus";
+import { SIGNUP_PROVIDER_NAMES, signupStatus } from "@/lib/signupForm";
 
 const ScrollEngine = dynamic(() => import("@/components/ScrollEngine"), { ssr: false });
 const ScrollSection = dynamic(() => import("@/components/ScrollSection"), { ssr: false });
@@ -82,6 +83,22 @@ function SaveIndicator({ dirty, state }: { dirty: boolean; state: SaveState }) {
     );
   }
   return <span role="status" className="flex-shrink-0 text-xs text-muted-foreground">{label}</span>;
+}
+
+/** What the signup field will do with the URL typed so far, in the owner's terms. */
+function SignupHint({ url }: { url: string | undefined }) {
+  const status = signupStatus(url);
+  switch (status.kind) {
+    case "empty":
+      return <>Shows an email field in place of the button. Paste the form URL from {SIGNUP_PROVIDER_NAMES}.</>;
+    case "invalid":
+      return <>That is not an https URL. Use the form URL your email provider gives you.</>;
+    case "unsupported":
+      return <>{status.provider}: {status.reason}. Use {SIGNUP_PROVIDER_NAMES}.</>;
+    case "ok":
+      if (!status.provider) return <>Emails will be posted to this URL as a field called &ldquo;email&rdquo;.</>;
+      return <>{status.provider} form: {status.note ?? "emails go straight to your list"}.</>;
+  }
 }
 
 const defaultSection = (i: number): Section => ({
@@ -748,7 +765,7 @@ function EditorInner() {
       const visibleForExport = onlyVisible(sections);
       const anchors = new Set(visibleForExport.map((_, i) => sectionAnchor(i)));
       const unresolved = visibleForExport
-        .filter((s) => s.ctaLabel && s.ctaHref?.startsWith("#") && !anchors.has(s.ctaHref.slice(1)))
+        .filter((s) => !s.signupUrl && s.ctaLabel && s.ctaHref?.startsWith("#") && !anchors.has(s.ctaHref.slice(1)))
         .map((s) => s.ctaLabel);
       if (unresolved.length) {
         toast.warning(
@@ -1340,6 +1357,26 @@ function EditorInner() {
                       className="h-7 bg-white/5 border-white/10 text-xs"
                     />
                   </div>
+                </div>
+                <div className="space-y-1.5 rounded-md border border-white/10 p-2">
+                  <label htmlFor="signup-url" className="text-xs text-muted-foreground">Email signup form</label>
+                  <Input
+                    id="signup-url"
+                    value={selectedSectionData.signupUrl ?? ""}
+                    onChange={(e) => updateSection(selectedSectionData.id, { signupUrl: e.target.value.trim() || undefined })}
+                    placeholder="https:// form URL from your email provider"
+                    className="h-7 bg-white/5 border-white/10 text-xs"
+                  />
+                  <Input
+                    aria-label="Signup button text"
+                    value={selectedSectionData.signupButton ?? ""}
+                    onChange={(e) => updateSection(selectedSectionData.id, { signupButton: e.target.value || undefined })}
+                    placeholder="Join the waitlist"
+                    className="h-7 bg-white/5 border-white/10 text-xs"
+                  />
+                  <p className="text-xs leading-snug text-muted-foreground">
+                    <SignupHint url={selectedSectionData.signupUrl} />
+                  </p>
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-xs text-muted-foreground">Image URL</label>
