@@ -7,6 +7,7 @@ import { DISPLAY_STYLES, displayStyle } from "@/lib/displayStyles";
 import { parseThemeJson, parseStyleJson } from "@/lib/siteSchema";
 import { proceduralRuntimeSource } from "@/lib/generate2DFrames";
 import { compileTheme, varsToCss } from "@/lib/themeCss";
+import { signupForm, type SignupForm } from "@/lib/signupForm";
 
 function esc(s: unknown): string {
   return String(s ?? "")
@@ -73,6 +74,18 @@ async function readCapped(req: NextRequest, limit: number): Promise<string | nul
     reader.releaseLock();
   }
   return out + decoder.decode();
+}
+
+/** The signup form a section shows in place of its button: no script, it posts to the provider. */
+function signupFormHtml(f: SignupForm, s: Section, index: number, centered: boolean): string {
+  const id = `sc-email-${index}`;
+  const radius = "var(--sc-radius, 8px)";
+  const hidden = f.hidden.map(([k, v]) => `<input type="hidden" name="${esc(k)}" value="${esc(v)}" />`).join("");
+  return `<form class="sc-signup" method="post" action="${esc(f.action)}" target="_blank" rel="noopener" style="display:flex; flex-wrap:wrap; gap:0.5rem; width:min(520px, calc(100vw - 4rem)); justify-content:${centered ? "center" : "flex-start"}; margin:0.5rem ${centered ? "auto" : "0"} 0;">
+            <label for="${id}" class="sc-visually-hidden">Email address</label>
+            <input id="${id}" type="email" name="${esc(f.emailName)}" required autocomplete="email" placeholder="you@example.com" style="flex:1 1 240px; min-width:0; min-height:48px; padding:0 1rem; border-radius:${radius}; border:1px solid rgba(255,255,255,0.35); background:rgba(0,0,0,0.35); color:inherit; font:inherit; font-size:1rem;" />${hidden}
+            <button type="submit" style="flex:0 0 auto; min-height:48px; padding:0 1.5rem; border:0; border-radius:${radius}; background:${safeCss(s.accentColor || "var(--sc-accent, #7c3aed)")}; color:white; font:inherit; font-weight:600; font-size:1rem; cursor:pointer;">${esc(s.signupButton || "Join the waitlist")}</button>
+          </form>`;
 }
 
 function safeHref(s: unknown): string {
@@ -264,6 +277,7 @@ export async function POST(req: NextRequest) {
       const reveal = (REVEALS as readonly string[]).includes(s.reveal ?? "") ? s.reveal : "rise";
       const hTag = sectionIndex === firstHeadingIndex ? "h1" : "h2";
       const scrim = Math.min(Math.max(Number(s.scrim ?? 0) || 0, 0), 1);
+      const signup = signupForm(s.signupUrl);
       return `
     <section id="${sectionAnchor(sectionIndex)}" class="scroll-section" style="height:${trackHeight(s)}px; position:relative; z-index:10;">
       <div class="section-sticky" style="position:sticky; top:0; height:100vh; display:flex; align-items:${safeCss(s.align || L.align)}; justify-content:${safeCss(s.justify || L.justify)}; overflow:hidden;">
@@ -274,7 +288,7 @@ export async function POST(req: NextRequest) {
             ? `<${hTag} class="sc-display sc-statement" style="color:${safeCss(s.headingColor || "var(--sc-ink, #ffffff)")}; margin-bottom:1rem;">${esc(s.heading)}</${hTag}>`
             : `<${hTag} class="sc-display" style="font-size:${H.fontSize}; font-weight:${H.fontWeight}; line-height:${H.lineHeight}; letter-spacing:${H.letterSpacing}; text-transform:var(--sc-display-case, none); color:${safeCss(s.headingColor || "var(--sc-ink, #ffffff)")}; margin-bottom:1rem;">${esc(s.heading)}</${hTag}>`) : ""}
           ${s.body ? `<p style="font-size:var(--sc-body-size, 1.125rem); line-height:1.7; color:${safeCss(s.bodyColor || "var(--sc-muted, rgba(255,255,255,0.72))")}; max-width:var(--sc-measure, 600px); margin:${stack};">${esc(s.body)}</p>` : ""}
-          ${s.ctaLabel ? `<a href="${esc(safeHref(s.ctaHref || "#"))}" style="display:inline-block; background:${safeCss(s.accentColor || "var(--sc-accent, #7c3aed)")}; color:white; padding:0.875rem 2rem; border-radius:var(--sc-radius, 8px); font-weight:600; text-decoration:none; font-size:1rem;">${esc(s.ctaLabel)}</a>` : ""}
+          ${signup ? signupFormHtml(signup, s, sectionIndex, (s.textAlign || L.textAlign) === "center") : s.ctaLabel ? `<a href="${esc(safeHref(s.ctaHref || "#"))}" style="display:inline-block; background:${safeCss(s.accentColor || "var(--sc-accent, #7c3aed)")}; color:white; padding:0.875rem 2rem; border-radius:var(--sc-radius, 8px); font-weight:600; text-decoration:none; font-size:1rem;">${esc(s.ctaLabel)}</a>` : ""}
         </div>
       </div>
     </section>`;
@@ -320,6 +334,9 @@ export async function POST(req: NextRequest) {
     .section-sticky { pointer-events: none; }
     .section-content { pointer-events: auto; }
     .section-content.visible { opacity: 1 !important; transform: translateY(0) !important; }
+    .sc-visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+    .sc-signup input::placeholder { color: rgba(255,255,255,0.72); }
+    @media (max-width: 480px) { .sc-signup button { flex: 1 1 100% !important; } }
     .section-content[data-reveal] { opacity: 0; }
     .section-content[data-reveal="rise"] { transform: translateY(32px); }
     .section-content[data-reveal="fade"] { transform: none; }

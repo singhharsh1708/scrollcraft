@@ -65,6 +65,10 @@ body {
   margin: 0;
 }
 
+.sc-visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.sc-signup input::placeholder { color: rgba(255,255,255,0.72); }
+@media (max-width: 480px) { .sc-signup button { flex: 1 1 100% !important; } }
+
 @media (prefers-reduced-motion: reduce) {
   .section-content[data-reveal],
   .section-content[data-reveal="stagger"] > * {

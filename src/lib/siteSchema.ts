@@ -102,6 +102,9 @@ export const sectionSchema = object({
   body: string().max(5000).optional(),
   ctaLabel: string().max(200).optional(),
   ctaHref: ctaHrefSchema.optional(),
+  /** An email provider's form URL. When set, the section collects an email instead of showing its button. */
+  signupUrl: string().max(2000).regex(/^https:\/\//i, "must be an https URL").optional(),
+  signupButton: string().max(60).optional(),
   image: imageSrcSchema.optional(),
   imageAlt: string().max(500).optional(),
   imageWidth: number().int().min(16).max(1600).optional(),
@@ -141,6 +144,8 @@ export const exportSectionSchema = object({
   body: string().optional(),
   ctaLabel: string().optional(),
   ctaHref: string().optional(),
+  signupUrl: string().optional(),
+  signupButton: string().optional(),
   image: string().optional(),
   imageAlt: string().optional(),
   imageWidth: number().optional(),

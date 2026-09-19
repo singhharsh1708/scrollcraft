@@ -8,6 +8,7 @@ import { generate2DFrames } from "@/lib/generate2DFrames";
 import { loadFrames, storeFrames } from "@/lib/frameStorage";
 import { layoutStyle } from "@/lib/layoutStyles";
 import { displayStyle } from "@/lib/displayStyles";
+import { signupForm } from "@/lib/signupForm";
 
 const REVEAL_CSS = `
 .sc-reveal{opacity:0;will-change:opacity,transform;transition:opacity .6s cubic-bezier(.25,.46,.45,.94),transform .6s cubic-bezier(.25,.46,.45,.94),clip-path .7s cubic-bezier(.25,.46,.45,.94)}
@@ -21,6 +22,8 @@ const REVEAL_CSS = `
 .sc-reveal[data-reveal="stagger"].sc-visible>*:nth-child(2){transition-delay:90ms}
 .sc-reveal[data-reveal="stagger"].sc-visible>*:nth-child(3){transition-delay:180ms}
 .sc-reveal[data-reveal="stagger"].sc-visible>*:nth-child(n+4){transition-delay:270ms}
+.sc-signup input::placeholder{color:rgba(255,255,255,.72)}
+@media (max-width:480px){.sc-signup button{flex:1 1 100%!important}}
 @media (prefers-reduced-motion:reduce){.sc-reveal,.sc-reveal[data-reveal="stagger"]>*{opacity:1!important;transform:none!important;clip-path:none!important;transition:none!important}}
 /* Off-screen until focused, so a keyboard user can get past the background canvas. */
 .sc-skip{position:absolute;left:-9999px;top:0;z-index:100;padding:.75rem 1.25rem;background:var(--sc-ink,#fff);color:var(--sc-ground,#000);border-radius:0 0 .5rem 0;font-weight:600;text-decoration:none}
@@ -259,6 +262,7 @@ export default function SiteRenderer({
           const align = (s.textAlign ?? L.textAlign) as "left" | "center" | "right";
           const stack = align === "center" ? "0 auto 1.5rem" : "0 0 1.5rem";
           const scrim = Math.min(Math.max(Number(s.scrim ?? 0) || 0, 0), 1);
+          const signup = signupForm(s.signupUrl);
           if (s.kind === "spacer") {
             return (
               <section
@@ -325,7 +329,35 @@ export default function SiteRenderer({
                       margin: stack,
                     }}>{s.body}</p>
                   )}
-                  {s.ctaLabel && (
+                  {signup ? (
+                    <form
+                      className="sc-signup"
+                      method="post"
+                      action={signup.action}
+                      target="_blank"
+                      rel="noopener"
+                      style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", width: "min(520px, calc(100vw - 4rem))", justifyContent: align === "center" ? "center" : "flex-start", margin: `0.5rem ${align === "center" ? "auto" : "0"} 0` }}
+                    >
+                      <label htmlFor={`sc-email-${i}`} className="sr-only">Email address</label>
+                      <input
+                        id={`sc-email-${i}`} type="email" name={signup.emailName} required autoComplete="email" placeholder="you@example.com"
+                        style={{
+                          flex: "1 1 240px", minWidth: 0, minHeight: 48, padding: "0 1rem", borderRadius: "var(--sc-radius, 8px)",
+                          border: "1px solid rgba(255,255,255,0.35)", background: "rgba(0,0,0,0.35)", color: "inherit", font: "inherit", fontSize: "1rem",
+                        }}
+                      />
+                      {signup.hidden.map(([k, v]) => <input key={k} type="hidden" name={k} value={v} />)}
+                      <button
+                        type="submit"
+                        style={{
+                          flex: "0 0 auto", minHeight: 48, padding: "0 1.5rem", border: 0, borderRadius: "var(--sc-radius, 8px)",
+                          background: s.accentColor ?? "var(--sc-accent, #7c3aed)", color: "#fff", font: "inherit", fontWeight: 600, fontSize: "1rem", cursor: "pointer",
+                        }}
+                      >
+                        {s.signupButton || "Join the waitlist"}
+                      </button>
+                    </form>
+                  ) : s.ctaLabel && (
                     <a href={ctaHrefOk(s.ctaHref)} style={{
                       display: "inline-block",
                       background: s.accentColor ?? "var(--sc-accent, #7c3aed)",
