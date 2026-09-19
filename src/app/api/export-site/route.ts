@@ -393,7 +393,6 @@ export async function POST(req: NextRequest) {
     #scroll-hint, #scroll-canvas { display: none !important; }
   </style></noscript>
   ${safeCustomHead || ""}
-  <script src="lenis.min.js"></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -587,14 +586,9 @@ export async function POST(req: NextRequest) {
         if (hint) hint.style.opacity = scrollTop > 100 ? '0' : '1';
       }
 
-      if (typeof window.Lenis !== 'undefined') {
-        var lenis = new window.Lenis({ lerp: 0.08, smoothWheel: true });
-        lenis.on('scroll', onScroll);
-        function raf(time) { lenis.raf(time); requestAnimationFrame(raf); }
-        requestAnimationFrame(raf);
-      } else {
-        window.addEventListener('scroll', onScroll, { passive: true });
-      }
+      // Native scrolling: the visitor's wheel, trackpad and keys move the page exactly as
+      // they would anywhere else, and the background follows.
+      window.addEventListener('scroll', onScroll, { passive: true });
       window.addEventListener('resize', resize);
       resize();
       ${styleSpec ? "" : "preload();"}

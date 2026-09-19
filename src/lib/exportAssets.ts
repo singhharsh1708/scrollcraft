@@ -145,9 +145,8 @@ folder and the background stays black. The page tells you when that has happened
 | \`apple-touch-icon.png\` | The icon when saved to a phone's home screen |
 | \`robots.txt\` | Tells search engines they may index the site |
 ${hasAudio ? "| \`audio/\` | Your background track |\n" : ""}
-| \`lenis.min.js\` | Smooth scrolling. Remove it and scrolling still works |
 ${procedural
-  ? "\nThe background is drawn in the browser from a small style recipe, so there is no\n`frames/` folder. The page itself is about 35 KB; the social preview image is the only\nfile larger than that."
+  ? "\nThe background is drawn in the browser from a small style recipe, so there is no\n`frames/` folder. The page itself is about 30 KB; the social preview image is the only\nfile larger than that."
   : "\n| `frames/` | The background images |\n\nKeep `frames/` beside `index.html`."}
 
 ${hasAudio ? `## About the audio

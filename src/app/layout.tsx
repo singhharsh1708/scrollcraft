@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
-import SmoothScroll from "@/components/SmoothScroll";
 import { Analytics } from "@vercel/analytics/next";
 import { siteUrl } from "@/lib/env";
 
@@ -47,9 +46,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`dark ${geistSans.variable} ${geistMono.variable}`}>
       <body className="min-h-full antialiased">
-          <SmoothScroll>
-            {children}
-          </SmoothScroll>
+          {children}
         <Toaster richColors position="bottom-right" />
         {process.env.NEXT_PUBLIC_VERCEL_ENV ? <Analytics /> : null}
       </body>
