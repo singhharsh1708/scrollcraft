@@ -90,6 +90,8 @@
   --chart-4: oklch(0.62 0.14 280);
   --chart-5: oklch(0.85 0.06 230);
   --radius: 0.375rem;
+  /* The sticky nav's height. The hero tucks under it and sticky tabs sit below it. */
+  --nav-h: 52px;
   --sidebar: oklch(0.181 0.037 265.9);
   --sidebar-foreground: oklch(0.959 0.022 239.4);
   --sidebar-primary: oklch(0.55 0.19 256.4);

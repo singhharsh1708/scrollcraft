@@ -358,9 +358,27 @@ describe("the sticky nav reads on both grounds", () => {
   it("turns light over a pale band instead of staying a dark slab", () => {
     const navbar = readFileSync("src/components/Navbar.tsx", "utf8");
     expect(navbar).toContain('".band-light"');
-    expect(navbar).toContain('onLight ? "nav-on-light bg-band/95" : "bg-background/80"');
+    expect(navbar).toContain('onLight ? "nav-on-light border-black/10 bg-band/95" : "border-white/[0.08] bg-background/70"');
     // Same token set as the band itself, so nothing inside the nav needs its own rule.
     expect(CSS).toMatch(/\.band-light,\s*\.nav-on-light\s*\{/);
+  });
+
+  it("is frosted glass the way Apple's is, not a box", () => {
+    // Read off apple.com: saturate(1.8) blur(20px) over a translucent ground, full width.
+    const navbar = readFileSync("src/components/Navbar.tsx", "utf8");
+    expect(navbar).toContain("backdrop-blur-[20px] backdrop-saturate-[1.8]");
+    expect(navbar).not.toMatch(/rounded-md border border-border backdrop-blur/);
+  });
+
+  it("keeps one definition of its height for everything that sits against it", () => {
+    // The hero tucks under the nav and the stage tabs stick below it. Each hardcoded 76px,
+    // which silently broke the moment the nav changed height.
+    expect(CSS).toContain("--nav-h:");
+    for (const f of ["src/components/HeroSequence.tsx", "src/components/Lifecycle.tsx", "src/components/Navbar.tsx"]) {
+      const src = readFileSync(f, "utf8");
+      expect(src, `${f} hardcodes the nav height`).not.toMatch(/\[76px\]/);
+      expect(src).toContain("var(--nav-h)");
+    }
   });
 
   it("does not leave the cyan mark on the pale ground, where it cannot be read", () => {

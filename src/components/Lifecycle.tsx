@@ -91,7 +91,7 @@ export default function Lifecycle({ steps }: { steps: LifecycleStep[] }) {
 
   return (
     <div className="relative mt-20">
-      <nav aria-label="Stages" className="sticky top-[76px] z-30 -mx-6 mb-10 bg-background/85 px-6 py-3 backdrop-blur-md lg:hidden">
+      <nav aria-label="Stages" className="sticky top-[var(--nav-h)] z-30 -mx-6 mb-10 bg-background/85 px-6 py-3 backdrop-blur-md lg:hidden">
         <div ref={tabsRef} className="flex gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {steps.map((s, i) => (
             <button

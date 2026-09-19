@@ -192,7 +192,7 @@ export default function HeroSequence({
   }, [template, reducedMotion]);
 
   return (
-    <section ref={trackRef} className="relative -mt-[76px]" style={{ height: reducedMotion ? undefined : "280svh" }}>
+    <section ref={trackRef} className="relative -mt-[var(--nav-h)]" style={{ height: reducedMotion ? undefined : "280svh" }}>
       <div
         ref={stageRef}
         className={`${reducedMotion ? "relative" : "sticky top-0"} h-svh min-h-[600px] overflow-hidden bg-background`}
@@ -238,7 +238,7 @@ export default function HeroSequence({
         </div>
 
         {/* The page's own copy, which steps aside as the template takes over. */}
-        <div className="relative z-10 mx-auto grid h-full w-full max-w-[1360px] grid-cols-1 px-6 pt-[76px] lg:grid-cols-2 lg:items-center">
+        <div className="relative z-10 mx-auto grid h-full w-full max-w-[1360px] grid-cols-1 px-6 pt-[var(--nav-h)] lg:grid-cols-2 lg:items-center">
           <div ref={copyRef} className="flex flex-col items-start pt-10 sm:pt-16 lg:pt-0">
             {children}
           </div>
