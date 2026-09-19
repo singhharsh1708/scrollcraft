@@ -8,11 +8,11 @@ import GitHubMark from "@/components/GitHubMark";
 import { GITHUB_REPO_URL, GITHUB_SPONSORS_URL } from "@/lib/links";
 
 /**
- * A one-line announcement, then a contained nav that sticks.
+ * A one-line announcement, then a glass nav that sticks.
  *
- * The announcement sits in normal flow so it scrolls away and only the nav pins. The
- * nav is inset from the edge and bordered rather than full-bleed, so a page's own
- * artwork shows around it.
+ * The announcement sits in normal flow so it scrolls away and only the nav pins. The nav
+ * is a full-width pane of frosted glass rather than a box: the page moving under it glows
+ * through, blurred and saturated, the way Apple's does.
  */
 
 const NAV_LINKS = [
@@ -76,18 +76,19 @@ export default function Navbar({ position = "sticky" }: { position?: "fixed" | "
         </div>
       )}
 
-      <div className={`${position === "relative" ? "relative" : "sticky top-0"} z-50 px-3 pt-3 sm:px-6`}>
+      <div className={`${position === "relative" ? "relative" : "sticky top-0"} z-50`}>
         <nav
           ref={navRef}
           aria-label="Main"
           data-surface={onLight ? "light" : "dark"}
-          // Near-opaque on the pale band: at 80% it borrowed the darkness of the dark card
-          // panels inside the band, which took the muted links down to 4.69:1.
-          className={`mx-auto max-w-[1360px] rounded-md border border-border backdrop-blur-xl transition-colors duration-300 ${
-            onLight ? "nav-on-light bg-band/95" : "bg-background/80"
+          // Apple's recipe, read off apple.com: saturate(1.8) blur(20px) over a translucent
+          // ground. The pale band keeps a near-opaque ground: at 90% the blur pulled in the
+          // dark card panels inside the band and took the links to 3.83:1.
+          className={`w-full border-b backdrop-blur-[20px] backdrop-saturate-[1.8] transition-colors duration-300 ${
+            onLight ? "nav-on-light border-black/10 bg-band/95" : "border-white/[0.08] bg-background/70"
           }`}
         >
-          <div className="flex h-16 items-center justify-between gap-4 pl-5 pr-2.5">
+          <div className="mx-auto flex h-[var(--nav-h)] max-w-[1360px] items-center justify-between gap-4 pl-6 pr-3 sm:px-6">
             <Link href="/" aria-label="ScrollCraft home" className="flex shrink-0 items-center gap-2 text-foreground">
               <BrandMark className="h-5 w-5 text-primary-ink" />
               <span className="text-[1.1rem] font-medium tracking-[-0.02em]">ScrollCraft</span>
@@ -100,7 +101,7 @@ export default function Navbar({ position = "sticky" }: { position?: "fixed" | "
                   href={href}
                   aria-current={isActive(href) ? "page" : undefined}
                   className={`lc-mono text-sm transition-colors ${
-                    isActive(href) ? "text-foreground" : "text-muted-foreground hover:text-foreground"
+                    isActive(href) ? "text-foreground" : "text-foreground/75 hover:text-foreground"
                   }`}
                 >
                   {label}
@@ -110,7 +111,7 @@ export default function Navbar({ position = "sticky" }: { position?: "fixed" | "
                 href={DOCS_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="lc-mono text-sm text-muted-foreground transition-colors hover:text-foreground"
+                className="lc-mono text-sm text-foreground/75 transition-colors hover:text-foreground"
               >
                 Docs
               </a>
@@ -150,7 +151,7 @@ export default function Navbar({ position = "sticky" }: { position?: "fixed" | "
                   href={href}
                   onClick={() => setOpen(false)}
                   aria-current={isActive(href) ? "page" : undefined}
-                  className={`lc-mono py-2.5 text-[0.95rem] ${isActive(href) ? "text-foreground" : "text-muted-foreground"}`}
+                  className={`lc-mono py-2.5 text-[0.95rem] ${isActive(href) ? "text-foreground" : "text-foreground/75"}`}
                 >
                   {label}
                 </Link>
@@ -160,7 +161,7 @@ export default function Navbar({ position = "sticky" }: { position?: "fixed" | "
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => setOpen(false)}
-                className="lc-mono py-2.5 text-[0.95rem] text-muted-foreground"
+                className="lc-mono py-2.5 text-[0.95rem] text-foreground/75"
               >
                 Docs
               </a>
@@ -169,7 +170,7 @@ export default function Navbar({ position = "sticky" }: { position?: "fixed" | "
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => setOpen(false)}
-                className="lc-mono flex items-center gap-2 py-2.5 text-[0.95rem] text-muted-foreground"
+                className="lc-mono flex items-center gap-2 py-2.5 text-[0.95rem] text-foreground/75"
               >
                 <Heart className="h-4 w-4" aria-hidden="true" /> Sponsor
               </a>
