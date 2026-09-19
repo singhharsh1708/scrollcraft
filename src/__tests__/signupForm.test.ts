@@ -6,6 +6,7 @@ import path from "node:path";
 import type { NextRequest } from "next/server";
 import { signupForm, signupStatus } from "@/lib/signupForm";
 import { sectionSchema } from "@/lib/siteSchema";
+import { templateBySlug } from "@/lib/templates";
 
 const rateLimitMock = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/rateLimit", () => ({ rateLimit: rateLimitMock, getClientIp: () => "1.2.3.4" }));
@@ -101,6 +102,17 @@ describe("an exported section collects the email itself", () => {
     const html = await exportHtml([{ heading: "A", ctaLabel: "Read more", ctaHref: "#x", scrollHeight: 1000 }]);
     expect(html).toContain(">Read more</a>");
     expect(html).not.toContain('class="sc-signup"');
+  });
+
+  it("turns the launch template's closing button into the form once a link is added", async () => {
+    const kept = templateBySlug("kept")!;
+    expect(kept.sections.some((s) => s.signupUrl), "a template must not post anyone's emails to an account they do not own").toBe(false);
+    const last = kept.sections.length - 1;
+    const html = await exportHtml(kept.sections.map((s, i) => (i === last ? { ...s, signupUrl: BUTTONDOWN } : s)));
+    expect(html.match(/class="sc-signup"/g)).toHaveLength(1);
+    expect(html).toContain(`action="${BUTTONDOWN}"`);
+    expect(html).toMatch(new RegExp(`<input id="sc-email-${last}" type="email" name="email"`));
+    expect(html).toMatch(/<button type="submit"[^>]*>Join the waitlist<\/button>/);
   });
 
   it("cannot be used to inject markup through the URL or the label", async () => {
