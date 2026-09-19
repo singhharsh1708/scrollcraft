@@ -81,10 +81,10 @@ function signupFormHtml(f: SignupForm, s: Section, index: number, centered: bool
   const id = `sc-email-${index}`;
   const radius = "var(--sc-radius, 8px)";
   const hidden = f.hidden.map(([k, v]) => `<input type="hidden" name="${esc(k)}" value="${esc(v)}" />`).join("");
-  return `<form class="sc-signup" method="post" action="${esc(f.action)}" target="_blank" rel="noopener" style="display:flex; flex-wrap:wrap; gap:0.5rem; justify-content:${centered ? "center" : "flex-start"}; margin-top:0.5rem;">
+  return `<form class="sc-signup" method="post" action="${esc(f.action)}" target="_blank" rel="noopener" style="display:flex; flex-wrap:wrap; gap:0.5rem; width:min(520px, calc(100vw - 4rem)); justify-content:${centered ? "center" : "flex-start"}; margin:0.5rem ${centered ? "auto" : "0"} 0;">
             <label for="${id}" class="sc-visually-hidden">Email address</label>
-            <input id="${id}" type="email" name="${esc(f.emailName)}" required autocomplete="email" placeholder="you@example.com" style="flex:1 1 220px; max-width:320px; min-height:48px; padding:0 1rem; border-radius:${radius}; border:1px solid rgba(255,255,255,0.35); background:rgba(0,0,0,0.35); color:inherit; font:inherit; font-size:1rem;" />${hidden}
-            <button type="submit" style="min-height:48px; padding:0 1.5rem; border:0; border-radius:${radius}; background:${safeCss(s.accentColor || "var(--sc-accent, #7c3aed)")}; color:white; font:inherit; font-weight:600; font-size:1rem; cursor:pointer;">${esc(s.signupButton || "Join the waitlist")}</button>
+            <input id="${id}" type="email" name="${esc(f.emailName)}" required autocomplete="email" placeholder="you@example.com" style="flex:1 1 240px; min-width:0; min-height:48px; padding:0 1rem; border-radius:${radius}; border:1px solid rgba(255,255,255,0.35); background:rgba(0,0,0,0.35); color:inherit; font:inherit; font-size:1rem;" />${hidden}
+            <button type="submit" style="flex:0 0 auto; min-height:48px; padding:0 1.5rem; border:0; border-radius:${radius}; background:${safeCss(s.accentColor || "var(--sc-accent, #7c3aed)")}; color:white; font:inherit; font-weight:600; font-size:1rem; cursor:pointer;">${esc(s.signupButton || "Join the waitlist")}</button>
           </form>`;
 }
 
@@ -335,7 +335,8 @@ export async function POST(req: NextRequest) {
     .section-content { pointer-events: auto; }
     .section-content.visible { opacity: 1 !important; transform: translateY(0) !important; }
     .sc-visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-    .sc-signup input::placeholder { color: rgba(255,255,255,0.6); }
+    .sc-signup input::placeholder { color: rgba(255,255,255,0.72); }
+    @media (max-width: 480px) { .sc-signup button { flex: 1 1 100% !important; } }
     .section-content[data-reveal] { opacity: 0; }
     .section-content[data-reveal="rise"] { transform: translateY(32px); }
     .section-content[data-reveal="fade"] { transform: none; }

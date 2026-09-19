@@ -26,7 +26,7 @@ import { layoutStyle } from "@/lib/layoutStyles";
 import { faviconSvg, notFoundHtml, exportReadme, renderSocialCard, renderTouchIcon } from "@/lib/exportAssets";
 import { generate2DFrames } from "@/lib/generate2DFrames";
 import { AUTOSAVE_DEBOUNCE_MS, saveStatusLabel, type SaveState } from "@/lib/saveStatus";
-import { SIGNUP_PROVIDER_NAMES, signupStatus } from "@/lib/signupForm";
+import { SIGNUP_PROVIDER_NAMES, signupForm, signupStatus } from "@/lib/signupForm";
 
 const ScrollEngine = dynamic(() => import("@/components/ScrollEngine"), { ssr: false });
 const ScrollSection = dynamic(() => import("@/components/ScrollSection"), { ssr: false });
@@ -1252,7 +1252,16 @@ function EditorInner() {
                                 {s.body}
                               </p>
                             )}
-                            {s.ctaLabel && (
+                            {signupForm(s.signupUrl) ? (
+                              <span data-signup-preview style={{ display: "inline-flex", flexWrap: "wrap", gap: "0.375rem", justifyContent: "center" }}>
+                                <span style={{ display: "inline-block", minWidth: "11rem", padding: "0.625rem 0.875rem", borderRadius: "0.375rem", border: "1px solid rgba(255,255,255,0.35)", background: "rgba(0,0,0,0.35)", color: "rgba(255,255,255,0.72)", fontSize: "0.875rem", textAlign: "left" }}>
+                                  you@example.com
+                                </span>
+                                <span style={{ display: "inline-block", background: s.accentColor, color: "white", padding: "0.625rem 1.5rem", borderRadius: "0.375rem", fontWeight: 600, fontSize: "0.875rem" }}>
+                                  {s.signupButton || "Join the waitlist"}
+                                </span>
+                              </span>
+                            ) : s.ctaLabel && (
                               <span style={{ display: "inline-block", background: s.accentColor, color: "white", padding: "0.625rem 1.5rem", borderRadius: "0.375rem", fontWeight: 600, fontSize: "0.875rem" }}>
                                 {s.ctaLabel}
                               </span>

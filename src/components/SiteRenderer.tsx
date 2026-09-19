@@ -22,7 +22,8 @@ const REVEAL_CSS = `
 .sc-reveal[data-reveal="stagger"].sc-visible>*:nth-child(2){transition-delay:90ms}
 .sc-reveal[data-reveal="stagger"].sc-visible>*:nth-child(3){transition-delay:180ms}
 .sc-reveal[data-reveal="stagger"].sc-visible>*:nth-child(n+4){transition-delay:270ms}
-.sc-signup input::placeholder{color:rgba(255,255,255,.6)}
+.sc-signup input::placeholder{color:rgba(255,255,255,.72)}
+@media (max-width:480px){.sc-signup button{flex:1 1 100%!important}}
 @media (prefers-reduced-motion:reduce){.sc-reveal,.sc-reveal[data-reveal="stagger"]>*{opacity:1!important;transform:none!important;clip-path:none!important;transition:none!important}}
 /* Off-screen until focused, so a keyboard user can get past the background canvas. */
 .sc-skip{position:absolute;left:-9999px;top:0;z-index:100;padding:.75rem 1.25rem;background:var(--sc-ink,#fff);color:var(--sc-ground,#000);border-radius:0 0 .5rem 0;font-weight:600;text-decoration:none}
@@ -335,13 +336,13 @@ export default function SiteRenderer({
                       action={signup.action}
                       target="_blank"
                       rel="noopener"
-                      style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", justifyContent: align === "center" ? "center" : "flex-start", marginTop: "0.5rem" }}
+                      style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", width: "min(520px, calc(100vw - 4rem))", justifyContent: align === "center" ? "center" : "flex-start", margin: `0.5rem ${align === "center" ? "auto" : "0"} 0` }}
                     >
                       <label htmlFor={`sc-email-${i}`} className="sr-only">Email address</label>
                       <input
                         id={`sc-email-${i}`} type="email" name={signup.emailName} required autoComplete="email" placeholder="you@example.com"
                         style={{
-                          flex: "1 1 220px", maxWidth: 320, minHeight: 48, padding: "0 1rem", borderRadius: "var(--sc-radius, 8px)",
+                          flex: "1 1 240px", minWidth: 0, minHeight: 48, padding: "0 1rem", borderRadius: "var(--sc-radius, 8px)",
                           border: "1px solid rgba(255,255,255,0.35)", background: "rgba(0,0,0,0.35)", color: "inherit", font: "inherit", fontSize: "1rem",
                         }}
                       />
@@ -349,7 +350,7 @@ export default function SiteRenderer({
                       <button
                         type="submit"
                         style={{
-                          minHeight: 48, padding: "0 1.5rem", border: 0, borderRadius: "var(--sc-radius, 8px)",
+                          flex: "0 0 auto", minHeight: 48, padding: "0 1.5rem", border: 0, borderRadius: "var(--sc-radius, 8px)",
                           background: s.accentColor ?? "var(--sc-accent, #7c3aed)", color: "#fff", font: "inherit", fontWeight: 600, fontSize: "1rem", cursor: "pointer",
                         }}
                       >
