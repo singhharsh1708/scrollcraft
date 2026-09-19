@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageMeta } from "@/lib/pageMeta";
 import { templateBySlug } from "@/lib/templates";
 
 /**
@@ -13,11 +14,12 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const template = templateBySlug(slug);
   const canonical = `/templates/${slug}`;
   if (!template) return { alternates: { canonical } };
-  return {
+  return pageMeta({
     title: `${template.name} template`,
     description: template.tagline,
-    alternates: { canonical },
-  };
+    path: canonical,
+    image: { url: `/template-previews/${template.slug}.jpg`, width: 800, height: 500, alt: `The opening screen of the ${template.name} template` },
+  });
 }
 
 export default function TemplateLayout({ children }: { children: React.ReactNode }) {
