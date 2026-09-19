@@ -192,7 +192,7 @@ export default function HeroSequence({
   }, [template, reducedMotion]);
 
   return (
-    <section ref={trackRef} className="relative -mt-[var(--nav-h)]" style={{ height: reducedMotion ? undefined : "280svh" }}>
+    <section ref={trackRef} className={`relative -mt-[var(--nav-h)] ${reducedMotion ? "" : "h-[200svh] lg:h-[280svh]"}`}>
       <div
         ref={stageRef}
         className={`${reducedMotion ? "relative" : "sticky top-0"} h-svh min-h-[600px] overflow-hidden bg-background`}
