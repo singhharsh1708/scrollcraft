@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import sharp from "sharp";
-import { pageMeta, SHARE_BASE } from "@/lib/pageMeta";
+import { pageMeta, SHARE_BASE, DEFAULT_SHARE_IMAGE } from "@/lib/pageMeta";
 
 /**
  * Every public route names its own address.
@@ -45,11 +45,15 @@ describe("every public route claims its own address", () => {
 });
 
 describe("a shared link describes the page it points at", () => {
-  it("carries the root's share fields, the page's own words and its address", () => {
+  it("carries the root's share fields, card image, the page's own words and its address", async () => {
     const meta = pageMeta({ title: "Templates", description: "Twenty-two sites.", path: "/templates" });
     expect(meta.openGraph).toMatchObject({ ...SHARE_BASE, title: "Templates | ScrollCraft", description: "Twenty-two sites.", url: "/templates" });
     expect(meta.twitter).toMatchObject({ card: "summary_large_image", title: "Templates | ScrollCraft", description: "Twenty-two sites." });
-    expect(meta.openGraph).not.toHaveProperty("images");
+    // Measured: with openGraph set and no images, /templates rendered no og:image at all.
+    expect(meta.openGraph).toMatchObject({ images: [DEFAULT_SHARE_IMAGE] });
+    expect(meta.twitter).toMatchObject({ images: [DEFAULT_SHARE_IMAGE] });
+    const { size } = await import("../app/opengraph-image");
+    expect([DEFAULT_SHARE_IMAGE.width, DEFAULT_SHARE_IMAGE.height]).toEqual([size.width, size.height]);
     expect(meta.alternates).toEqual({ canonical: "/templates" });
   });
 
