@@ -15,7 +15,6 @@ export type HeroTemplate = {
   style: Style2D;
   colors: [string, string, string];
   ink: string;
-  muted: string;
   accent: string;
   scenes: HeroScene[];
 };
@@ -223,8 +222,8 @@ export default function HeroSequence({
                 style={{ opacity: i === 0 ? 1 : 0 }}
               >
                 <p
-                  className="mb-[0.7em] font-semibold uppercase tracking-[0.18em]"
-                  style={{ color: template.muted, fontSize: "max(10px, 0.24em)" }}
+                  className="mb-[0.7em] font-semibold uppercase tracking-[0.18em] opacity-85"
+                  style={{ color: template.ink, fontSize: "max(10px, 0.24em)" }}
                 >
                   {s.eyebrow}
                 </p>

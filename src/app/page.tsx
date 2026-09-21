@@ -64,7 +64,6 @@ export default function Home() {
     style: heroSource.style,
     colors: heroSource.colors,
     ink: heroSource.theme?.ink ?? "#f0f5f8",
-    muted: heroSource.theme?.muted ?? "rgba(240,245,248,0.72)",
     accent: heroSource.theme?.accent ?? "#7c3aed",
     scenes: heroScenes(heroSource.sections),
   };
