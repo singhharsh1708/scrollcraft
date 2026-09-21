@@ -1,12 +1,13 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useRef, type ReactNode } from "react";
-import { Space_Grotesk } from "next/font/google";
+import { Playfair_Display } from "next/font/google";
 import { drawFrame2D, type Style2D } from "@/lib/generate2DFrames";
+import type { HeroScene } from "@/lib/heroScenes";
 
-// TripVault's own display face, so the demo reads as somebody else's site inside this one.
+// AuraBeauty's own display face, so the demo reads as somebody else's site inside this one.
 // Next serves it from this origin, one weight. Change it with HERO_SLUG in page.tsx.
-const display = Space_Grotesk({ subsets: ["latin"], weight: "700", display: "swap" });
+const display = Playfair_Display({ subsets: ["latin"], weight: "700", display: "swap" });
 
 export type HeroTemplate = {
   slug: string;
@@ -14,8 +15,8 @@ export type HeroTemplate = {
   style: Style2D;
   colors: [string, string, string];
   ink: string;
-  muted: string;
-  scenes: { eyebrow: string; heading: string }[];
+  accent: string;
+  scenes: HeroScene[];
 };
 
 /** Share of the track over which the screen grows from a card to the whole viewport. It
@@ -221,17 +222,25 @@ export default function HeroSequence({
                 style={{ opacity: i === 0 ? 1 : 0 }}
               >
                 <p
-                  className="mb-[0.7em] font-semibold uppercase tracking-[0.18em]"
-                  style={{ color: template.muted, fontSize: "max(10px, 0.24em)" }}
+                  className="mb-[0.7em] font-semibold uppercase tracking-[0.18em] opacity-85"
+                  style={{ color: template.ink, fontSize: "max(10px, 0.24em)" }}
                 >
                   {s.eyebrow}
                 </p>
                 <p
-                  className={`${display.className} leading-[1.02] tracking-[-0.035em]`}
+                  className={`${display.className} leading-[1.05] tracking-[-0.02em]`}
                   style={{ color: template.ink, fontSize: i === 0 ? "1em" : "0.68em" }}
                 >
                   {s.heading}
                 </p>
+                {s.cta && (
+                  <span
+                    className="mt-[1em] rounded-full px-[1.4em] py-[0.7em] font-semibold text-white"
+                    style={{ background: template.accent, fontSize: "max(11px, 0.2em)" }}
+                  >
+                    {s.cta}
+                  </span>
+                )}
               </div>
             ))}
           </div>
