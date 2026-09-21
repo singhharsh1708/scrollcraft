@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { TEMPLATES, templateCategories } from "@/lib/templates";
+import { heroScenes } from "@/lib/heroScenes";
 import HomeClient, { type EditorSample, type ExampleCard, type TemplateSlice } from "./HomeClient";
 import type { HeroTemplate } from "@/components/HeroSequence";
 
@@ -17,15 +18,13 @@ export const metadata: Metadata = { alternates: { canonical: "/" } };
  * down. The example manifest is read the same way: three of its fields are on the page,
  * and its palette notes are not.
  */
-const PICK_SLUGS = ["aurabeauty", "ledger-fintech", "kiln-coffee", "northlight"];
-const EDITOR_SLUG = "aurabeauty";
+const PICK_SLUGS = ["kept", "ledger-fintech", "kiln-coffee", "northlight"];
+const EDITOR_SLUG = "orbitcrm";
 /**
- * The template the hero plays. Measured on the preview pages over the range the hero
- * scrubs, TripVault's background is the brightest in the catalogue (mean luma 46.7 of
- * 255, against 12.4 for Harbour) and changes the most per scroll step of any template in
- * the page's colours (6.4, against 2.5). The hero sets TripVault's display face.
+ * The template the hero plays. Its wave background visibly moves as the visitor scrolls,
+ * where the gradient templates read as one flat field. The hero sets its display face.
  */
-const HERO_SLUG = "tripvault";
+const HERO_SLUG = "aurabeauty";
 
 function examples(): ExampleCard[] {
   try {
@@ -66,10 +65,8 @@ export default function Home() {
     colors: heroSource.colors,
     ink: heroSource.theme?.ink ?? "#f0f5f8",
     muted: heroSource.theme?.muted ?? "rgba(240,245,248,0.72)",
-    scenes: heroSource.sections
-      .filter((s) => s.kind !== "spacer" && s.heading)
-      .slice(0, 3)
-      .map((s) => ({ eyebrow: s.eyebrow ?? "", heading: s.heading ?? "" })),
+    accent: heroSource.theme?.accent ?? "#7c3aed",
+    scenes: heroScenes(heroSource.sections),
   };
 
   return (

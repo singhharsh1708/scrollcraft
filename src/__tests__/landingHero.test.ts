@@ -168,6 +168,26 @@ describe("the hero plays a real template", () => {
     expect(Number(desktop)).toBeGreaterThan(Number(phone));
   });
 
+  it("plays the template through to its closing button", async () => {
+    const { templateBySlug } = await import("@/lib/templates");
+    const { heroScenes } = await import("@/lib/heroScenes");
+    const slug = /const HERO_SLUG = "([a-z-]+)";/.exec(PAGE)![1];
+    const sections = templateBySlug(slug)!.sections.filter((s) => s.kind !== "spacer");
+    const scenes = heroScenes(templateBySlug(slug)!.sections);
+    expect(scenes).toHaveLength(3);
+    expect(scenes[0].heading).toBe(sections[0].heading);
+    expect(scenes[2]).toMatchObject({ heading: sections.at(-1)!.heading, cta: sections.at(-1)!.ctaLabel });
+    expect(scenes[2].cta).toBeTruthy();
+    expect(scenes.slice(0, 2).every((s) => !s.cta)).toBe(true);
+  });
+
+  it("sets the headings in the played template's own display face", async () => {
+    const { templateBySlug } = await import("@/lib/templates");
+    const slug = /const HERO_SLUG = "([a-z-]+)";/.exec(PAGE)![1];
+    const font = /import \{ (\w+) \} from "next\/font\/google";/.exec(HERO)![1].replace(/_/g, " ");
+    expect(font).toBe(templateBySlug(slug)!.theme.fontDisplay);
+  });
+
   it("keeps the demo out of the reading order and names it in words", () => {
     // Three headings from somebody else's site would be read out as if they were ours.
     expect(HERO).toMatch(/ref=\{screenRef\}\s*aria-hidden="true"/);
