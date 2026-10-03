@@ -13,7 +13,7 @@ import {
   ArrowLeft, Download, Plus, Trash2, Eye, EyeOff, ChevronUp, ChevronDown,
   Layers, Loader2, AlignLeft, AlignCenter, AlignRight,
   Monitor, Tablet, Smartphone, Music, Volume2, VolumeX, Save,
-  Undo2, Redo2, Copy, Sparkles
+  Undo2, Redo2, Copy, Sparkles, FileDown, FileUp
 } from "lucide-react";
 import { useScrollAudio } from "@/lib/useScrollAudio";
 import { AssistantBar, useAssistantAvailable } from "@/components/AssistantBar";
@@ -27,6 +27,7 @@ import { faviconSvg, notFoundHtml, exportReadme, renderSocialCard, renderTouchIc
 import { generate2DFrames } from "@/lib/generate2DFrames";
 import { AUTOSAVE_DEBOUNCE_MS, saveStatusLabel, type SaveState } from "@/lib/saveStatus";
 import { SIGNUP_PROVIDER_NAMES, signupForm, signupStatus } from "@/lib/signupForm";
+import { buildProjectFile, parseProjectFile, projectFileName, backgroundTravels, type ProjectDocument } from "@/lib/projectFile";
 
 const ScrollEngine = dynamic(() => import("@/components/ScrollEngine"), { ssr: false });
 const ScrollSection = dynamic(() => import("@/components/ScrollSection"), { ssr: false });
@@ -843,7 +844,7 @@ function EditorInner() {
       if (editGenRef.current === genAtSave) setDirty(false);
       setSaveState(framesCached ? "saved" : "partial");
       if (!opts?.silent) {
-        if (framesCached) toast.success("Saved in this browser");
+        if (framesCached) toast.success("Saved in this browser only. Download a copy to keep it anywhere else.");
         else toast.warning("Saved, but the background could not be cached - export to keep it.");
       }
       return SAVED_FRAMES_KEY;
@@ -854,6 +855,85 @@ function EditorInner() {
     } finally {
       setIsSaving(false);
     }
+  };
+
+  /**
+   * Take the work off this machine, and bring it back.
+   *
+   * Save keeps a document in this browser and nowhere else, so clearing browsing data or
+   * moving to another laptop lost it outright. This is the copy someone owns: small,
+   * because the background is a recipe rather than pixels, and plain JSON, so it can sit
+   * in a repository next to the site it builds.
+   */
+  const currentProjectDocument = (): ProjectDocument => ({
+    name: siteName,
+    description: siteDescription || undefined,
+    sections,
+    themeJson: siteTheme ? JSON.stringify(siteTheme) : null,
+    styleJson: styleSpec ? JSON.stringify(styleSpec) : null,
+    customHead,
+    customCss,
+    fps,
+    framesFromRecipe,
+  });
+
+  const handleDownloadProject = () => {
+    const doc = currentProjectDocument();
+    const url = URL.createObjectURL(new Blob([buildProjectFile(doc)], { type: "application/json" }));
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = projectFileName(siteName);
+    a.click();
+    URL.revokeObjectURL(url);
+    if (backgroundTravels(doc)) {
+      toast.success("Saved a copy you can keep, move to another computer, or send to someone");
+    } else {
+      toast.warning("Saved your text and settings. The background came from your own footage, so it stays in this browser and this copy will open with a new one.");
+    }
+  };
+
+  const openProjectInputRef = useRef<HTMLInputElement>(null);
+
+  const handleOpenProject = async (file: File) => {
+    const parsed = parseProjectFile(await file.text().catch(() => ""));
+    if (!parsed.ok) {
+      toast.error(parsed.error);
+      return;
+    }
+    const doc = parsed.value.document;
+    const restored = doc.sections as Section[];
+    if (restored.length) {
+      setSections(restored);
+      setSelectedSection(restored[0].id);
+    }
+    setSiteName(doc.name);
+    setSiteDescription(doc.description ?? "");
+    if (typeof doc.fps === "number") setFps(doc.fps);
+    setCustomHead(doc.customHead ?? "");
+    setCustomCss(doc.customCss ?? "");
+
+    const theme = doc.themeJson ? themeSchema.safeParse(JSON.parse(doc.themeJson)) : null;
+    if (theme?.success) setSiteTheme(theme.data);
+
+    const style = doc.styleJson ? siteStyleSchema.safeParse(JSON.parse(doc.styleJson)) : null;
+    if (style?.success) {
+      setStyleSpec(style.data);
+      const mob = window.innerWidth < 768;
+      const redrawn = await generate2DFrames({
+        style: style.data.style,
+        color1: style.data.colors[0], color2: style.data.colors[1], color3: style.data.colors[2],
+        frameCount: mob ? 60 : 90, width: mob ? 640 : 1280, height: mob ? 360 : 720,
+      }, () => {}).catch(() => null);
+      if (redrawn?.length) {
+        setFrames(redrawn);
+        setFrameCount(redrawn.length);
+        setIsDemo(false);
+        setFramesFromRecipe(true);
+        toast.success(`Opened ${doc.name}`);
+        return;
+      }
+    }
+    toast.warning(`Opened ${doc.name}, but its background could not be drawn. Pick a template or a style to make a new one.`);
   };
 
   // The autosave timer below is scheduled by one render and fires during another, so it
@@ -1064,6 +1144,37 @@ function EditorInner() {
               Rewrite
             </Button>
           )}
+          <input
+            ref={openProjectInputRef}
+            type="file"
+            accept="application/json,.json"
+            className="sr-only"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              e.target.value = "";
+              if (file) void handleOpenProject(file);
+            }}
+          />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => openProjectInputRef.current?.click()}
+            title="Open a copy from your computer"
+            aria-label="Open a copy from your computer"
+            className="border-white/10 h-7 px-2 text-xs"
+          >
+            <FileUp className="w-3.5 h-3.5" />
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleDownloadProject}
+            title="Download a copy you can move to another computer"
+            aria-label="Download a copy you can move to another computer"
+            className="border-white/10 h-7 px-2 text-xs"
+          >
+            <FileDown className="w-3.5 h-3.5" />
+          </Button>
           <Button
             variant="outline"
             size="sm"
