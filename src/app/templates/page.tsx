@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { Suspense } from "react";
 import { pageMeta } from "@/lib/pageMeta";
 import { TEMPLATES, templateCategories, templateScrollHeight, templateSectionCount } from "@/lib/templates";
 import TemplatesClient, { type TemplateCard } from "./TemplatesClient";
+import { filtersFromQuery } from "@/lib/templateFilters";
 
 export const metadata: Metadata = pageMeta({
   title: "Templates",
@@ -21,7 +21,7 @@ const LEAD_SLUG = "kept";
  * which is the bulk of the file and none of this page. Reading it here keeps that on the
  * server and sends down only what a card renders.
  */
-export default function TemplatesPage() {
+export default async function TemplatesPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const ordered = [...TEMPLATES].sort((a, b) => Number(b.slug === LEAD_SLUG) - Number(a.slug === LEAD_SLUG));
   const templates: TemplateCard[] = ordered.map((t) => ({
     slug: t.slug,
@@ -36,11 +36,15 @@ export default function TemplatesPage() {
     scrollHeight: templateScrollHeight(t),
   }));
 
-  // The gallery reads its filters from the URL, which is a client-side concern; the
-  // boundary lets the rest of the page stay static.
-  return (
-    <Suspense fallback={null}>
-      <TemplatesClient templates={templates} categories={templateCategories()} />
-    </Suspense>
-  );
+  // Filters are read here rather than in the browser. Reading them client-side put the
+  // whole gallery behind a Suspense boundary, and the served HTML then carried none of
+  // the 22 cards: a crawler, and anyone arriving from search, saw an empty page.
+  const categories = templateCategories();
+  const query = new URLSearchParams();
+  for (const [key, value] of Object.entries(await searchParams)) {
+    if (typeof value === "string") query.set(key, value);
+  }
+  const { filters, sort } = filtersFromQuery(query, { categories });
+
+  return <TemplatesClient templates={templates} categories={categories} initialFilters={filters} initialSort={sort} />;
 }

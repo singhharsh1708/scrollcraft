@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,7 +16,6 @@ import {
   backgroundCounts,
   categoryCounts,
   filterTemplates,
-  filtersFromQuery,
   filtersToQuery,
   hasActiveFilters,
   sortTemplates,
@@ -41,16 +40,24 @@ export interface TemplateCard {
   scrollHeight: number;
 }
 
-export default function TemplatesClient({ templates, categories: allCategories }: { templates: TemplateCard[]; categories: string[] }) {
+export default function TemplatesClient({
+  templates,
+  categories: allCategories,
+  initialFilters,
+  initialSort,
+}: {
+  templates: TemplateCard[];
+  categories: string[];
+  initialFilters: TemplateFilters;
+  initialSort: TemplateSort;
+}) {
   const router = useRouter();
   const pathname = usePathname();
-  const params = useSearchParams();
 
-  // The URL is the starting state, so a filtered gallery can be linked, bookmarked and
-  // sent to somebody else rather than described to them.
-  const fromUrl = useMemo(() => filtersFromQuery(params, { categories: allCategories }), [params, allCategories]);
-  const [filters, setFilters] = useState<TemplateFilters>(fromUrl.filters);
-  const [sort, setSort] = useState<TemplateSort>(fromUrl.sort);
+  // The server read these out of the URL and rendered the matching cards, so a shared
+  // link and a crawler both get the real page. From here they are this component's.
+  const [filters, setFilters] = useState<TemplateFilters>(initialFilters);
+  const [sort, setSort] = useState<TemplateSort>(initialSort);
 
   useEffect(() => {
     const query = filtersToQuery(filters, sort);
