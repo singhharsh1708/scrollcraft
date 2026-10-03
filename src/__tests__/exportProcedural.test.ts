@@ -139,6 +139,17 @@ describe("procedural background export", () => {
 });
 
 describe("the inlined runtime is executable", () => {
+  it("carries every helper the drawing functions call", () => {
+    // baseFill was added to three styles and left out of this list. Types passed, the app
+    // was fine, and every exported site using those styles would have thrown on load.
+    const { source } = proceduralRuntimeSource();
+    const defined = new Set([...source.matchAll(/function\s+([A-Za-z0-9_$]+)/g)].map((m) => m[1]));
+    const called = new Set([...source.matchAll(/\b([A-Za-z0-9_$]+)\s*\(/g)].map((m) => m[1]));
+    const builtins = new Set(["Math", "Array", "Object", "String", "Number", "if", "for", "while", "switch", "catch", "return", "function", "typeof"]);
+    const missing = [...called].filter((name) => !defined.has(name) && !builtins.has(name) && /^(draw|hex|lerp|base)/i.test(name));
+    expect(missing, `the exported runtime calls ${missing.join(", ")} without defining them`).toEqual([]);
+  });
+
   it("draws using the recipe the page actually emits, not a hand-built one", async () => {
     // The original version of this test built its own options object in the correct
     // FrameOptions shape and ran the runtime against that. It passed while the export

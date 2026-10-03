@@ -12,6 +12,9 @@ export interface TemplateTheme {
   muted?: string;
   accent?: string;
   accentText?: string;
+  /** The page behind the canvas. Absent, the renderer's own near-black is used, which is
+   *  why every template before Pare was dark whether or not it wanted to be. */
+  ground?: string;
   radius?: number;
 }
 
@@ -1559,6 +1562,64 @@ export const TEMPLATES: Template[] = [
         heading: "Prints, licensing, or a shed I should see.",
         body: "If you know a mill still running on water, I would rather hear about that than anything else. Replies in a few days, from me, not an assistant.",
         ctaLabel: "Send a note", ctaHref: "#contact",
+        scrollHeight: 1200,
+      },
+    ],
+  },
+  {
+    slug: "pare",
+    name: "Pare",
+    tagline: "An engineer who makes slow databases fast, on a page that is not dark",
+    category: "Portfolio",
+    tags: ["Light", "Technical", "Consulting"],
+    style: "geometric",
+    colors: ["#1b3a8f", "#8a5a2b", "#eff2f6"],
+    gradient: "from-slate-300 via-stone-300 to-slate-100",
+    theme: { fontDisplay: "JetBrains Mono", fontBody: "Public Sans", scale: "compact", displayWeight: 700, displayTracking: -0.03, ink: "#111823", muted: "rgba(17,24,35,0.72)", accent: "#1d4ed8", accentText: "#17347f", ground: "#eff2f6", radius: 4 },
+    sections: [
+      {
+        kind: "statement", layout: "center", reveal: "mask",
+        eyebrow: "Independent, booked by the fortnight",
+        heading: "Your database is not slow. One query is.",
+        ctaLabel: "See what that looks like", ctaHref: "#section-2",
+        scrollHeight: 1300,
+      },
+      {
+        layout: "left", reveal: "stagger",
+        eyebrow: "The usual shape of it",
+        heading: "A report that took forty seconds now takes three hundred milliseconds",
+        body: "Nine times out of ten it is one query, one missing index and one ORM call in a loop. I read the explain plans, fix the three that matter, and leave the rest alone.",
+        scrollHeight: 1400,
+      },
+      {
+        layout: "right", reveal: "fade",
+        eyebrow: "How I work",
+        heading: "Two weeks, on your branch, with your team watching",
+        body: "No access to production without someone from your side in the room. Every change arrives as a pull request with the before and after timings in the description, so your engineers can argue with it.",
+        scrollHeight: 1400,
+      },
+      { kind: "spacer", scrollHeight: 600 },
+      {
+        layout: "left", reveal: "stagger",
+        eyebrow: "What you keep",
+        heading: "The explain plans, not just the fix",
+        body: "You get a short document per query: what it was doing, why it was slow, what changed, and how to spot the same pattern again. The point is that you do not need me the second time.",
+        scrollHeight: 1400,
+      },
+      {
+        layout: "right", reveal: "fade",
+        eyebrow: "What I turn down",
+        heading: "Greenfield, migrations and rewrites",
+        body: "Starting from nothing is somebody else's work, and a rewrite is rarely the cheapest way out of a slow query. If that is what you need I will say so in the first call rather than the fourth week.",
+        scrollHeight: 1300,
+      },
+      { kind: "spacer", scrollHeight: 500 },
+      {
+        layout: "center", reveal: "fade",
+        eyebrow: "Next opening",
+        heading: "Send me the slow query.",
+        body: "Paste the statement and its explain plan. I will tell you whether it is worth two weeks of my time or twenty minutes of yours, for free, within a day.",
+        ctaLabel: "Send a query", ctaHref: "#contact",
         scrollHeight: 1200,
       },
     ],

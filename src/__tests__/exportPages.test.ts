@@ -263,3 +263,19 @@ describe("the gate that measures an export", () => {
     expect(readFileSync("docs/DEPLOY.md", "utf8")).toContain("npm run check:export");
   });
 });
+
+describe("the exported page is legible on a light palette too", () => {
+  it("does not dim the muted colour a second time", async () => {
+    // --sc-muted already carries its own alpha. The footer's legal line dimmed it again
+    // with opacity: 0.75, which compounded to 54% and measured 3.73:1 on Pare's light
+    // ground. The export gate refused it at accessibility 95.
+    const route = readFileSync("src/app/api/export-site/route.ts", "utf8");
+    const footer = route.slice(route.indexOf(".footer-legal"), route.indexOf(".footer-legal") + 200);
+    expect(footer).not.toMatch(/opacity:\s*0\.\d+/);
+  });
+
+  it("exports the light template without falling back to a dark page", async () => {
+    const { body } = await exportSite({ template: "pare" });
+    expect(body.html).toContain("#eff2f6");
+  });
+});
