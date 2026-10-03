@@ -70,7 +70,7 @@ export default function Navbar({ position = "sticky" }: { position?: "fixed" | "
             className="group mx-auto flex max-w-[1360px] flex-col items-center justify-center gap-x-10 gap-y-1 px-4 py-2.5 text-center text-sm sm:flex-row"
           >
             <span>Three finished sites, served as the exact bundles they export to.</span>
-            <span className="lc-mono inline-flex items-center gap-2 text-white/85 transition-colors group-hover:text-white">
+            <span className="lc-mono inline-flex items-center gap-2 text-white transition-colors">
               See the examples <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
             </span>
           </Link>

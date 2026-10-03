@@ -33,8 +33,25 @@ type FrameOptions = Parameters<typeof drawFrame2D>[4];
 const REST_CACHE = new Map<string, number>();
 const REST_CANDIDATES = [0, 0.15, 0.3, 0.45, 0.6, 0.75, 0.9];
 
+function restKey(opts: FrameOptions, maxProgress: number): string {
+  return `${opts.style}|${opts.color1}|${opts.color2}|${opts.color3}|${maxProgress}`;
+}
+
+export function knownRestingProgress(opts: FrameOptions, maxProgress: number): number | undefined {
+  return REST_CACHE.get(restKey(opts, maxProgress));
+}
+
+/**
+ * Seven draws and seven readbacks, for one number.
+ *
+ * Cheap on its own and ruinous in a group: the landing page mounts four of these, and
+ * running the probe inside the first paint put 28 synchronous getImageData calls in front
+ * of the page settling. Measured with Lighthouse, that page blocked for 480ms while every
+ * other page in the site blocked for none. It runs off the critical path now, so call
+ * knownRestingProgress first and paint something while this works.
+ */
 function restingProgress(opts: FrameOptions, maxProgress: number): number {
-  const key = `${opts.style}|${opts.color1}|${opts.color2}|${opts.color3}|${maxProgress}`;
+  const key = restKey(opts, maxProgress);
   const cached = REST_CACHE.get(key);
   if (cached !== undefined) return cached;
   let best = 0;
@@ -60,6 +77,13 @@ function restingProgress(opts: FrameOptions, maxProgress: number): number {
   }
   REST_CACHE.set(key, best);
   return best;
+}
+
+/** After the page has settled, or very soon, in a browser without requestIdleCallback. */
+function whenIdle(run: () => void): void {
+  const idle = (window as unknown as { requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number }).requestIdleCallback;
+  if (typeof idle === "function") idle(run, { timeout: 1200 });
+  else setTimeout(run, 200);
 }
 
 /**
@@ -122,8 +146,20 @@ export default function StylePreview({
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       sizeRef.current = { w, h };
       // Repaint immediately so a resize never leaves the canvas blank; a running
-      // loop overwrites this on its next tick.
-      drawFrame2D(ctx, w, h, restingProgress(optsRef.current, maxRef.current), optsRef.current);
+      // loop overwrites this on its next tick. The resting frame is whichever of the
+      // style's frames is brightest, and finding it costs seven readbacks, so the first
+      // paint uses the start of the range and the better frame arrives when the browser
+      // is idle.
+      const known = knownRestingProgress(optsRef.current, maxRef.current);
+      drawFrame2D(ctx, w, h, known ?? 0, optsRef.current);
+      if (known === undefined) {
+        whenIdle(() => {
+          const context = canvas.getContext("2d");
+          if (!context) return;
+          const { w: width, h: height } = sizeRef.current;
+          drawFrame2D(context, width, height, restingProgress(optsRef.current, maxRef.current), optsRef.current);
+        });
+      }
     };
 
     resize();
