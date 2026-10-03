@@ -12,6 +12,7 @@ import {
   type TemplateFilters,
 } from "@/lib/templateFilters";
 import { TEMPLATES, templateCategories } from "@/lib/templates";
+import { readFileSync } from "node:fs";
 
 /**
  * The gallery had one filter and a search box. Every listing people actually buy from
@@ -118,5 +119,24 @@ describe("a filtered view is a link someone can send", () => {
   it("caps a search term from the URL", () => {
     const read = filtersFromQuery(new URLSearchParams(`q=${"a".repeat(500)}`), { categories });
     expect(read.filters.q.length).toBeLessThanOrEqual(100);
+  });
+});
+
+describe("the gallery is a page a crawler can read", () => {
+  const PAGE = readFileSync("src/app/templates/page.tsx", "utf8");
+  const CLIENT = readFileSync("src/app/templates/TemplatesClient.tsx", "utf8");
+
+  it("reads the filters on the server and hands them down", () => {
+    // Reading them in the browser put the whole gallery behind a Suspense boundary, and
+    // the served HTML then carried none of the 22 cards.
+    expect(PAGE).toContain("filtersFromQuery");
+    expect(PAGE).toContain("initialFilters");
+    expect(CLIENT).not.toContain("useSearchParams");
+    expect(PAGE, "the gallery is wrapped in a boundary again").not.toMatch(/<Suspense/);
+  });
+
+  it("still lets the browser own the filters once the page is interactive", () => {
+    expect(CLIENT).toContain("filtersToQuery");
+    expect(CLIENT).toContain("router.replace");
   });
 });
