@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { Redis } from "@upstash/redis";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
+import { redisCredentials } from "@/lib/redisCredentials";
 import { FUNNEL_EVENTS, type FunnelEvent } from "@/lib/funnel";
 import { TEMPLATES } from "@/lib/templates";
 
@@ -20,13 +21,9 @@ const MAX_EXPORT_SECONDS = 600;
 let redis: Redis | null = null;
 
 function getRedis(): Redis | null {
-  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) return null;
-  if (!redis) {
-    redis = new Redis({
-      url: process.env.UPSTASH_REDIS_REST_URL,
-      token: process.env.UPSTASH_REDIS_REST_TOKEN,
-    });
-  }
+  const credentials = redisCredentials();
+  if (!credentials) return null;
+  if (!redis) redis = new Redis(credentials);
   return redis;
 }
 

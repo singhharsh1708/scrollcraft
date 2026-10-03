@@ -2,6 +2,7 @@ import "server-only"; // hard build error if accidentally imported in a client c
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 import { logger } from "@/lib/logger";
+import { redisCredentials } from "@/lib/redisCredentials";
 
 // Lazy-init Redis + per-config Ratelimit instances
 let redis: Redis | null = null;
@@ -16,21 +17,17 @@ const UPSTASH_COOLDOWN_MS = 30_000;
 let upstashDownUntil = 0;
 
 function getRedis(): Redis | null {
-  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+  const credentials = redisCredentials();
+  if (!credentials) {
     if (!warnedNoUpstash) {
       warnedNoUpstash = true;
       // Without this the fallback is silent: limits still enforce, but only per
       // instance, so the real ceiling is (limit × running instances).
-      logger.warn("UPSTASH_* unset — rate limiting uses the in-memory fallback; limits are per-instance, not shared across instances");
+      logger.warn("No Redis credentials (UPSTASH_REDIS_REST_* or KV_REST_API_*) — rate limiting uses the in-memory fallback; limits are per-instance, not shared across instances");
     }
     return null;
   }
-  if (!redis) {
-    redis = new Redis({
-      url: process.env.UPSTASH_REDIS_REST_URL,
-      token: process.env.UPSTASH_REDIS_REST_TOKEN,
-    });
-  }
+  if (!redis) redis = new Redis(credentials);
   return redis;
 }
 

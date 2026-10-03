@@ -23,6 +23,9 @@ const envSchema = z.object({
   // Rate limiting (Upstash Redis — optional, falls back to in-memory)
   UPSTASH_REDIS_REST_URL: z.string().url().optional(),
   UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
+  // The same store, named the way Vercel's marketplace provisions it.
+  KV_REST_API_URL: z.string().url().optional(),
+  KV_REST_API_TOKEN: z.string().optional(),
 
   // Observability
   NEXT_PUBLIC_SENTRY_DSN: z.string().url().optional(),
