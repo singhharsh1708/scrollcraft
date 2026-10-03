@@ -29,6 +29,7 @@ npm start
 | --- | --- |
 | `SITE_URL` | `robots.txt`, the sitemap and canonical URLs fall back to the public deployment URL |
 | `UPSTASH_REDIS_REST_URL` / `_TOKEN` | Rate limiting falls back to an in-memory store, correct for a single instance |
+| `FUNNEL_TOKEN` | `GET /api/count` answers 404; the daily counts are still written, but only readable from the Upstash console |
 | `NEXT_PUBLIC_SENTRY_DSN` | Error reporting is disabled |
 | `SENTRY_ORG` / `SENTRY_PROJECT` / `SENTRY_AUTH_TOKEN` | Source maps are not uploaded; stack traces stay minified |
 

@@ -29,6 +29,18 @@ function send(name: FunnelEvent, properties?: Record<string, string | number>): 
   } catch {
     // An ad blocker, a stale script or no network. None of that is the editor's problem.
   }
+  // Vercel keeps custom events behind its Pro plan, so the counts we actually read back
+  // come from our own route. sendBeacon, because an export can be followed by the tab
+  // closing and a fetch would be cancelled with it.
+  try {
+    const body = JSON.stringify({ event: name, ...properties });
+    const blob = new Blob([body], { type: "application/json" });
+    if (!navigator.sendBeacon?.("/api/count", blob)) {
+      void fetch("/api/count", { method: "POST", body, headers: { "content-type": "application/json" }, keepalive: true }).catch(() => {});
+    }
+  } catch {
+    // Same again: a count is never worth an error in someone's editor.
+  }
 }
 
 /** A catalogue slug, or "custom" for anything a person named themselves. */

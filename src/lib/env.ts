@@ -16,6 +16,10 @@ const envSchema = z.object({
   VERCEL_PROJECT_PRODUCTION_URL: z.string().optional(),
   VERCEL_URL: z.string().optional(),
 
+  // Reads back the daily funnel counts at /api/count. Unset, that route answers 404:
+  // without a secret there is nothing to check a reader against.
+  FUNNEL_TOKEN: z.string().min(16).optional(),
+
   // Rate limiting (Upstash Redis — optional, falls back to in-memory)
   UPSTASH_REDIS_REST_URL: z.string().url().optional(),
   UPSTASH_REDIS_REST_TOKEN: z.string().optional(),

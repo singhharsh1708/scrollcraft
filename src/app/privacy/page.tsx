@@ -44,16 +44,18 @@ export default function PrivacyPage() {
           </li>
           <li>
             <strong>Four counts, so we can tell whether this works.</strong> Vercel Web
-            Analytics records how many people open the editor, make a first edit, start an
-            export and finish one, plus which catalogue template was opened and how many
-            seconds an export took. That is the whole list. Your headings, body copy, site
-            name, custom CSS and uploads are never part of it, and a site you named
-            yourself is counted only as &quot;custom&quot;.
+            Analytics, and a counter of our own, record how many people open the editor,
+            make a first edit, start an export and finish one, plus which catalogue
+            template was opened and how many seconds an export took. Our counter keeps
+            only a running total per day, in the same Upstash store used for rate limiting.
+            That is the whole list. Your headings, body copy, site name, custom CSS and
+            uploads are never part of it, and a site you named yourself is counted only as
+            &quot;custom&quot;.
           </li>
           <li>
             <strong>Ordinary request logs.</strong> Our host records the usual server access
-            logs, including IP addresses, which we also use to rate-limit the export and
-            rewrite endpoints so one visitor cannot exhaust them for everyone.
+            logs, including IP addresses, which we also use to rate-limit the export,
+            rewrite and counting endpoints so one visitor cannot exhaust them for everyone.
           </li>
         </ul>
         <p>
@@ -65,7 +67,7 @@ export default function PrivacyPage() {
         <ul>
           <li><strong>Vercel</strong> — hosting, and Web Analytics for the four counts above. Request logs may be retained under their policy.</li>
           <li><strong>Sentry</strong> — error reports, when enabled. These carry a stack trace, not your content.</li>
-          <li><strong>Upstash</strong> — rate limiting, when enabled. It stores a counter keyed by IP.</li>
+          <li><strong>Upstash</strong> — rate limiting and the daily counts above, when enabled. It stores a counter keyed by IP for limits, and counters keyed by date for the four steps.</li>
           <li><strong>Sarvam AI</strong> — the rewrite assistant, when enabled. It receives the instruction you type and the copy of the site you are editing, and only when you press Rewrite.</li>
           <li><strong>Google Fonts</strong> — templates load webfonts, which discloses your IP to Google. Exported sites do the same unless you self-host the fonts.</li>
         </ul>
