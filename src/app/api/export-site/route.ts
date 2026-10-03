@@ -3,6 +3,7 @@ import { logger } from "@/lib/logger";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { REVEALS, exportSectionsSchema, sectionAnchor, type Section, visibleSections as onlyVisible } from "@/lib/siteSchema";
 import { isAllowedHref } from "@/lib/siteSchema";
+import { templateBySlug } from "@/lib/templates";
 import { HOME_SLUG, pageFileName, navLinks, asPages, pagesSchema, type SitePage } from "@/lib/sitePages";
 import { layoutStyle } from "@/lib/layoutStyles";
 import { DISPLAY_STYLES, displayStyle } from "@/lib/displayStyles";
@@ -136,15 +137,41 @@ export async function POST(req: NextRequest) {
     } = body;
     const {
       pages,
-      sections,
-      siteName,
-      siteDescription = "",
-      styleJson = "",
+      sections: sectionsFromBody,
+      siteName: siteNameFromBody,
+      siteDescription: siteDescriptionFromBody = "",
+      styleJson: styleJsonFromBody = "",
       customHead = "",
       customCss = "",
-      themeJson = "",
+      themeJson: themeJsonFromBody = "",
       fps = 24,
     } = body;
+
+    /**
+     * A catalogue template by name, so the whole of it can be exported in one call.
+     *
+     * The editor sends what is on screen and always will. This is for everything else:
+     * the plugin, and the check that measures a real export before a change ships.
+     */
+    const named = typeof body.template === "string" ? templateBySlug(body.template) : undefined;
+    if (typeof body.template === "string" && !named) {
+      return NextResponse.json({ error: `template: no template called ${String(body.template).slice(0, 40)}` }, { status: 400 });
+    }
+    const { sections, siteName, siteDescription, styleJson, themeJson } = named
+      ? {
+          sections: sectionsFromBody ?? named.sections,
+          siteName: siteNameFromBody || named.name,
+          siteDescription: siteDescriptionFromBody || named.tagline,
+          styleJson: styleJsonFromBody || JSON.stringify({ style: named.style, colors: named.colors }),
+          themeJson: themeJsonFromBody || JSON.stringify(named.theme),
+        }
+      : {
+          sections: sectionsFromBody,
+          siteName: siteNameFromBody,
+          siteDescription: siteDescriptionFromBody,
+          styleJson: styleJsonFromBody,
+          themeJson: themeJsonFromBody,
+        };
 
 
     // One page arrives as `sections`, a site as `pages`. Exactly one of them is required.
@@ -183,7 +210,10 @@ export async function POST(req: NextRequest) {
      */
     let sitePages: SitePage[];
     if (pages === undefined || pages === null) {
-      sitePages = asPages({ sections: validSections });
+      // A site of one page is titled by the site's own name. asPages calls it "Home",
+      // which is right in a nav beside About and Contact, and wrong in the browser tab
+      // and the share card of a site that has no other page.
+      sitePages = asPages({ sections: validSections }).map((page) => ({ ...page, title: siteName || page.title }));
     } else {
       const parsedPages = pagesSchema.safeParse(pages);
       if (!parsedPages.success) {

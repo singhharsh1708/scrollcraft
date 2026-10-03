@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import type { NextRequest } from "next/server";
-import { templateBySlug } from "@/lib/templates";
+
 import { HOME_SLUG } from "@/lib/sitePages";
+import { templateBySlug } from "@/lib/templates";
 import { readFileSync } from "node:fs";
 
 const rateLimitMock = vi.hoisted(() => vi.fn());
@@ -184,5 +185,71 @@ describe("a button that points at another page actually goes there", () => {
       expect(source, `${file} carries its own href allowlist`).not.toMatch(/mailto:\|tel:/);
       expect(source).toContain("isAllowedHref");
     }
+  });
+});
+
+describe("the browser tab says what the site is called", () => {
+  it("titles a one page export with the site name, not with the word Home", async () => {
+    // Shipped broken in #426: every single page export since then said "Home" in the tab
+    // and in its share card, because the page list calls its first entry that.
+    const { body } = await exportSite({ sections: kept.sections, siteName: "Riverbank Books" });
+    expect(body.html).toContain("<title>Riverbank Books</title>");
+    expect(body.html).toContain('<meta property="og:title" content="Riverbank Books" />');
+  });
+
+  it("still titles each page of a real site with its own name", async () => {
+    const { body } = await exportSite({ pages: threePages, siteName: "Northgate" });
+    expect(body.pages[0].html).toContain("<title>Home</title>");
+    expect(body.pages[2].html).toContain("<title>Contact</title>");
+  });
+});
+
+describe("a catalogue template can be exported by name", () => {
+  it("fills in the sections, theme, style, name and description from the catalogue", async () => {
+    const { status, body } = await exportSite({ template: "weft", siteName: undefined, sections: undefined });
+    expect(status).toBe(200);
+    const weft = templateBySlug("weft")!;
+    expect(body.html).toContain(weft.sections[0].heading!);
+    expect(body.html).toContain(`<title>${weft.name}</title>`);
+    expect(body.html).toContain(weft.theme.fontDisplay!.replace(" ", "+"));
+    expect(body.siteName).toBe(weft.name);
+  });
+
+  it("lets what is sent win over what the catalogue holds", async () => {
+    const { body } = await exportSite({ template: "weft", siteName: "My studio" });
+    expect(body.html).toContain("<title>My studio</title>");
+  });
+
+  it("names a template it does not have, rather than exporting something else", async () => {
+    const { status, body } = await exportSite({ template: "not-a-template" });
+    expect(status).toBe(400);
+    expect(body.error).toMatch(/no template called not-a-template/);
+  });
+});
+
+describe("the gate that measures an export", () => {
+  const SCRIPT = readFileSync("scripts/check-export.mjs", "utf8");
+
+  it("fails under the scores we already ship", () => {
+    expect(SCRIPT).toContain('opt("performance", 95)');
+    expect(SCRIPT).toContain('opt("accessibility", 100)');
+    expect(SCRIPT).toMatch(/process\.exit\(1\)/);
+  });
+
+  it("serves the export as a folder, which is how it is hosted", () => {
+    expect(SCRIPT).toContain("createServer");
+    expect(SCRIPT).toContain("index.html");
+  });
+
+  it("does not block its own server while Lighthouse runs", () => {
+    // spawnSync blocks the event loop, so the server answers nothing and Chrome dies
+    // with "Target closed" against a server that is listening and deaf.
+    expect(SCRIPT, "spawnSync would deafen the server").not.toMatch(/spawnSync\s*\(/);
+    expect(SCRIPT).toContain('import { spawn }');
+  });
+
+  it("is a command rather than a thing to remember", () => {
+    expect(readFileSync("package.json", "utf8")).toContain('"check:export"');
+    expect(readFileSync("docs/DEPLOY.md", "utf8")).toContain("npm run check:export");
   });
 });
