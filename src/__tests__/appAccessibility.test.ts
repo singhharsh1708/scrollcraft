@@ -388,3 +388,14 @@ describe("the sticky nav reads on both grounds", () => {
     expect(block).toContain("--primary-ink: oklch(0.55 0.19 256.4)");
   });
 });
+
+describe("the announcement banner reads at full strength", () => {
+  it("does not dim its own link text", () => {
+    // Measured on production: text-white/85 on the banner resolved to #d9e9fa against
+    // rgb(1,109,221), which is 4.01:1, and Lighthouse failed the page's colour contrast
+    // for it. Full white on the same background measures 4.96:1.
+    const navbar = readFileSync("src/components/Navbar.tsx", "utf8");
+    const banner = navbar.slice(navbar.indexOf("bg-primary"), navbar.indexOf("bg-primary") + 1200);
+    expect(banner, "the banner dims its link text again").not.toMatch(/text-white\/\d+/);
+  });
+});
