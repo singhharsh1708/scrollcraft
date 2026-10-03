@@ -20,7 +20,7 @@ beforeEach(() => {
   beaconMock.mockClear();
   vi.unstubAllEnvs();
   vi.stubEnv("NEXT_PUBLIC_VERCEL_ENV", "production");
-  vi.stubGlobal("navigator", { sendBeacon: beaconMock });
+  vi.stubGlobal("navigator", { sendBeacon: beaconMock, webdriver: false });
   vi.stubGlobal("Blob", class { constructor(public parts: string[]) {} text() { return this.parts.join(""); } });
 });
 
@@ -76,6 +76,25 @@ describe("the counts reach our own store, not only the analytics vendor", () => 
     vi.stubEnv("NEXT_PUBLIC_VERCEL_ENV", "");
     countFirstEdit();
     expect(beaconMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("a browser being driven by a script is not a visitor", () => {
+  it("counts nothing when navigator.webdriver is set", () => {
+    // Our own headless checks opened the editor 12 times in one afternoon, and every one
+    // of them counted. The first numbers anybody read were mostly us.
+    vi.stubGlobal("navigator", { sendBeacon: beaconMock, webdriver: true });
+    countEditorOpened("kept");
+    countFirstEdit();
+    countExportStarted();
+    countExportFinished();
+    expect(trackMock).not.toHaveBeenCalled();
+    expect(beaconMock).not.toHaveBeenCalled();
+  });
+
+  it("still counts an ordinary browser", () => {
+    countEditorOpened("kept");
+    expect(beaconMock).toHaveBeenCalled();
   });
 });
 
