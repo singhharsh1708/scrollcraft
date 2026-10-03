@@ -1,8 +1,9 @@
 import { string, number, boolean, object, literal, type infer as zInfer } from "zod";
 import { sectionsSchema, type Section } from "@/lib/siteSchema";
+import { pagesSchema, asPages, type SitePage } from "@/lib/sitePages";
 
 export const PROJECT_FORMAT = "scrollcraft.project";
-export const PROJECT_VERSION = 1;
+export const PROJECT_VERSION = 2;
 
 /** Room for a long site with custom CSS, and far short of what a stray file could cost. */
 const MAX_FILE_BYTES = 5_000_000;
@@ -11,6 +12,8 @@ const documentSchema = object({
   name: string().max(200),
   description: string().max(1000).optional(),
   sections: sectionsSchema,
+  /** Absent in a version 1 file, which held one page under `sections`. */
+  pages: pagesSchema.optional(),
   themeJson: string().max(20_000).nullable().optional(),
   styleJson: string().max(5_000).nullable().optional(),
   customHead: string().max(20_000).optional(),
@@ -26,7 +29,15 @@ const projectFileSchema = object({
   document: documentSchema,
 }).strip();
 
-export type ProjectDocument = Omit<zInfer<typeof documentSchema>, "sections"> & { sections: Section[] };
+export type ProjectDocument = Omit<zInfer<typeof documentSchema>, "sections" | "pages"> & {
+  sections: Section[];
+  pages?: SitePage[];
+};
+
+/** Every page in a file, whichever version wrote it. */
+export function projectPages(doc: ProjectDocument): SitePage[] {
+  return asPages({ pages: doc.pages, sections: doc.sections });
+}
 export type ProjectFile = { format: string; version: number; exportedAt?: string; document: ProjectDocument };
 
 export type ProjectParse = { ok: true; value: ProjectFile } | { ok: false; error: string };

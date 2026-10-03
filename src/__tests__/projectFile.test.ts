@@ -7,6 +7,7 @@ import {
   parseProjectFile,
   projectFileName,
   backgroundTravels,
+  projectPages,
   type ProjectDocument,
 } from "@/lib/projectFile";
 import { templateBySlug } from "@/lib/templates";
@@ -138,5 +139,42 @@ describe("it says what will not travel", () => {
     // meant to be mailed around. The editor has to say so rather than lose it silently.
     expect(backgroundTravels({ ...doc, framesFromRecipe: false })).toBe(false);
     expect(backgroundTravels({ ...doc, styleJson: null })).toBe(false);
+  });
+});
+
+describe("a file carries every page of a site", () => {
+  const twoPages = {
+    ...doc,
+    pages: [
+      { slug: "index", title: "Home", sections: kept.sections },
+      { slug: "contact", title: "Contact", sections: kept.sections.slice(0, 3) },
+    ],
+  };
+
+  it("round trips the pages, not only the open one", () => {
+    const parsed = parseProjectFile(buildProjectFile(twoPages));
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    expect(projectPages(parsed.value.document).map((p) => p.slug)).toEqual(["index", "contact"]);
+    expect(projectPages(parsed.value.document)[1].sections).toHaveLength(3);
+  });
+
+  it("reads a file written before pages existed as a single home page", () => {
+    const v1 = JSON.parse(buildProjectFile(doc));
+    v1.version = 1;
+    delete v1.document.pages;
+    const parsed = parseProjectFile(JSON.stringify(v1));
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    const pages = projectPages(parsed.value.document);
+    expect(pages).toHaveLength(1);
+    expect(pages[0]).toMatchObject({ slug: "index", title: "Home" });
+    expect(pages[0].sections).toHaveLength(kept.sections.length);
+  });
+
+  it("refuses a page list the exporter would reject", () => {
+    const bad = JSON.parse(buildProjectFile(twoPages));
+    bad.document.pages[1].slug = "404";
+    expect(parseProjectFile(JSON.stringify(bad)).ok).toBe(false);
   });
 });

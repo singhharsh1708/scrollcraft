@@ -94,7 +94,10 @@ export async function deleteFrames(key: string): Promise<void> {
 export interface StoredDocument {
   name: string;
   description?: string;
+  /** The open page's sections, kept for documents saved before a site could have pages. */
   sections: unknown[];
+  /** Every page of the site, home first. Absent on a document saved before pages existed. */
+  pages?: { slug: string; title: string; sections: unknown[] }[];
   themeJson?: string | null;
   styleJson?: string | null;
   customHead?: string;

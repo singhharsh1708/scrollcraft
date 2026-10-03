@@ -13,7 +13,7 @@ import {
   ArrowLeft, Download, Plus, Trash2, Eye, EyeOff, ChevronUp, ChevronDown,
   Layers, Loader2, AlignLeft, AlignCenter, AlignRight,
   Monitor, Tablet, Smartphone, Music, Volume2, VolumeX, Save,
-  Undo2, Redo2, Copy, Sparkles, FileDown, FileUp
+  Undo2, Redo2, Copy, Sparkles, FileDown, FileUp, X, Pencil
 } from "lucide-react";
 import { useScrollAudio } from "@/lib/useScrollAudio";
 import { AssistantBar, useAssistantAvailable } from "@/components/AssistantBar";
@@ -27,8 +27,10 @@ import { faviconSvg, notFoundHtml, exportReadme, renderSocialCard, renderTouchIc
 import { generate2DFrames } from "@/lib/generate2DFrames";
 import { AUTOSAVE_DEBOUNCE_MS, saveStatusLabel, type SaveState } from "@/lib/saveStatus";
 import { SIGNUP_PROVIDER_NAMES, signupForm, signupStatus } from "@/lib/signupForm";
-import { buildProjectFile, parseProjectFile, projectFileName, backgroundTravels, type ProjectDocument } from "@/lib/projectFile";
+import { buildProjectFile, parseProjectFile, projectFileName, backgroundTravels, projectPages, type ProjectDocument } from "@/lib/projectFile";
 import { countEditorOpened, countFirstEdit, countExportStarted, countExportFinished } from "@/lib/funnel";
+import { HOME_SLUG } from "@/lib/sitePages";
+import { addPage, removePage, renamePage, canAddPage, withLiveSections, type PageList } from "@/lib/editorPages";
 
 const ScrollEngine = dynamic(() => import("@/components/ScrollEngine"), { ssr: false });
 const ScrollSection = dynamic(() => import("@/components/ScrollSection"), { ssr: false });
@@ -195,6 +197,16 @@ function EditorInner() {
   const [fps, setFps] = useState(parsedFrames ? parseInt(fpsParam || "24") : 24);
   const [sections, setSections] = useState<Section[]>(() => templateSections ?? [defaultSection(0)]);
   const [selectedSection, setSelectedSection] = useState<string>(sections[0].id);
+  /**
+   * The pages of this site. `sections` is whichever page is open, so every other page's
+   * sections live here and the open one is written back whenever it is needed whole.
+   */
+  const [pages, setPages] = useState<PageList<EditorSection>>(() => [
+    { slug: HOME_SLUG, title: "Home", sections: templateSections ?? [defaultSection(0)] },
+  ]);
+  const [openPage, setOpenPage] = useState(0);
+  const [renamingPage, setRenamingPage] = useState<number | null>(null);
+  const allPages = (): PageList<EditorSection> => withLiveSections(pages, openPage, sections);
   // Named after the preset or upload it came from, so a generated site does not
   // arrive here as an anonymous "My ScrollCraft Site".
   const [siteName, setSiteName] = useState(
@@ -384,10 +396,20 @@ function EditorInner() {
           return;
         }
 
-        if (Array.isArray(doc.sections) && doc.sections.length) {
+        if (Array.isArray(doc.pages) && doc.pages.length) {
+          const restoredPages = doc.pages as PageList<EditorSection>;
+          setPages(restoredPages);
+          setOpenPage(0);
+          const first = restoredPages[0].sections;
+          if (first.length) {
+            setSections(first);
+            setSelectedSection(first[0].id);
+          }
+        } else if (Array.isArray(doc.sections) && doc.sections.length) {
           const restored = doc.sections as Section[];
           setSections(restored);
           setSelectedSection(restored[0].id);
+          setPages([{ slug: HOME_SLUG, title: "Home", sections: restored as EditorSection[] }]);
         }
         if (doc.name) setSiteName(doc.name);
         if (doc.description) setSiteDescription(doc.description);
@@ -653,6 +675,7 @@ function EditorInner() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          pages: allPages(),
           sections,
           siteName,
           siteDescription,
@@ -676,7 +699,7 @@ function EditorInner() {
         const msg = await res.json().then((d) => d?.error).catch(() => null);
         throw new Error(msg || "Export failed. Please try again.");
       }
-      const { html, audioExt } = await res.json();
+      const { html, pages: exportedPages, audioExt } = await res.json();
 
       // Build ZIP entirely in the browser — no round-trip for large frame data. Load
       // JSZip on demand so it stays out of the editor's first-load bundle.
@@ -684,7 +707,12 @@ function EditorInner() {
       toast.info("Building ZIP…");
       const { default: JSZip } = await import("jszip");
       const zip = new JSZip();
-      zip.file("index.html", html);
+      // One file per page, named by the server. An older response carries only `html`.
+      if (Array.isArray(exportedPages) && exportedPages.length) {
+        for (const page of exportedPages as { path: string; html: string }[]) zip.file(page.path, page.html);
+      } else {
+        zip.file("index.html", html);
+      }
 
       // Everything below turns the ZIP from "an index.html" into something a
       // non-technical owner can actually put online: an icon, a social card, a 404,
@@ -832,6 +860,7 @@ function EditorInner() {
       name: siteName,
       description: siteDescription || undefined,
       sections,
+      pages: allPages(),
       themeJson: siteTheme ? JSON.stringify(siteTheme) : null,
       styleJson: styleSpec ? JSON.stringify(styleSpec) : null,
       customHead,
@@ -884,6 +913,7 @@ function EditorInner() {
     name: siteName,
     description: siteDescription || undefined,
     sections,
+    pages: allPages(),
     themeJson: siteTheme ? JSON.stringify(siteTheme) : null,
     styleJson: styleSpec ? JSON.stringify(styleSpec) : null,
     customHead,
@@ -907,6 +937,52 @@ function EditorInner() {
     }
   };
 
+  const switchToPage = (index: number) => {
+    if (index === openPage || !pages[index]) return;
+    const synced = allPages();
+    setPages(synced);
+    const next = synced[index].sections.length ? synced[index].sections : [defaultSection(0)];
+    setSections(next);
+    setSelectedSection(next[0].id);
+    setOpenPage(index);
+    setRenamingPage(null);
+  };
+
+  const handleAddPage = () => {
+    const synced = allPages();
+    if (!canAddPage(synced)) {
+      toast.warning(`A site can have ${synced.length} pages at most.`);
+      return;
+    }
+    const fresh = [defaultSection(0)];
+    const next = addPage(synced, `Page ${synced.length + 1}`, fresh);
+    setPages(next);
+    setSections(fresh);
+    setSelectedSection(fresh[0].id);
+    setOpenPage(next.length - 1);
+    setRenamingPage(next.length - 1);
+    setDirty(true);
+  };
+
+  const handleRenamePage = (index: number, title: string) => {
+    setPages(renamePage(allPages(), index, title));
+    setRenamingPage(null);
+    setDirty(true);
+  };
+
+  const handleRemovePage = (index: number) => {
+    const synced = allPages();
+    if (!window.confirm(`Delete the page "${synced[index].title}" and everything on it?`)) return;
+    const next = removePage(synced, index);
+    if (next === synced) return;
+    const nextOpen = openPage >= next.length ? next.length - 1 : openPage > index ? openPage - 1 : openPage;
+    setPages(next);
+    setSections(next[nextOpen].sections);
+    setSelectedSection(next[nextOpen].sections[0]?.id ?? "");
+    setOpenPage(nextOpen);
+    setDirty(true);
+  };
+
   const openProjectInputRef = useRef<HTMLInputElement>(null);
 
   const handleOpenProject = async (file: File) => {
@@ -916,7 +992,10 @@ function EditorInner() {
       return;
     }
     const doc = parsed.value.document;
-    const restored = doc.sections as Section[];
+    const restoredPages = projectPages(doc) as PageList<EditorSection>;
+    setPages(restoredPages);
+    setOpenPage(0);
+    const restored = restoredPages[0].sections;
     if (restored.length) {
       setSections(restored);
       setSelectedSection(restored[0].id);
@@ -1228,8 +1307,55 @@ function EditorInner() {
       )}
 
       <main className="flex flex-col md:flex-row flex-1 overflow-y-auto md:overflow-x-auto md:overflow-y-hidden">
-        {/* Left panel: sections list */}
+        {/* Left panel: pages, then the open page's sections */}
         <div className="w-full max-h-52 md:w-56 md:max-h-none border-b md:border-b-0 md:border-r border-white/5 flex flex-col bg-card/30 flex-shrink-0">
+          <nav aria-label="Pages" className="p-2 border-b border-white/5 flex flex-wrap items-center gap-1">
+            {pages.map((page, i) => (
+              <span key={page.slug} className="flex items-center">
+                {renamingPage === i ? (
+                  <input
+                    autoFocus
+                    aria-label={`Name of page ${i + 1}`}
+                    defaultValue={page.title}
+                    onBlur={(e) => handleRenamePage(i, e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleRenamePage(i, (e.target as HTMLInputElement).value);
+                      if (e.key === "Escape") setRenamingPage(null);
+                    }}
+                    className="h-7 w-24 rounded-md border border-primary/50 bg-background px-2 text-xs"
+                  />
+                ) : (
+                  <button
+                    onClick={() => (i === openPage ? setRenamingPage(i) : switchToPage(i))}
+                    aria-current={i === openPage ? "page" : undefined}
+                    title={i === openPage ? `Rename ${page.title}` : `Open ${page.title}`}
+                    className={`h-7 rounded-md px-2 text-xs transition-colors ${i === openPage ? "bg-primary/20 text-primary-ink font-medium" : "text-muted-foreground hover:text-foreground hover:bg-white/5"}`}
+                  >
+                    {page.title}
+                    {i === openPage && <Pencil className="ml-1 inline h-3 w-3 opacity-60" />}
+                  </button>
+                )}
+                {i > 0 && (
+                  <button
+                    onClick={() => handleRemovePage(i)}
+                    aria-label={`Delete the page ${page.title}`}
+                    title={`Delete the page ${page.title}`}
+                    className="ml-0.5 rounded p-1 text-muted-foreground hover:text-foreground hover:bg-white/5"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                )}
+              </span>
+            ))}
+            <button
+              onClick={handleAddPage}
+              aria-label="Add a page"
+              title="Add a page"
+              className="h-7 rounded-md px-2 text-xs text-muted-foreground hover:text-foreground hover:bg-white/5"
+            >
+              <Plus className="h-3.5 w-3.5" />
+            </button>
+          </nav>
           <div className="p-3 border-b border-white/5 flex items-center justify-between">
             <div className="flex items-center gap-2 text-sm font-medium">
               <Layers className="w-3.5 h-3.5 text-primary-ink" /> Sections
