@@ -27,7 +27,7 @@ export default function PrivacyPage() {
           sent anywhere on its own.
         </p>
         <p>
-          Three things can leave your browser, none of them identifying you:
+          Four things can leave your browser, none of them identifying you:
         </p>
         <ul>
           <li>
@@ -43,6 +43,14 @@ export default function PrivacyPage() {
             configured with a key. The request is not written to any database or log.
           </li>
           <li>
+            <strong>Four counts, so we can tell whether this works.</strong> Vercel Web
+            Analytics records how many people open the editor, make a first edit, start an
+            export and finish one, plus which catalogue template was opened and how many
+            seconds an export took. That is the whole list. Your headings, body copy, site
+            name, custom CSS and uploads are never part of it, and a site you named
+            yourself is counted only as &quot;custom&quot;.
+          </li>
+          <li>
             <strong>Ordinary request logs.</strong> Our host records the usual server access
             logs, including IP addresses, which we also use to rate-limit the export and
             rewrite endpoints so one visitor cannot exhaust them for everyone.
@@ -55,7 +63,7 @@ export default function PrivacyPage() {
 
         <h2>Third-party services</h2>
         <ul>
-          <li><strong>Vercel</strong> — hosting. Request logs may be retained under their policy.</li>
+          <li><strong>Vercel</strong> — hosting, and Web Analytics for the four counts above. Request logs may be retained under their policy.</li>
           <li><strong>Sentry</strong> — error reports, when enabled. These carry a stack trace, not your content.</li>
           <li><strong>Upstash</strong> — rate limiting, when enabled. It stores a counter keyed by IP.</li>
           <li><strong>Sarvam AI</strong> — the rewrite assistant, when enabled. It receives the instruction you type and the copy of the site you are editing, and only when you press Rewrite.</li>
