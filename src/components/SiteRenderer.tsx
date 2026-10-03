@@ -34,11 +34,12 @@ const REVEAL_CSS = `
 `;
 
 function ctaHrefOk(href: string | undefined): string {
+  // The rule the schema and the exporter use, so the preview shows what will ship.
   const v = String(href ?? "");
-  return /^(?:https?:\/\/|\/|#|mailto:|tel:)/i.test(v) ? v : "#";
+  return isAllowedHref(v) ? v : "#";
 }
 import { compileTheme } from "@/lib/themeCss";
-import type { Section, SiteStyle, Theme } from "@/lib/siteSchema";
+import { isAllowedHref, type Section, type SiteStyle, type Theme } from "@/lib/siteSchema";
 
 const INTRO_BUFFER = 1000;
 
