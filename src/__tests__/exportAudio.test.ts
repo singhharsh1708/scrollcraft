@@ -22,7 +22,10 @@ describe("the ZIP and the page agree on the audio filename", () => {
     expect(ROUTE).toContain("const audioExt = AUDIO_EXT[baseMime] ?? \"mp3\";");
     expect(ROUTE).toContain("new Audio('audio/track.${audioExt}')");
     expect(ROUTE).toContain("audioExt,");
-    expect(EDITOR).toContain("const { html, audioExt } = await res.json();");
+    // The shape of the response grew a `pages` field; what matters is that the client
+    // still takes the extension from the server rather than guessing a second time.
+    expect(EDITOR).toMatch(/const \{[^}]*\baudioExt\b[^}]*\} = await res\.json\(\);/);
+    expect(EDITOR).not.toMatch(/audioExt\s*=\s*["'`]/);
     expect(EDITOR).toContain("zip.file(`audio/track.${audioExt}`, audioBase64, { base64: true });");
   });
 
