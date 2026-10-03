@@ -234,9 +234,9 @@ describe("what the site claims about itself is true", () => {
     const limited = readdirSync("src/app/api", { withFileTypes: true })
       .filter((d) => d.isDirectory())
       .filter((d) => readFileSync(join("src/app/api", d.name, "route.ts"), "utf8").includes("rateLimit("));
-    expect(limited.map((d) => d.name).sort()).toEqual(["edit-site", "export-site"]);
+    expect(limited.map((d) => d.name).sort()).toEqual(["count", "edit-site", "export-site"]);
     expect(privacy, "the privacy page names the limited endpoints").toMatch(
-      /rate-limit the export and\s+rewrite endpoints/
+      /rate-limit the export,\s+rewrite and counting endpoints/
     );
   });
 

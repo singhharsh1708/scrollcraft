@@ -13,11 +13,21 @@ import { FUNNEL_EVENTS, countEditorOpened, countFirstEdit, countExportStarted, c
  * worth more than any metric.
  */
 
+const beaconMock = vi.fn((_url: string, _body: unknown) => true);
+
 beforeEach(() => {
   trackMock.mockClear();
+  beaconMock.mockClear();
   vi.unstubAllEnvs();
   vi.stubEnv("NEXT_PUBLIC_VERCEL_ENV", "production");
+  vi.stubGlobal("navigator", { sendBeacon: beaconMock });
+  vi.stubGlobal("Blob", class { constructor(public parts: string[]) {} text() { return this.parts.join(""); } });
 });
+
+async function beaconBody(): Promise<Record<string, unknown>> {
+  const blob = beaconMock.mock.calls.at(-1)?.[1] as unknown as { parts: string[] };
+  return JSON.parse(blob.parts.join(""));
+}
 
 describe("the four counts that say whether this product works", () => {
   it("names exactly the four steps of the funnel", () => {
@@ -52,6 +62,20 @@ describe("the four counts that say whether this product works", () => {
     const fresh = await import("@/lib/funnel");
     fresh.countExportFinished();
     expect(trackMock).toHaveBeenCalledWith("export_finished", undefined);
+  });
+});
+
+describe("the counts reach our own store, not only the analytics vendor", () => {
+  it("posts the same four events to /api/count", async () => {
+    countEditorOpened("kept");
+    expect(beaconMock).toHaveBeenCalledWith("/api/count", expect.anything());
+    expect(await beaconBody()).toEqual({ event: "editor_opened", template: "kept" });
+  });
+
+  it("sends nothing to our route outside production either", () => {
+    vi.stubEnv("NEXT_PUBLIC_VERCEL_ENV", "");
+    countFirstEdit();
+    expect(beaconMock).not.toHaveBeenCalled();
   });
 });
 
