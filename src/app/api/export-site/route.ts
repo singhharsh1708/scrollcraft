@@ -210,10 +210,7 @@ export async function POST(req: NextRequest) {
      */
     let sitePages: SitePage[];
     if (pages === undefined || pages === null) {
-      // A site of one page is titled by the site's own name. asPages calls it "Home",
-      // which is right in a nav beside About and Contact, and wrong in the browser tab
-      // and the share card of a site that has no other page.
-      sitePages = asPages({ sections: validSections }).map((page) => ({ ...page, title: siteName || page.title }));
+      sitePages = asPages({ sections: validSections });
     } else {
       const parsedPages = pagesSchema.safeParse(pages);
       if (!parsedPages.success) {
@@ -225,6 +222,19 @@ export async function POST(req: NextRequest) {
       if (sitePages[0].slug !== HOME_SLUG) {
         return NextResponse.json({ error: `pages: the first page must be the home page` }, { status: 400 });
       }
+    }
+
+    /**
+     * A site of one page is titled by the site's own name.
+     *
+     * Both the editor and `asPages` call a lone page "Home", which is right in a nav
+     * beside About and Contact and wrong in the browser tab and the share card of a site
+     * that has no other page. Applied here rather than on one of the two paths in, which
+     * is the mistake the first version of this made: the API stopped saying Home and the
+     * editor, which is how everybody actually exports, carried on.
+     */
+    if (sitePages.length === 1 && siteName) {
+      sitePages = [{ ...sitePages[0], title: siteName }];
     }
 
     const emptyPage = sitePages.find((page) => onlyVisible(page.sections as Section[]).length === 0);
