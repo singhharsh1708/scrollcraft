@@ -33,6 +33,21 @@ npm start
 | `NEXT_PUBLIC_SENTRY_DSN` | Error reporting is disabled |
 | `SENTRY_ORG` / `SENTRY_PROJECT` / `SENTRY_AUTH_TOKEN` | Source maps are not uploaded; stack traces stay minified |
 
+## Measuring an export
+
+Before shipping a change that touches the exporter, a template or the engine, measure a
+real export rather than trusting that it is still fine:
+
+```sh
+npm run build && npx next start -p 3000 &
+npm run check:export -- --slug weft --base http://127.0.0.1:3000
+```
+
+It exports that template through the running app, serves the result as a plain folder the
+way anybody would host it, runs Lighthouse against that, and exits non-zero under 95
+performance or 100 accessibility. Measured on 3 October 2026: kept, aurabeauty, weft and
+orbitcrm each score 100 performance, 100 accessibility, 100 SEO and 96 best practices.
+
 ## Checking a deploy
 
 `GET /api/health` returns `200` with `{"status":"ok"}`. It reports configuration only —
