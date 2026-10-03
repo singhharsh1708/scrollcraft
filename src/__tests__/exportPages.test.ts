@@ -197,6 +197,16 @@ describe("the browser tab says what the site is called", () => {
     expect(body.html).toContain('<meta property="og:title" content="Riverbank Books" />');
   });
 
+  it("titles a one page site sent the way the editor sends it", async () => {
+    // The editor posts a page list, and its lone page is called Home. Fixing only the
+    // sections path left every export made in the editor saying Home in the tab.
+    const { body } = await exportSite({
+      pages: [{ slug: HOME_SLUG, title: "Home", sections: kept.sections }],
+      siteName: "Riverbank Books",
+    });
+    expect(body.html).toContain("<title>Riverbank Books</title>");
+  });
+
   it("still titles each page of a real site with its own name", async () => {
     const { body } = await exportSite({ pages: threePages, siteName: "Northgate" });
     expect(body.pages[0].html).toContain("<title>Home</title>");
