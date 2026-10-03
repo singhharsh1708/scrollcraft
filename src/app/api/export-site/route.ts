@@ -469,9 +469,11 @@ export async function POST(req: NextRequest) {
       font-size: 1rem; line-height: 1.6;
       max-width: var(--sc-measure, 600px); margin: 0 auto 1.5rem;
     }
+    /* No extra opacity: the muted colour already carries its own, and dimming it again
+       compounded to 54% and put this line at 3.73:1 on a light page. */
     #site-footer .footer-legal {
       color: var(--sc-muted, rgba(255,255,255,0.72));
-      font-size: 0.8125rem; margin: 0; opacity: 0.75;
+      font-size: 0.8125rem; margin: 0;
     }
 
     #scroll-hint {

@@ -19,6 +19,24 @@ function lerp(a: number, b: number, t: number) {
   return a + (b - a) * t;
 }
 
+/**
+ * What a frame starts from.
+ *
+ * Every style began with a near-black fill, which is why all 23 templates before Pare
+ * were dark whether or not their palette was: a light third colour was painted over
+ * before it could be seen. A palette whose third colour is light now gets that colour as
+ * its base, and every dark palette keeps the exact fill it had, so no existing template
+ * moves by a pixel.
+ *
+ * drawGradient is not included: its stops multiply the palette down to rgb(5,5,15), so a
+ * light palette there needs different maths rather than a different base.
+ */
+export function baseFill(opts: FrameOptions, dark: string): string {
+  const [r, g, b] = hexToRgb(opts.color3);
+  const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+  return luminance > 0.5 ? opts.color3 : dark;
+}
+
 function drawGradient(ctx: CanvasRenderingContext2D, w: number, h: number, p: number, opts: FrameOptions) {
   const [r1, g1, b1] = hexToRgb(opts.color1);
   const [r2, g2, b2] = hexToRgb(opts.color2);
@@ -50,7 +68,7 @@ function drawGradient(ctx: CanvasRenderingContext2D, w: number, h: number, p: nu
 }
 
 function drawGeometric(ctx: CanvasRenderingContext2D, w: number, h: number, p: number, opts: FrameOptions) {
-  ctx.fillStyle = "#030308";
+  ctx.fillStyle = baseFill(opts, "#030308");
   ctx.fillRect(0, 0, w, h);
 
   const [r1, g1, b1] = hexToRgb(opts.color1);
@@ -100,7 +118,7 @@ function drawGeometric(ctx: CanvasRenderingContext2D, w: number, h: number, p: n
 }
 
 function drawParticles(ctx: CanvasRenderingContext2D, w: number, h: number, p: number, opts: FrameOptions) {
-  ctx.fillStyle = "#020208";
+  ctx.fillStyle = baseFill(opts, "#020208");
   ctx.fillRect(0, 0, w, h);
 
   const [r1, g1, b1] = hexToRgb(opts.color1);
@@ -140,7 +158,7 @@ function drawParticles(ctx: CanvasRenderingContext2D, w: number, h: number, p: n
 }
 
 function drawWave(ctx: CanvasRenderingContext2D, w: number, h: number, p: number, opts: FrameOptions) {
-  ctx.fillStyle = "#020510";
+  ctx.fillStyle = baseFill(opts, "#020510");
   ctx.fillRect(0, 0, w, h);
 
   const [r1, g1, b1] = hexToRgb(opts.color1);
@@ -220,7 +238,10 @@ export interface ProceduralRuntime {
  * carries whatever names the build produced and a minified build produces short ones.
  */
 export function proceduralRuntimeSource(): ProceduralRuntime {
-  const fns = [hexToRgb, lerp, drawGradient, drawGeometric, drawParticles, drawWave, drawFrame2D];
+  // Every function the exported page calls, including the helpers. A missing one is not a
+  // type error here and not a test failure in the app: it is a site that throws in the
+  // visitor's browser, which is how baseFill was caught.
+  const fns = [hexToRgb, lerp, baseFill, drawGradient, drawGeometric, drawParticles, drawWave, drawFrame2D];
   const source = fns
     .map((fn) => {
       const src = fn.toString();
