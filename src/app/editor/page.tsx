@@ -28,6 +28,7 @@ import { generate2DFrames } from "@/lib/generate2DFrames";
 import { AUTOSAVE_DEBOUNCE_MS, saveStatusLabel, type SaveState } from "@/lib/saveStatus";
 import { SIGNUP_PROVIDER_NAMES, signupForm, signupStatus } from "@/lib/signupForm";
 import { buildProjectFile, parseProjectFile, projectFileName, backgroundTravels, type ProjectDocument } from "@/lib/projectFile";
+import { countEditorOpened, countFirstEdit, countExportStarted, countExportFinished } from "@/lib/funnel";
 
 const ScrollEngine = dynamic(() => import("@/components/ScrollEngine"), { ssr: false });
 const ScrollSection = dynamic(() => import("@/components/ScrollSection"), { ssr: false });
@@ -350,6 +351,13 @@ function EditorInner() {
   });
 
 
+  // One count per editor session, so the share of visitors who get as far as opening it
+  // can be read against the share who export.
+  useEffect(() => {
+    countEditorOpened(searchParams.get("template"));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   /**
    * Restore the document this browser last saved.
    *
@@ -453,6 +461,7 @@ function EditorInner() {
   const undoStack = useRef<Section[][]>([]);
   const redoStack = useRef<Section[][]>([]);
   const lastEditKey = useRef<{ key: string; t: number } | null>(null);
+  const countedFirstEdit = useRef(false);
   // canUndo/canRedo are state (not derived from refs during render) so the
   // toolbar buttons re-render correctly without reading refs at render time.
   const [canUndo, setCanUndo] = useState(false);
@@ -496,6 +505,10 @@ function EditorInner() {
     redoStack.current = [];
     setSections(next);
     setDirty(true);
+    if (!countedFirstEdit.current) {
+      countedFirstEdit.current = true;
+      countFirstEdit();
+    }
     syncHistoryFlags();
   }, [syncHistoryFlags]);
 
@@ -594,6 +607,7 @@ function EditorInner() {
       toast.error("Can't export demo frames — generate real frames first");
       return;
     }
+    countExportStarted();
     setIsExporting(true);
     try {
       // The export is built from what is on screen, so there is nothing to sync first.
@@ -757,6 +771,7 @@ function EditorInner() {
       a.download = `${siteName.replace(/\s+/g, "-").toLowerCase()}.zip`;
       a.click();
       URL.revokeObjectURL(url);
+      countExportFinished();
       toast.success("Site exported! Extract and serve with `npx serve .`");
 
       // A call to action pointing at an in-page id that no section carries is a button
