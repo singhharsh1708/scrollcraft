@@ -1,0 +1,188 @@
+import { describe, it, expect, beforeEach, vi } from "vitest";
+import type { NextRequest } from "next/server";
+import { templateBySlug } from "@/lib/templates";
+import { HOME_SLUG } from "@/lib/sitePages";
+import { readFileSync } from "node:fs";
+
+const rateLimitMock = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/rateLimit", () => ({ rateLimit: rateLimitMock, getClientIp: () => "1.2.3.4" }));
+
+type Handler = typeof import("../app/api/export-site/route").POST;
+let POST: Handler;
+
+beforeEach(async () => {
+  vi.clearAllMocks();
+  rateLimitMock.mockResolvedValue({ allowed: true });
+  ({ POST } = await import("../app/api/export-site/route"));
+});
+
+const kept = templateBySlug("kept")!;
+const aura = templateBySlug("aurabeauty")!;
+
+async function exportSite(body: Record<string, unknown>) {
+  const res = await POST(
+    new Request("https://scrollcraft.space/api/export-site", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ siteName: "Kept", frameCount: 10, fps: 24, ...body }),
+    }) as unknown as NextRequest
+  );
+  return { status: res.status, body: await res.json() };
+}
+
+const threePages = [
+  { slug: HOME_SLUG, title: "Home", sections: kept.sections },
+  { slug: "about", title: "About", sections: aura.sections },
+  { slug: "contact", title: "Contact", sections: kept.sections },
+];
+
+/**
+ * Every template people buy has real pages behind the cards, and ours could only write
+ * an index.html, so "Services" and "Contact" had nowhere to go.
+ */
+
+describe("a site can be more than one page", () => {
+  it("writes a file per page, home first and named index.html", async () => {
+    const { status, body } = await exportSite({ pages: threePages });
+    expect(status).toBe(200);
+    expect(body.pages.map((p: { path: string }) => p.path)).toEqual(["index.html", "about.html", "contact.html"]);
+  });
+
+  it("gives every page the same nav, marking the one you are on", async () => {
+    const { body } = await exportSite({ pages: threePages });
+    for (const page of body.pages) {
+      expect(page.html).toContain('<nav id="site-nav" aria-label="Pages">');
+      for (const href of ["index.html", "about.html", "contact.html"]) {
+        expect(page.html).toContain(`href="${href}"`);
+      }
+      const nav = /<nav id="site-nav"[\s\S]*?<\/nav>/.exec(page.html)![0];
+      expect(nav.match(/aria-current="page"/g)).toHaveLength(1);
+    }
+    expect(body.pages[1].html).toContain('<a href="about.html" aria-current="page">About</a>');
+  });
+
+  it("links to files, so the folder works before it is ever hosted", async () => {
+    // Double-clicking index.html is how most people check an export first.
+    const { body } = await exportSite({ pages: threePages });
+    const written = new Set(body.pages.map((p: { path: string }) => p.path));
+    const hrefs = [...String(body.pages[0].html).matchAll(/<nav id="site-nav"[\s\S]*?<\/nav>/g)]
+      .flatMap((m) => [...m[0].matchAll(/href="([^"]+)"/g)].map((h) => h[1]));
+    expect(hrefs.length).toBeGreaterThan(0);
+    for (const href of hrefs) {
+      expect(href).not.toMatch(/^(https?:|\/)/);
+      expect(written.has(href), `${href} is linked but never written`).toBe(true);
+    }
+  });
+
+  it("titles each page for the tab and the share card", async () => {
+    const { body } = await exportSite({ pages: threePages });
+    expect(body.pages[1].html).toContain("<title>About</title>");
+    expect(body.pages[1].html).toContain('<meta property="og:title" content="About" />');
+  });
+
+  it("gives each page its own sections, not the home page's", async () => {
+    const { body } = await exportSite({ pages: threePages });
+    expect(body.pages[1].html).toContain(aura.sections[0].heading!);
+    expect(body.pages[1].html).not.toContain(kept.sections[0].heading!);
+  });
+
+  it("points every page at the one frames folder rather than a copy each", async () => {
+    const { body } = await exportSite({ pages: threePages, frameCount: 10 });
+    for (const page of body.pages) {
+      expect(page.html).not.toMatch(/about\/frames|contact\/frames/);
+    }
+  });
+});
+
+describe("a one page site is exactly what it was", () => {
+  it("writes no nav when there is nothing to navigate to", async () => {
+    const { body } = await exportSite({ sections: kept.sections });
+    expect(body.html).not.toContain("site-nav");
+    expect(body.pages.map((p: { path: string }) => p.path)).toEqual(["index.html"]);
+  });
+
+  it("still answers with html for a client that has not been updated", async () => {
+    const { body } = await exportSite({ sections: kept.sections });
+    expect(body.html).toContain("<!DOCTYPE html>");
+    expect(body.html).toBe(body.pages[0].html);
+  });
+
+  it("builds the same page whether it arrives as sections or as one page", async () => {
+    const asSections = await exportSite({ sections: kept.sections });
+    const asPage = await exportSite({ pages: [{ slug: HOME_SLUG, title: "Kept", sections: kept.sections }] });
+    // The title is the one difference: a page carries its own.
+    const strip = (html: string) => html.replace(/<title>[^<]*<\/title>/, "").replace(/og:title" content="[^"]*"/, "");
+    expect(strip(asPage.body.pages[0].html)).toBe(strip(asSections.body.pages[0].html));
+  });
+});
+
+describe("a page cannot break the export it sits in", () => {
+  it("refuses a page whose address would overwrite another file", async () => {
+    const { status, body } = await exportSite({
+      pages: [{ slug: HOME_SLUG, title: "Home", sections: kept.sections }, { slug: "404", title: "Oops", sections: kept.sections }],
+    });
+    expect(status).toBe(400);
+    expect(body.error).toMatch(/pages/);
+  });
+
+  it("refuses a page that tries to write outside the folder", async () => {
+    const { status } = await exportSite({
+      pages: [{ slug: HOME_SLUG, title: "Home", sections: kept.sections }, { slug: "../evil", title: "X", sections: kept.sections }],
+    });
+    expect(status).toBe(400);
+  });
+
+  it("insists the first page is the home page, so index.html always exists", async () => {
+    const { status, body } = await exportSite({
+      pages: [{ slug: "about", title: "About", sections: kept.sections }],
+    });
+    expect(status).toBe(400);
+    expect(body.error).toMatch(/home page/i);
+  });
+
+  it("names the page that has nothing to show, rather than failing the whole export blindly", async () => {
+    const { status, body } = await exportSite({
+      pages: [
+        { slug: HOME_SLUG, title: "Home", sections: kept.sections },
+        { slug: "about", title: "About", sections: [{ heading: "Hidden", visible: false, scrollHeight: 1000 }] },
+      ],
+    });
+    expect(status).toBe(400);
+    expect(body.error).toContain("About");
+  });
+
+  it("escapes a page title rather than letting it into the markup", async () => {
+    const { body } = await exportSite({
+      pages: [
+        { slug: HOME_SLUG, title: "Home", sections: kept.sections },
+        { slug: "about", title: '<img src=x onerror=alert(1)>', sections: kept.sections },
+      ],
+    });
+    expect(body.pages[0].html).not.toContain("<img src=x onerror");
+    expect(body.pages[0].html).toContain("&lt;img src=x onerror=alert(1)&gt;");
+  });
+});
+
+describe("a button that points at another page actually goes there", () => {
+  it("keeps the link instead of rewriting it to nothing", async () => {
+    // Measured in a browser before this: the schema accepted contact.html and the
+    // exporter rewrote it to "#", so the one button on the page did nothing.
+    const { body } = await exportSite({
+      pages: [
+        { slug: HOME_SLUG, title: "Home", sections: [{ heading: "Home", ctaLabel: "Book a visit", ctaHref: "contact.html", scrollHeight: 1000 }] },
+        { slug: "contact", title: "Contact", sections: kept.sections },
+      ],
+    });
+    expect(body.pages[0].html).toContain('href="contact.html"');
+    expect(body.pages[0].html).not.toMatch(/href="#"[^>]*>Book a visit/);
+  });
+
+  it("is judged by one rule, not three copies of it", () => {
+    // The schema, the exporter and the editor preview each had their own allowlist.
+    for (const file of ["src/app/api/export-site/route.ts", "src/components/SiteRenderer.tsx"]) {
+      const source = readFileSync(file, "utf8");
+      expect(source, `${file} carries its own href allowlist`).not.toMatch(/mailto:\|tel:/);
+      expect(source).toContain("isAllowedHref");
+    }
+  });
+});

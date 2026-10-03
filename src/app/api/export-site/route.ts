@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { REVEALS, exportSectionsSchema, sectionAnchor, type Section, visibleSections as onlyVisible } from "@/lib/siteSchema";
+import { isAllowedHref } from "@/lib/siteSchema";
+import { HOME_SLUG, pageFileName, navLinks, asPages, pagesSchema, type SitePage } from "@/lib/sitePages";
 import { layoutStyle } from "@/lib/layoutStyles";
 import { DISPLAY_STYLES, displayStyle } from "@/lib/displayStyles";
 import { parseThemeJson, parseStyleJson } from "@/lib/siteSchema";
@@ -89,9 +91,10 @@ function signupFormHtml(f: SignupForm, s: Section, index: number, centered: bool
 }
 
 function safeHref(s: unknown): string {
+  // The same rule the schema validates against. Kept apart, a button that passed
+  // validation was still rewritten to "#" here, so a link to another page did nothing.
   const href = String(s ?? "").trim();
-  if (href.startsWith("//")) return "#";
-  return /^(?:https?:\/\/|mailto:|tel:|#|\/|\.{1,2}\/)/i.test(href) ? href : "#";
+  return isAllowedHref(href) ? href : "#";
 }
 
 export async function POST(req: NextRequest) {
@@ -132,6 +135,7 @@ export async function POST(req: NextRequest) {
       frameCount,
     } = body;
     const {
+      pages,
       sections,
       siteName,
       siteDescription = "",
@@ -143,12 +147,14 @@ export async function POST(req: NextRequest) {
     } = body;
 
 
-    if (!Array.isArray(sections) || sections.length === 0) {
+    // One page arrives as `sections`, a site as `pages`. Exactly one of them is required.
+    const bodyContent = Array.isArray(pages) ? pages : sections;
+    if (!Array.isArray(bodyContent) || bodyContent.length === 0) {
       return NextResponse.json({ error: "sections must be a non-empty array" }, { status: 400 });
     }
-    // Cap the section payload: with no stored record to fall back on, the body is the
-    // only input and an uncapped `sections` amplifies a small request into a huge page.
-    if (JSON.stringify(sections).length > 1_000_000) {
+    // Cap the payload: with no stored record to fall back on, the body is the only input
+    // and an uncapped one amplifies a small request into a huge page.
+    if (JSON.stringify(bodyContent).length > 1_000_000) {
       return NextResponse.json({ error: "sections payload is too large" }, { status: 400 });
     }
     // Shape, not just size. Without this the route read whatever arrived: a null element
@@ -156,7 +162,10 @@ export async function POST(req: NextRequest) {
     // the wrong type was interpolated as-is, so `{"heading":{"a":1}}` shipped a page
     // whose <h1> read "[object Object]". Types only - out-of-range numbers stay the
     // clamps' job below, and MAX_SECTIONS is the limit the editor itself enforces.
-    const parsedSections = exportSectionsSchema.safeParse(sections);
+    // A body may carry `sections` (one page, the long-standing shape) or `pages`. The
+    // checks below run against the home page either way, so one of them can be absent.
+    const homeSections = sections ?? (Array.isArray(pages) ? pages[0]?.sections : undefined);
+    const parsedSections = exportSectionsSchema.safeParse(homeSections);
     if (!parsedSections.success) {
       const issue = parsedSections.error.issues[0];
       const where = issue?.path?.length ? issue.path.join(".") : "sections";
@@ -168,6 +177,34 @@ export async function POST(req: NextRequest) {
     // Cast because this schema checks types, not the enums: an unrecognised layout or
     // reveal is clamped a few lines down rather than rejected.
     const validSections = parsedSections.data as Section[];
+    /**
+     * The pages to write. A body with no `pages` is one home page, which is every export
+     * made before this existed and every client that has not been updated.
+     */
+    let sitePages: SitePage[];
+    if (pages === undefined || pages === null) {
+      sitePages = asPages({ sections: validSections });
+    } else {
+      const parsedPages = pagesSchema.safeParse(pages);
+      if (!parsedPages.success) {
+        const issue = parsedPages.error.issues[0];
+        const where = issue?.path?.length ? `pages.${issue.path.join(".")}` : "pages";
+        return NextResponse.json({ error: `${where}: ${issue?.message ?? "invalid page"}` }, { status: 400 });
+      }
+      sitePages = parsedPages.data as SitePage[];
+      if (sitePages[0].slug !== HOME_SLUG) {
+        return NextResponse.json({ error: `pages: the first page must be the home page` }, { status: 400 });
+      }
+    }
+
+    const emptyPage = sitePages.find((page) => onlyVisible(page.sections as Section[]).length === 0);
+    if (emptyPage) {
+      return NextResponse.json(
+        { error: sitePages.length > 1 ? `${emptyPage.title}: at least one section must be visible to export` : "At least one section must be visible to export" },
+        { status: 400 }
+      );
+    }
+
     // A background recipe lets the exported page draw its own frames, so the ZIP carries
     // no JPEGs at all. Frames are only required when there is no recipe to draw from.
     const parsedStyle = styleJson ? parseStyleJson(styleJson) : null;
@@ -254,10 +291,15 @@ export async function POST(req: NextRequest) {
 
     // The validated copy, not the raw body: unknown keys are stripped and every field
     // is the type the generator below assumes.
-    const visibleSections = onlyVisible(validSections);
-    if (visibleSections.length === 0) {
-      return NextResponse.json({ error: "At least one section must be visible to export" }, { status: 400 });
-    }
+    /**
+     * One page of the site.
+     *
+     * Everything above this is shared: the theme, the frames, the audio and the styles.
+     * Everything below depends on which page is being written, so it runs once per page
+     * and the nav is handed in already marked for the page it sits on.
+     */
+    const renderPage = (pageSections: Section[], pageTitle: string, navHtml: string): string => {
+    const visibleSections = onlyVisible(pageSections);
 
     // The first heading on the page is the page's heading. Every section emitted an h2,
     // so an exported site had no h1 at all — a document outline starting at level two,
@@ -302,10 +344,10 @@ export async function POST(req: NextRequest) {
   <meta charset="UTF-8" />
   ${themeFontLinks}
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>${esc(siteName || "My ScrollCraft Site")}</title>
+  <title>${esc(pageTitle || siteName || "My ScrollCraft Site")}</title>
   <meta name="description" content="${esc(metaDescription)}" />
   <meta property="og:type" content="website" />
-  <meta property="og:title" content="${esc(siteName || "My ScrollCraft Site")}" />
+  <meta property="og:title" content="${esc(pageTitle || siteName || "My ScrollCraft Site")}" />
   <meta property="og:description" content="${esc(metaDescription)}" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta property="og:image" content="og-image.jpg" />
@@ -326,6 +368,14 @@ export async function POST(req: NextRequest) {
     .skip-link { position: absolute; left: -9999px; top: 0; z-index: 100; padding: 0.75rem 1.25rem; background: var(--sc-ink, #fff); color: var(--sc-ground, #000); border-radius: 0 0 0.5rem 0; font-weight: 600; text-decoration: none; }
     .skip-link:focus { left: 0; }
     main:focus { outline: none; }
+    ${sitePages.length < 2 ? "" : `
+    /* Sits above the canvas, out of the way of the first heading, and wraps to its own
+       rows rather than scrolling sideways. Omitted entirely on a one page site. */
+    #site-nav { position: fixed; top: 0; left: 0; right: 0; z-index: 50; display: flex; flex-wrap: wrap; justify-content: center; gap: 0.25rem 1.25rem; padding: 0.85rem 1.25rem; background: color-mix(in srgb, var(--sc-ground, #05070c) 72%, transparent); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+    #site-nav a { color: var(--sc-ink, #fff); opacity: 0.74; text-decoration: none; font-size: 0.9375rem; font-weight: 500; padding: 0.25rem 0; }
+    #site-nav a:hover { opacity: 1; }
+    #site-nav a[aria-current="page"] { opacity: 1; box-shadow: inset 0 -2px 0 var(--sc-accent-text, currentColor); }
+    @media (prefers-reduced-motion: reduce) { #site-nav { backdrop-filter: none; -webkit-backdrop-filter: none; background: var(--sc-ground, #05070c); } }`}
     /* The page sets its own colours, so the browser default ring can vanish against them. */
     a:focus-visible, button:focus-visible, [tabindex]:focus-visible { outline: 3px solid var(--sc-accent-text, #ede9fe); outline-offset: 3px; border-radius: 2px; }
     #scroll-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
@@ -413,6 +463,7 @@ export async function POST(req: NextRequest) {
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
+  ${navHtml}
   <canvas id="scroll-canvas" role="img" aria-label="${esc(siteName ? `${siteName} animated scroll background` : "Animated scroll background")}"></canvas>
   <main id="main" tabindex="-1">
     <div id="scroll-container">
@@ -743,9 +794,26 @@ export async function POST(req: NextRequest) {
   </script>
 </body>
 </html>`;
+      return html;
+    };
+
+    const navHtmlFor = (slug: string): string => {
+      if (sitePages.length < 2) return "";
+      const links = navLinks(sitePages, slug)
+        .map((l) => `<a href="${esc(l.href)}"${l.current ? ' aria-current="page"' : ""}>${esc(l.label)}</a>`)
+        .join("");
+      return `<nav id="site-nav" aria-label="Pages">${links}</nav>`;
+    };
+
+    const rendered = sitePages.map((page) => ({
+      path: pageFileName(page.slug),
+      html: renderPage(page.sections as Section[], page.title, navHtmlFor(page.slug)),
+    }));
 
     return NextResponse.json({
-      html,
+      // The home page, under its old name, so an older client keeps working unchanged.
+      html: rendered[0].html,
+      pages: rendered,
       audioExt,
       siteName: siteName || "scrollcraft-site",
       fps: validatedFps,
