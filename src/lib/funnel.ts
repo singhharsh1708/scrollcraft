@@ -22,8 +22,21 @@ const MAX_EXPORT_MS = 600_000;
  */
 let exportStartedAt: number | null = null;
 
+/**
+ * A browser being driven by a script.
+ *
+ * Set by every automation framework and by Chrome's own remote debugging. Our headless
+ * checks opened the editor a dozen times in one afternoon and all of it counted, so the
+ * first real numbers were mostly us. A visitor who finishes a site is the whole point of
+ * these counts, and a robot never does.
+ */
+function driven(): boolean {
+  return typeof navigator !== "undefined" && navigator.webdriver === true;
+}
+
 function send(name: FunnelEvent, properties?: Record<string, string | number>): void {
   if (!process.env.NEXT_PUBLIC_VERCEL_ENV) return;
+  if (driven()) return;
   try {
     track(name, properties);
   } catch {
