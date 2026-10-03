@@ -18,6 +18,7 @@ import { GITHUB_REPO_URL, GITHUB_SPONSORS_URL } from "@/lib/links";
 const NAV_LINKS = [
   { href: "/examples",  label: "Examples"  },
   { href: "/templates", label: "Templates" },
+  { href: "/ui",        label: "Components" },
   { href: "/presets",   label: "Presets"   },
   { href: "/changelog", label: "Changelog" },
 ];
