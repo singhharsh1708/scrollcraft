@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { readFileSync } from "node:fs";
 import { KIT, KIT_BASE, KIT_TOKENS, kitComponent, kitPage, kitStylesheet } from "@/lib/componentKit";
 
 /**
@@ -166,5 +167,40 @@ describe("everything clickable is big enough to hit", () => {
     const faq = kitComponent("faq")!;
     expect(footer.css).toMatch(/\.sck-footer-nav a \{[^}]*min-height:\s*3[2-9]px/);
     expect(faq.css).toMatch(/summary \{[^}]*padding:\s*0\.4rem/);
+  });
+});
+
+describe("the page that shows the kit", () => {
+  const PAGE = readFileSync("src/app/ui/page.tsx", "utf8");
+  const CLIENT = readFileSync("src/app/ui/UiClient.tsx", "utf8");
+
+  it("builds every preview from the same registry the code blocks come from", () => {
+    // A preview rendered from anything else could show one thing and copy another.
+    expect(PAGE).toContain("kitPage([c], \"dark\")");
+    expect(PAGE).toContain("kitPage([c], \"light\")");
+    expect(PAGE).toContain("components={KIT}");
+    expect(CLIENT).toContain("srcDoc={light ? pageFor[c.id].light : pageFor[c.id].dark}");
+  });
+
+  it("copies the component's own html and css, not a reformatted copy of them", () => {
+    expect(CLIENT).toContain("text={active === \"html\" ? c.html : c.css}");
+    expect(CLIENT).toContain("navigator.clipboard.writeText(text)");
+  });
+
+  it("shows each preview in a frame of its own, so this site's CSS cannot reach into it", () => {
+    expect(CLIENT).toContain("<iframe");
+    expect(CLIENT).toMatch(/title=\{`\$\{c\.name\} preview`\}/);
+    expect(CLIENT, "an inline preview would inherit this page's styles").not.toContain("dangerouslySetInnerHTML");
+  });
+
+  it("offers the width switcher almost nobody else has, and both grounds", () => {
+    expect(CLIENT).toContain("Phone: 390");
+    expect(CLIENT).toContain("Tablet: 768");
+    expect(CLIENT).toContain("lightTokens");
+  });
+
+  it("is reachable: in the nav and in the sitemap", () => {
+    expect(readFileSync("src/components/Navbar.tsx", "utf8")).toContain('href: "/ui"');
+    expect(readFileSync("src/app/sitemap.ts", "utf8")).toContain("${siteUrl}/ui");
   });
 });

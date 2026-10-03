@@ -39,6 +39,21 @@ export const KIT_TOKENS = `:root {
   --sck-font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }`;
 
+/** The same tokens for a light page, so a block can be checked on either ground. */
+export const KIT_TOKENS_LIGHT = `:root {
+  --sck-ground: #ffffff;
+  --sck-surface: #f2f5fb;
+  --sck-ink: #0f1420;
+  --sck-muted: #333c4d;
+  --sck-accent: #2340b8;
+  --sck-accent-ink: #ffffff;
+  --sck-line: rgba(15, 20, 32, 0.16);
+  --sck-field: rgba(15, 20, 32, 0.04);
+  --sck-radius: 10px;
+  --sck-measure: 62ch;
+  --sck-font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}`;
+
 /** Shared by every section: the base type, focus ring and spacing rhythm. */
 export const KIT_BASE = `.sck {
   font-family: var(--sck-font);
@@ -225,7 +240,7 @@ export const KIT: KitComponent[] = [
 .sck-footer-nav { display: flex; flex-wrap: wrap; gap: 1.25rem; margin-bottom: 1.25rem; }
 .sck-footer-nav a { color: var(--sck-ink); text-decoration: none; border-bottom: 1px solid var(--sck-line); display: inline-flex; align-items: center; min-height: 32px; padding: 0 0 2px; }
 .sck-footer-nav a:hover { border-bottom-color: currentColor; }
-.sck-footer-legal { font-size: 0.875rem; margin: 0; }`,
+.sck-footer-legal { font-size: 0.9375rem; margin: 0; }`,
   },
 ];
 
@@ -238,8 +253,8 @@ export function kitStylesheet(component: KitComponent): string {
   return `${KIT_TOKENS}\n\n${KIT_BASE}\n\n${component.css}`;
 }
 
-/** A whole page of the kit, for seeing the set together. */
-export function kitPage(components: KitComponent[] = KIT): string {
+/** A whole page of the kit, for seeing the set together or one block on its own. */
+export function kitPage(components: KitComponent[] = KIT, theme: "dark" | "light" = "dark"): string {
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -247,7 +262,7 @@ export function kitPage(components: KitComponent[] = KIT): string {
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>ScrollCraft components</title>
 <style>
-${KIT_TOKENS}
+${theme === "light" ? KIT_TOKENS_LIGHT : KIT_TOKENS}
 
 ${KIT_BASE}
 
