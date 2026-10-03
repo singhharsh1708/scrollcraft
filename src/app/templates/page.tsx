@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { pageMeta } from "@/lib/pageMeta";
 import { TEMPLATES, templateCategories, templateScrollHeight, templateSectionCount } from "@/lib/templates";
 import TemplatesClient, { type TemplateCard } from "./TemplatesClient";
@@ -35,5 +36,11 @@ export default function TemplatesPage() {
     scrollHeight: templateScrollHeight(t),
   }));
 
-  return <TemplatesClient templates={templates} categories={templateCategories()} />;
+  // The gallery reads its filters from the URL, which is a client-side concern; the
+  // boundary lets the rest of the page stay static.
+  return (
+    <Suspense fallback={null}>
+      <TemplatesClient templates={templates} categories={templateCategories()} />
+    </Suspense>
+  );
 }

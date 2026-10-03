@@ -1,5 +1,6 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,6 +8,21 @@ import { ArrowRight, Search, Eye } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import type { Style2D } from "@/lib/generate2DFrames";
 import SiteFooter from "@/components/SiteFooter";
+import {
+  ALL,
+  BACKGROUND_LABELS,
+  EMPTY_FILTERS,
+  SORTS,
+  backgroundCounts,
+  categoryCounts,
+  filterTemplates,
+  filtersFromQuery,
+  filtersToQuery,
+  hasActiveFilters,
+  sortTemplates,
+  type TemplateFilters,
+  type TemplateSort,
+} from "@/lib/templateFilters";
 
 /**
  * What a gallery card renders. Deliberately not `Template`: the full record carries every
@@ -26,25 +42,27 @@ export interface TemplateCard {
 }
 
 export default function TemplatesClient({ templates, categories: allCategories }: { templates: TemplateCard[]; categories: string[] }) {
-  const [search, setSearch] = useState("");
-  const [activeCategory, setActiveCategory] = useState("All");
+  const router = useRouter();
+  const pathname = usePathname();
+  const params = useSearchParams();
 
-  const categories = useMemo(() => ["All", ...allCategories], [allCategories]);
+  // The URL is the starting state, so a filtered gallery can be linked, bookmarked and
+  // sent to somebody else rather than described to them.
+  const fromUrl = useMemo(() => filtersFromQuery(params, { categories: allCategories }), [params, allCategories]);
+  const [filters, setFilters] = useState<TemplateFilters>(fromUrl.filters);
+  const [sort, setSort] = useState<TemplateSort>(fromUrl.sort);
 
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    return templates.filter((t) => {
-      const matchesCategory = activeCategory === "All" || t.category === activeCategory;
-      if (!matchesCategory) return false;
-      if (!q) return true;
-      return (
-        t.name.toLowerCase().includes(q) ||
-        t.tagline.toLowerCase().includes(q) ||
-        t.category.toLowerCase().includes(q) ||
-        t.tags.some((tag) => tag.toLowerCase().includes(q))
-      );
-    });
-  }, [search, activeCategory, templates]);
+  useEffect(() => {
+    const query = filtersToQuery(filters, sort);
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+  }, [filters, sort, pathname, router]);
+
+  const categories = useMemo(() => [ALL, ...allCategories], [allCategories]);
+  const counts = useMemo(() => categoryCounts(templates, filters), [templates, filters]);
+  const backgrounds = useMemo(() => backgroundCounts(templates, filters), [templates, filters]);
+  const filtered = useMemo(() => sortTemplates(filterTemplates(templates, filters), sort), [templates, filters, sort]);
+  const search = filters.q;
+  const setSearch = (q: string) => setFilters((f) => ({ ...f, q }));
 
   return (
     <main className="min-h-screen bg-background text-foreground">
@@ -75,41 +93,81 @@ export default function TemplatesClient({ templates, categories: allCategories }
           />
         </div>
 
-        <div className="flex flex-wrap gap-2 justify-center">
+        <fieldset className="flex flex-wrap gap-2 justify-center">
+          <legend className="lc-mono mb-2 w-full text-center text-xs uppercase tracking-[0.18em] text-muted-foreground">What it is for</legend>
           {categories.map((c) => (
             <button
               key={c}
               type="button"
-              onClick={() => setActiveCategory(c)}
-              aria-pressed={activeCategory === c}
-              className={`lc-mono h-9 px-4 rounded-full text-[0.8rem] border transition-colors ${
-                activeCategory === c
+              onClick={() => setFilters((f) => ({ ...f, category: c }))}
+              aria-pressed={filters.category === c}
+              disabled={(counts[c] ?? 0) === 0 && c !== filters.category}
+              className={`lc-mono h-9 px-4 rounded-full text-[0.8rem] border transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                filters.category === c
                   ? "border-primary-ink/60 bg-primary-ink/15 text-foreground"
                   : "border-border text-muted-foreground hover:text-foreground hover:border-foreground/30"
               }`}
             >
-              {c}
+              {c} <span className="tabular-nums opacity-80">{counts[c] ?? 0}</span>
             </button>
           ))}
-        </div>
+        </fieldset>
 
-        <p className="lc-mono text-center text-xs text-muted-foreground" aria-live="polite">
-          {filtered.length} of {templates.length} templates
-        </p>
+        <fieldset className="flex flex-wrap gap-2 justify-center">
+          <legend className="lc-mono mb-2 w-full text-center text-xs uppercase tracking-[0.18em] text-muted-foreground">How the background moves</legend>
+          {[ALL, ...Object.keys(BACKGROUND_LABELS)].map((b) => (
+            <button
+              key={b}
+              type="button"
+              onClick={() => setFilters((f) => ({ ...f, background: b }))}
+              aria-pressed={filters.background === b}
+              disabled={(backgrounds[b] ?? 0) === 0 && b !== filters.background}
+              className={`lc-mono h-9 px-4 rounded-full text-[0.8rem] border transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                filters.background === b
+                  ? "border-primary-ink/60 bg-primary-ink/15 text-foreground"
+                  : "border-border text-muted-foreground hover:text-foreground hover:border-foreground/30"
+              }`}
+            >
+              {b === ALL ? ALL : BACKGROUND_LABELS[b]} <span className="tabular-nums opacity-80">{backgrounds[b] ?? 0}</span>
+            </button>
+          ))}
+        </fieldset>
+
+        <div className="flex flex-wrap items-center justify-center gap-4">
+          <p className="lc-mono text-xs text-muted-foreground" aria-live="polite">
+            {filtered.length} of {templates.length} templates
+          </p>
+          <div className="flex items-center gap-2">
+            <label htmlFor="template-sort" className="lc-mono text-xs text-muted-foreground">Order</label>
+            <select
+              id="template-sort"
+              value={sort}
+              onChange={(e) => setSort(e.target.value as TemplateSort)}
+              className="lc-mono h-9 rounded-md border border-border bg-card px-2 text-xs text-foreground"
+            >
+              {SORTS.map((s) => <option key={s} value={s}>{s}</option>)}
+            </select>
+          </div>
+          {hasActiveFilters(filters) && (
+            <Button variant="outline" size="sm" className="lc-mono h-9 border-border text-xs" onClick={() => setFilters(EMPTY_FILTERS)}>
+              Clear filters
+            </Button>
+          )}
+        </div>
       </div>
 
       <section className="px-6 pb-24 max-w-7xl mx-auto">
         {filtered.length === 0 ? (
           <div className="text-center py-20 border border-border rounded-lg bg-card">
-            <p className="font-medium mb-1">Nothing matches “{search}”</p>
+            <p className="font-medium mb-1">No template matches that</p>
             <p className="text-sm text-muted-foreground mb-5">
-              Try a category instead, or clear the search.
+              Clear the filters, or <Link href="/contact?topic=custom" className="underline underline-offset-4">tell us what you were looking for</Link>.
             </p>
             <Button
               variant="outline"
               size="sm"
               className="border-border"
-              onClick={() => { setSearch(""); setActiveCategory("All"); }}
+              onClick={() => setFilters(EMPTY_FILTERS)}
             >
               Show all templates
             </Button>
