@@ -42,6 +42,7 @@ beforeEach(async () => {
   incrMock.mockResolvedValue(1);
   incrbyMock.mockResolvedValue(12);
   expireMock.mockResolvedValue(1);
+  vi.stubEnv("VERCEL_ENV", "production");
   vi.stubEnv("UPSTASH_REDIS_REST_URL", "https://example.upstash.io");
   vi.stubEnv("UPSTASH_REDIS_REST_TOKEN", "token");
   getMock.mockResolvedValue(0);
@@ -96,6 +97,23 @@ describe("the four counts are recorded, and nothing else is", () => {
       expect(Number(ttl)).toBeGreaterThan(0);
       expect(Number(ttl)).toBeLessThanOrEqual(400 * 24 * 60 * 60);
     }
+  });
+});
+
+describe("a preview or a local run cannot touch the real numbers", () => {
+  it("keeps anything that is not production under its own prefix", async () => {
+    vi.stubEnv("VERCEL_ENV", "preview");
+    vi.resetModules();
+    const { POST: preview } = await import("../app/api/count/route");
+    await preview(new Request("https://scrollcraft.space/api/count", {
+      method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ event: "first_edit" }),
+    }) as unknown as NextRequest);
+    expect(incrMock).toHaveBeenCalledWith(expect.stringContaining("funnel:preview:"));
+  });
+
+  it("writes production counts unprefixed, so the owner reads one set of keys", async () => {
+    await post({ event: "first_edit" });
+    expect(incrMock).toHaveBeenCalledWith(expect.stringMatching(/^funnel:\d{4}-\d{2}-\d{2}:first_edit$/));
   });
 });
 

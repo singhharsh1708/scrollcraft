@@ -37,6 +37,14 @@ function today(): string {
 }
 
 /**
+ * Keys are scoped by deployment, so a preview build and a local run cannot inflate the
+ * numbers the owner reads. Only production writes to the unprefixed keys.
+ */
+function scope(): string {
+  return process.env.VERCEL_ENV === "production" ? "" : `${process.env.VERCEL_ENV || "dev"}:`;
+}
+
+/**
  * Read the counts back.
  *
  * Needs FUNNEL_TOKEN, and answers 404 without one: adoption numbers are the owner's to
@@ -64,13 +72,14 @@ export async function GET(req: NextRequest) {
 
   try {
     for (const date of dates) {
+      const prefix = `funnel:${scope()}${date}`;
       for (const event of FUNNEL_EVENTS) {
-        totals[event] += Number(await store.get(`funnel:${date}:${event}`)) || 0;
+        totals[event] += Number(await store.get(`${prefix}:${event}`)) || 0;
       }
-      secondsSum += Number(await store.get(`funnel:${date}:export_finished_seconds_sum`)) || 0;
-      secondsN += Number(await store.get(`funnel:${date}:export_finished_seconds_n`)) || 0;
+      secondsSum += Number(await store.get(`${prefix}:export_finished_seconds_sum`)) || 0;
+      secondsN += Number(await store.get(`${prefix}:export_finished_seconds_n`)) || 0;
       for (const slug of [...slugs, "custom"]) {
-        const n = Number(await store.get(`funnel:${date}:editor_opened:${slug}`)) || 0;
+        const n = Number(await store.get(`${prefix}:editor_opened:${slug}`)) || 0;
         if (n) byTemplate[slug] = (byTemplate[slug] ?? 0) + n;
       }
     }
@@ -107,19 +116,20 @@ export async function POST(req: NextRequest) {
   if (!store) return new NextResponse(null, { status: 204 });
 
   const date = today();
-  const increments: [key: string, by: number][] = [[`funnel:${date}:${event}`, 1]];
+  const prefix = `funnel:${scope()}${date}`;
+  const increments: [key: string, by: number][] = [[`${prefix}:${event}`, 1]];
 
   if (event === "editor_opened") {
     const slug = typeof body.template === "string" && slugs.has(body.template) ? body.template : "custom";
-    increments.push([`funnel:${date}:editor_opened:${slug}`, 1]);
+    increments.push([`${prefix}:editor_opened:${slug}`, 1]);
   }
 
   // A sum and a count, so the mean can be read back without a key per export.
   if (event === "export_finished") {
     const seconds = Number(body.seconds);
     if (Number.isFinite(seconds) && seconds >= 0 && seconds <= MAX_EXPORT_SECONDS) {
-      increments.push([`funnel:${date}:export_finished_seconds_sum`, Math.round(seconds)]);
-      increments.push([`funnel:${date}:export_finished_seconds_n`, 1]);
+      increments.push([`${prefix}:export_finished_seconds_sum`, Math.round(seconds)]);
+      increments.push([`${prefix}:export_finished_seconds_n`, 1]);
     }
   }
 
