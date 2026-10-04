@@ -274,8 +274,14 @@ describe("the exported page is legible on a light palette too", () => {
     expect(footer).not.toMatch(/opacity:\s*0\.\d+/);
   });
 
-  it("exports the light template without falling back to a dark page", async () => {
-    const { body } = await exportSite({ template: "pare" });
+  it("paints a light palette's own ground, whenever one ships", async () => {
+    // No light template is in the catalogue today, so this exercises the path directly.
+    const { body } = await exportSite({
+      sections: [{ heading: "On a pale page", scrollHeight: 1000 }],
+      siteName: "Pale",
+      styleJson: JSON.stringify({ style: "geometric", colors: ["#1b3a8f", "#8a5a2b", "#eff2f6"] }),
+      themeJson: JSON.stringify({ ink: "#111823", ground: "#eff2f6" }),
+    });
     expect(body.html).toContain("#eff2f6");
   });
 });
