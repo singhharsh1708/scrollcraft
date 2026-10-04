@@ -26,19 +26,20 @@ describe("a light palette gets a light page", () => {
     expect(baseFill(optsFor(["#28407e", "#6b2f2a", "#0a0d18"]), "#030308")).toBe("#030308");
   });
 
-  it("changes nothing for any template that already existed", () => {
-    // The whole catalogue, minus the one light template this was built for: every one of
-    // them must still start from the exact fill it started from before.
+  it("changes nothing for any template in the catalogue", () => {
+    // Every template ships dark today, so none of them may move.
     for (const template of TEMPLATES) {
-      if (template.slug === "pare") continue;
       for (const dark of DARK_BASES) {
         expect(baseFill(optsFor(template.colors), dark), `${template.slug} moved`).toBe(dark);
       }
     }
   });
 
-  it("the catalogue has a light template at all, which it did not before", () => {
+  it("leaves the catalogue dark until a light template is designed to look it", () => {
+    // Pare was reverted: a light palette with this geometry paints a page whose mean
+    // brightness is 237 and whose background barely moves, which reads as an unstyled
+    // page rather than a quiet one. The engine can do light; the design has to earn it.
     const light = TEMPLATES.filter((t) => baseFill(optsFor(t.colors), "#030308") !== "#030308");
-    expect(light.map((t) => t.slug)).toContain("pare");
+    expect(light.map((t) => t.slug)).toEqual([]);
   });
 });
