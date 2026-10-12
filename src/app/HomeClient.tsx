@@ -121,6 +121,35 @@ function PanelFrame({ label, meta, children }: { label: string; meta?: string; c
   );
 }
 
+function DescribePanel() {
+  return (
+    <PanelFrame label="/describe" meta="a paragraph in, a site out">
+      <div className="space-y-3 p-4">
+        <div className="rounded-md border border-border bg-background p-3">
+          <p className="text-sm leading-relaxed text-foreground">
+            A two-chair barbershop on Mill Road in Cambridge, open since 2011. Walk-ins
+            before noon, appointments after. Fades, beard trims and hot towel shaves. We do
+            not do colour.
+          </p>
+        </div>
+        <p className="lc-mono text-[11px] text-muted-foreground">six sections written from it</p>
+        <ul className="space-y-1.5">
+          {[
+            ["Mill Road, Cambridge", "Two chairs on Mill Road since 2011."],
+            ["Before noon", "Walk in before twelve. No booking needed."],
+            ["What we don't do", "We do not do colour."],
+          ].map(([eyebrow, heading]) => (
+            <li key={eyebrow} className="rounded-md border border-border bg-card px-3 py-2">
+              <p className="lc-mono text-[10px] uppercase tracking-[0.14em] text-primary-ink">{eyebrow}</p>
+              <p className="mt-1 text-sm text-foreground">{heading}</p>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </PanelFrame>
+  );
+}
+
 function PickPanel({ templates, total }: { templates: TemplateSlice[]; total: number }) {
   return (
     <PanelFrame label="/templates" meta={`${total} sites`}>
@@ -323,6 +352,22 @@ export default function HomeClient({
 
   const steps: LifecycleStep[] = [
     {
+      id: "describe",
+      label: "Describe",
+      title: "Describe",
+      subtitle: "Write what the business is. The first draft comes back written.",
+      bullets: [
+        ["Say", " the street, the hours, the materials and the prices"],
+        ["Attach", " a photograph or two of the work or the room"],
+        ["Get", " five to nine sections, a palette and a typeface pairing"],
+      ],
+      links: [
+        { label: "Describe your business", href: "/describe" },
+        { label: "What it costs", href: "/pricing" },
+      ],
+      panel: <DescribePanel />,
+    },
+    {
       id: "pick",
       label: "Pick",
       title: "Pick",
@@ -490,7 +535,7 @@ export default function HomeClient({
       <section className="px-6 pb-16 pt-28 sm:pt-36">
         <div className="mx-auto max-w-[1360px]">
           <h2 className="lc-display text-center text-4xl text-primary-ink sm:text-5xl lg:text-[3.6rem]">
-            <span className="block">The whole path, from a template</span>
+            <span className="block">The whole path, from a paragraph</span>
             <span className="block">to a site anyone can visit</span>
           </h2>
           <Lifecycle steps={steps} />
