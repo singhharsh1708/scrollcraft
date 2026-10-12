@@ -65,6 +65,7 @@ export function keyHashFrom(req: Request): string | null {
 const entitlementKey = (hash: string) => `sc_ent:${hash}`;
 const orderKey = (orderId: string) => `sc_ord:${orderId}`;
 const orderOwnerKey = (orderId: string) => `sc_ordkey:${orderId}`;
+const refundKey = (orderId: string) => `sc_ref:${orderId}`;
 const freeKey = (ip: string) => `sc_free:${ip}:${new Date().toISOString().slice(0, 7)}`;
 
 /**
@@ -166,7 +167,8 @@ async function spend(r: Redis, ip: string, hash: string | null): Promise<Allowan
     kind: "free",
     release: async () => {
       try {
-        await r.decr(key);
+        const left = await r.decr(key);
+        if (left < 0) await r.set(key, 0);
       } catch (err) {
         logger.error("credits: could not give the free site back", { err });
       }
@@ -204,10 +206,15 @@ export async function grantPack(hash: string, orderId: string, email?: string): 
  * Sites already written stay written: the clamp removes the unused part of the pack and
  * nothing else, so a refund cannot leave someone owing credits.
  */
-export async function revokePack(orderId: string): Promise<"revoked" | "unknown" | "unavailable"> {
+export async function revokePack(orderId: string): Promise<"revoked" | "already" | "unknown" | "unavailable"> {
   const r = store();
   if (!r) return "unavailable";
   try {
+    // Marked before anything is taken away, for the same reason the grant is: a refund
+    // delivered twice must not cost the buyer two packs, and the route asks for exactly
+    // that redelivery whenever the store was unreachable.
+    const first = await r.set(refundKey(orderId), "1", { nx: true, ex: 400 * 24 * 60 * 60 });
+    if (first !== "OK") return "already";
     const hash = await r.get<string>(orderOwnerKey(orderId));
     if (!hash) return "unknown";
     const key = entitlementKey(hash);

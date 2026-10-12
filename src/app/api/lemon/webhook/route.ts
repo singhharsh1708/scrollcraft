@@ -29,10 +29,18 @@ type Payload = {
   data?: { id?: string; attributes?: Record<string, unknown> };
 };
 
-function orderIdOf(payload: Payload): string {
-  const attributes = payload.data?.attributes ?? {};
-  const fromKey = attributes.order_id;
-  if (typeof fromKey === "number" || typeof fromKey === "string") return String(fromKey);
+/**
+ * On a licence key event the order is named by the key's own order_id. The event's
+ * data.id is the licence key's id, which would file the grant under a number no refund
+ * ever mentions, so there is no fallback here.
+ */
+function licenceOrderId(payload: Payload): string {
+  const fromKey = payload.data?.attributes?.order_id;
+  return typeof fromKey === "number" || typeof fromKey === "string" ? String(fromKey) : "";
+}
+
+/** On a refund the order is the subject of the event, so data.id is the order. */
+function refundOrderId(payload: Payload): string {
   return String(payload.data?.id ?? "");
 }
 
@@ -69,7 +77,7 @@ export async function POST(req: NextRequest) {
 
   if (event === "license_key_created") {
     const key = typeof attributes.key === "string" ? attributes.key : "";
-    const orderId = orderIdOf(payload);
+    const orderId = licenceOrderId(payload);
     if (!key || !orderId) {
       logger.error("lemon webhook: a licence key event without a key or an order", { event });
       return NextResponse.json({ error: "Unusable payload." }, { status: 422 });
@@ -87,7 +95,7 @@ export async function POST(req: NextRequest) {
   }
 
   if (event === "order_refunded") {
-    const result = await revokePack(orderIdOf(payload));
+    const result = await revokePack(refundOrderId(payload));
     if (result === "unavailable") return NextResponse.json({ error: "Could not record that yet." }, { status: 500 });
     logger.info("lemon webhook took a refunded pack back", { result });
     return NextResponse.json({ ok: true, result });

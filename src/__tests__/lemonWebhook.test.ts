@@ -152,6 +152,15 @@ describe("a purchase is worth one pack, however many times it is delivered", () 
     expect(peek(entitlement)).toBeUndefined();
   });
 
+  it("will not file a pack under the licence key's own id, which no refund ever names", async () => {
+    // data.id on a licence event is the key, not the order. Filing the grant under it
+    // leaves a later refund, which carries the order's id, with nothing to take back.
+    const payload = licenceCreated({ order_id: undefined });
+    payload.data.id = "88888";
+    expect((await deliver(payload)).status).toBe(422);
+    expect(peek(entitlement)).toBeUndefined();
+  });
+
   it("answers 500 when there is no store, so Lemon Squeezy delivers it again", async () => {
     vi.stubEnv("UPSTASH_REDIS_REST_URL", "");
     vi.stubEnv("UPSTASH_REDIS_REST_TOKEN", "");

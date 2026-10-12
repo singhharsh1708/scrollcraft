@@ -260,6 +260,20 @@ describe("a pack is granted once per order, however often the webhook arrives", 
   });
 });
 
+describe("giving an allowance back cannot hand out more than it took", () => {
+  it("keeps the month's free counter at zero when a release arrives twice", async () => {
+    const first = await credits.takeAllowance(IP, null);
+    expect(first.ok).toBe(true);
+    if (!first.ok) return;
+    await first.release();
+    await first.release();
+    expect(Number(peek(free) ?? 0)).toBe(0);
+    // And the month still only holds one free site, rather than one plus the slack.
+    expect((await credits.takeAllowance(IP, null)).ok).toBe(true);
+    expect((await credits.takeAllowance(IP, null)).ok).toBe(false);
+  });
+});
+
 describe("a refund takes back the unused part of the pack and no more", () => {
   it("removes the pack when none of it has been spent", async () => {
     await credits.grantPack(HASH, "order-9");
@@ -287,6 +301,26 @@ describe("a refund takes back the unused part of the pack and no more", () => {
       expect(balance!.total, `used ${used}`).toBeGreaterThanOrEqual(used);
       expect(balance!.remaining, `used ${used}`).toBeGreaterThanOrEqual(0);
     }
+  });
+
+  it("costs one pack however many times the same refund is delivered", async () => {
+    // Measured before the guard: two deliveries of one refund took ten sites off a buyer
+    // who had bought two packs. Lemon Squeezy redelivers whatever it did not hear a 200
+    // for, and this route asks for that redelivery whenever the store was unreachable.
+    await credits.grantPack(HASH, "order-9");
+    await credits.grantPack(HASH, "order-10");
+    expect(await credits.revokePack("order-9")).toBe("revoked");
+    expect(await credits.revokePack("order-9")).toBe("already");
+    expect(await credits.revokePack("order-9")).toBe("already");
+    expect((await credits.balanceOf(HASH))?.remaining).toBe(5);
+  });
+
+  it("still takes back a second pack that was refunded on its own order", async () => {
+    await credits.grantPack(HASH, "order-9");
+    await credits.grantPack(HASH, "order-10");
+    await credits.revokePack("order-9");
+    expect(await credits.revokePack("order-10")).toBe("revoked");
+    expect((await credits.balanceOf(HASH))?.remaining).toBe(0);
   });
 
   it("says so when the order was never recorded, rather than touching anybody's balance", async () => {
