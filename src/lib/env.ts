@@ -32,6 +32,12 @@ const envSchema = z.object({
   AUTH_GITHUB_ID: z.string().optional(),
   AUTH_GITHUB_SECRET: z.string().optional(),
 
+  // Stripe. Absent, the checkout answers 503 and no Buy button is offered. The webhook
+  // secret belongs to one endpoint in one mode, so test and live each have their own.
+  STRIPE_SECRET_KEY: z.string().regex(/^sk_(test|live)_/).optional(),
+  STRIPE_WEBHOOK_SECRET: z.string().regex(/^whsec_/).optional(),
+  STRIPE_PRICE_ID: z.string().regex(/^price_/).optional(),
+
   // Reads back the daily funnel counts at /api/count. Unset, that route answers 404:
   // without a secret there is nothing to check a reader against.
   FUNNEL_TOKEN: z.string().min(16).optional(),

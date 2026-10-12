@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { accountIdentity, authConfigured } from "@/auth";
+import { stripeConfigured } from "@/lib/stripe";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { logger } from "@/lib/logger";
 import {
@@ -48,6 +49,9 @@ export async function GET(req: NextRequest) {
     // Whether this deployment can offer sign-in at all. A fork without a GitHub app
     // should not be shown a button that answers 404.
     canSignIn: authConfigured(),
+    // Whether a pack can be bought here at all. Buying needs an account to land on, so
+    // a shop with no sign-in is not a shop.
+    canBuy: stripeConfigured() && authConfigured(),
     remaining: balance?.remaining ?? 0,
     total: balance?.total ?? 0,
   });

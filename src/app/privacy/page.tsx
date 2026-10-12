@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { pageMeta } from "@/lib/pageMeta";
+import { paymentProcessor } from "@/lib/paymentProcessor";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import SiteFooter from "@/components/SiteFooter";
@@ -12,6 +13,7 @@ export const metadata: Metadata = pageMeta({
 });
 
 export default function PrivacyPage() {
+  const stripe = paymentProcessor() === "stripe";
   return (
     <main className="min-h-screen bg-background text-foreground">
       <Navbar />
@@ -21,11 +23,14 @@ export default function PrivacyPage() {
 
         <h2>The short version</h2>
         <p>
-          Nothing you have to sign in to, and no profile or saved history. The sites you
-          build stay in your own browser until you export them. If you buy a pack of
-          generations we do keep a short record of it, because otherwise we could not give
-          you what you paid for: your email, a one-way hash of your licence key, how many
-          sites are left, and, if you sign in, your GitHub account number. That record
+          Nothing you have to sign in to in order to use the editor, the templates or the
+          exporter, and no profile or saved history. The sites you build stay in your own
+          browser until you export them. If you buy a pack of generations we do keep a
+          short record of it, because otherwise we could not give you what you paid for:{" "}
+          {stripe
+            ? "your GitHub account number and how many sites are left on it. No email, no name and no card."
+            : "your email, a one-way hash of your licence key, how many sites are left, and, if you sign in, your GitHub account number."}{" "}
+          That record
           lives in a key-value store, it is the only thing we hold about anybody, and it is
           deleted on request.
         </p>
@@ -72,17 +77,29 @@ export default function PrivacyPage() {
             is configured with a key.
           </li>
           <li>
-            <strong>A licence key, only if you buy more sites.</strong> The first site is
-            free. A pack of five is bought from Lemon Squeezy, who take the payment and
-            hold the card details, the name and the billing address; we never see them. They
-            send us the key they issued you and the email you bought with. We store a
-            one-way hash of that key, the email, and how many sites of the pack are left.
-            Pasting the key into ScrollCraft sends it once to Lemon Squeezy to be checked.
+            {stripe ? (
+              <>
+                <strong>A purchase, only if you buy more sites.</strong> The first site is
+                free. A pack of five is paid for on Stripe&apos;s own page, so the card
+                details, the name and the billing address go to them and never to us. Stripe
+                tell us that a payment was made and which account it was for. We keep how
+                many sites are left on that account, and nothing else about the purchase.
+              </>
+            ) : (
+              <>
+                <strong>A licence key, only if you buy more sites.</strong> The first site is
+                free. A pack of five is bought from Lemon Squeezy, who take the payment and
+                hold the card details, the name and the billing address; we never see them. They
+                send us the key they issued you and the email you bought with. We store a
+                one-way hash of that key, the email, and how many sites of the pack are left.
+                Pasting the key into ScrollCraft sends it once to Lemon Squeezy to be checked.
+              </>
+            )}
           </li>
           <li>
             <strong>Ordinary request logs.</strong> Our host records the usual server access
             logs, including IP addresses, which we also use to rate-limit the export,
-            rewrite, counting, site-writing and licence endpoints so one visitor cannot exhaust them for
+            rewrite, counting, site-writing, licence and checkout endpoints so one visitor cannot exhaust them for
             everyone. Writing a site costs us real money per request, so that one is limited
             tightly: three a minute and twenty a day from one address.
           </li>
@@ -99,7 +116,11 @@ export default function PrivacyPage() {
           <li><strong>Upstash</strong> — rate limiting and the daily counts above, when enabled. It stores a counter keyed by IP for limits, and counters keyed by date for the four steps.</li>
           <li><strong>Anthropic</strong> — writes a site from your description, when enabled. It receives that description and any photographs you attach, and only when you press Build my site.</li>
           <li><strong>GitHub</strong> &mdash; sign-in, if you use it and this deployment offers it. GitHub tells us your account number, your username and your avatar; we keep only the number, and we keep it so your credits can find you in another browser. We never ask them for your repositories or anything else.</li>
-          <li><strong>Lemon Squeezy</strong> &mdash; the shop, when enabled. It is the seller of record for a pack of sites: it receives your payment details directly and tells us only which licence key was issued, for which order, to which email.</li>
+          {stripe ? (
+            <li><strong>Stripe</strong> &mdash; payments, when the shop is enabled. You pay on their page, so they receive your card and billing details directly and we do not. They tell us only that a payment succeeded and which account to credit.</li>
+          ) : (
+  <li><strong>Lemon Squeezy</strong> &mdash; the shop, when enabled. It is the seller of record for a pack of sites: it receives your payment details directly and tells us only which licence key was issued, for which order, to which email.</li>
+          )}
           <li><strong>Sarvam AI</strong> — the rewrite assistant, when enabled. It receives the instruction you type and the copy of the site you are editing, and only when you press Rewrite.</li>
           <li><strong>Google Fonts</strong> — templates load webfonts, which discloses your IP to Google. Exported sites do the same unless you self-host the fonts.</li>
         </ul>

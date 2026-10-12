@@ -86,7 +86,7 @@ describe("the shop runs no payment code in the browser", () => {
     // card field of ours, and nothing for the content security policy to let through.
     const inBrowser = sources.filter((f) => {
       const t = readFileSync(f, "utf8");
-      return /^["']use client["']/m.test(t) && /lemonsqueezy|lemon\.js/i.test(t);
+      return /^["']use client["']/m.test(t) && /lemonsqueezy|lemon\.js|js\.stripe\.com|loadStripe|@stripe\//i.test(t);
     });
     expect(inBrowser).toEqual([]);
     const removed = sources.filter((f) => /razorpay/i.test(readFileSync(f, "utf8")));
