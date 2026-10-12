@@ -47,6 +47,23 @@ describe("every public route claims its own address", () => {
   });
 });
 
+describe("a bad link lands somewhere useful", () => {
+  // Next's own 404 is a black screen with no navigation and nothing to click, which is
+  // what every stale link and old search result used to land on.
+  const notFound = readFileSync("src/app/not-found.tsx", "utf8");
+
+  it("offers a way on rather than a dead end", () => {
+    for (const href of ["/describe", "/templates", "/examples"]) {
+      expect(notFound, `the 404 does not offer ${href}`).toContain(`"${href}"`);
+    }
+    expect(notFound, "the 404 drops the site's own navigation").toContain("<Navbar />");
+  });
+
+  it("keeps itself out of the index", () => {
+    expect(notFound).toMatch(/robots:\s*\{\s*index: false/);
+  });
+});
+
 describe("a shared link describes the page it points at", () => {
   it("carries the root's share fields, card image, the page's own words and its address", async () => {
     const meta = pageMeta({ title: "Templates", description: "Twenty-two sites.", path: "/templates" });
