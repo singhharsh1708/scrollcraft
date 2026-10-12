@@ -136,11 +136,17 @@ export default function AboutPage() {
           <span className="block text-primary-ink">with us</span>
         </h2>
         <p className="mx-auto mb-10 mt-6 max-w-md text-lg text-muted-foreground">
-          No account, no install. Pick a template and export a finished site.
+          Nothing to install. Describe the business and have the first draft written, or
+          pick a template and export a finished site.
         </p>
-        <Link href="/create" className="lc-btn lc-btn-solid">
-          Start building <ArrowRight className="h-4 w-4" aria-hidden="true" />
-        </Link>
+        <div className="flex flex-wrap justify-center gap-3">
+          <Link href="/describe" className="lc-btn lc-btn-solid">
+            Write my site <ArrowRight className="h-4 w-4" aria-hidden="true" />
+          </Link>
+          <Link href="/templates" className="lc-btn lc-btn-ghost">
+            Browse templates
+          </Link>
+        </div>
       </section>
 
       <SiteFooter />
