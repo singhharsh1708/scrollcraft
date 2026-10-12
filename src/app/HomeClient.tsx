@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
-import { ArrowUpRight, Film, LayoutTemplate, Terminal } from "lucide-react";
+import { ArrowUpRight, Film, LayoutTemplate, PenLine, Terminal } from "lucide-react";
 import HeroSequence, { type HeroTemplate } from "@/components/HeroSequence";
 import Navbar from "@/components/Navbar";
 import StylePreview from "@/components/StylePreview";
@@ -57,7 +57,7 @@ const DEPLOY_TARGETS = ["Netlify", "Vercel", "GitHub Pages", "Cloudflare Pages",
  */
 export const OWNERSHIP_CHECKED = "19 September 2026";
 export const OWNERSHIP: { tool: string; answer: string; cost: string; source?: string }[] = [
-  { tool: "ScrollCraft", answer: "Yes, as a plain HTML ZIP", cost: "Free, no account" },
+  { tool: "ScrollCraft", answer: "Yes, as a plain HTML ZIP", cost: "Free to edit and export; $4 a written site after the first" },
   { tool: "Webflow", answer: "HTML and CSS; CMS content stays behind", cost: "Core Workspace plan, $19/mo billed yearly", source: "https://webflow.com/pricing" },
   { tool: "Carrd", answer: "Yes", cost: "Pro Plus plan, $49/yr", source: "https://carrd.com/pro" },
   { tool: "Squarespace", answer: "Content only, as XML for WordPress", cost: "Not offered for the design", source: "https://support.squarespace.com/hc/en-us/articles/206566687-Exporting-your-site" },
@@ -96,6 +96,8 @@ const BARS = Array.from({ length: 48 }, (_, i) =>
 );
 
 const FAQ = [
+  { q: "What does it cost?", a: "The editor, the templates and the export are free, with no account and no limit. The one thing that costs money is having a site written from your description, because a model writes it: the first is free, then five more are $20, bought once. Nothing renews." },
+  { q: "Does it write the site for me?", a: "If you want it to. Describe the business in a few sentences, attach a photograph or two, and it writes the copy, picks the palette and the typefaces and lays out the sections. Everything it writes opens in the editor, and every word is yours to change." },
   { q: "Do I need to know how to code?", a: "No. Pick a template, change the copy and colours, and export. What you download is plain HTML, CSS and JavaScript that any host will serve." },
   { q: "How does the scroll animation work?", a: "ScrollCraft draws a sequence of frames on a canvas, and the page shows the frame that matches how far the reader has scrolled. There is no WebGL and no animation library." },
   { q: "Does it take over my visitors' scrolling?", a: "No. The page scrolls exactly the way the visitor's wheel, trackpad or finger normally scrolls it, and the background follows along. Nothing slows, smooths or snaps the scroll, and visitors who ask their system for less motion get a still page." },
@@ -407,6 +409,14 @@ export default function HomeClient({
 
   const ways = [
     {
+      icon: PenLine,
+      name: "describe",
+      title: "Write a paragraph, get a site",
+      sub: "For anybody who would rather describe the business than design it",
+      link: { label: "Describe your business", href: "/describe" },
+      panel: <StylePreview style="geometric" colors={WAVE_COLORS} paused={reduced} maxProgress={0.45} className="absolute inset-0 h-full w-full" />,
+    },
+    {
       icon: LayoutTemplate,
       name: "templates",
       title: "Edit a finished site in the browser",
@@ -439,22 +449,22 @@ export default function HomeClient({
       {/* Hero */}
       <HeroSequence template={heroTemplate} templateCount={stats.templates} reducedMotion={reduced}>
         <h1 className="lc-display text-[2.6rem] sm:text-6xl lg:text-[3.9rem]">
-          <span className="block text-foreground">Cinematic scroll websites</span>
-          <span className="block text-primary-ink">exported as plain HTML</span>
+          <span className="block text-foreground">Describe your business.</span>
+          <span className="block text-primary-ink">Get a cinematic scroll site.</span>
         </h1>
         <p className="mt-7 max-w-xl text-lg leading-relaxed text-muted-foreground sm:text-xl">
-          Pick a finished template, change the words, download a ZIP. The background moves
-          as your reader scrolls, and nothing needs installing.
+          Write a few sentences about what you do, add a photograph or two, and get a finished
+          site to edit and download as plain HTML. Or start from a template and skip the writing.
         </p>
         <div className="mt-10 grid w-full max-w-sm grid-cols-2 gap-3 sm:flex sm:w-auto sm:max-w-none">
-          <Link href="/create" className="lc-btn lc-btn-solid">
-            Start building
+          <Link href="/describe" className="lc-btn lc-btn-solid">
+            Write my site
           </Link>
-          <Link href="/examples" className="lc-btn lc-btn-ghost">
-            See examples
+          <Link href="/templates" className="lc-btn lc-btn-ghost">
+            Browse templates
           </Link>
         </div>
-        <p className="lc-mono mt-8 text-sm text-muted-foreground">No account · Runs in your browser · MIT licensed</p>
+        <p className="lc-mono mt-8 text-sm text-muted-foreground">First site free · Editing and export always free · MIT licensed</p>
         <p className="lc-mono mt-12 hidden text-sm text-primary-ink lg:block">Scroll, and the screen plays the site</p>
       </HeroSequence>
 
@@ -487,13 +497,14 @@ export default function HomeClient({
       <section className="band-light">
         <div className="mx-auto max-w-[1360px] px-6 py-28 sm:py-32">
           <div className="grid gap-8 lg:grid-cols-2 lg:items-end">
-            <h2 className="lc-display text-4xl sm:text-5xl lg:text-[3.6rem]">Three ways to build a scroll site</h2>
+            <h2 className="lc-display text-4xl sm:text-5xl lg:text-[3.6rem]">Four ways to build a scroll site</h2>
             <p className="max-w-lg text-lg leading-relaxed text-muted-foreground lg:justify-self-end">
-              Edit a finished template in the browser, scroll through footage you already shot,
-              or build the whole thing from your terminal. All three produce the same bundle.
+              Describe the business and have the first draft written, edit a finished template,
+              scroll through footage you already shot, or build it from your terminal. All four
+              produce the same bundle.
             </p>
           </div>
-          <div className="mt-16 grid gap-12 md:grid-cols-3 md:gap-6">
+          <div className="mt-16 grid gap-12 md:grid-cols-2 md:gap-8 xl:grid-cols-4 xl:gap-6">
             {ways.map((w) => (
               <article key={w.name} className="flex flex-col">
                 <div className="relative aspect-[16/10] overflow-hidden rounded-lg bg-[#0a1122]">{w.panel}</div>
@@ -563,14 +574,14 @@ export default function HomeClient({
       <section className="band-light border-t border-border">
         <div className="mx-auto max-w-[1360px] px-6 py-28 sm:py-32">
           <h2 className="lc-display text-4xl sm:text-5xl lg:pl-[14%] lg:text-[3.6rem]">
-            <span className="block">Free, open source,</span>
+            <span className="block">Open source,</span>
             <span className="block">and yours to keep</span>
           </h2>
           <dl className="mt-16 grid gap-12 sm:grid-cols-3 lg:pl-[14%]">
             {[
               [String(stats.templates), "Finished templates"],
               [String(stats.categories), "Categories covered"],
-              ["0", "Accounts, databases or paywalls"],
+              ["1", "Sites written free, before anything is paid"],
             ].map(([n, label]) => (
               <div key={label} className="flex flex-col-reverse">
                 <dt className="lc-mono mt-3 text-sm text-muted-foreground">{label}</dt>
@@ -699,16 +710,16 @@ export default function HomeClient({
               <span className="block">scroll site</span>
             </h2>
             <div className="mt-10 flex flex-wrap gap-3">
-              <Link href="/create" className="lc-btn lc-btn-solid">
-                Start building
+              <Link href="/describe" className="lc-btn lc-btn-solid">
+                Write my site
               </Link>
               <Link href="/templates" className="lc-btn lc-btn-ghost">
                 Browse templates
               </Link>
             </div>
             <p className="mt-10 max-w-md text-lg leading-relaxed text-foreground/90">
-              Pick a template, change the words, download a ZIP. No account, nothing to
-              install, nothing to pay.
+              Describe the business, or pick a template, then change the words and download a
+              ZIP. The first written site is free and the editor never costs anything.
             </p>
           </div>
         </div>
