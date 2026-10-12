@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowUp, ImagePlus, Loader2 } from "lucide-react";
@@ -31,6 +31,22 @@ const EXAMPLES: [string, string][] = [
 
 export default function PromptHero({ reducedMotion }: { reducedMotion: boolean }) {
   const router = useRouter();
+  /**
+   * The canvas starts once the page has finished hydrating.
+   *
+   * Measured before this: the largest element on the page is the sentence under the
+   * headline, and 87% of its 3.6s was render delay, with 719ms of script evaluation
+   * competing for the same thread. A gradient holds the ground until then, so there is
+   * nothing to see arrive and nothing to shift.
+   */
+  const [painting, setPainting] = useState(false);
+  useEffect(() => {
+    const idle = window.requestIdleCallback ?? ((fn: () => void) => window.setTimeout(fn, 200));
+    const handle = idle(() => setPainting(true));
+    return () => {
+      if (window.cancelIdleCallback && typeof handle === "number") window.cancelIdleCallback(handle);
+    };
+  }, []);
   const [value, setValue] = useState("");
   const [busy, setBusy] = useState(false);
   const boxRef = useRef<HTMLTextAreaElement>(null);
@@ -49,13 +65,15 @@ export default function PromptHero({ reducedMotion }: { reducedMotion: boolean }
 
   return (
     <section className="relative isolate flex min-h-[calc(100svh-4rem)] items-center overflow-hidden border-b border-border px-6 py-20">
-      <StylePreview
-        style="wave"
-        colors={HERO_COLORS}
-        paused={reducedMotion}
-        maxProgress={0.22}
-        className="absolute inset-0 -z-10 h-full w-full"
-      />
+      {painting && (
+        <StylePreview
+          style="wave"
+          colors={HERO_COLORS}
+          paused={reducedMotion}
+          maxProgress={0.22}
+          className="absolute inset-0 -z-10 h-full w-full"
+        />
+      )}
       <div aria-hidden="true" className="absolute inset-0 -z-10 bg-gradient-to-b from-background/70 via-background/40 to-background" />
       {/* The one place the accent is allowed to behave like a light source, directly
           under the control the whole page exists to get somebody to use. */}
