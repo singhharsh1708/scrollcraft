@@ -464,7 +464,19 @@ export default function HomeClient({
             Browse templates
           </Link>
         </div>
-        <p className="lc-mono mt-8 text-sm text-muted-foreground">First site free · Editing and export always free · MIT licensed</p>
+        {/* The offer, in the hero, because the first question anybody has about a tool
+            that writes for them is what it costs. */}
+        <div className="relative z-10 mt-8 flex w-full max-w-xl flex-col gap-3 rounded-lg border border-primary-ink/30 bg-card p-4 shadow-[0_20px_60px_-30px_rgba(0,0,0,0.9)] sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="lc-mono text-sm text-primary-ink">Your first site, free</p>
+            <p className="lc-mono mt-1 text-xs text-muted-foreground">
+              Then five for $20, bought once · nothing renews · editing and export always free
+            </p>
+          </div>
+          <Link href="/pricing" className="lc-btn lc-btn-ghost lc-btn-sm shrink-0">
+            See pricing
+          </Link>
+        </div>
         <p className="lc-mono mt-12 hidden text-sm text-primary-ink lg:block">Scroll, and the screen plays the site</p>
       </HeroSequence>
 
