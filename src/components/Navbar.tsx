@@ -134,7 +134,9 @@ export default function Navbar({
           // dark card panels inside the band and took the links to 3.83:1.
           className={`w-full backdrop-blur-[20px] backdrop-saturate-[1.8] transition-colors duration-300 ${
             variant === "floating"
-              ? "mx-auto max-w-[1360px] rounded-full border shadow-[0_30px_80px_-40px_rgba(0,0,0,0.95)]"
+              // Rounded like a pill only while it is one line tall. With the menu open it
+              // is a panel, and a full radius on a panel draws an ellipse around the links.
+              ? `mx-auto max-w-[1360px] border shadow-[var(--lift-2)] ${open ? "rounded-2xl" : "rounded-full"}`
               : "border-b"
           } ${onLight ? "nav-on-light border-black/10 bg-band/95" : "border-white/[0.08] bg-background/70"}`}
         >
