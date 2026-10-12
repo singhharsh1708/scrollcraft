@@ -2,7 +2,7 @@ import { ImageResponse } from "next/og";
 import { siteUrl } from "@/lib/env";
 
 export const runtime = "edge";
-export const alt = "ScrollCraft — Cinematic scroll websites, exported as plain HTML";
+export const alt = "ScrollCraft — Describe your business, get a cinematic scroll site";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -49,10 +49,10 @@ export default function OGImage() {
 
         <div style={{ display: "flex", flexDirection: "column" }}>
           <div style={{ display: "flex", fontSize: 84, fontWeight: 300, color: "#e5f4ff", letterSpacing: "-3px", lineHeight: 1.05 }}>
-            Cinematic scroll websites
+            Describe your business.
           </div>
           <div style={{ display: "flex", fontSize: 84, fontWeight: 300, color: "#7fc8ff", letterSpacing: "-3px", lineHeight: 1.05 }}>
-            exported as plain HTML
+            Get a cinematic scroll site.
           </div>
         </div>
 
@@ -67,7 +67,7 @@ export default function OGImage() {
             color: "#93a9c0",
           }}
         >
-          <div style={{ display: "flex" }}>Templates · Editor · One-ZIP export · Open source</div>
+          <div style={{ display: "flex" }}>First site free · Editor · One-ZIP export · Open source</div>
           <div style={{ display: "flex", color: "#7fc8ff" }}>{siteUrl.replace(/^https?:\/\//, "")}</div>
         </div>
       </div>
