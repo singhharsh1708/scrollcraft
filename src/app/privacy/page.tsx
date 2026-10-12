@@ -11,13 +11,14 @@ export default function PrivacyPage() {
       <Navbar />
       <article className="max-w-3xl mx-auto px-6 py-20 prose prose-invert prose-sm prose-headings:font-light prose-headings:tracking-[-0.03em] prose-h1:text-5xl prose-a:text-primary-ink">
         <h1>Privacy Policy</h1>
-        <p className="text-muted-foreground">Last updated: September 2026</p>
+        <p className="text-muted-foreground">Last updated: October 2026</p>
 
         <h2>The short version</h2>
         <p>
-          ScrollCraft has no accounts and no database. There is nothing to sign in to, so
-          there is no profile, no saved history and no record of you on our side. The sites
-          you build stay in your own browser until you export them.
+          ScrollCraft has no database and nothing you have to sign in to. Signing in with
+          GitHub is optional and does one thing: it carries credits you have paid for from
+          one browser to another. There is no profile and no saved history either way, and
+          the sites you build stay in your own browser until you export them.
         </p>
 
         <h2>What we collect</h2>
@@ -88,6 +89,7 @@ export default function PrivacyPage() {
           <li><strong>Sentry</strong> — error reports, when enabled. These carry a stack trace, not your content.</li>
           <li><strong>Upstash</strong> — rate limiting and the daily counts above, when enabled. It stores a counter keyed by IP for limits, and counters keyed by date for the four steps.</li>
           <li><strong>Anthropic</strong> — writes a site from your description, when enabled. It receives that description and any photographs you attach, and only when you press Build my site.</li>
+          <li><strong>GitHub</strong> &mdash; sign-in, if you use it and this deployment offers it. GitHub tells us your account number, your username and your avatar; we keep only the number, and we keep it so your credits can find you in another browser. We never ask them for your repositories or anything else.</li>
           <li><strong>Lemon Squeezy</strong> &mdash; the shop, when enabled. It is the seller of record for a pack of sites: it receives your payment details directly and tells us only which licence key was issued, for which order, to which email.</li>
           <li><strong>Sarvam AI</strong> — the rewrite assistant, when enabled. It receives the instruction you type and the copy of the site you are editing, and only when you press Rewrite.</li>
           <li><strong>Google Fonts</strong> — templates load webfonts, which discloses your IP to Google. Exported sites do the same unless you self-host the fonts.</li>
@@ -98,13 +100,17 @@ export default function PrivacyPage() {
           Two, both around the site writer and neither readable by scripts: a random name
           for this browser, so your free site is yours rather than one shared with everybody
           on the same network, and, if you buy a pack, the hash of your licence key so this
-          browser can spend what you paid for. There is no session to keep, and no
-          advertising or analytics cookies are used. See our <Link href="/cookies" className="underline">Cookie Policy</Link>.
+          browser can spend what you paid for. A third is set only while you are signed in
+          with GitHub, and holds the signed session. No advertising or analytics cookies
+          are used. See our <Link href="/cookies" className="underline">Cookie Policy</Link>.
         </p>
 
         <h2>Your rights</h2>
         <p>
-          There is no account to delete and no data of yours for us to hold. To remove what
+          If you never signed in, there is no account to delete and nothing of yours for us
+          to hold. If you did, what we hold is your GitHub account number and how many of
+          your paid sites are left; email <a href="mailto:hs1663531@gmail.com" className="underline">hs1663531@gmail.com</a> and
+          it is deleted, along with any unused credits. To remove what
           ScrollCraft has stored on your device, clear this site&apos;s data in your browser
           — that erases every unexported site, so export anything you want to keep first.
         </p>

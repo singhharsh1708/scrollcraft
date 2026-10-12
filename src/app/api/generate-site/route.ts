@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { Redis } from "@upstash/redis";
+import { accountIdentity } from "@/auth";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { redisCredentials } from "@/lib/redisCredentials";
 import { logger } from "@/lib/logger";
@@ -117,15 +118,17 @@ export async function POST(req: NextRequest) {
 
   // One site's worth of allowance, taken before the call and given back if the call
   // does not produce a site. Nobody should pay for a 502.
-  const hash = keyHashFrom(req);
-  // A browser that has not been here before is given a name, so its free site is its own
-  // rather than one shared with everybody behind the same address.
+  // A signed-in visitor spends their account's credits, which is what makes them reach
+  // the same person in a second browser. Everybody else spends the key cookie's.
+  const identity = (await accountIdentity()) ?? keyHashFrom(req);
+  // The free site stays with the browser either way: one person signed in on three
+  // machines is still one free site each, not one per account per browser.
   const browser = browserTokenFrom(req) ?? crypto.randomUUID();
   const remember = (response: NextResponse) => {
     response.cookies.set(BROWSER_COOKIE, browser, cookieOptions());
     return response;
   };
-  const allowance = await takeAllowance(ip, hash, browser);
+  const allowance = await takeAllowance(ip, identity, browser);
   if (!allowance.ok) {
     if (allowance.reason === "unavailable") {
       return NextResponse.json({ error: "Site generation is unavailable for a moment. Try again shortly." }, { status: 503 });
@@ -136,10 +139,13 @@ export async function POST(req: NextRequest) {
         { status: 402 }
       ));
     }
+    // Read back rather than taken from the refusal: somebody who signed in and has never
+    // bought anything has an identity but no pack, and must not be told credits are spent.
+    const bought = identity ? (await balanceOf(identity))?.total ?? 0 : 0;
     return remember(NextResponse.json(
       {
         error:
-          allowance.reason === "no-credits"
+          bought > 0
             ? `Those credits are spent. Another ${PACK_SITES} sites cost $${PACK_PRICE_USD}.`
             : `The free site has been used from this connection. ${PACK_SITES} more cost $${PACK_PRICE_USD}.`,
         needsCredits: true,
@@ -207,7 +213,7 @@ export async function POST(req: NextRequest) {
       paid: allowance.kind === "paid",
     });
 
-    const left = hash ? (await balanceOf(hash))?.remaining ?? 0 : 0;
+    const left = identity ? (await balanceOf(identity))?.remaining ?? 0 : 0;
     return remember(NextResponse.json({
       remaining: left,
       usedFreeSite: allowance.kind === "free",
