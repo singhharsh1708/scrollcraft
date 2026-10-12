@@ -101,7 +101,7 @@ export default function TemplatesClient({
         </div>
 
         <fieldset className="flex flex-wrap gap-2 justify-center">
-          <legend className="lc-mono mb-2 w-full text-center text-xs uppercase tracking-[0.18em] text-muted-foreground">What it is for</legend>
+          <legend className="mb-2 w-full text-center text-sm text-muted-foreground">What it is for</legend>
           {categories.map((c) => (
             <button
               key={c}
@@ -121,7 +121,7 @@ export default function TemplatesClient({
         </fieldset>
 
         <fieldset className="flex flex-wrap gap-2 justify-center">
-          <legend className="lc-mono mb-2 w-full text-center text-xs uppercase tracking-[0.18em] text-muted-foreground">How the background moves</legend>
+          <legend className="mb-2 w-full text-center text-sm text-muted-foreground">How the background moves</legend>
           {[ALL, ...Object.keys(BACKGROUND_LABELS)].map((b) => (
             <button
               key={b}

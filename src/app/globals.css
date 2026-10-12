@@ -273,6 +273,11 @@
     --solid-hover: oklch(0.24 0.045 262);
     --line-strong: oklch(0.128 0.023 258.4 / 26%);
     --wash: oklch(0.128 0.023 258.4 / 5%);
+    /* The accent's glow belongs under a blue button on a dark ground. Here the button
+       is the dark ink on a pale band, so it takes a plain shadow instead. */
+    --glow: 0 10px 24px -14px oklch(0.128 0.023 258.4 / 55%);
+    --lift-1: 0 1px 2px oklch(0.128 0.023 258.4 / 8%), 0 12px 30px -24px oklch(0.128 0.023 258.4 / 45%);
+    --lift-2: 0 2px 4px oklch(0.128 0.023 258.4 / 8%), 0 30px 60px -40px oklch(0.128 0.023 258.4 / 55%);
   }
   .band-light {
     background: var(--band);
