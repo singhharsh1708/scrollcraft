@@ -21,6 +21,11 @@ async function storeCheck(): Promise<{ state: string; ms?: number }> {
   if (!credentials) return { state: "absent" };
   const started = Date.now();
   try {
+    const raw = await fetch(`${credentials.url}/ping`, {
+      headers: { Authorization: `Bearer ${credentials.token}` },
+      signal: AbortSignal.timeout(STORE_TIMEOUT_MS),
+    });
+    logger.info("health: raw store reply", { status: raw.status, body: (await raw.text()).slice(0, 120) });
     const redis = new Redis({ ...credentials, signal: AbortSignal.timeout(STORE_TIMEOUT_MS) });
     await redis.ping();
     return { state: "ok", ms: Date.now() - started };
