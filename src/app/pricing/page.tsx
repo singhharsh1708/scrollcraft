@@ -48,8 +48,8 @@ export default function PricingPage() {
         </p>
 
         <div className="mt-14 grid gap-6 md:grid-cols-2">
-          <div className="rounded-xl border border-border bg-card p-8">
-            <p className="lc-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">The tool</p>
+          <div className="rounded-2xl border border-border bg-card p-8 shadow-[var(--lift-1)]">
+            <p className="text-sm text-muted-foreground">The tool itself</p>
             <p className="mt-4 lc-display text-4xl">Free</p>
             <p className="mt-2 text-sm text-muted-foreground">No account needed, no card, no trial.</p>
             <ul className="mt-7 space-y-3 text-sm">
@@ -65,12 +65,16 @@ export default function PricingPage() {
             </Link>
           </div>
 
-          <div className="rounded-xl border border-primary-ink/40 bg-card p-8">
-            <p className="lc-mono text-xs uppercase tracking-[0.18em] text-primary-ink">Five sites</p>
+          <div className="relative rounded-2xl border border-primary-ink/40 bg-card p-8 shadow-[var(--lift-2)] lg:-mt-3 lg:mb-3">
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-x-10 -top-px h-px bg-gradient-to-r from-transparent via-primary-ink to-transparent"
+            />
+            <p className="text-sm text-primary-ink">When the free one runs out</p>
             <p className="mt-4 lc-display text-4xl">
               $20<span className="ml-2 align-middle text-base text-muted-foreground">one payment</span>
             </p>
-            <p className="mt-2 text-sm text-muted-foreground">$4 a site. Buy again whenever you run out.</p>
+            <p className="mt-2 text-sm text-muted-foreground">Five sites, $4 each. Buy again whenever you run out.</p>
             <ul className="mt-7 space-y-3 text-sm">
               {PACK.map((line) => (
                 <li key={line} className="flex gap-3">
