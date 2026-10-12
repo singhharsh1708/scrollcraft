@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { storeDocument } from "@/lib/frameStorage";
 import { MAX_DESCRIPTION, MAX_IMAGES } from "@/lib/briefLimits";
+import { HANDOFF_KEY } from "@/components/PromptHero";
 import type { Section } from "@/lib/siteSchema";
 
 /**
@@ -56,6 +57,21 @@ export default function DescribeClient() {
   const [needsCredits, setNeedsCredits] = useState(false);
   const [allowance, setAllowance] = useState<{ hasKey: boolean; remaining: number } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // Whatever was typed into the box on the landing page, so nobody writes it twice.
+  useEffect(() => {
+    try {
+      const carried = sessionStorage.getItem(HANDOFF_KEY);
+      if (carried) {
+        sessionStorage.removeItem(HANDOFF_KEY);
+        // Not set straight from the effect body: this is a read from an external store,
+        // and the compiler's lint wants that arriving through a callback.
+        queueMicrotask(() => setDescription(carried.slice(0, MAX_DESCRIPTION)));
+      }
+    } catch {
+      // Storage refused: the box simply starts empty.
+    }
+  }, []);
 
   useEffect(() => {
     let live = true;

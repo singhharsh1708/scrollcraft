@@ -60,7 +60,18 @@ function useViewer(): Viewer | "signed-out" | null {
   return viewer;
 }
 
-export default function Navbar({ position = "sticky" }: { position?: "fixed" | "sticky" | "relative" }) {
+/**
+ * `floating` is the landing page's nav: the same links in a rounded bar that sits over
+ * the hero rather than cutting a line across it. Everything else about it is unchanged,
+ * so the two variants cannot drift apart.
+ */
+export default function Navbar({
+  position = "sticky",
+  variant = "band",
+}: {
+  position?: "fixed" | "sticky" | "relative";
+  variant?: "band" | "floating";
+}) {
   const pathname = usePathname();
   const viewer = useViewer();
   const [open, setOpen] = useState(false);
@@ -113,7 +124,7 @@ export default function Navbar({ position = "sticky" }: { position?: "fixed" | "
         </div>
       )}
 
-      <div className={`${position === "relative" ? "relative" : "sticky top-0"} z-50`}>
+      <div className={`${position === "relative" ? "relative" : "sticky top-0"} z-50 ${variant === "floating" ? "px-4 pt-4" : ""}`}>
         <nav
           ref={navRef}
           aria-label="Main"
@@ -121,11 +132,13 @@ export default function Navbar({ position = "sticky" }: { position?: "fixed" | "
           // Apple's recipe, read off apple.com: saturate(1.8) blur(20px) over a translucent
           // ground. The pale band keeps a near-opaque ground: at 90% the blur pulled in the
           // dark card panels inside the band and took the links to 3.83:1.
-          className={`w-full border-b backdrop-blur-[20px] backdrop-saturate-[1.8] transition-colors duration-300 ${
-            onLight ? "nav-on-light border-black/10 bg-band/95" : "border-white/[0.08] bg-background/70"
-          }`}
+          className={`w-full backdrop-blur-[20px] backdrop-saturate-[1.8] transition-colors duration-300 ${
+            variant === "floating"
+              ? "mx-auto max-w-[1360px] rounded-full border shadow-[0_30px_80px_-40px_rgba(0,0,0,0.95)]"
+              : "border-b"
+          } ${onLight ? "nav-on-light border-black/10 bg-band/95" : "border-white/[0.08] bg-background/70"}`}
         >
-          <div className="mx-auto flex h-[var(--nav-h)] max-w-[1360px] items-center justify-between gap-4 pl-6 pr-3 sm:px-6">
+          <div className={`mx-auto flex h-[var(--nav-h)] max-w-[1360px] items-center justify-between gap-4 pl-6 pr-3 ${variant === "floating" ? "sm:pl-7 sm:pr-3" : "sm:px-6"}`}>
             <Link href="/" aria-label="ScrollCraft home" className="flex shrink-0 items-center gap-2 text-foreground">
               <BrandMark className="h-5 w-5 text-primary-ink" />
               <span className="text-[1.1rem] font-medium tracking-[-0.02em]">ScrollCraft</span>
