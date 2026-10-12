@@ -23,6 +23,14 @@ const LONG_EDGE = 1024;
 const EXAMPLES = [
   "A two-chair barbershop on Mill Road, open since 2011. Walk-ins before noon, appointments after. Fades, beard trims, and we do not do colour.",
   "I repair and restore vintage film cameras, mostly Nikon and Pentax, from a workshop in Leeds. Six to eight week turnaround, and I send photographs of the work as I go.",
+  "A rooftop kite shop in Ahmedabad, open only in the three weeks before Uttarayan. Paper kites and manja by the dozen, cash at the stairs.",
+];
+
+/** What the description turns into, in the order it happens. */
+const WHAT_HAPPENS = [
+  ["It reads what you wrote", "The street, the hours, the materials and the prices become the copy. Nothing is invented: no awards, no clients, no review scores."],
+  ["It picks the look", "A palette from your trade, a typeface pairing to match, and a moving background chosen for the subject rather than for every subject."],
+  ["You get the editor", "Five to nine sections, open in the editor, every word yours to change. Export it as plain HTML whenever you like."],
 ];
 
 type Picked = { name: string; media_type: string; data: string; preview: string };
@@ -132,6 +140,16 @@ export default function DescribeClient() {
           Write it the way you would tell someone what you do. Street names, hours, materials and
           prices make a better site than adjectives do. Everything it writes is yours to change.
         </p>
+
+        <ol className="mt-10 grid gap-5 border-y border-border py-7 sm:grid-cols-3">
+          {WHAT_HAPPENS.map(([title, detail], i) => (
+            <li key={title}>
+              <p className="lc-mono text-xs text-primary-ink">0{i + 1}</p>
+              <p className="mt-2 text-sm text-foreground">{title}</p>
+              <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{detail}</p>
+            </li>
+          ))}
+        </ol>
 
         <label htmlFor="description" className="lc-mono mt-10 block text-xs uppercase tracking-[0.18em] text-muted-foreground">
           What is the business?
