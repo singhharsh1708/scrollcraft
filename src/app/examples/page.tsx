@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { pageMeta } from "@/lib/pageMeta";
 import Link from "next/link";
+import { TEMPLATES } from "@/lib/templates";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
@@ -171,7 +172,7 @@ export default function ExamplesPage() {
             <span className="block text-primary-ink">template instead</span>
           </h2>
           <p className="mx-auto mb-8 max-w-md text-muted-foreground">
-            These three were written from scratch. The library has 21 sites you can edit in
+            These three were written from scratch. The library has {TEMPLATES.length} sites you can edit in
             the browser and export the same way.
           </p>
           <div className="flex flex-wrap gap-3 justify-center">

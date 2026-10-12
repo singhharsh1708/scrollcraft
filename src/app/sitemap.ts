@@ -2,28 +2,36 @@ import { MetadataRoute } from "next";
 import { siteUrl } from "@/lib/env";
 import { TEMPLATES } from "@/lib/templates";
 
+/**
+ * Every page worth indexing, and no lastModified on any of them.
+ *
+ * It used to carry one: the build timestamp, on all of them, which says every page
+ * changed every time anything was deployed. A crawler that cannot trust the field
+ * ignores it, so stating nothing is more honest than stating that.
+ *
+ * /create and /editor are intentionally absent: they are the tool itself and are
+ * disallowed in robots.ts. Listing /create here as well produced "Indexed, though
+ * blocked by robots.txt" in Search Console.
+ */
 export default function sitemap(): MetadataRoute.Sitemap {
-  const now = new Date();
-
-  // /create and /editor are intentionally absent: they are the tool itself and
-  // are disallowed in robots.ts. Listing /create here as well produced "Indexed, though
-  // blocked by robots.txt" in Search Console.
   return [
-    { url: siteUrl,                lastModified: now, changeFrequency: "weekly", priority: 1 },
-    { url: `${siteUrl}/templates`, lastModified: now, changeFrequency: "weekly", priority: 0.9 },
+    { url: siteUrl,                 changeFrequency: "weekly",  priority: 1 },
+    { url: `${siteUrl}/describe`,   changeFrequency: "weekly",  priority: 0.9 },
+    { url: `${siteUrl}/templates`,  changeFrequency: "weekly",  priority: 0.9 },
     ...TEMPLATES.map((t) => ({
       url: `${siteUrl}/templates/${t.slug}`,
-      lastModified: now,
       changeFrequency: "monthly" as const,
       priority: 0.7,
     })),
-    { url: `${siteUrl}/describe`, lastModified: now, changeFrequency: "weekly", priority: 0.9 },
-    { url: `${siteUrl}/pricing`, lastModified: now, changeFrequency: "monthly", priority: 0.8 },
-    { url: `${siteUrl}/ui`,      lastModified: now, changeFrequency: "weekly",  priority: 0.8 },
-    { url: `${siteUrl}/presets`, lastModified: now, changeFrequency: "weekly",  priority: 0.6 },
-    { url: `${siteUrl}/about`,   lastModified: now, changeFrequency: "monthly", priority: 0.5 },
-    { url: `${siteUrl}/contact`, lastModified: now, changeFrequency: "monthly", priority: 0.4 },
-    { url: `${siteUrl}/privacy`, lastModified: now, changeFrequency: "yearly",  priority: 0.3 },
-    { url: `${siteUrl}/terms`,   lastModified: now, changeFrequency: "yearly",  priority: 0.3 },
+    { url: `${siteUrl}/examples`,   changeFrequency: "monthly", priority: 0.8 },
+    { url: `${siteUrl}/pricing`,    changeFrequency: "monthly", priority: 0.8 },
+    { url: `${siteUrl}/ui`,         changeFrequency: "weekly",  priority: 0.8 },
+    { url: `${siteUrl}/presets`,    changeFrequency: "weekly",  priority: 0.6 },
+    { url: `${siteUrl}/changelog`,  changeFrequency: "weekly",  priority: 0.5 },
+    { url: `${siteUrl}/about`,      changeFrequency: "monthly", priority: 0.5 },
+    { url: `${siteUrl}/contact`,    changeFrequency: "monthly", priority: 0.4 },
+    { url: `${siteUrl}/privacy`,    changeFrequency: "yearly",  priority: 0.3 },
+    { url: `${siteUrl}/terms`,      changeFrequency: "yearly",  priority: 0.3 },
+    { url: `${siteUrl}/cookies`,    changeFrequency: "yearly",  priority: 0.3 },
   ];
 }

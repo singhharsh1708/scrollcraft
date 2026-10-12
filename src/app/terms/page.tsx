@@ -1,7 +1,13 @@
+import type { Metadata } from "next";
+import { pageMeta } from "@/lib/pageMeta";
 import Navbar from "@/components/Navbar";
 import SiteFooter from "@/components/SiteFooter";
 
-export const metadata = { title: "Terms of Service", alternates: { canonical: "/terms" } };
+export const metadata: Metadata = pageMeta({
+  title: "Terms of Service",
+  description: "What you may do with ScrollCraft, what a pack of generations is, and how refunds work.",
+  path: "/terms",
+});
 
 export default function TermsPage() {
   return (
@@ -15,7 +21,7 @@ export default function TermsPage() {
         <p>By using ScrollCraft you agree to these terms. If you do not agree, do not use the service.</p>
 
         <h2>What ScrollCraft Does</h2>
-        <p>ScrollCraft is a free, open-source tool for building scroll-animated websites. You pick a template or a style, edit it in your browser, and export a production-ready HTML/CSS/JS site. It runs without an account and stores nothing about you.</p>
+        <p>ScrollCraft is a free, open-source tool for building scroll-animated websites. You pick a template or a style, edit it in your browser, and export a production-ready HTML/CSS/JS site. You can use all of that without an account. Writing a site from a description is the one part that costs money, and the one part that keeps a record: see the privacy policy for exactly what that record is.</p>
 
         <h2>Your Content</h2>
         <p>You own the websites and content you create with ScrollCraft, outright. We claim no rights over them and we do not hold them: your work stays in your browser until you export it. No licence to store or display it is granted or needed.</p>

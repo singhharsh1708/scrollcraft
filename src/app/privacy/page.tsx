@@ -1,9 +1,15 @@
+import type { Metadata } from "next";
+import { pageMeta } from "@/lib/pageMeta";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import SiteFooter from "@/components/SiteFooter";
 import { CONTACT_EMAIL } from "@/lib/links";
 
-export const metadata = { title: "Privacy Policy", alternates: { canonical: "/privacy" } };
+export const metadata: Metadata = pageMeta({
+  title: "Privacy Policy",
+  description: "What leaves your browser, what we keep if you buy a pack, and how to have it deleted.",
+  path: "/privacy",
+});
 
 export default function PrivacyPage() {
   return (
@@ -15,10 +21,13 @@ export default function PrivacyPage() {
 
         <h2>The short version</h2>
         <p>
-          ScrollCraft has no database and nothing you have to sign in to. Signing in with
-          GitHub is optional and does one thing: it carries credits you have paid for from
-          one browser to another. There is no profile and no saved history either way, and
-          the sites you build stay in your own browser until you export them.
+          Nothing you have to sign in to, and no profile or saved history. The sites you
+          build stay in your own browser until you export them. If you buy a pack of
+          generations we do keep a short record of it, because otherwise we could not give
+          you what you paid for: your email, a one-way hash of your licence key, how many
+          sites are left, and, if you sign in, your GitHub account number. That record
+          lives in a key-value store, it is the only thing we hold about anybody, and it is
+          deleted on request.
         </p>
 
         <h2>What we collect</h2>
@@ -28,7 +37,7 @@ export default function PrivacyPage() {
           sent anywhere on its own.
         </p>
         <p>
-          Six things can leave your browser, none of them identifying you:
+          Six things can leave your browser. Four of them carry nothing that identifies you; the other two are named as such below:
         </p>
         <ul>
           <li>
