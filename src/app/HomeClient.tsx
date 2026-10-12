@@ -3,14 +3,15 @@ import Link from "next/link";
 import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
 import { ArrowUpRight, Film, LayoutTemplate, PenLine, Terminal } from "lucide-react";
 import PromptHero from "@/components/PromptHero";
-import HeroSequence, { type HeroTemplate } from "@/components/HeroSequence";
+import dynamic from "next/dynamic";
+import type { HeroTemplate } from "@/components/HeroSequence";
 import Navbar from "@/components/Navbar";
 import StylePreview from "@/components/StylePreview";
 import type { Style2D } from "@/lib/generate2DFrames";
 import PluginInstall from "@/components/PluginInstall";
 import { CONTACT_EMAIL } from "@/lib/links";
 import SiteFooter from "@/components/SiteFooter";
-import Lifecycle, { type LifecycleStep } from "@/components/Lifecycle";
+import type { LifecycleStep } from "@/components/Lifecycle";
 import { GITHUB_REPO_URL } from "@/lib/links";
 
 /** NeuralPath and Halo, for the canvases further down. Both from the catalogue. */
@@ -48,6 +49,17 @@ export type EditorSample = {
   sections: { kind: string; heading: string; eyebrow: string }[];
 };
 export type HomeStats = { templates: number; categories: number };
+
+/**
+ * Everything below the first screen loads as its own chunk.
+ *
+ * The scroll demo and the lifecycle carry the heaviest machinery on the page and
+ * neither is visible until somebody scrolls. Measured with them in the first bundle:
+ * 719ms of script evaluation and 260ms of blocking, against a hero whose job is to
+ * accept a sentence immediately.
+ */
+const HeroSequence = dynamic(() => import("@/components/HeroSequence"));
+const Lifecycle = dynamic(() => import("@/components/Lifecycle"));
 
 const DEPLOY_TARGETS = ["Netlify", "Vercel", "GitHub Pages", "Cloudflare Pages", "Any static host"];
 
