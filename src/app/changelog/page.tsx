@@ -12,6 +12,19 @@ export const metadata: Metadata = pageMeta({
 
 const ENTRIES = [
   {
+    version: "v1.4.0",
+    date: "October 12, 2026",
+    tag: "Minor",
+    tagColor: "bg-white/8 text-foreground border-white/15",
+    changes: [
+      { type: "new", text: "Describe your business in a paragraph, attach a photograph or two, and get a finished site open in the editor with every word yours to change" },
+      { type: "new", text: "The house rules the catalogue is held to are the rules the writer follows: name the street, the hours and the materials, invent no awards, clients or review scores, and say in one section what the business will not do" },
+      { type: "new", text: "Typefaces come from a closed set of pairings, so a site cannot come back naming a font that does not exist" },
+      { type: "new", text: "The first site is free, five more are $20, bought once with nothing renewing. A failed request costs no credit" },
+      { type: "improved", text: "Photographs are reduced to 1024 pixels on your own device before they are sent, and neither they nor your description are stored" },
+    ],
+  },
+  {
     version: "v1.3.0",
     date: "September 11, 2026",
     tag: "Minor",
