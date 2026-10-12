@@ -333,8 +333,10 @@ describe("a checkout can only be opened by somebody it can be credited to", () =
   });
 
   it("will not charge in a currency other than the one the site quotes", async () => {
-    stripeAnswers({ data: [{ id: "price_inr", unit_amount: 2000, currency: "inr" }] });
+    const fetchMock = stripeAnswers({ data: [{ id: "price_inr", unit_amount: 2000, currency: "inr" }] });
     expect((await checkout(request())).status).toBe(502);
+    // Refused at the price, not by a later call falling over: no session was attempted.
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   it("answers 502 when no price carries the lookup key", async () => {
