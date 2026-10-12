@@ -155,8 +155,8 @@ export default function Navbar({ position = "sticky" }: { position?: "fixed" | "
             </div>
 
             <div className="hidden items-center gap-2 md:flex">
-              <Link href="/create" className="lc-btn lc-btn-solid lc-btn-sm">
-                Start building
+              <Link href="/describe" className="lc-btn lc-btn-solid lc-btn-sm">
+                Get started
               </Link>
               <a
                 href={GITHUB_REPO_URL}
@@ -238,8 +238,8 @@ export default function Navbar({ position = "sticky" }: { position?: "fixed" | "
                 <Heart className="h-4 w-4" aria-hidden="true" /> Sponsor
               </a>
               <div className="mt-3 grid grid-cols-2 gap-2">
-                <Link href="/create" onClick={() => setOpen(false)} className="lc-btn lc-btn-solid lc-btn-sm">
-                  Start building
+                <Link href="/describe" onClick={() => setOpen(false)} className="lc-btn lc-btn-solid lc-btn-sm">
+                  Get started
                 </Link>
                 <a
                   href={GITHUB_REPO_URL}
