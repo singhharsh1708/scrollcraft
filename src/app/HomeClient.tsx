@@ -360,7 +360,6 @@ export default function HomeClient({
   stats: HomeStats;
 }) {
   const reduced = useReducedMotion();
-  const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   const steps: LifecycleStep[] = [
     {
@@ -696,30 +695,22 @@ export default function HomeClient({
             <span className="block">ask first</span>
           </h2>
           <div className="border-t border-border">
-            {FAQ.map((item, i) => (
-              <div key={item.q} className="border-b border-border">
-                <button
-                  type="button"
-                  onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                  className="flex w-full items-center justify-between gap-6 py-6 text-left"
-                  aria-expanded={openFaq === i}
-                  aria-controls={`faq-answer-${i}`}
-                  id={`faq-question-${i}`}
-                >
+            {/* Native disclosure rather than state: the answers used to render only
+                once clicked, so they were not in the HTML at all and a search engine
+                reading this page saw nine questions and no answers. */}
+            {FAQ.map((item) => (
+              <details key={item.q} className="group border-b border-border">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-6 py-6 text-left">
                   <span className="text-lg font-light tracking-[-0.01em] sm:text-xl">{item.q}</span>
-                  <span aria-hidden="true" className={`text-muted-foreground text-lg leading-none transition-transform flex-shrink-0 ${openFaq === i ? "rotate-45" : ""}`}>+</span>
-                </button>
-                {openFaq === i && (
-                  <div
-                    id={`faq-answer-${i}`}
-                    role="region"
-                    aria-labelledby={`faq-question-${i}`}
-                    className="max-w-2xl pb-6 leading-relaxed text-muted-foreground"
+                  <span
+                    aria-hidden="true"
+                    className="flex-shrink-0 text-lg leading-none text-muted-foreground transition-transform group-open:rotate-45"
                   >
-                    {item.a}
-                  </div>
-                )}
-              </div>
+                    +
+                  </span>
+                </summary>
+                <div className="max-w-2xl pb-6 leading-relaxed text-muted-foreground">{item.a}</div>
+              </details>
             ))}
           </div>
         </div>

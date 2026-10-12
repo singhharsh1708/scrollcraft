@@ -1,8 +1,14 @@
+import type { Metadata } from "next";
+import { pageMeta } from "@/lib/pageMeta";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import SiteFooter from "@/components/SiteFooter";
 
-export const metadata = { title: "Cookie Policy", alternates: { canonical: "/cookies" } };
+export const metadata: Metadata = pageMeta({
+  title: "Cookie Policy",
+  description: "The three cookies ScrollCraft can set, what each is for, and what clearing them costs you.",
+  path: "/cookies",
+});
 
 export default function CookiesPage() {
   return (
@@ -10,7 +16,7 @@ export default function CookiesPage() {
       <Navbar />
       <article className="max-w-3xl mx-auto px-6 py-20 prose prose-invert prose-sm prose-headings:font-light prose-headings:tracking-[-0.03em] prose-h1:text-5xl prose-a:text-primary-ink">
         <h1>Cookie Policy</h1>
-        <p className="text-muted-foreground">Last updated: August 2026</p>
+        <p className="text-muted-foreground">Last updated: October 2026</p>
 
         <h2>Three at most, and only if you use what needs them</h2>
         <p>
@@ -35,8 +41,8 @@ export default function CookiesPage() {
           </li>
         </ul>
         <p>
-          Neither is readable by scripts on the page, neither leaves this site, and
-          clearing them costs you nothing except pasting your key again.
+          None of them is readable by scripts on the page, none leaves this site, and
+          clearing them costs you nothing except signing in or pasting your key again.
         </p>
 
         <h2>What is stored on your device</h2>

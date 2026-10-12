@@ -333,15 +333,16 @@ describe("controls that open something say whether it is open", () => {
     expect(navbar).toContain('id="mobile-menu"');
   });
 
-  it("wires each FAQ row to the answer it reveals", () => {
+  it("opens each FAQ row with a native disclosure, so the answer is in the page", () => {
+    // It used to be a button and a conditional div, with the open state in React. The
+    // answers were then absent from the HTML entirely, which cost the accessibility of
+    // a hand-rolled widget and every one of those answers in search results.
     const home = readFileSync("src/app/HomeClient.tsx", "utf8");
-    expect(home).toContain("aria-expanded={openFaq === i}");
-    expect(home).toContain("aria-controls={`faq-answer-${i}`}");
-    expect(home).toContain("id={`faq-question-${i}`}");
-    expect(home).toContain('role="region"');
-    expect(home).toContain("aria-labelledby={`faq-question-${i}`}");
-    // The "+" is decoration; the state is on the button.
-    expect(home).toMatch(/<span aria-hidden="true" className=\{`text-muted-foreground text-lg/);
+    expect(home).toContain("<details key={item.q}");
+    expect(home).toContain("<summary");
+    expect(home).not.toContain("openFaq");
+    // The "+" is decoration; the disclosure itself carries the state.
+    expect(home).toMatch(/aria-hidden="true"[\s\S]{0,120}group-open:rotate-45/);
   });
 });
 
