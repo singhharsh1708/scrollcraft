@@ -95,11 +95,11 @@ export default function PrivacyPage() {
 
         <h2>Cookies</h2>
         <p>
-          One cookie, and only if you buy a pack of sites: it holds the hash of your
-          licence key so this browser can spend what you paid for. Nothing else is stored
-          in it, it is not readable by scripts, and clearing it only means pasting the key
-          again. There is no session to keep, and no advertising or analytics cookies are
-          used. See our <Link href="/cookies" className="underline">Cookie Policy</Link>.
+          Two, both around the site writer and neither readable by scripts: a random name
+          for this browser, so your free site is yours rather than one shared with everybody
+          on the same network, and, if you buy a pack, the hash of your licence key so this
+          browser can spend what you paid for. There is no session to keep, and no
+          advertising or analytics cookies are used. See our <Link href="/cookies" className="underline">Cookie Policy</Link>.
         </p>
 
         <h2>Your rights</h2>

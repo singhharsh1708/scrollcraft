@@ -95,9 +95,14 @@ function okResponse(overrides: Record<string, unknown> = {}) {
 type Handler = typeof import("../app/api/generate-site/route").POST;
 let POST: Handler;
 
+/**
+ * A browser keeps the cookie it is given, so these requests carry one. A caller that
+ * keeps no cookies is a different case, covered by its own test below.
+ */
+const BROWSER = "sc_fid=browser-under-test";
+
 function post(body: unknown, cookie?: string) {
-  const headers: Record<string, string> = { "content-type": "application/json" };
-  if (cookie) headers.cookie = cookie;
+  const headers: Record<string, string> = { "content-type": "application/json", cookie: cookie ? `${cookie}; ${BROWSER}` : BROWSER };
   return POST(
     new Request("https://scrollcraft.space/api/generate-site", {
       method: "POST",
@@ -108,6 +113,17 @@ function post(body: unknown, cookie?: string) {
 }
 
 const asBuyer = (body: unknown) => post(body, `sc_key=${HASH}`);
+
+/** Somebody who throws away every cookie they are given. */
+function postWithoutCookies(body: unknown) {
+  return POST(
+    new Request("https://scrollcraft.space/api/generate-site", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body),
+    }) as unknown as NextRequest
+  );
+}
 
 async function load() {
   vi.resetModules();
@@ -139,6 +155,30 @@ describe("the allowance is taken before the model is called", () => {
     });
     await asBuyer({ description: DESCRIPTION });
     expect(usedDuringTheCall).toBe(1);
+  });
+
+  it("names this browser on the way out, so its free site stays its own", async () => {
+    const res = await postWithoutCookies({ description: DESCRIPTION });
+    expect(res.status).toBe(200);
+    expect(res.headers.get("set-cookie")).toMatch(/sc_fid=[^;]{8,};/);
+    expect(res.headers.get("set-cookie")).toMatch(/HttpOnly/i);
+  });
+
+  it("keeps the name a browser already has rather than handing out another free site", async () => {
+    await post({ description: DESCRIPTION });
+    const res = await post({ description: DESCRIPTION });
+    expect(res.status).toBe(402);
+    expect(res.headers.get("set-cookie")).toContain("browser-under-test");
+  });
+
+  it("bounds somebody who keeps no cookies by the address instead", async () => {
+    // Each of these looks like a new browser. The address is what stops it.
+    for (let i = 0; i < 5; i++) {
+      expect((await postWithoutCookies({ description: DESCRIPTION })).status, `call ${i}`).toBe(200);
+    }
+    const res = await postWithoutCookies({ description: DESCRIPTION });
+    expect(res.status).toBe(402);
+    expect((await res.json()).error).toMatch(/as many free sites as this connection/);
   });
 
   it("answers 402 and calls nobody when the free site is gone and there is no key", async () => {
