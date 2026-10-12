@@ -71,8 +71,8 @@ describe("the transport and framing headers", () => {
   });
 });
 
-describe("nothing in the app still talks to a payment processor", () => {
-  it("has no client that would need the grants back", () => {
+describe("the shop runs no payment code in the browser", () => {
+  it("keeps the processor server side, so the page needs no script grant", () => {
     const out: string[] = [];
     (function walk(dir: string) {
       for (const entry of readdirSync(dir, { withFileTypes: true })) {
@@ -81,11 +81,15 @@ describe("nothing in the app still talks to a payment processor", () => {
         else if (/\.(ts|tsx)$/.test(entry.name)) out.push(full);
       }
     })("src");
-    const offenders = out.filter((f) => {
+    const sources = out.filter((f) => !f.includes("changelog") && !f.includes("__tests__"));
+    // Checkout is a link to a hosted page, not an embedded widget: no SDK, no iframe, no
+    // card field of ours, and nothing for the content security policy to let through.
+    const inBrowser = sources.filter((f) => {
       const t = readFileSync(f, "utf8");
-      // The changelog records the removal by name, which is not a caller.
-      return /razorpay|lemonsqueezy/i.test(t) && !f.includes("changelog") && !f.includes("__tests__");
+      return /^["']use client["']/m.test(t) && /lemonsqueezy|lemon\.js/i.test(t);
     });
-    expect(offenders).toEqual([]);
+    expect(inBrowser).toEqual([]);
+    const removed = sources.filter((f) => /razorpay/i.test(readFileSync(f, "utf8")));
+    expect(removed).toEqual([]);
   });
 });

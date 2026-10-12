@@ -15,6 +15,7 @@ const ROUTES: [string, string][] = [
   ["src/app/templates/page.tsx", "/templates"],
   ["src/app/ui/page.tsx", "/ui"],
   ["src/app/describe/page.tsx", "/describe"],
+  ["src/app/pricing/page.tsx", "/pricing"],
   ["src/app/examples/page.tsx", "/examples"],
   ["src/app/presets/layout.tsx", "/presets"],
   ["src/app/changelog/page.tsx", "/changelog"],

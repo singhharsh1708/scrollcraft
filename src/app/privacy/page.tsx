@@ -27,7 +27,7 @@ export default function PrivacyPage() {
           sent anywhere on its own.
         </p>
         <p>
-          Five things can leave your browser, none of them identifying you:
+          Six things can leave your browser, none of them identifying you:
         </p>
         <ul>
           <li>
@@ -62,9 +62,17 @@ export default function PrivacyPage() {
             is configured with a key.
           </li>
           <li>
+            <strong>A licence key, only if you buy more sites.</strong> The first site is
+            free. A pack of five is bought from Lemon Squeezy, who take the payment and
+            hold the card details, the name and the billing address; we never see them. They
+            send us the key they issued you and the email you bought with. We store a
+            one-way hash of that key, the email, and how many sites of the pack are left.
+            Pasting the key into ScrollCraft sends it once to Lemon Squeezy to be checked.
+          </li>
+          <li>
             <strong>Ordinary request logs.</strong> Our host records the usual server access
             logs, including IP addresses, which we also use to rate-limit the export,
-            rewrite, counting and site-writing endpoints so one visitor cannot exhaust them for
+            rewrite, counting, site-writing and licence endpoints so one visitor cannot exhaust them for
             everyone. Writing a site costs us real money per request, so that one is limited
             tightly: three a minute and twenty a day from one address.
           </li>
@@ -80,14 +88,18 @@ export default function PrivacyPage() {
           <li><strong>Sentry</strong> — error reports, when enabled. These carry a stack trace, not your content.</li>
           <li><strong>Upstash</strong> — rate limiting and the daily counts above, when enabled. It stores a counter keyed by IP for limits, and counters keyed by date for the four steps.</li>
           <li><strong>Anthropic</strong> — writes a site from your description, when enabled. It receives that description and any photographs you attach, and only when you press Build my site.</li>
+          <li><strong>Lemon Squeezy</strong> &mdash; the shop, when enabled. It is the seller of record for a pack of sites: it receives your payment details directly and tells us only which licence key was issued, for which order, to which email.</li>
           <li><strong>Sarvam AI</strong> — the rewrite assistant, when enabled. It receives the instruction you type and the copy of the site you are editing, and only when you press Rewrite.</li>
           <li><strong>Google Fonts</strong> — templates load webfonts, which discloses your IP to Google. Exported sites do the same unless you self-host the fonts.</li>
         </ul>
 
         <h2>Cookies</h2>
         <p>
-          We set no cookies at all. There is no session to keep, and no advertising or
-          analytics cookies are used. See our <Link href="/cookies" className="underline">Cookie Policy</Link>.
+          One cookie, and only if you buy a pack of sites: it holds the hash of your
+          licence key so this browser can spend what you paid for. Nothing else is stored
+          in it, it is not readable by scripts, and clearing it only means pasting the key
+          again. There is no session to keep, and no advertising or analytics cookies are
+          used. See our <Link href="/cookies" className="underline">Cookie Policy</Link>.
         </p>
 
         <h2>Your rights</h2>

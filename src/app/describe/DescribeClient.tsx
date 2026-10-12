@@ -1,6 +1,7 @@
 "use client";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Loader2, Upload, X } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import SiteFooter from "@/components/SiteFooter";
@@ -44,7 +45,22 @@ export default function DescribeClient() {
   const [images, setImages] = useState<Picked[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [needsCredits, setNeedsCredits] = useState(false);
+  const [allowance, setAllowance] = useState<{ hasKey: boolean; remaining: number } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    let live = true;
+    fetch("/api/credits")
+      .then((r) => r.json())
+      .then((body: { hasKey?: boolean; remaining?: number }) => {
+        if (live) setAllowance({ hasKey: Boolean(body.hasKey), remaining: body.remaining ?? 0 });
+      })
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, []);
 
   const addFiles = async (files: FileList | null) => {
     if (!files?.length) return;
@@ -64,6 +80,7 @@ export default function DescribeClient() {
   const build = async () => {
     setBusy(true);
     setError("");
+    setNeedsCredits(false);
     try {
       const res = await fetch("/api/generate-site", {
         method: "POST",
@@ -76,6 +93,7 @@ export default function DescribeClient() {
       const body = await res.json();
       if (!res.ok) {
         setError(body.error || "Could not build a site from that.");
+        setNeedsCredits(Boolean(body.needsCredits));
         return;
       }
 
@@ -187,6 +205,14 @@ export default function DescribeClient() {
         {error && (
           <p role="alert" className="mt-6 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-foreground">
             {error}
+            {needsCredits && (
+              <>
+                {" "}
+                <Link href="/pricing" className="underline underline-offset-4">
+                  See what a pack costs
+                </Link>
+              </>
+            )}
           </p>
         )}
 
@@ -198,6 +224,20 @@ export default function DescribeClient() {
           <span className="text-sm text-muted-foreground" aria-live="polite">
             {busy ? "About half a minute." : short ? "A sentence or two to start." : "You can change every word afterwards."}
           </span>
+        </div>
+
+        <div className="mt-5 text-sm text-muted-foreground">
+          {allowance?.hasKey ? (
+            <>
+              {allowance.remaining} {allowance.remaining === 1 ? "site" : "sites"} left on this browser.{" "}
+              <Link href="/pricing" className="underline underline-offset-4">Top up</Link>
+            </>
+          ) : (
+            <>
+              The first site is free. Five more are $20.{" "}
+              <Link href="/pricing" className="underline underline-offset-4">Pricing</Link>
+            </>
+          )}
         </div>
       </section>
 

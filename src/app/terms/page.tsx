@@ -9,7 +9,7 @@ export default function TermsPage() {
       <Navbar />
       <article className="max-w-3xl mx-auto px-6 py-20 prose prose-invert prose-sm prose-headings:font-light prose-headings:tracking-[-0.03em] prose-h1:text-5xl prose-a:text-primary-ink">
         <h1>Terms of Service</h1>
-        <p className="text-muted-foreground">Last updated: August 2026</p>
+        <p className="text-muted-foreground">Last updated: October 2026</p>
 
         <h2>Acceptance</h2>
         <p>By using ScrollCraft you agree to these terms. If you do not agree, do not use the service.</p>
@@ -23,8 +23,19 @@ export default function TermsPage() {
         <h2>Acceptable Use</h2>
         <p>Do not use ScrollCraft to create content that is illegal, harmful, or violates third-party rights. There are no accounts to suspend, so this is a request rather than a threat — but the licence below does not authorise unlawful use.</p>
 
-        <h2>No Charge</h2>
-        <p>ScrollCraft is free. There is no subscription, no purchase and no payment of any kind, so there is nothing to refund and no price to change.</p>
+        <h2>What Costs Money</h2>
+        <p>The editor, the templates, the catalogue and the exporter are free and always will be: no subscription, no account, no limit on how many sites you build or export by hand.</p>
+        <p>Writing a site from a description costs us money per request, because a model writes it. So the first one is free, and after that five sites cost $20, bought once. There is no subscription and nothing renews.</p>
+
+        <h2>Credits</h2>
+        <p>A pack is a prepaid licence to use the site writer five times. Credits are not money, cannot be exchanged for it, and are not transferable. They do not expire. A credit is taken when a site is written and given back if the request fails, so a failure costs you nothing.</p>
+        <p>Packs are sold through Lemon Squeezy, who are the seller of record and handle the payment, the invoice and any sales tax. Your licence key is in their receipt email and in your orders page with them.</p>
+
+        <h2>Refunds</h2>
+        <p>Unused credits are refunded on request within 14 days, no questions asked: email the address below with your order number. Credits already spent are not refundable, because the site was written and the cost was incurred. A partial refund is pro-rated over what is left.</p>
+
+        <h2>If The Site Writer Goes Away</h2>
+        <p>If we stop offering the site writer, you get 30 days&apos; notice, the editor and the exporter keep working, and unused credits are refunded on request. Sites you have already made are yours and live in your browser, so nothing you built stops working.</p>
 
         <h2>The Source</h2>
         <p>ScrollCraft is open source and you may run, modify and self-host it under the terms of its licence in the repository. These terms cover the hosted instance only.</p>

@@ -21,6 +21,7 @@ const NAV_LINKS = [
   { href: "/templates", label: "Templates" },
   { href: "/ui",        label: "Components" },
   { href: "/presets",   label: "Presets"   },
+  { href: "/pricing",   label: "Pricing"   },
   { href: "/changelog", label: "Changelog" },
 ];
 
