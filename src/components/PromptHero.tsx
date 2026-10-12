@@ -2,7 +2,7 @@
 import { useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowUp, Loader2 } from "lucide-react";
+import { ArrowUp, ImagePlus, Loader2 } from "lucide-react";
 import StylePreview from "@/components/StylePreview";
 import { MAX_DESCRIPTION } from "@/lib/briefLimits";
 
@@ -57,9 +57,16 @@ export default function PromptHero({ reducedMotion }: { reducedMotion: boolean }
         className="absolute inset-0 -z-10 h-full w-full"
       />
       <div aria-hidden="true" className="absolute inset-0 -z-10 bg-gradient-to-b from-background/70 via-background/40 to-background" />
+      {/* The one place the accent is allowed to behave like a light source, directly
+          under the control the whole page exists to get somebody to use. */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute left-1/2 top-[58%] -z-10 h-[520px] w-[820px] max-w-[120vw] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-60 blur-[90px]"
+        style={{ background: "radial-gradient(closest-side, oklch(0.55 0.19 256.4 / 55%), transparent)" }}
+      />
 
       <div className="mx-auto w-full max-w-3xl text-center">
-        <p className="lc-mono inline-flex flex-wrap items-center justify-center gap-x-2 rounded-full border border-primary-ink/30 bg-card px-4 py-1.5 text-xs text-primary-ink">
+        <p className="lc-mono inline-flex flex-wrap items-center justify-center gap-x-2 rounded-full border border-white/10 bg-card/80 px-4 py-1.5 text-xs text-primary-ink shadow-[var(--lift-1)] backdrop-blur-sm">
           First site free
           <span className="text-muted-foreground">then 5 for $20</span>
         </p>
@@ -74,7 +81,7 @@ export default function PromptHero({ reducedMotion }: { reducedMotion: boolean }
           Everything it writes is yours to change, and the export is plain HTML.
         </p>
 
-        <div className="mt-9 rounded-xl border border-border bg-card p-2 text-left shadow-[0_40px_120px_-60px_rgba(0,0,0,0.95)]">
+        <div className="mt-9 rounded-2xl border border-white/10 bg-card/95 p-2 text-left shadow-[var(--lift-2)] backdrop-blur-sm transition-shadow focus-within:border-primary-ink/40 focus-within:shadow-[var(--glow)]">
           <textarea
             ref={boxRef}
             value={value}
@@ -85,17 +92,20 @@ export default function PromptHero({ reducedMotion }: { reducedMotion: boolean }
             rows={3}
             aria-label="Describe your business"
             placeholder="What is the business? Where is it, how long has it been going, what do you actually do?"
-            className="w-full resize-none bg-transparent px-3 py-3 text-base text-foreground outline-none placeholder:text-muted-foreground"
+            className="w-full resize-none bg-transparent px-4 py-4 text-base leading-relaxed text-foreground outline-none placeholder:text-muted-foreground"
           />
-          <div className="flex items-center justify-between gap-3 px-3 pb-1">
-            <span className="lc-mono text-xs text-muted-foreground">
-              {short ? "A sentence or two to start" : `${value.trim().length} characters`}
+          <div className="flex items-center justify-between gap-3 px-4 pb-2">
+            <span className="flex items-center gap-2 text-xs text-muted-foreground">
+              <ImagePlus className="h-4 w-4" aria-hidden="true" />
+              {short ? "Photographs optional" : `${value.trim().length} characters`}
             </span>
+            {/* Not faded out when it is not ready: a button nobody can read is worse
+                than one that plainly says it is waiting for a sentence. */}
             <button
               type="button"
               onClick={go}
               disabled={short || busy}
-              className="lc-btn lc-btn-solid lc-btn-sm rounded-full disabled:opacity-40"
+              className={`lc-btn lc-btn-sm ${short || busy ? "lc-btn-ghost text-muted-foreground" : "lc-btn-solid"}`}
             >
               {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <ArrowUp className="h-4 w-4" aria-hidden="true" />}
               Write my site

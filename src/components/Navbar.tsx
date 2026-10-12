@@ -111,13 +111,13 @@ export default function Navbar({
   return (
     <>
       {pathname !== "/examples" && (
-        <div className="bg-primary text-white">
+        <div className="border-b border-white/[0.06] bg-card/40 text-foreground/80 backdrop-blur-sm">
           <Link
             href="/examples"
-            className="group mx-auto flex max-w-[1360px] flex-col items-center justify-center gap-x-10 gap-y-1 px-4 py-2.5 text-center text-sm sm:flex-row"
+            className="group mx-auto flex max-w-[1360px] flex-col items-center justify-center gap-x-3 gap-y-1 px-4 py-2 text-center text-[13px] sm:flex-row"
           >
             <span>Three finished sites, served as the exact bundles they export to.</span>
-            <span className="lc-mono inline-flex items-center gap-2 text-white transition-colors">
+            <span className="inline-flex items-center gap-1.5 text-primary-ink transition-colors group-hover:text-foreground">
               See the examples <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
             </span>
           </Link>

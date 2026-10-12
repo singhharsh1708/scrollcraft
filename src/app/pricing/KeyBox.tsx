@@ -74,7 +74,7 @@ export default function KeyBox({ checkout }: { checkout: string }) {
       )}
 
       <div className="mt-6 border-t border-border pt-6">
-        <label htmlFor="licence" className="lc-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
+        <label htmlFor="licence" className="text-sm text-muted-foreground">
           Already bought a pack?
         </label>
         <div className="mt-2 flex flex-wrap gap-2">
@@ -83,9 +83,9 @@ export default function KeyBox({ checkout }: { checkout: string }) {
             value={key}
             onChange={(e) => setKey(e.target.value)}
             placeholder="Paste the key from your receipt"
-            className="h-11 min-w-0 flex-1 bg-background font-mono text-sm"
+            className="h-11 min-w-0 flex-1 rounded-full bg-background px-4 font-mono text-sm"
           />
-          <Button onClick={redeem} disabled={busy || key.trim().length < 8} variant="outline" className="h-11">
+          <Button onClick={redeem} disabled={busy || key.trim().length < 8} variant="outline" className="h-11 rounded-full px-5">
             {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : "Use it here"}
           </Button>
         </div>

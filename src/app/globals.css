@@ -89,7 +89,17 @@
   --chart-3: oklch(0.72 0.12 200);
   --chart-4: oklch(0.62 0.14 280);
   --chart-5: oklch(0.85 0.06 230);
-  --radius: 0.375rem;
+  --radius: 0.625rem;
+
+  /*
+   * Depth, which this design had none of: every surface was a 1px hairline on a flat
+   * ground, so nothing sat above anything else and the page read as a wireframe of
+   * itself. Three levels, all tuned on the navy rather than generic black shadows.
+   */
+  --lift-1: 0 1px 0 oklch(1 0 0 / 6%) inset, 0 10px 30px -18px oklch(0 0 0 / 90%);
+  --lift-2: 0 1px 0 oklch(1 0 0 / 7%) inset, 0 30px 70px -40px oklch(0 0 0 / 95%);
+  /* The accent's own light, for the one control the page is built around. */
+  --glow: 0 0 0 1px oklch(0.55 0.19 256.4 / 35%), 0 18px 50px -20px oklch(0.55 0.19 256.4 / 55%);
   /* The sticky nav's height. The hero tucks under it and sticky tabs sit below it. */
   --nav-h: 52px;
   --sidebar: oklch(0.181 0.037 265.9);
@@ -109,10 +119,12 @@
   --band-line: oklch(0.9 0.012 240);
 
   /* Button surfaces, stated outright rather than mixed, so they need no color-mix()
-     support and flip cleanly inside a light band. */
-  --solid-bg: oklch(0.959 0.022 239.4);
-  --solid-fg: oklch(0.128 0.023 258.4);
-  --solid-hover: oklch(1 0 0);
+     support and flip cleanly inside a light band. The primary action carries the
+     brand's own blue rather than a white chip: on a navy page a white button is the
+     loudest thing on screen and says nothing about whose page it is. */
+  --solid-bg: oklch(0.55 0.19 256.4);
+  --solid-fg: oklch(1 0 0);
+  --solid-hover: oklch(0.60 0.19 256.4);
   --line-strong: oklch(0.93 0.03 240 / 34%);
   --wash: oklch(0.93 0.03 240 / 7%);
 }
@@ -189,14 +201,14 @@
     gap: 0.625rem;
     height: 3rem;
     padding: 0 1.5rem;
-    border-radius: 4px;
+    border-radius: 999px;
     border: 1px solid transparent;
     font-family: var(--font-mono);
     font-size: 0.875rem;
     line-height: 1;
     white-space: nowrap;
     cursor: pointer;
-    transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+    transition: background-color 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s, transform 0.15s;
   }
   .lc-btn:focus-visible {
     outline: 2px solid var(--ring);
@@ -210,17 +222,23 @@
   .lc-btn-solid {
     background: var(--solid-bg);
     color: var(--solid-fg);
+    box-shadow: var(--glow);
   }
   .lc-btn-solid:hover {
     background: var(--solid-hover);
+    transform: translateY(-1px);
+  }
+  .lc-btn-solid:active {
+    transform: translateY(0);
   }
   .lc-btn-ghost {
-    background: transparent;
+    background: oklch(1 0 0 / 3%);
     color: var(--foreground);
     border-color: var(--line-strong);
   }
   .lc-btn-ghost:hover {
     background: var(--wash);
+    border-color: oklch(0.806 0.107 242.3 / 45%);
   }
 
   /* "Explore something ↗": mono, muted, brightens on hover. */
