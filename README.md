@@ -28,8 +28,11 @@ those sites without WebGL, an animation library, or a render farm.
    `robots.txt`, config for Netlify, Vercel and GitHub Pages, and steps for
    Cloudflare Pages. Deploying is dragging a folder.
 
-Everything runs in the browser. There is no account, no database and nothing to buy. The
-one exception is the copy assistant below, which is off unless you configure a key.
+Everything runs in the browser. There is no account and no database, and the editor, the
+templates and the exporter are free with nothing to buy. Two things call out, and both are
+off unless you configure a key: the copy assistant below, and writing a site from a
+description, which costs money per request on the hosted version. There the first one is
+free and five more are $20, bought once.
 
 ## Features
 

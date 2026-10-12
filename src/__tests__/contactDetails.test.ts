@@ -168,15 +168,25 @@ describe("what the site claims about itself is true", () => {
     expect(gallery).toContain("${TEMPLATES.length} finished scroll sites across ${templateCategories().length} categories");
   });
 
-  it("sells nothing, anywhere", () => {
+  it("quotes one price for one thing in every place it quotes a price", () => {
+    // The only thing sold is a pack of generations. A page that says a different number
+    // from the one the server enforces is a refund request waiting to happen.
+    const credits = readFileSync("src/lib/credits.ts", "utf8");
+    expect(credits).toMatch(/PACK_SITES = 5/);
+    expect(credits).toMatch(/PACK_PRICE_USD = 20/);
+    for (const file of ["src/app/pricing/page.tsx", "src/app/terms/page.tsx"]) {
+      const text = readFileSync(file, "utf8");
+      expect(text, `${file} does not name the price`).toMatch(/\$20/);
+      expect(text, `${file} names a price for something other than five sites`).toMatch(/five sites|Five sites|five times/i);
+    }
+    // Nothing is a subscription, and nothing the editor or the exporter does is sold.
     for (const [label, text] of [
       ["README", README],
       ["terms", readFileSync("src/app/terms/page.tsx", "utf8")],
-      ["contact", readFileSync("src/app/contact/page.tsx", "utf8")],
+      ["pricing", readFileSync("src/app/pricing/page.tsx", "utf8")],
     ] as const) {
-      expect(text, `${label} still offers something for sale`).not.toMatch(
-        /bought once|are paid|paid templates|premium template|"Billing"/i
-      );
+      expect(text, `${label} sells a subscription`).not.toMatch(/per month|\/mo\b|monthly plan|free trial/i);
+      expect(text, `${label} sells the templates`).not.toMatch(/paid templates|premium template/i);
     }
   });
 
@@ -231,12 +241,17 @@ describe("what the site claims about itself is true", () => {
     // names the endpoints, so the wording has to keep up with the routes themselves.
     const privacy = readFileSync("src/app/privacy/page.tsx", "utf8");
     expect(privacy).not.toContain("rate-limit the two API routes");
-    const limited = readdirSync("src/app/api", { withFileTypes: true })
-      .filter((d) => d.isDirectory())
-      .filter((d) => readFileSync(join("src/app/api", d.name, "route.ts"), "utf8").includes("rateLimit("));
-    expect(limited.map((d) => d.name).sort()).toEqual(["count", "edit-site", "export-site", "generate-site"]);
+    const routes: string[] = [];
+    const walk = (dir: string, name: string) => {
+      for (const entry of readdirSync(dir, { withFileTypes: true })) {
+        if (entry.isDirectory()) walk(join(dir, entry.name), name ? `${name}/${entry.name}` : entry.name);
+        else if (entry.name === "route.ts" && readFileSync(join(dir, entry.name), "utf8").includes("rateLimit(")) routes.push(name);
+      }
+    };
+    walk("src/app/api", "");
+    expect(routes.sort()).toEqual(["count", "credits", "edit-site", "export-site", "generate-site"]);
     expect(privacy, "the privacy page names the limited endpoints").toMatch(
-      /rate-limit the export,\s+rewrite, counting and site-writing endpoints/
+      /rate-limit the export,\s+rewrite, counting, site-writing and licence endpoints/
     );
   });
 

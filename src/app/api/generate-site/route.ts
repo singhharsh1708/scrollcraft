@@ -7,6 +7,7 @@ import { redisCredentials } from "@/lib/redisCredentials";
 import { logger } from "@/lib/logger";
 import { sectionsSchema, themeSchema, siteStyleSchema } from "@/lib/siteSchema";
 import { BRIEF_RULES, briefSchema, briefToSite, checkBriefInput } from "@/lib/siteBrief";
+import { PACK_PRICE_USD, PACK_SITES, balanceOf, keyHashFrom, takeAllowance } from "@/lib/credits";
 
 /**
  * A description in, a site out.
@@ -114,6 +115,26 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // One site's worth of allowance, taken before the call and given back if the call
+  // does not produce a site. Nobody should pay for a 502.
+  const hash = keyHashFrom(req);
+  const allowance = await takeAllowance(ip, hash);
+  if (!allowance.ok) {
+    if (allowance.reason === "unavailable") {
+      return NextResponse.json({ error: "Site generation is unavailable for a moment. Try again shortly." }, { status: 503 });
+    }
+    return NextResponse.json(
+      {
+        error:
+          allowance.reason === "no-credits"
+            ? `Those credits are spent. Another ${PACK_SITES} sites is $${PACK_PRICE_USD}.`
+            : `The free site has been used from this connection. ${PACK_SITES} more is $${PACK_PRICE_USD}.`,
+        needsCredits: true,
+      },
+      { status: 402 }
+    );
+  }
+
   const client = new Anthropic();
   const content: Anthropic.ContentBlockParam[] = [
     ...input.images.map(
@@ -138,9 +159,11 @@ export async function POST(req: NextRequest) {
 
     if (response.stop_reason === "refusal") {
       logger.warn("generate-site declined", { category: response.stop_details?.category });
+      await allowance.release();
       return NextResponse.json({ error: "That description could not be turned into a site. Try describing the business plainly." }, { status: 422 });
     }
     if (response.stop_reason === "max_tokens" || !response.parsed_output) {
+      await allowance.release();
       return NextResponse.json({ error: "The site came back incomplete. Try a shorter description." }, { status: 502 });
     }
 
@@ -157,6 +180,7 @@ export async function POST(req: NextRequest) {
         theme: theme.success ? null : theme.error.issues[0]?.message,
         style: style.success ? null : style.error.issues[0]?.message,
       });
+      await allowance.release();
       return NextResponse.json({ error: "The site came back malformed. Try again." }, { status: 502 });
     }
 
@@ -167,9 +191,13 @@ export async function POST(req: NextRequest) {
       outputTokens: usage.output_tokens,
       images: input.images.length,
       todayAcrossEveryone: today,
+      paid: allowance.kind === "paid",
     });
 
+    const left = hash ? (await balanceOf(hash))?.remaining ?? 0 : 0;
     return NextResponse.json({
+      remaining: left,
+      usedFreeSite: allowance.kind === "free",
       siteName: site.siteName,
       siteDescription: site.siteDescription,
       style: style.data,
@@ -177,6 +205,7 @@ export async function POST(req: NextRequest) {
       sections: sections.data,
     });
   } catch (err) {
+    await allowance.release();
     if (err instanceof Anthropic.RateLimitError) {
       return NextResponse.json({ error: "Busy right now. Try again in a minute." }, { status: 429 });
     }
