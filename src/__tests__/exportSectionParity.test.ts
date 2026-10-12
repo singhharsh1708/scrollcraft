@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import type { NextRequest } from "next/server";
 import { readFileSync } from "node:fs";
 import { SECTION_LAYOUTS } from "@/lib/siteSchema";
+import { fillSections } from "@/lib/editorSections";
 import { layoutStyle } from "@/lib/layoutStyles";
 import { TEMPLATES } from "@/lib/templates";
 
@@ -320,11 +321,17 @@ describe("the editor hands the exporter what the template asked for", () => {
     // carry none of the three, and both the renderer and the exporter read
     // `s.align ?? L.align` — so the stamp won and every left, right and lower-third
     // composition in the catalogue exported dead centre.
-    const fn = EDITOR_SRC.slice(EDITOR_SRC.indexOf("function toEditorSections"), EDITOR_SRC.indexOf("function EditorInner"));
-    expect(fn).toContain("const L = layoutStyle(s.layout);");
-    for (const line of ["textAlign: s.textAlign ?? L.textAlign,", "align: s.align ?? L.align,", "justify: s.justify ?? L.justify,"]) {
-      expect(fn, `${line} is missing`).toContain(line);
+    const placements = ["left", "right", "lower-third", "upper-third", "center"] as const;
+    const filled = fillSections(placements.map((layout) => ({ layout, heading: layout })), {}, "t");
+    for (const [i, layout] of placements.entries()) {
+      const L = layoutStyle(layout);
+      expect(filled[i].textAlign, `${layout} textAlign`).toBe(L.textAlign);
+      expect(filled[i].align, `${layout} align`).toBe(L.align);
+      expect(filled[i].justify, `${layout} justify`).toBe(L.justify);
     }
+    // A section that does set them keeps what it set.
+    const [explicit] = fillSections([{ layout: "left", textAlign: "right", align: "center", justify: "flex-end" }], {}, "t");
+    expect([explicit.textAlign, explicit.align, explicit.justify]).toEqual(["right", "center", "flex-end"]);
     // From the exporter's own table, not a second copy of the placement rules.
     expect(layoutStyle("lower-third")).toMatchObject({ align: "flex-end", justify: "flex-start", textAlign: "left" });
   });

@@ -127,8 +127,8 @@ export async function POST(req: NextRequest) {
       {
         error:
           allowance.reason === "no-credits"
-            ? `Those credits are spent. Another ${PACK_SITES} sites is $${PACK_PRICE_USD}.`
-            : `The free site has been used from this connection. ${PACK_SITES} more is $${PACK_PRICE_USD}.`,
+            ? `Those credits are spent. Another ${PACK_SITES} sites cost $${PACK_PRICE_USD}.`
+            : `The free site has been used from this connection. ${PACK_SITES} more cost $${PACK_PRICE_USD}.`,
         needsCredits: true,
       },
       { status: 402 }
