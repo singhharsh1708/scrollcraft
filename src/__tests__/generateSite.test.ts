@@ -253,6 +253,31 @@ describe("the route refuses before it calls out", () => {
     expect(rateLimitMock).not.toHaveBeenCalled();
   });
 
+  it("checks a per minute allowance and a per day one, and says which it was", async () => {
+    // One mock answering both checks cannot tell them apart: with the per minute check
+    // deleted the test still saw a 429 from the daily one. Assert the buckets.
+    rateLimitMock.mockResolvedValue({ allowed: true });
+    await post({ description: DESCRIPTION });
+    const buckets = rateLimitMock.mock.calls.map((call) => call[1]?.bucket);
+    expect(buckets).toContain("generate-site");
+    expect(buckets).toContain("generate-site-day");
+    const perMinute = rateLimitMock.mock.calls.find((call) => call[1]?.bucket === "generate-site")?.[1];
+    const perDay = rateLimitMock.mock.calls.find((call) => call[1]?.bucket === "generate-site-day")?.[1];
+    expect(perMinute).toMatchObject({ limit: 3, windowMs: 60_000 });
+    expect(perDay?.limit).toBeLessThanOrEqual(20);
+  });
+
+  it("stops at the minute allowance before spending anything", async () => {
+    // Only the first check refuses; the day still has room. A 429 here can only come
+    // from the per minute limiter, and nothing may reach the model.
+    rateLimitMock.mockImplementation(async (_ip: string, opts: { bucket: string }) => ({
+      allowed: opts.bucket !== "generate-site",
+    }));
+    const res = await post({ description: DESCRIPTION });
+    expect(res.status).toBe(429);
+    expect(sdk.parse).not.toHaveBeenCalled();
+  });
+
   it("answers 429 once the address is over its allowance", async () => {
     rateLimitMock.mockResolvedValue({ allowed: false });
     const res = await post({ description: DESCRIPTION });
