@@ -82,7 +82,7 @@ beforeEach(async () => {
 describe("the balance says what this browser may write", () => {
   it("reports the free site and the pack price to a browser with no key", async () => {
     const body = await (await get()).json();
-    expect(body).toEqual({ free: 1, pack: 5, hasKey: false, remaining: 0, total: 0, signedIn: false });
+    expect(body).toEqual({ free: 1, pack: 5, hasKey: false, remaining: 0, total: 0, signedIn: false, canSignIn: false });
   });
 
   it("reads the balance of the key the cookie carries", async () => {
@@ -94,6 +94,7 @@ describe("the balance says what this browser may write", () => {
       remaining: 7,
       total: 10,
       signedIn: false,
+      canSignIn: false,
     });
   });
 

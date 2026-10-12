@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { storeDocument } from "@/lib/frameStorage";
 import { MAX_DESCRIPTION, MAX_IMAGES } from "@/lib/briefLimits";
 import { HANDOFF_KEY } from "@/components/PromptHero";
+import OutOfCredits from "@/components/OutOfCredits";
 import type { Section } from "@/lib/siteSchema";
 
 /**
@@ -55,7 +56,12 @@ export default function DescribeClient() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [needsCredits, setNeedsCredits] = useState(false);
-  const [allowance, setAllowance] = useState<{ hasKey: boolean; remaining: number; signedIn: boolean } | null>(null);
+  const [allowance, setAllowance] = useState<{
+    hasKey: boolean;
+    remaining: number;
+    signedIn: boolean;
+    canSignIn: boolean;
+  } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   // Whatever was typed into the box on the landing page, so nobody writes it twice.
@@ -77,12 +83,13 @@ export default function DescribeClient() {
     let live = true;
     fetch("/api/credits")
       .then((r) => r.json())
-      .then((body: { hasKey?: boolean; remaining?: number; signedIn?: boolean }) => {
+      .then((body: { hasKey?: boolean; remaining?: number; signedIn?: boolean; canSignIn?: boolean }) => {
         if (live) {
           setAllowance({
             hasKey: Boolean(body.hasKey),
             remaining: body.remaining ?? 0,
             signedIn: Boolean(body.signedIn),
+            canSignIn: Boolean(body.canSignIn),
           });
         }
       })
@@ -164,7 +171,7 @@ export default function DescribeClient() {
         </p>
 
         <ol className="mt-10 grid gap-5 border-y border-border py-7 sm:grid-cols-3">
-          {WHAT_HAPPENS.map(([title, detail], i) => (
+          {WHAT_HAPPENS.map(([title, detail]) => (
             <li key={title}>
               <p className="text-sm text-foreground">{title}</p>
               <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{detail}</p>
@@ -241,17 +248,16 @@ export default function DescribeClient() {
           </div>
         </div>
 
-        {error && (
-          <p role="alert" className="mt-6 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-foreground">
+        {error && needsCredits && (
+          <OutOfCredits
+            message={error}
+            canSignIn={Boolean(allowance?.canSignIn)}
+            signedIn={Boolean(allowance?.signedIn)}
+          />
+        )}
+        {error && !needsCredits && (
+          <p role="alert" className="mt-6 rounded-xl border border-destructive/40 bg-destructive/10 p-4 text-sm text-foreground">
             {error}
-            {needsCredits && (
-              <>
-                {" "}
-                <Link href="/pricing" className="underline underline-offset-4">
-                  See what a pack costs
-                </Link>
-              </>
-            )}
           </p>
         )}
 
