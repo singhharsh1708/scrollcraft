@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
 import { ArrowUpRight, Film, LayoutTemplate, PenLine, Terminal } from "lucide-react";
+import PromptHero from "@/components/PromptHero";
 import HeroSequence, { type HeroTemplate } from "@/components/HeroSequence";
 import Navbar from "@/components/Navbar";
 import StylePreview from "@/components/StylePreview";
@@ -444,40 +445,31 @@ export default function HomeClient({
 
   return (
     <main className="min-h-screen overflow-x-clip bg-background text-foreground">
-      <Navbar />
+      <Navbar variant="floating" />
 
       {/* Hero */}
+      <PromptHero reducedMotion={reduced} />
+
+      {/* The demo that used to be the hero: it earns its place by showing the thing
+          working, which no amount of copy does. */}
       <HeroSequence template={heroTemplate} templateCount={stats.templates} reducedMotion={reduced}>
-        <h1 className="lc-display text-[2.6rem] sm:text-6xl lg:text-[3.9rem]">
-          <span className="block text-foreground">Describe your business.</span>
-          <span className="block text-primary-ink">Get a cinematic scroll site.</span>
-        </h1>
+        <h2 className="lc-display text-[2.2rem] sm:text-5xl lg:text-[3.2rem]">
+          <span className="block text-foreground">This is what comes out.</span>
+          <span className="block text-primary-ink">Scroll, and the screen plays it.</span>
+        </h2>
         <p className="mt-7 max-w-xl text-lg leading-relaxed text-muted-foreground sm:text-xl">
-          Write a few sentences about what you do, add a photograph or two, and get a finished
-          site to edit and download as plain HTML. Or start from a template and skip the writing.
+          A finished site from the catalogue, played by the same engine your own site is
+          built on. Nothing here is a video: the background is drawn frame by frame as the
+          page scrolls, and the export behaves the same way on your own host.
         </p>
         <div className="mt-10 grid w-full max-w-sm grid-cols-2 gap-3 sm:flex sm:w-auto sm:max-w-none">
-          <Link href="/describe" className="lc-btn lc-btn-solid">
-            Write my site
+          <Link href="/examples" className="lc-btn lc-btn-ghost">
+            See the examples
           </Link>
           <Link href="/templates" className="lc-btn lc-btn-ghost">
             Browse templates
           </Link>
         </div>
-        {/* The offer, in the hero, because the first question anybody has about a tool
-            that writes for them is what it costs. */}
-        <div className="relative z-10 mt-8 flex w-full max-w-xl flex-col gap-3 rounded-lg border border-primary-ink/30 bg-card p-4 shadow-[0_20px_60px_-30px_rgba(0,0,0,0.9)] sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="lc-mono text-sm text-primary-ink">Your first site, free</p>
-            <p className="lc-mono mt-1 text-xs text-muted-foreground">
-              Then five for $20, bought once · nothing renews · editing and export always free
-            </p>
-          </div>
-          <Link href="/pricing" className="lc-btn lc-btn-ghost lc-btn-sm shrink-0">
-            See pricing
-          </Link>
-        </div>
-        <p className="lc-mono mt-12 hidden text-sm text-primary-ink lg:block">Scroll, and the screen plays the site</p>
       </HeroSequence>
 
       {/* Social proof strip */}
