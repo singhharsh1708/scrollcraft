@@ -17,14 +17,18 @@ import { endSession, startGitHubSignIn } from "@/app/signin/actions";
  * through, blurred and saturated, the way Apple's does.
  */
 
+/**
+ * Four links, not eight.
+ *
+ * Somebody arriving wants a site, and the nav was offering them the component kit, the
+ * preset library and the release notes alongside the product. Those are for people who
+ * already use this, and the footer is where they now live.
+ */
 const NAV_LINKS = [
-  { href: "/examples",  label: "Examples"  },
   { href: "/describe",  label: "Describe"  },
   { href: "/templates", label: "Templates" },
-  { href: "/ui",        label: "Components" },
-  { href: "/presets",   label: "Presets"   },
+  { href: "/examples",  label: "Examples"  },
   { href: "/pricing",   label: "Pricing"   },
-  { href: "/changelog", label: "Changelog" },
 ];
 
 const DOCS_URL = `${GITHUB_REPO_URL}#readme`;
