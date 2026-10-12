@@ -42,6 +42,9 @@ export async function GET(req: NextRequest) {
     // An account only counts once it has a pack, or somebody who signed in and has never
     // bought anything would be shown a balance instead of the box for pasting a key.
     hasKey: Boolean(hash) || (balance?.total ?? 0) > 0,
+    // Where the credits live, so the page can say "on your account" or "on this browser"
+    // rather than guessing and being wrong for half the people reading it.
+    signedIn: Boolean(await accountIdentity()),
     remaining: balance?.remaining ?? 0,
     total: balance?.total ?? 0,
   });

@@ -242,6 +242,7 @@ describe("a signed-in visitor spends their account's credits, not the browser's"
       hasKey: true,
       remaining: 7,
       total: 10,
+      signedIn: true,
     });
   });
 

@@ -16,13 +16,16 @@ export default function KeyBox({ checkout }: { checkout: string }) {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [remaining, setRemaining] = useState<number | null>(null);
+  const [signedIn, setSignedIn] = useState(false);
 
   useEffect(() => {
     let live = true;
     fetch("/api/credits")
       .then((r) => r.json())
-      .then((body: { hasKey?: boolean; remaining?: number }) => {
-        if (live && body.hasKey) setRemaining(body.remaining ?? 0);
+      .then((body: { hasKey?: boolean; remaining?: number; signedIn?: boolean }) => {
+        if (!live) return;
+        setSignedIn(Boolean(body.signedIn));
+        if (body.hasKey) setRemaining(body.remaining ?? 0);
       })
       .catch(() => {});
     return () => {
@@ -46,7 +49,11 @@ export default function KeyBox({ checkout }: { checkout: string }) {
       }
       setRemaining(body.remaining ?? 0);
       setKey("");
-      setMessage(`${body.remaining} ${body.remaining === 1 ? "site" : "sites"} on this browser.`);
+      setMessage(
+        signedIn
+          ? `${body.remaining} ${body.remaining === 1 ? "site" : "sites"} on your account, in any browser you sign in on.`
+          : `${body.remaining} ${body.remaining === 1 ? "site" : "sites"} on this browser.`
+      );
     } catch {
       setMessage("Could not reach the server. Check your connection.");
     } finally {
@@ -84,7 +91,7 @@ export default function KeyBox({ checkout }: { checkout: string }) {
         </div>
         {remaining !== null && !message && (
           <p className="mt-3 text-sm text-muted-foreground">
-            {remaining} {remaining === 1 ? "site" : "sites"} left on this browser.
+            {remaining} {remaining === 1 ? "site" : "sites"} left {signedIn ? "on your account" : "on this browser"}.
           </p>
         )}
         {message && (

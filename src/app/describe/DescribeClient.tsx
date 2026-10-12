@@ -55,7 +55,7 @@ export default function DescribeClient() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [needsCredits, setNeedsCredits] = useState(false);
-  const [allowance, setAllowance] = useState<{ hasKey: boolean; remaining: number } | null>(null);
+  const [allowance, setAllowance] = useState<{ hasKey: boolean; remaining: number; signedIn: boolean } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   // Whatever was typed into the box on the landing page, so nobody writes it twice.
@@ -77,8 +77,14 @@ export default function DescribeClient() {
     let live = true;
     fetch("/api/credits")
       .then((r) => r.json())
-      .then((body: { hasKey?: boolean; remaining?: number }) => {
-        if (live) setAllowance({ hasKey: Boolean(body.hasKey), remaining: body.remaining ?? 0 });
+      .then((body: { hasKey?: boolean; remaining?: number; signedIn?: boolean }) => {
+        if (live) {
+          setAllowance({
+            hasKey: Boolean(body.hasKey),
+            remaining: body.remaining ?? 0,
+            signedIn: Boolean(body.signedIn),
+          });
+        }
       })
       .catch(() => {});
     return () => {
@@ -263,13 +269,19 @@ export default function DescribeClient() {
         <div className="mt-5 text-sm text-muted-foreground">
           {allowance?.hasKey ? (
             <>
-              {allowance.remaining} {allowance.remaining === 1 ? "site" : "sites"} left on this browser.{" "}
+              {allowance.remaining} {allowance.remaining === 1 ? "site" : "sites"} left{" "}
+              {allowance.signedIn ? "on your account" : "on this browser"}.{" "}
               <Link href="/pricing" className="underline underline-offset-4">Top up</Link>
             </>
           ) : (
             <>
               The first site is free. Five more are $20.{" "}
               <Link href="/pricing" className="underline underline-offset-4">Pricing</Link>
+              {allowance && !allowance.signedIn && (
+                <>
+                  {" "}Bought a pack somewhere else? Sign in and it follows you.
+                </>
+              )}
             </>
           )}
         </div>
