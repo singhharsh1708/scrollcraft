@@ -18,11 +18,22 @@ import { logger } from "@/lib/logger";
  */
 
 export const FREE_SITES = 1;
+/**
+ * Free sites one address may account for in a month, whoever is behind it.
+ *
+ * The free site follows the browser rather than the address, because an address is not a
+ * person: most mobile traffic in India leaves a carrier through shared addresses, so
+ * counting per address hands one stranger's free site to a street full of people. This is
+ * the aggregate guard behind that, for somebody who simply clears their cookies.
+ */
+export const FREE_PER_IP = 5;
 export const PACK_SITES = 5;
 export const PACK_PRICE_USD = 20;
 
 /** The cookie holding the hash of the licence key this browser pasted. */
 export const KEY_COOKIE = "sc_key";
+/** The cookie naming this browser, so its free site is its own. */
+export const BROWSER_COOKIE = "sc_fid";
 const COOKIE_MAX_AGE = 400 * 24 * 60 * 60;
 
 let redis: Redis | null = null;
@@ -48,18 +59,26 @@ export function cookieOptions() {
   };
 }
 
-/** The key hash this browser carries, read from the request's own cookie header. */
-export function keyHashFrom(req: Request): string | null {
+function cookieValue(req: Request, name: string): string | null {
   const header = req.headers.get("cookie");
   if (!header) return null;
   for (const part of header.split(";")) {
-    const [name, ...rest] = part.trim().split("=");
-    if (name === KEY_COOKIE) {
-      const value = decodeURIComponent(rest.join("="));
-      return /^[a-f0-9]{64}$/.test(value) ? value : null;
-    }
+    const [key, ...rest] = part.trim().split("=");
+    if (key === name) return decodeURIComponent(rest.join("="));
   }
   return null;
+}
+
+/** The key hash this browser carries, read from the request's own cookie header. */
+export function keyHashFrom(req: Request): string | null {
+  const value = cookieValue(req, KEY_COOKIE);
+  return value && /^[a-f0-9]{64}$/.test(value) ? value : null;
+}
+
+/** The name this browser goes by for its free site, or null if it has not been given one. */
+export function browserTokenFrom(req: Request): string | null {
+  const value = cookieValue(req, BROWSER_COOKIE);
+  return value && /^[a-zA-Z0-9_-]{8,64}$/.test(value) ? value : null;
 }
 
 const entitlementKey = (hash: string) => `sc_ent:${hash}`;
@@ -67,6 +86,7 @@ const orderKey = (orderId: string) => `sc_ord:${orderId}`;
 const orderOwnerKey = (orderId: string) => `sc_ordkey:${orderId}`;
 const refundKey = (orderId: string) => `sc_ref:${orderId}`;
 const freeKey = (ip: string) => `sc_free:${ip}:${new Date().toISOString().slice(0, 7)}`;
+const browserKey = (token: string) => `sc_freeb:${token}`;
 
 /**
  * Spend one credit, or say there was none.
@@ -103,7 +123,7 @@ export async function balanceOf(hash: string): Promise<Balance | null> {
 
 export type Allowance =
   | { ok: true; kind: "free" | "paid"; release: () => Promise<void> }
-  | { ok: false; reason: "free-used" | "no-credits" | "unavailable" };
+  | { ok: false; reason: "free-used" | "no-credits" | "address-busy" | "unavailable" };
 
 /**
  * Take one site's worth of allowance before the model is called.
@@ -113,7 +133,7 @@ export type Allowance =
  * its storage and a phone can turn its data off and on, so the only thing worth counting
  * is the one the visitor does not hold.
  */
-export async function takeAllowance(ip: string, hash: string | null): Promise<Allowance> {
+export async function takeAllowance(ip: string, hash: string | null, browser: string): Promise<Allowance> {
   const r = store();
   if (!r) {
     // No store means nothing can be counted. In production that is a reason to stop
@@ -126,7 +146,7 @@ export async function takeAllowance(ip: string, hash: string | null): Promise<Al
   }
 
   try {
-    return await spend(r, ip, hash);
+    return await spend(r, ip, hash, browser);
   } catch (err) {
     // Nothing could be counted, so nothing may be spent: the alternative is an
     // unbounded number of model calls billed to us during an outage.
@@ -135,7 +155,7 @@ export async function takeAllowance(ip: string, hash: string | null): Promise<Al
   }
 }
 
-async function spend(r: Redis, ip: string, hash: string | null): Promise<Allowance> {
+async function spend(r: Redis, ip: string, hash: string | null, browser: string): Promise<Allowance> {
   if (hash) {
     const key = entitlementKey(hash);
     const spent = (await r.eval(SPEND, [key], [])) as number;
@@ -155,20 +175,34 @@ async function spend(r: Redis, ip: string, hash: string | null): Promise<Allowan
     }
   }
 
-  const key = freeKey(ip);
-  const taken = await r.incr(key);
-  if (taken === 1) await r.expire(key, 70 * 24 * 60 * 60);
+  // This browser's own allowance first, then the address's, so one is not spent when the
+  // other refuses. Both are given back together.
+  const mine = browserKey(browser);
+  const taken = await r.incr(mine);
+  if (taken === 1) await r.expire(mine, 400 * 24 * 60 * 60);
   if (taken > FREE_SITES) {
-    await r.decr(key);
+    await r.decr(mine);
     return { ok: false, reason: hash ? "no-credits" : "free-used" };
   }
+
+  const here = freeKey(ip);
+  const fromHere = await r.incr(here);
+  if (fromHere === 1) await r.expire(here, 70 * 24 * 60 * 60);
+  if (fromHere > FREE_PER_IP) {
+    await r.decr(here);
+    await r.decr(mine);
+    return { ok: false, reason: "address-busy" };
+  }
+
   return {
     ok: true,
     kind: "free",
     release: async () => {
       try {
-        const left = await r.decr(key);
-        if (left < 0) await r.set(key, 0);
+        for (const key of [mine, here]) {
+          const left = await r.decr(key);
+          if (left < 0) await r.set(key, 0);
+        }
       } catch (err) {
         logger.error("credits: could not give the free site back", { err });
       }

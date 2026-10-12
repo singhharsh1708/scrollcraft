@@ -12,11 +12,29 @@ export default function CookiesPage() {
         <h1>Cookie Policy</h1>
         <p className="text-muted-foreground">Last updated: August 2026</p>
 
-        <h2>We set none</h2>
+        <h2>Two, and only around the site writer</h2>
         <p>
-          ScrollCraft sets no cookies. There are no accounts, so there is no session to
-          keep, and no advertising, analytics or cross-site tracking cookies are used
-          either.
+          There are no accounts, so there is no session to keep, and no advertising,
+          analytics or cross-site tracking cookies are used. Writing a site from a
+          description is the one paid thing here, and it needs to tell one browser from
+          another, so it sets two cookies and no more:
+        </p>
+        <ul>
+          <li>
+            <strong>sc_fid</strong> &mdash; a random name for this browser, set the first
+            time you have a site written. It is what makes your free site yours rather
+            than one shared with everybody on the same network. It holds nothing about
+            you and is never read by anybody else.
+          </li>
+          <li>
+            <strong>sc_key</strong> &mdash; set only if you buy a pack and paste your
+            licence key. It holds a one-way hash of that key, so this browser can spend
+            what you paid for.
+          </li>
+        </ul>
+        <p>
+          Neither is readable by scripts on the page, neither leaves this site, and
+          clearing them costs you nothing except pasting your key again.
         </p>
 
         <h2>What is stored on your device</h2>

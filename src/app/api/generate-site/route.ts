@@ -7,7 +7,7 @@ import { redisCredentials } from "@/lib/redisCredentials";
 import { logger } from "@/lib/logger";
 import { sectionsSchema, themeSchema, siteStyleSchema } from "@/lib/siteSchema";
 import { BRIEF_RULES, briefSchema, briefToSite, checkBriefInput } from "@/lib/siteBrief";
-import { PACK_PRICE_USD, PACK_SITES, balanceOf, keyHashFrom, takeAllowance } from "@/lib/credits";
+import { BROWSER_COOKIE, PACK_PRICE_USD, PACK_SITES, balanceOf, browserTokenFrom, cookieOptions, keyHashFrom, takeAllowance } from "@/lib/credits";
 
 /**
  * A description in, a site out.
@@ -118,12 +118,25 @@ export async function POST(req: NextRequest) {
   // One site's worth of allowance, taken before the call and given back if the call
   // does not produce a site. Nobody should pay for a 502.
   const hash = keyHashFrom(req);
-  const allowance = await takeAllowance(ip, hash);
+  // A browser that has not been here before is given a name, so its free site is its own
+  // rather than one shared with everybody behind the same address.
+  const browser = browserTokenFrom(req) ?? crypto.randomUUID();
+  const remember = (response: NextResponse) => {
+    response.cookies.set(BROWSER_COOKIE, browser, cookieOptions());
+    return response;
+  };
+  const allowance = await takeAllowance(ip, hash, browser);
   if (!allowance.ok) {
     if (allowance.reason === "unavailable") {
       return NextResponse.json({ error: "Site generation is unavailable for a moment. Try again shortly." }, { status: 503 });
     }
-    return NextResponse.json(
+    if (allowance.reason === "address-busy") {
+      return remember(NextResponse.json(
+        { error: "That is as many free sites as this connection can have this month. A pack of 5 is $20.", needsCredits: true },
+        { status: 402 }
+      ));
+    }
+    return remember(NextResponse.json(
       {
         error:
           allowance.reason === "no-credits"
@@ -132,7 +145,7 @@ export async function POST(req: NextRequest) {
         needsCredits: true,
       },
       { status: 402 }
-    );
+    ));
   }
 
   const client = new Anthropic();
@@ -195,7 +208,7 @@ export async function POST(req: NextRequest) {
     });
 
     const left = hash ? (await balanceOf(hash))?.remaining ?? 0 : 0;
-    return NextResponse.json({
+    return remember(NextResponse.json({
       remaining: left,
       usedFreeSite: allowance.kind === "free",
       siteName: site.siteName,
@@ -203,7 +216,7 @@ export async function POST(req: NextRequest) {
       style: style.data,
       theme: theme.data,
       sections: sections.data,
-    });
+    }));
   } catch (err) {
     await allowance.release();
     if (err instanceof Anthropic.RateLimitError) {
