@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { createHash, createHmac } from "node:crypto";
 import type { NextRequest } from "next/server";
-import { peek, peekHash, putHash, putKey, resetFakeRedis } from "./stubs/fakeRedis";
+import { breakFakeRedis, peek, peekHash, putHash, putKey, resetFakeRedis } from "./stubs/fakeRedis";
 
 /**
  * The webhook is the only unauthenticated route in the app that hands out something worth
@@ -251,5 +251,25 @@ describe("anything else is acknowledged and dropped", () => {
     const res = await deliver("{not json");
     expect(res.status).toBe(400);
     expect((await res.json()).error).toBe("Expected JSON.");
+  });
+});
+
+describe("a store that cannot be reached asks for the delivery again", () => {
+  it("answers 500 to a purchase, because the money is taken and the credits are not given", async () => {
+    breakFakeRedis();
+    const res = await deliver(licenceCreated());
+    expect(res.status).toBe(500);
+    expect((await res.json()).error).toMatch(/Could not record/);
+  });
+
+  it("answers 500 to a refund rather than reporting a revocation that did not happen", async () => {
+    putKey("sc_ordkey:4242", HASH);
+    breakFakeRedis();
+    expect((await deliver(refunded(4242))).status).toBe(500);
+  });
+
+  it("still refuses a bad signature while the store is down", async () => {
+    breakFakeRedis();
+    expect((await deliver(licenceCreated(), "deadbeef")).status).toBe(400);
   });
 });

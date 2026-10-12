@@ -14,17 +14,18 @@
 type Hash = Record<string, string>;
 type Value = string | number | Hash;
 
-type State = { data: Map<string, Value>; ttl: Map<string, number> };
+type State = { data: Map<string, Value>; ttl: Map<string, number>; broken: boolean };
 
 const globalState = globalThis as typeof globalThis & { __scFakeRedis?: State };
 
 function state(): State {
-  globalState.__scFakeRedis ??= { data: new Map(), ttl: new Map() };
+  globalState.__scFakeRedis ??= { data: new Map(), ttl: new Map(), broken: false };
   return globalState.__scFakeRedis;
 }
 
-function tick(): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, 0));
+async function tick(): Promise<void> {
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  if (state().broken) throw new Error("fake redis is pretending to be unreachable");
 }
 
 function hashAt(key: string): Hash {
@@ -35,10 +36,19 @@ function hashAt(key: string): Hash {
   return fresh;
 }
 
-/** Forget everything, including the expiries. Call this between tests. */
+/** Forget everything, including the expiries and any pretend outage. */
 export function resetFakeRedis(): void {
   state().data.clear();
   state().ttl.clear();
+  state().broken = false;
+}
+
+/**
+ * Make every call reject, which is what an Upstash outage looks like from here. The
+ * credit code has to answer "unavailable" to that rather than quietly generating for free.
+ */
+export function breakFakeRedis(broken = true): void {
+  state().broken = broken;
 }
 
 /** What is under a plain key, for a test that wants to look rather than go through a method. */

@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { createHash } from "node:crypto";
-import { peek, peekHash, peekTtl, putHash, resetFakeRedis } from "./stubs/fakeRedis";
+import { breakFakeRedis, peek, peekHash, peekTtl, putHash, resetFakeRedis } from "./stubs/fakeRedis";
 
 /**
  * Entitlements, which is the one part of this app where a mistake costs somebody money.
@@ -315,5 +315,34 @@ describe("with no store configured nothing is handed out in production", () => {
     expect(await credits.grantPack(HASH, "order-9")).toBe("unavailable");
     expect(await credits.revokePack("order-9")).toBe("unavailable");
     expect(await credits.balanceOf(HASH)).toBeNull();
+  });
+});
+
+describe("a store that refuses is not the same as an answer", () => {
+  it("refuses to generate rather than treating an outage as a free site", async () => {
+    putHash(entitlement, { total: 5, used: 0 });
+    breakFakeRedis();
+    expect(await credits.takeAllowance(IP, HASH)).toEqual({ ok: false, reason: "unavailable" });
+    expect(await credits.takeAllowance(IP, null)).toEqual({ ok: false, reason: "unavailable" });
+  });
+
+  it("says a purchase was not recorded, which is what makes the webhook retry", async () => {
+    breakFakeRedis();
+    expect(await credits.grantPack(HASH, "order-9")).toBe("unavailable");
+    expect(await credits.revokePack("order-9")).toBe("unavailable");
+  });
+
+  it("answers an unknown balance rather than a zero one", async () => {
+    putHash(entitlement, { total: 5, used: 0 });
+    breakFakeRedis();
+    expect(await credits.balanceOf(HASH)).toBeNull();
+  });
+
+  it("does not lose the credits once the store comes back", async () => {
+    putHash(entitlement, { total: 5, used: 0 });
+    breakFakeRedis();
+    await credits.takeAllowance(IP, HASH);
+    breakFakeRedis(false);
+    expect((await credits.balanceOf(HASH))?.remaining).toBe(5);
   });
 });
