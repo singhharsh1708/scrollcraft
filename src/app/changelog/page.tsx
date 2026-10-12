@@ -69,7 +69,7 @@ const ENTRIES = [
       { type: "new", text: "Fully open source and free. No accounts, no database, no payment of any kind" },
       { type: "new", text: "Runs with an empty environment: clone it, npm install, npm run dev. Nothing to configure" },
       { type: "new", text: "Video frames are extracted in your browser — your footage never leaves the device" },
-      { type: "new", text: "Exports ship a 404 page, favicon, social card, robots.txt and configs for Netlify, Vercel, GitHub Pages and Cloudflare" },
+      { type: "new", text: "Exports ship a 404 page, favicon, social card, robots.txt, configs for Netlify, Vercel and GitHub Pages, and written steps for Cloudflare Pages, which needs no config file" },
       { type: "improved", text: "All 21 templates are free; the 8 that were sold individually are no longer gated" },
       { type: "removed", text: "Sign-in, the dashboard, saved sites and hosted /s/ links — the tool keeps your work in your own browser and exports it" },
       { type: "removed", text: "Razorpay, Lemon Squeezy, subscription plans and premium template purchases" },

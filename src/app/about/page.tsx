@@ -28,7 +28,7 @@ const VALUES = [
   { icon: Sparkles, title: "Ready to ship", desc: "Every template is a finished site, not a blank canvas. Pick one and change the words." },
   { icon: Zap, title: "Nothing to wait for", desc: "No signup, no build step, no keys. Open the editor and you are already working." },
   { icon: Globe, title: "Own your code", desc: "Everything you export belongs to you. No lock-in, ever." },
-  { icon: Users, title: "Built for builders", desc: "Freelancers, founders, agencies — we build for people who make things." },
+  { icon: Users, title: "Built for builders", desc: "Freelancers, founders and agencies: people who make things and need a site that looks like they did." },
 ];
 
 export default function AboutPage() {
@@ -132,8 +132,8 @@ export default function AboutPage() {
       {/* CTA */}
       <section className="border-t border-border px-6 py-28 text-center">
         <h2 className="lc-display text-5xl sm:text-6xl">
-          <span className="block">Come build</span>
-          <span className="block text-primary-ink">with us</span>
+          <span className="block">Build something</span>
+          <span className="block text-primary-ink">with it</span>
         </h2>
         <p className="mx-auto mb-10 mt-6 max-w-md text-lg text-muted-foreground">
           Nothing to install. Describe the business and have the first draft written, or

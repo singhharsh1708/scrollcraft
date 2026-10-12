@@ -199,8 +199,11 @@ describe("the page that shows the kit", () => {
     expect(CLIENT).toContain("lightTokens");
   });
 
-  it("is reachable: in the nav and in the sitemap", () => {
-    expect(readFileSync("src/components/Navbar.tsx", "utf8")).toContain('href: "/ui"');
+  it("is reachable: in the footer and in the sitemap", () => {
+    // It left the nav when that grew to eight links. The kit is for people already
+    // using this, so the footer is the right place, but it still has to be linked from
+    // every page and still has to be in the sitemap.
+    expect(readFileSync("src/components/SiteFooter.tsx", "utf8")).toContain('href: "/ui"');
     expect(readFileSync("src/app/sitemap.ts", "utf8")).toContain("${siteUrl}/ui");
   });
 });

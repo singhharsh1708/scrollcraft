@@ -641,7 +641,7 @@ export default function HomeClient({
             {[
               [String(stats.templates), "Finished templates"],
               [String(stats.categories), "Categories covered"],
-              ["1", "Sites written free, before anything is paid"],
+              ["~20s", "From a paragraph to a site you can edit"],
             ].map(([n, label]) => (
               <div key={label} className="flex flex-col-reverse">
                 <dt className="lc-mono mt-3 text-sm text-muted-foreground">{label}</dt>
