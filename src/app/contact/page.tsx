@@ -146,7 +146,7 @@ export default function ContactPage() {
                   <Textarea id="contact-message" value={form.message} onChange={e => setForm(f => ({ ...f, message: e.target.value }))} placeholder={form.topic === "Custom build" ? "What is the site for, what do you already have (footage, copy, brand), and when do you need it?" : "Tell us what's on your mind..."} className="bg-background border-border min-h-[140px] resize-none" />
                 </div>
                 <button type="submit" disabled={loading} className="lc-btn lc-btn-solid w-full disabled:opacity-60">
-                  {loading ? "Opening…" : "Compose message"}
+                  {loading ? "Opening…" : "Open in your email app"}
                 </button>
               </form>
             )}
