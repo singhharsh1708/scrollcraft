@@ -392,7 +392,7 @@ export const TEMPLATES: Template[] = [
     name: "Signal",
     tagline: "A conference page that answers the only three questions",
     category: "Event",
-    tags: ["Bold", "Cyan", "Dated"],
+    tags: ["Bold", "Cyan", "Schedule"],
     style: "geometric",
     colors: ["#03121a", "#0a5f6e", "#010a0f"],
     gradient: "from-cyan-900 via-teal-950 to-slate-950",
@@ -1120,7 +1120,7 @@ export const TEMPLATES: Template[] = [
   {
     slug: "aurabeauty",
     name: "AuraBeauty",
-    tagline: "Luxury skincare, delivered to your door",
+    tagline: "A skincare shop page that keeps one product on screen at a time",
     category: "E-commerce",
     tags: ["Rose", "Luxury", "Retail"],
     style: "wave",
@@ -1185,7 +1185,7 @@ export const TEMPLATES: Template[] = [
   {
     slug: "nightrealm",
     name: "NightRealm",
-    tagline: "Enter the world beyond the veil",
+    tagline: "A game page that opens on atmosphere rather than a feature list",
     category: "Gaming",
     tags: ["Neon", "Gaming", "Loud"],
     style: "particles",
@@ -1250,7 +1250,7 @@ export const TEMPLATES: Template[] = [
   {
     slug: "tripvault",
     name: "TripVault",
-    tagline: "Every adventure, beautifully organised",
+    tagline: "A travel app page built around one trip at a time",
     category: "Travel",
     tags: ["Sky", "App", "Friendly"],
     style: "gradient",
@@ -1315,7 +1315,7 @@ export const TEMPLATES: Template[] = [
   {
     slug: "greenshift",
     name: "GreenShift",
-    tagline: "Climate technology for a liveable planet",
+    tagline: "A climate startup page that leads with what it actually does",
     category: "Launch",
     tags: ["Green", "Climate", "Earnest"],
     style: "wave",
@@ -1380,7 +1380,7 @@ export const TEMPLATES: Template[] = [
   {
     slug: "ember",
     name: "Ember",
-    tagline: "Fire-crafted steakhouse, downtown",
+    tagline: "A steakhouse page that puts the fire before the menu",
     category: "Food & Drink",
     tags: ["Fire", "Hospitality", "Warm"],
     style: "particles",
