@@ -4,8 +4,9 @@
 
 **Cinematic scroll websites, exported as plain HTML.**
 
-Pick a template, change the words, download a ZIP, put it anywhere. The editor, every
-template and the export are free and open source.
+Describe your business and have the first draft written, or pick a template and change the
+words. Either way you download a ZIP and put it anywhere. The editor, every template and
+the export are free and open source.
 
 [Live demo](https://scrollcraft.space) · [Examples](https://scrollcraft.space/examples) · [Report a bug](https://github.com/singhharsh1708/scrollcraft/issues) · [Request a feature](https://github.com/singhharsh1708/scrollcraft/issues)
 
