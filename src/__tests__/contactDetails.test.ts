@@ -249,9 +249,9 @@ describe("what the site claims about itself is true", () => {
       }
     };
     walk("src/app/api", "");
-    expect(routes.sort()).toEqual(["count", "credits", "edit-site", "export-site", "generate-site"]);
+    expect(routes.sort()).toEqual(["checkout", "count", "credits", "edit-site", "export-site", "generate-site"]);
     expect(privacy, "the privacy page names the limited endpoints").toMatch(
-      /rate-limit the export,\s+rewrite, counting, site-writing and licence endpoints/
+      /rate-limit the export,\s+rewrite, counting, site-writing, licence and checkout endpoints/
     );
   });
 

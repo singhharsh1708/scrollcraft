@@ -3,7 +3,8 @@ import Link from "next/link";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import GitHubMark from "@/components/GitHubMark";
-import { startGitHubSignIn } from "@/app/signin/actions";
+import BuyPack from "@/components/BuyPack";
+import { signInAndReturn } from "@/app/signin/actions";
 
 /**
  * What somebody sees the moment the free site is gone.
@@ -17,10 +18,13 @@ export default function OutOfCredits({
   message,
   canSignIn,
   signedIn,
+  canBuy,
 }: {
   message: string;
   canSignIn: boolean;
   signedIn: boolean;
+  /** Whether a pack can be bought on this deployment at all. */
+  canBuy: boolean;
 }) {
   const [busy, setBusy] = useState(false);
 
@@ -31,18 +35,24 @@ export default function OutOfCredits({
     >
       <p className="text-foreground">{message}</p>
 
-      <div className="mt-5 flex flex-wrap gap-3">
-        <Link href="/pricing" className="lc-btn lc-btn-solid lc-btn-sm">
-          See what a pack costs
-        </Link>
-        {canSignIn && !signedIn && (
-          <form action={startGitHubSignIn} onSubmit={() => setBusy(true)}>
+      <div className="mt-5 flex flex-wrap items-start gap-3">
+        {canBuy ? (
+          <BuyPack signedIn={signedIn} canSignIn={canSignIn} next="/describe" />
+        ) : (
+          <Link href="/pricing" className="lc-btn lc-btn-solid lc-btn-sm">
+            See what a pack costs
+          </Link>
+        )}
+        {canBuy && (
+          <Link href="/pricing" className="lc-btn lc-btn-ghost lc-btn-sm">
+            What a pack includes
+          </Link>
+        )}
+        {!canBuy && canSignIn && !signedIn && (
+          <form action={signInAndReturn} onSubmit={() => setBusy(true)}>
+            <input type="hidden" name="next" value="/describe" />
             <button type="submit" className="lc-btn lc-btn-ghost lc-btn-sm" disabled={busy}>
-              {busy ? (
-                <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-              ) : (
-                <GitHubMark className="h-4 w-4" />
-              )}
+              {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <GitHubMark className="h-4 w-4" />}
               Sign in with GitHub
             </button>
           </form>
@@ -51,9 +61,9 @@ export default function OutOfCredits({
 
       <p className="mt-4 text-sm text-muted-foreground">
         {signedIn
-          ? "A pack bought now lands on your account, so it reaches you in any browser you sign in on."
+          ? "Five sites for $20, paid once. They land on your account and reach you in any browser you sign in on."
           : canSignIn
-            ? "Already bought a pack? Sign in and it follows you here. You can also paste the licence key on the pricing page."
+            ? "Five sites for $20, paid once. Signing in first means the pack is yours on any machine, and if you already bought one it follows you here."
             : "Already bought a pack? Paste the licence key on the pricing page."}
       </p>
     </div>

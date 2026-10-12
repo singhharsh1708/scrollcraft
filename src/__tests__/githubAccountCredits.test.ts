@@ -253,6 +253,7 @@ describe("a signed-in visitor spends their account's credits, not the browser's"
       total: 10,
       signedIn: true,
       canSignIn: true,
+      canBuy: false,
     });
   });
 

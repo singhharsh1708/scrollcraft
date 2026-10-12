@@ -61,6 +61,7 @@ export default function DescribeClient() {
     remaining: number;
     signedIn: boolean;
     canSignIn: boolean;
+    canBuy: boolean;
   } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -83,13 +84,14 @@ export default function DescribeClient() {
     let live = true;
     fetch("/api/credits")
       .then((r) => r.json())
-      .then((body: { hasKey?: boolean; remaining?: number; signedIn?: boolean; canSignIn?: boolean }) => {
+      .then((body: { hasKey?: boolean; remaining?: number; signedIn?: boolean; canSignIn?: boolean; canBuy?: boolean }) => {
         if (live) {
           setAllowance({
             hasKey: Boolean(body.hasKey),
             remaining: body.remaining ?? 0,
             signedIn: Boolean(body.signedIn),
             canSignIn: Boolean(body.canSignIn),
+            canBuy: Boolean(body.canBuy),
           });
         }
       })
@@ -253,6 +255,7 @@ export default function DescribeClient() {
             message={error}
             canSignIn={Boolean(allowance?.canSignIn)}
             signedIn={Boolean(allowance?.signedIn)}
+            canBuy={Boolean(allowance?.canBuy)}
           />
         )}
         {error && !needsCredits && (

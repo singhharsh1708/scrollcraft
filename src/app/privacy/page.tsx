@@ -82,7 +82,7 @@ export default function PrivacyPage() {
           <li>
             <strong>Ordinary request logs.</strong> Our host records the usual server access
             logs, including IP addresses, which we also use to rate-limit the export,
-            rewrite, counting, site-writing and licence endpoints so one visitor cannot exhaust them for
+            rewrite, counting, site-writing, licence and checkout endpoints so one visitor cannot exhaust them for
             everyone. Writing a site costs us real money per request, so that one is limited
             tightly: three a minute and twenty a day from one address.
           </li>

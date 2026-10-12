@@ -3,31 +3,84 @@ import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import BuyPack, { TOTAL_BEFORE_KEY } from "@/components/BuyPack";
 
 /**
- * Buy a pack, or tell this browser which pack is yours.
+ * Buy a pack, see what is left, or tell this browser which pack is yours.
  *
- * The key is the whole of the account. It is in the receipt email, it works on any
- * machine you paste it into, and what the browser keeps is a cookie holding its hash
- * rather than the key itself.
+ * Buying goes through an account, so the pack is there wherever its owner signs in. A
+ * licence key from an earlier purchase still works: paste it and it is carried onto the
+ * account, or kept on this browser for somebody who never signs in.
  */
+
+type Credits = {
+  hasKey?: boolean;
+  remaining?: number;
+  total?: number;
+  signedIn?: boolean;
+  canSignIn?: boolean;
+  canBuy?: boolean;
+};
+
+/** How long to wait for a payment's webhook before saying so plainly. */
+const CONFIRM_TRIES = 10;
+const CONFIRM_EVERY_MS = 1500;
+
 export default function KeyBox({ checkout }: { checkout: string }) {
   const [key, setKey] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
-  const [remaining, setRemaining] = useState<number | null>(null);
-  const [signedIn, setSignedIn] = useState(false);
+  const [credits, setCredits] = useState<Credits | null>(null);
+  const [confirming, setConfirming] = useState<"no" | "waiting" | "landed" | "slow">("no");
 
   useEffect(() => {
     let live = true;
-    fetch("/api/credits")
-      .then((r) => r.json())
-      .then((body: { hasKey?: boolean; remaining?: number; signedIn?: boolean }) => {
+    const justBought = new URLSearchParams(window.location.search).get("bought") === "1";
+    // What the balance was before the buyer left for Stripe, written by the Buy button.
+    // Without it there is no telling a pack that has just landed from one already there.
+    let before: number | null = null;
+    try {
+      const stored = sessionStorage.getItem(TOTAL_BEFORE_KEY);
+      before = stored === null ? null : Number(stored);
+    } catch {
+      // Storage refused: fall back to "any credits at all".
+    }
+    let tries = 0;
+
+    const read = async () => {
+      try {
+        const body = (await (await fetch("/api/credits", { cache: "no-store" })).json()) as Credits;
         if (!live) return;
-        setSignedIn(Boolean(body.signedIn));
-        if (body.hasKey) setRemaining(body.remaining ?? 0);
-      })
-      .catch(() => {});
+        setCredits(body);
+        if (!justBought) return;
+
+        // The buyer gets back before the webhook does. Stripe has the money and the
+        // credits arrive a moment later, so the page waits for them rather than showing
+        // a balance that looks as though the purchase did nothing.
+        const total = body.total ?? 0;
+        const landed = before === null ? total > 0 : total > before;
+        if (landed) {
+          try {
+            sessionStorage.removeItem(TOTAL_BEFORE_KEY);
+          } catch {
+            // Nothing to clear.
+          }
+          setConfirming("landed");
+          return;
+        }
+        tries += 1;
+        if (tries >= CONFIRM_TRIES) {
+          setConfirming("slow");
+          return;
+        }
+        setConfirming("waiting");
+        window.setTimeout(read, CONFIRM_EVERY_MS);
+      } catch {
+        // A failed read leaves whatever was last shown.
+      }
+    };
+    void read();
+
     return () => {
       live = false;
     };
@@ -47,10 +100,10 @@ export default function KeyBox({ checkout }: { checkout: string }) {
         setMessage(body.error || "That key was not recognised.");
         return;
       }
-      setRemaining(body.remaining ?? 0);
+      setCredits((current) => ({ ...current, hasKey: true, remaining: body.remaining ?? 0, total: body.total ?? 0 }));
       setKey("");
       setMessage(
-        signedIn
+        credits?.signedIn
           ? `${body.remaining} ${body.remaining === 1 ? "site" : "sites"} on your account, in any browser you sign in on.`
           : `${body.remaining} ${body.remaining === 1 ? "site" : "sites"} on this browser.`
       );
@@ -61,21 +114,51 @@ export default function KeyBox({ checkout }: { checkout: string }) {
     }
   };
 
+  const signedIn = Boolean(credits?.signedIn);
+  const remaining = credits?.hasKey ? credits.remaining ?? 0 : null;
+
   return (
     <div className="mt-8">
-      {checkout ? (
+      {confirming === "waiting" && (
+        <p role="status" className="mb-5 flex items-center gap-2 rounded-xl border border-border bg-background p-4 text-sm text-foreground">
+          <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+          Payment received. Adding your five sites.
+        </p>
+      )}
+      {confirming === "landed" && (
+        <p role="status" className="mb-5 rounded-xl border border-primary-ink/40 bg-background p-4 text-sm text-foreground">
+          Payment received. {credits?.remaining ?? 0} {credits?.remaining === 1 ? "site is" : "sites are"} on your account.{" "}
+          <a href="/describe" className="underline underline-offset-4">
+            Write one now
+          </a>
+        </p>
+      )}
+      {confirming === "slow" && (
+        <p role="status" className="mb-5 rounded-xl border border-border bg-background p-4 text-sm text-foreground">
+          Payment received, and the credits are taking longer than usual to arrive. Reload this page in a minute. If
+          they are still missing, email us with your receipt and we will add them by hand.
+        </p>
+      )}
+
+      {credits?.canBuy ? (
+        <BuyPack signedIn={signedIn} canSignIn={Boolean(credits.canSignIn)} next="/pricing" />
+      ) : checkout ? (
         <a href={checkout} className="lc-btn lc-btn-solid lc-btn-sm">
           Buy five sites
         </a>
       ) : (
-        <p className="text-sm text-muted-foreground">
-          The shop is not open on this deployment yet.
+        credits && <p className="text-sm text-muted-foreground">The shop is not open on this deployment yet.</p>
+      )}
+
+      {remaining !== null && confirming === "no" && !message && (
+        <p className="mt-4 text-sm text-muted-foreground">
+          {remaining} {remaining === 1 ? "site" : "sites"} left {signedIn ? "on your account" : "on this browser"}.
         </p>
       )}
 
       <div className="mt-6 border-t border-border pt-6">
         <label htmlFor="licence" className="text-sm text-muted-foreground">
-          Already bought a pack?
+          Have a licence key from an earlier purchase?
         </label>
         <div className="mt-2 flex flex-wrap gap-2">
           <Input
@@ -89,11 +172,6 @@ export default function KeyBox({ checkout }: { checkout: string }) {
             {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : "Use it here"}
           </Button>
         </div>
-        {remaining !== null && !message && (
-          <p className="mt-3 text-sm text-muted-foreground">
-            {remaining} {remaining === 1 ? "site" : "sites"} left {signedIn ? "on your account" : "on this browser"}.
-          </p>
-        )}
         {message && (
           <p role="status" className="mt-3 text-sm text-foreground">
             {message}
