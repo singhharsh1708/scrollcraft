@@ -16,6 +16,10 @@ const envSchema = z.object({
   VERCEL_PROJECT_PRODUCTION_URL: z.string().optional(),
   VERCEL_URL: z.string().optional(),
 
+  // Site generation. Absent, /api/generate-site answers 503 and the editor does not
+  // offer the button, the same way the rewrite assistant behaves without its key.
+  ANTHROPIC_API_KEY: z.string().optional(),
+
   // Reads back the daily funnel counts at /api/count. Unset, that route answers 404:
   // without a secret there is nothing to check a reader against.
   FUNNEL_TOKEN: z.string().min(16).optional(),

@@ -27,7 +27,7 @@ export default function PrivacyPage() {
           sent anywhere on its own.
         </p>
         <p>
-          Four things can leave your browser, none of them identifying you:
+          Five things can leave your browser, none of them identifying you:
         </p>
         <ul>
           <li>
@@ -53,9 +53,20 @@ export default function PrivacyPage() {
             &quot;custom&quot;.
           </li>
           <li>
+            <strong>Writing a site from a description, only if you ask for one.</strong> On the
+            Describe page, the words you write and any photographs you attach are sent to
+            Anthropic, which writes the site and returns it. Photographs are reduced to 1024
+            pixels on your own device first. Neither the description nor the photographs are
+            stored by us: they are sent once, used to write that site, and not kept. Nothing is
+            sent unless you press Build my site, and this instance only offers the page when it
+            is configured with a key.
+          </li>
+          <li>
             <strong>Ordinary request logs.</strong> Our host records the usual server access
             logs, including IP addresses, which we also use to rate-limit the export,
-            rewrite and counting endpoints so one visitor cannot exhaust them for everyone.
+            rewrite, counting and site-writing endpoints so one visitor cannot exhaust them for
+            everyone. Writing a site costs us real money per request, so that one is limited
+            tightly: three a minute and twenty a day from one address.
           </li>
         </ul>
         <p>
@@ -68,6 +79,7 @@ export default function PrivacyPage() {
           <li><strong>Vercel</strong> — hosting, and Web Analytics for the four counts above. Request logs may be retained under their policy.</li>
           <li><strong>Sentry</strong> — error reports, when enabled. These carry a stack trace, not your content.</li>
           <li><strong>Upstash</strong> — rate limiting and the daily counts above, when enabled. It stores a counter keyed by IP for limits, and counters keyed by date for the four steps.</li>
+          <li><strong>Anthropic</strong> — writes a site from your description, when enabled. It receives that description and any photographs you attach, and only when you press Build my site.</li>
           <li><strong>Sarvam AI</strong> — the rewrite assistant, when enabled. It receives the instruction you type and the copy of the site you are editing, and only when you press Rewrite.</li>
           <li><strong>Google Fonts</strong> — templates load webfonts, which discloses your IP to Google. Exported sites do the same unless you self-host the fonts.</li>
         </ul>
