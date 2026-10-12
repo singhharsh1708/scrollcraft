@@ -26,6 +26,12 @@ const envSchema = z.object({
   LEMONSQUEEZY_ACCEPT_TEST_MODE: z.enum(["0", "1"]).optional(),
   NEXT_PUBLIC_LEMON_CHECKOUT_URL: z.string().url().optional(),
 
+  // Sign in with GitHub. All three are needed together: absent, /api/auth answers 404,
+  // the nav offers no sign-in, and credits stay on the licence-key cookie.
+  AUTH_SECRET: z.string().optional(),
+  AUTH_GITHUB_ID: z.string().optional(),
+  AUTH_GITHUB_SECRET: z.string().optional(),
+
   // Reads back the daily funnel counts at /api/count. Unset, that route answers 404:
   // without a secret there is nothing to check a reader against.
   FUNNEL_TOKEN: z.string().min(16).optional(),

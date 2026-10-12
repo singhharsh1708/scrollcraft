@@ -1,10 +1,12 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { accountIdentity } from "@/auth";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { logger } from "@/lib/logger";
 import {
   FREE_SITES,
   KEY_COOKIE,
   PACK_SITES,
+  attachToAccount,
   balanceOf,
   cookieOptions,
   grantPack,
@@ -13,14 +15,16 @@ import {
 } from "@/lib/credits";
 
 /**
- * What this browser is allowed to write.
+ * What this visitor is allowed to write.
  *
  * GET says how many sites are left. POST takes a licence key, checks it with Lemon
  * Squeezy, and remembers it in a cookie the page cannot read. DELETE forgets it, which
  * is what somebody on a shared computer needs.
  *
  * The key never reaches storage: only its hash is kept, so a copy of the database is
- * not a bag of working licence keys.
+ * not a bag of working licence keys. A signed-in visitor's credits are their account's,
+ * so a key redeemed while signed in goes there instead of onto the hash, and one
+ * redeemed earlier is carried over on the next redemption.
  */
 
 const VALIDATE_URL = "https://api.lemonsqueezy.com/v1/licenses/validate";
@@ -29,11 +33,15 @@ const MAX_KEY_LENGTH = 200;
 
 export async function GET(req: NextRequest) {
   const hash = keyHashFrom(req);
-  const balance = hash ? await balanceOf(hash) : null;
+  const identity = (await accountIdentity()) ?? hash;
+  const balance = identity ? await balanceOf(identity) : null;
   return NextResponse.json({
     free: FREE_SITES,
     pack: PACK_SITES,
-    hasKey: Boolean(hash),
+    // A browser holding a key has one whether or not the store can be reached to say so.
+    // An account only counts once it has a pack, or somebody who signed in and has never
+    // bought anything would be shown a balance instead of the box for pasting a key.
+    hasKey: Boolean(hash) || (balance?.total ?? 0) > 0,
     remaining: balance?.remaining ?? 0,
     total: balance?.total ?? 0,
   });
@@ -65,12 +73,23 @@ export async function POST(req: NextRequest) {
   }
 
   const hash = hashKey(key);
+  const account = await accountIdentity();
+  const target = account ?? hash;
 
-  // A key this deployment already knows needs no round trip, which also means a Lemon
-  // Squeezy outage cannot lock a buyer out of credits they have already paid for.
-  const known = await balanceOf(hash);
-  if (known && known.total > 0) {
-    return remember(hash, known.remaining, known.total);
+  if (account) {
+    // Redeemed before they signed in, so the pack sits where only that one browser can
+    // find it. Carrying it over is what makes the credits follow them to the next one,
+    // and it is also the answer for a key already carried: no round trip either way.
+    const carried = await attachToAccount(hash, account);
+    if (carried === "attached" || carried === "already") {
+      const moved = await balanceOf(account);
+      return remember(hash, moved?.remaining ?? 0, moved?.total ?? 0);
+    }
+  } else {
+    // A key this deployment already knows needs no round trip, which also means a Lemon
+    // Squeezy outage cannot lock a buyer out of credits they have already paid for.
+    const known = await balanceOf(hash);
+    if (known && known.total > 0) return remember(hash, known.remaining, known.total);
   }
 
   let data: ValidateResponse;
@@ -100,13 +119,13 @@ export async function POST(req: NextRequest) {
   // a late webhook arriving later still add one pack between them.
   const orderId = data.meta?.order_id;
   if (orderId !== undefined) {
-    const result = await grantPack(hash, String(orderId), data.meta?.customer_email);
+    const result = await grantPack(target, String(orderId), data.meta?.customer_email);
     if (result === "unavailable") {
       return NextResponse.json({ error: "Could not record that key just now." }, { status: 503 });
     }
   }
 
-  const balance = await balanceOf(hash);
+  const balance = await balanceOf(target);
   return remember(hash, balance?.remaining ?? 0, balance?.total ?? 0);
 }
 

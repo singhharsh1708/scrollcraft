@@ -12,12 +12,10 @@ export default function CookiesPage() {
         <h1>Cookie Policy</h1>
         <p className="text-muted-foreground">Last updated: August 2026</p>
 
-        <h2>Two, and only around the site writer</h2>
+        <h2>Three at most, and only if you use what needs them</h2>
         <p>
-          There are no accounts, so there is no session to keep, and no advertising,
-          analytics or cross-site tracking cookies are used. Writing a site from a
-          description is the one paid thing here, and it needs to tell one browser from
-          another, so it sets two cookies and no more:
+          No advertising, analytics or cross-site tracking cookies are used, and none of
+          these is set until you do something that needs it:
         </p>
         <ul>
           <li>
@@ -25,6 +23,10 @@ export default function CookiesPage() {
             time you have a site written. It is what makes your free site yours rather
             than one shared with everybody on the same network. It holds nothing about
             you and is never read by anybody else.
+          </li>
+          <li>
+            <strong>A session cookie</strong> &mdash; set only when you sign in with
+            GitHub, and only to keep you signed in. Signing out removes it.
           </li>
           <li>
             <strong>sc_key</strong> &mdash; set only if you buy a pack and paste your

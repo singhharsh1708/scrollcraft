@@ -8,9 +8,12 @@ import { logger } from "@/lib/logger";
  * Who may write a site, and how many they have left.
  *
  * The first site is free. After that a pack of five costs twenty dollars, bought through
- * Lemon Squeezy, which hands the buyer a licence key. The key is the only identity here:
- * no accounts, no email, no password. A browser that has pasted a key carries a cookie
- * holding the key's hash, and that is the whole of what the server knows about anybody.
+ * Lemon Squeezy, which hands the buyer a licence key.
+ *
+ * Credits hang off an identity, and there are two of them. A browser that has pasted a
+ * key carries a cookie holding the key's hash, and that is the whole of what the server
+ * knows about a visitor who has not signed in. A visitor who has signed in with GitHub is
+ * their account instead, so their credits reach them in any browser.
  *
  * Two rules hold the rest of this file up. Credits are spent by one atomic script, so two
  * tabs cannot spend the same one; and a generation that fails gives the credit back,
@@ -81,12 +84,24 @@ export function browserTokenFrom(req: Request): string | null {
   return value && /^[a-zA-Z0-9_-]{8,64}$/.test(value) ? value : null;
 }
 
-const entitlementKey = (hash: string) => `sc_ent:${hash}`;
+/**
+ * The identity a signed-in GitHub account's credits hang off.
+ *
+ * The numeric account id, which GitHub never reissues, and never the login: a username
+ * can be changed and the freed one claimed by somebody else, who would then inherit the
+ * first owner's credits. Anything that is not an id is refused rather than keyed on.
+ */
+export function githubIdentity(accountId: string): string | null {
+  return /^[0-9]{1,20}$/.test(accountId) ? `gh:${accountId}` : null;
+}
+
+const entitlementKey = (identity: string) => `sc_ent:${identity}`;
 const orderKey = (orderId: string) => `sc_ord:${orderId}`;
 const orderOwnerKey = (orderId: string) => `sc_ordkey:${orderId}`;
 const refundKey = (orderId: string) => `sc_ref:${orderId}`;
 const freeKey = (ip: string) => `sc_free:${ip}:${new Date().toISOString().slice(0, 7)}`;
 const browserKey = (token: string) => `sc_freeb:${token}`;
+const attachedKey = (hash: string) => `sc_entmv:${hash}`;
 
 /**
  * Spend one credit, or say there was none.
@@ -103,12 +118,12 @@ return redis.call('HINCRBY', KEYS[1], 'used', 1)
 
 export type Balance = { total: number; used: number; remaining: number };
 
-export async function balanceOf(hash: string): Promise<Balance | null> {
+export async function balanceOf(identity: string): Promise<Balance | null> {
   const r = store();
   if (!r) return null;
   let row: { total?: string; used?: string } | null = null;
   try {
-    row = await r.hgetall<{ total?: string; used?: string }>(entitlementKey(hash));
+    row = await r.hgetall<{ total?: string; used?: string }>(entitlementKey(identity));
   } catch (err) {
     // A store that cannot be reached is not an answer about somebody's balance, so this
     // says "unknown" rather than "none" and leaves the caller to decide.
@@ -133,7 +148,7 @@ export type Allowance =
  * its storage and a phone can turn its data off and on, so the only thing worth counting
  * is the one the visitor does not hold.
  */
-export async function takeAllowance(ip: string, hash: string | null, browser: string): Promise<Allowance> {
+export async function takeAllowance(ip: string, identity: string | null, browser: string): Promise<Allowance> {
   const r = store();
   if (!r) {
     // No store means nothing can be counted. In production that is a reason to stop
@@ -146,7 +161,7 @@ export async function takeAllowance(ip: string, hash: string | null, browser: st
   }
 
   try {
-    return await spend(r, ip, hash, browser);
+    return await spend(r, ip, identity, browser);
   } catch (err) {
     // Nothing could be counted, so nothing may be spent: the alternative is an
     // unbounded number of model calls billed to us during an outage.
@@ -155,9 +170,9 @@ export async function takeAllowance(ip: string, hash: string | null, browser: st
   }
 }
 
-async function spend(r: Redis, ip: string, hash: string | null, browser: string): Promise<Allowance> {
-  if (hash) {
-    const key = entitlementKey(hash);
+async function spend(r: Redis, ip: string, identity: string | null, browser: string): Promise<Allowance> {
+  if (identity) {
+    const key = entitlementKey(identity);
     const spent = (await r.eval(SPEND, [key], [])) as number;
     if (spent >= 0) {
       return {
@@ -182,7 +197,7 @@ async function spend(r: Redis, ip: string, hash: string | null, browser: string)
   if (taken === 1) await r.expire(mine, 400 * 24 * 60 * 60);
   if (taken > FREE_SITES) {
     await r.decr(mine);
-    return { ok: false, reason: hash ? "no-credits" : "free-used" };
+    return { ok: false, reason: identity ? "no-credits" : "free-used" };
   }
 
   const here = freeKey(ip);
@@ -211,20 +226,20 @@ async function spend(r: Redis, ip: string, hash: string | null, browser: string)
 }
 
 /**
- * Add a pack to a key, once per order.
+ * Add a pack to an identity, once per order.
  *
  * Lemon Squeezy resends a webhook it did not hear a 200 for, and the same order must not
  * be worth ten sites because the network was slow.
  */
-export async function grantPack(hash: string, orderId: string, email?: string): Promise<"granted" | "already" | "unavailable"> {
+export async function grantPack(identity: string, orderId: string, email?: string): Promise<"granted" | "already" | "unavailable"> {
   const r = store();
   if (!r) return "unavailable";
   try {
-    const first = await r.set(orderKey(orderId), hash, { nx: true, ex: 400 * 24 * 60 * 60 });
+    const first = await r.set(orderKey(orderId), identity, { nx: true, ex: 400 * 24 * 60 * 60 });
     if (first !== "OK") return "already";
-    await r.hincrby(entitlementKey(hash), "total", PACK_SITES);
-    await r.hset(entitlementKey(hash), { lastOrder: orderId, ...(email ? { email } : {}) });
-    await r.set(orderOwnerKey(orderId), hash, { ex: 400 * 24 * 60 * 60 });
+    await r.hincrby(entitlementKey(identity), "total", PACK_SITES);
+    await r.hset(entitlementKey(identity), { lastOrder: orderId, ...(email ? { email } : {}) });
+    await r.set(orderOwnerKey(orderId), identity, { ex: 400 * 24 * 60 * 60 });
     return "granted";
   } catch (err) {
     // The caller answers 500 so Lemon Squeezy delivers it again. The money is taken and
@@ -249,9 +264,9 @@ export async function revokePack(orderId: string): Promise<"revoked" | "already"
     // that redelivery whenever the store was unreachable.
     const first = await r.set(refundKey(orderId), "1", { nx: true, ex: 400 * 24 * 60 * 60 });
     if (first !== "OK") return "already";
-    const hash = await r.get<string>(orderOwnerKey(orderId));
-    if (!hash) return "unknown";
-    const key = entitlementKey(hash);
+    const identity = await r.get<string>(orderOwnerKey(orderId));
+    if (!identity) return "unknown";
+    const key = entitlementKey(identity);
     const row = await r.hgetall<{ total?: string; used?: string }>(key);
     const total = Number(row?.total ?? 0);
     const used = Number(row?.used ?? 0);
@@ -259,6 +274,40 @@ export async function revokePack(orderId: string): Promise<"revoked" | "already"
     return "revoked";
   } catch (err) {
     logger.error("credits: could not take a refunded pack back", { err, orderId });
+    return "unavailable";
+  }
+}
+
+/**
+ * Move a key's unspent sites onto an account.
+ *
+ * Somebody who pasted their key before signing in has their pack under the key's hash,
+ * where another browser cannot find it. The marker makes the move happen once, and the
+ * account is credited before the key is emptied: a store that dies between the two
+ * leaves one pack counted twice, costing us five generations, where the other order
+ * would lose sites somebody paid for.
+ *
+ * "already" is this account's own earlier move, which is what tells the caller the key
+ * has been dealt with and needs no checking. A key carried onto somebody else's account
+ * is "nothing": there is nothing here left to give.
+ */
+export async function attachToAccount(hash: string, account: string): Promise<"attached" | "already" | "nothing" | "unavailable"> {
+  const r = store();
+  if (!r) return "unavailable";
+  try {
+    const marker = attachedKey(hash);
+    const row = await r.hgetall<{ total?: string; used?: string }>(entitlementKey(hash));
+    const total = Number(row?.total ?? 0);
+    const used = Number(row?.used ?? 0);
+    const unspent = total - used;
+    if (unspent < 1) return (await r.get<string>(marker)) === account ? "already" : "nothing";
+    const first = await r.set(marker, account, { nx: true, ex: 400 * 24 * 60 * 60 });
+    if (first !== "OK") return (await r.get<string>(marker)) === account ? "already" : "nothing";
+    await r.hincrby(entitlementKey(account), "total", unspent);
+    await r.hset(entitlementKey(hash), { total: used });
+    return "attached";
+  } catch (err) {
+    logger.error("credits: could not attach a key to an account", { err });
     return "unavailable";
   }
 }

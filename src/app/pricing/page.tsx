@@ -51,7 +51,7 @@ export default function PricingPage() {
           <div className="rounded-xl border border-border bg-card p-8">
             <p className="lc-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">The tool</p>
             <p className="mt-4 lc-display text-4xl">Free</p>
-            <p className="mt-2 text-sm text-muted-foreground">No account, no card, no trial.</p>
+            <p className="mt-2 text-sm text-muted-foreground">No account needed, no card, no trial.</p>
             <ul className="mt-7 space-y-3 text-sm">
               {FREE.map((line) => (
                 <li key={line} className="flex gap-3">
@@ -97,6 +97,7 @@ export default function PricingPage() {
             <p className="mt-3 text-sm text-muted-foreground">
               Five generations, not five templates. The sites are yours, exportable as plain
               files, with nothing phoning home and no licence attached to what you publish.
+              Sign in with GitHub and the pack follows you to any browser.
             </p>
           </div>
           <div>

@@ -21,14 +21,15 @@ export default function TermsPage() {
         <p>You own the websites and content you create with ScrollCraft, outright. We claim no rights over them and we do not hold them: your work stays in your browser until you export it. No licence to store or display it is granted or needed.</p>
 
         <h2>Acceptable Use</h2>
-        <p>Do not use ScrollCraft to create content that is illegal, harmful, or violates third-party rights. There are no accounts to suspend, so this is a request rather than a threat — but the licence below does not authorise unlawful use.</p>
+        <p>Do not use ScrollCraft to create content that is illegal, harmful, or violates third-party rights. The licence below does not authorise unlawful use, and an account that is used for it can lose access to the site writer.</p>
 
         <h2>What Costs Money</h2>
-        <p>The editor, the templates, the catalogue and the exporter are free and always will be: no subscription, no account, no limit on how many sites you build or export by hand.</p>
+        <p>The editor, the templates, the catalogue and the exporter are free and always will be: no subscription, no account needed, no limit on how many sites you build or export by hand.</p>
         <p>Writing a site from a description costs us money per request, because a model writes it. So the first one is free, and after that five sites cost $20, bought once. There is no subscription and nothing renews.</p>
 
         <h2>Credits</h2>
         <p>A pack is a prepaid licence to use the site writer five times. Credits are not money, cannot be exchanged for it, and are not transferable. They do not expire. A credit is taken when a site is written and given back if the request fails, so a failure costs you nothing.</p>
+        <p>Signing in with GitHub is optional and only carries credits between browsers. Credits bought while signed in belong to that account; credits bought without signing in belong to whoever holds the licence key.</p>
         <p>Packs are sold through Lemon Squeezy, who are the seller of record and handle the payment, the invoice and any sales tax. Your licence key is in their receipt email and in your orders page with them.</p>
 
         <h2>Refunds</h2>

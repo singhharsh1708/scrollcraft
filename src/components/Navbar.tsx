@@ -1,11 +1,13 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ArrowUpRight, Heart, Menu, X } from "lucide-react";
 import BrandMark from "@/components/BrandMark";
 import GitHubMark from "@/components/GitHubMark";
 import { GITHUB_REPO_URL, GITHUB_SPONSORS_URL } from "@/lib/links";
+import { endSession, startGitHubSignIn } from "@/app/signin/actions";
 
 /**
  * A one-line announcement, then a glass nav that sticks.
@@ -27,8 +29,40 @@ const NAV_LINKS = [
 
 const DOCS_URL = `${GITHUB_REPO_URL}#readme`;
 
+type Viewer = { name?: string | null; image?: string | null };
+
+/**
+ * Who is signed in, or nothing at all.
+ *
+ * Asked for over HTTP rather than through a provider, because the nav is mounted by a
+ * layout that knows nothing about this. A deployment with no GitHub app answers 404 to
+ * that endpoint, and the state stays null, which renders exactly the nav that was here
+ * before sign-in existed.
+ */
+function useViewer(): Viewer | "signed-out" | null {
+  const [viewer, setViewer] = useState<Viewer | "signed-out" | null>(null);
+  useEffect(() => {
+    let live = true;
+    (async () => {
+      try {
+        const res = await fetch("/api/auth/session", { headers: { accept: "application/json" } });
+        if (!res.ok) return;
+        const body = (await res.json()) as { user?: Viewer } | null;
+        if (live) setViewer(body?.user ?? "signed-out");
+      } catch {
+        // Nothing to offer is the right answer to a session that cannot be read.
+      }
+    })();
+    return () => {
+      live = false;
+    };
+  }, []);
+  return viewer;
+}
+
 export default function Navbar({ position = "sticky" }: { position?: "fixed" | "sticky" | "relative" }) {
   const pathname = usePathname();
+  const viewer = useViewer();
   const [open, setOpen] = useState(false);
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
 
@@ -132,6 +166,32 @@ export default function Navbar({ position = "sticky" }: { position?: "fixed" | "
               >
                 <GitHubMark className="h-4 w-4" /> GitHub
               </a>
+              {viewer === "signed-out" && (
+                <form action={startGitHubSignIn}>
+                  <button type="submit" className="lc-btn lc-btn-ghost lc-btn-sm">
+                    <GitHubMark className="h-4 w-4" /> Sign in
+                  </button>
+                </form>
+              )}
+              {viewer && viewer !== "signed-out" && (
+                <form action={endSession} className="flex items-center gap-2">
+                  {viewer.image && (
+                    // unoptimized: the avatar comes from GitHub's CDN, and optimising it
+                    // would mean naming that host in the image config.
+                    <Image
+                      unoptimized
+                      src={viewer.image}
+                      alt={viewer.name ? `${viewer.name}, signed in` : "Signed in"}
+                      width={28}
+                      height={28}
+                      className="h-7 w-7 rounded-full"
+                    />
+                  )}
+                  <button type="submit" className="lc-btn lc-btn-ghost lc-btn-sm">
+                    Sign out
+                  </button>
+                </form>
+              )}
             </div>
 
             <button
@@ -190,6 +250,30 @@ export default function Navbar({ position = "sticky" }: { position?: "fixed" | "
                 >
                   <GitHubMark className="h-4 w-4" /> GitHub
                 </a>
+                {viewer === "signed-out" && (
+                  <form action={startGitHubSignIn} className="col-span-2">
+                    <button type="submit" className="lc-btn lc-btn-ghost lc-btn-sm w-full">
+                      <GitHubMark className="h-4 w-4" /> Sign in
+                    </button>
+                  </form>
+                )}
+                {viewer && viewer !== "signed-out" && (
+                  <form action={endSession} className="col-span-2 flex items-center gap-2">
+                    {viewer.image && (
+                      <Image
+                        unoptimized
+                        src={viewer.image}
+                        alt={viewer.name ? `${viewer.name}, signed in` : "Signed in"}
+                        width={28}
+                        height={28}
+                        className="h-7 w-7 rounded-full"
+                      />
+                    )}
+                    <button type="submit" className="lc-btn lc-btn-ghost lc-btn-sm flex-1">
+                      Sign out
+                    </button>
+                  </form>
+                )}
               </div>
             </div>
           )}
