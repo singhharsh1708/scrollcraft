@@ -243,6 +243,13 @@ function CreatePageInner() {
             <div className="text-center">
               <h1 className="lc-display text-4xl mb-3">Choose your style</h1>
               <p className="text-muted-foreground">Pick an animation style for your scroll background</p>
+              <p className="mt-3 text-sm text-muted-foreground">
+                Would rather not choose?{" "}
+                <Link href="/describe" className="underline underline-offset-4 hover:text-foreground">
+                  Describe the business
+                </Link>{" "}
+                and have the style, the palette and the words picked for you.
+              </p>
             </div>
             <div className="grid grid-cols-2 gap-3">
               {STYLES.map((s) => (
