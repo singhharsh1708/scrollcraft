@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { accountIdentity } from "@/auth";
+import { accountIdentity, authConfigured } from "@/auth";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { logger } from "@/lib/logger";
 import {
@@ -45,6 +45,9 @@ export async function GET(req: NextRequest) {
     // Where the credits live, so the page can say "on your account" or "on this browser"
     // rather than guessing and being wrong for half the people reading it.
     signedIn: Boolean(await accountIdentity()),
+    // Whether this deployment can offer sign-in at all. A fork without a GitHub app
+    // should not be shown a button that answers 404.
+    canSignIn: authConfigured(),
     remaining: balance?.remaining ?? 0,
     total: balance?.total ?? 0,
   });

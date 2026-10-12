@@ -138,6 +138,15 @@ function generateSite({ browser, key }: { browser?: string; key?: string } = {})
 /** Nobody is signed in unless a test says so, which is the state every other suite runs in. */
 function signedIn(accountId: string | null) {
   accountIdentityMock.mockResolvedValue(accountId === null ? null : `gh:${accountId}`);
+  // Somebody can only be signed in on a deployment that has a GitHub app, and the
+  // balance now reports whether sign-in is on offer at all.
+  for (const [name, value] of [
+    ["AUTH_SECRET", "test-secret"],
+    ["AUTH_GITHUB_ID", "test-id"],
+    ["AUTH_GITHUB_SECRET", "test-secret"],
+  ]) {
+    vi.stubEnv(name, accountId === null ? "" : value);
+  }
 }
 
 async function load() {
@@ -243,6 +252,7 @@ describe("a signed-in visitor spends their account's credits, not the browser's"
       remaining: 7,
       total: 10,
       signedIn: true,
+      canSignIn: true,
     });
   });
 
