@@ -41,7 +41,7 @@ free and five more are $20, bought once.
   palette. Frames are drawn on canvas locally, with no API key and nothing to install.
 - **Scroll engine.** Smooth canvas scrubbing with separate desktop and portrait frame sets,
   so a phone gets a background shaped for it rather than a letterboxed one.
-- **Template library** — 23 finished scroll sites across 17 categories, each with its own
+- **Template library** — 23 finished scroll sites across 13 categories, each with its own
   Google Fonts pairing and palette.
 - **Plain HTML export.** No dependencies and no lock-in. The exported page scores 100 on
   Lighthouse for performance, accessibility, best practices and SEO.
