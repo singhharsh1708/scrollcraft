@@ -157,7 +157,7 @@ describe("the allowance is taken before the model is called", () => {
     expect((await asBuyer({ description: DESCRIPTION })).status).toBe(200);
     const res = await asBuyer({ description: DESCRIPTION });
     expect(res.status).toBe(402);
-    expect((await res.json()).error).toBe("Those credits are spent. Another 5 sites is $20.");
+    expect((await res.json()).error).toBe("Those credits are spent. Another 5 sites cost $20.");
   });
 
   it("answers 503 rather than generating for free when there is no store in production", async () => {

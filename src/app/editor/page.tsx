@@ -22,7 +22,7 @@ import { toast } from "sonner";
 import dynamic from "next/dynamic";
 import { siteStyleSchema, themeSchema, sectionAnchor, visibleSections as onlyVisible, type EditorSection, type Section as SchemaSection, type SiteStyle, type Theme } from "@/lib/siteSchema";
 import { templateBySlug, type Template } from "@/lib/templates";
-import { layoutStyle } from "@/lib/layoutStyles";
+import { defaultSection, fillSections } from "@/lib/editorSections";
 import { faviconSvg, notFoundHtml, exportReadme, renderSocialCard, renderTouchIcon } from "@/lib/exportAssets";
 import { generate2DFrames } from "@/lib/generate2DFrames";
 import { AUTOSAVE_DEBOUNCE_MS, saveStatusLabel, type SaveState } from "@/lib/saveStatus";
@@ -105,22 +105,6 @@ function SignupHint({ url }: { url: string | undefined }) {
   }
 }
 
-const defaultSection = (i: number): Section => ({
-  id: `section-${Date.now()}-${i}`,
-  eyebrow: "",
-  heading: `Section ${i + 1}`,
-  body: "",
-  ctaLabel: "",
-  ctaHref: "#",
-  accentColor: "#a78bfa",
-  headingColor: "#ffffff",
-  bodyColor: "rgba(255,255,255,0.7)",
-  textAlign: "center",
-  align: "center",
-  justify: "center",
-  scrollHeight: 1000,
-  visible: true,
-});
 
 /**
  * Map a template's sections onto the editor's own shape, giving each the id the editor
@@ -130,31 +114,9 @@ const defaultSection = (i: number): Section => ({
  * reactive graph and stopped the React Compiler preserving the undo/redo memoization.
  */
 function toEditorSections(t: Template, secs: Template["sections"]): Section[] {
-  return secs.map((s, i) => {
-    // A template places its copy with `layout` and sets none of the three directly.
-    // defaultSection's "center" is right for a blank section but would outrank the
-    // layout here, since both renderers read `s.align ?? L.align`.
-    const L = layoutStyle(s.layout);
-    return {
-    ...defaultSection(i),
-    ...s,
-    textAlign: s.textAlign ?? L.textAlign,
-    align: s.align ?? L.align,
-    justify: s.justify ?? L.justify,
-    id: `section-${i}-${t.slug}`,
-    heading: s.heading ?? "",
-    eyebrow: s.eyebrow ?? "",
-    body: s.body ?? "",
-    ctaLabel: s.ctaLabel ?? "",
-    ctaHref: s.ctaHref ?? "#",
-    accentColor: s.accentColor ?? t.theme.accentText ?? "#ede9fe",
-    headingColor: s.headingColor ?? t.theme.ink ?? "#ffffff",
-    bodyColor: s.bodyColor ?? t.theme.muted ?? "rgba(255,255,255,0.7)",
-    scrollHeight: s.scrollHeight ?? 1000,
-    visible: true,
-    };
-  });
+  return fillSections(secs, t.theme, t.slug);
 }
+
 
 function EditorInner() {
   const searchParams = useSearchParams();
@@ -396,8 +358,21 @@ function EditorInner() {
           return;
         }
 
+        // Parsed before the sections, because their colour defaults come from it.
+        let restoredTheme: Theme = {};
+        if (doc.themeJson) {
+          const parsedTheme = themeSchema.safeParse(JSON.parse(doc.themeJson));
+          if (parsedTheme.success) {
+            restoredTheme = parsedTheme.data;
+            setSiteTheme(parsedTheme.data);
+          }
+        }
+
         if (Array.isArray(doc.pages) && doc.pages.length) {
-          const restoredPages = doc.pages as PageList<EditorSection>;
+          const restoredPages = (doc.pages as PageList<EditorSection>).map((page) => ({
+            ...page,
+            sections: fillSections(page.sections as Template["sections"], restoredTheme, "saved") as EditorSection[],
+          }));
           setPages(restoredPages);
           setOpenPage(0);
           const first = restoredPages[0].sections;
@@ -406,7 +381,7 @@ function EditorInner() {
             setSelectedSection(first[0].id);
           }
         } else if (Array.isArray(doc.sections) && doc.sections.length) {
-          const restored = doc.sections as Section[];
+          const restored = fillSections(doc.sections as Template["sections"], restoredTheme, "saved");
           setSections(restored);
           setSelectedSection(restored[0].id);
           setPages([{ slug: HOME_SLUG, title: "Home", sections: restored as EditorSection[] }]);
@@ -416,11 +391,6 @@ function EditorInner() {
         if (typeof doc.fps === "number") setFps(doc.fps);
         if (doc.customHead) setCustomHead(doc.customHead);
         if (doc.customCss) setCustomCss(doc.customCss);
-        if (doc.themeJson) {
-          const parsedTheme = themeSchema.safeParse(JSON.parse(doc.themeJson));
-          if (parsedTheme.success) setSiteTheme(parsedTheme.data);
-        }
-
         let recipe: SiteStyle | null = null;
         if (doc.styleJson) {
           const parsedStyle = siteStyleSchema.safeParse(JSON.parse(doc.styleJson));
