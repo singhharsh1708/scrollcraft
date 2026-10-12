@@ -166,14 +166,13 @@ export default function DescribeClient() {
         <ol className="mt-10 grid gap-5 border-y border-border py-7 sm:grid-cols-3">
           {WHAT_HAPPENS.map(([title, detail], i) => (
             <li key={title}>
-              <p className="lc-mono text-xs text-primary-ink">0{i + 1}</p>
-              <p className="mt-2 text-sm text-foreground">{title}</p>
+              <p className="text-sm text-foreground">{title}</p>
               <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{detail}</p>
             </li>
           ))}
         </ol>
 
-        <label htmlFor="description" className="lc-mono mt-10 block text-xs uppercase tracking-[0.18em] text-muted-foreground">
+        <label htmlFor="description" className="mt-10 block text-sm text-muted-foreground">
           What is the business?
         </label>
         <Textarea
@@ -182,7 +181,7 @@ export default function DescribeClient() {
           onChange={(e) => setDescription(e.target.value.slice(0, MAX_DESCRIPTION))}
           rows={7}
           placeholder={EXAMPLES[0]}
-          className="mt-2 bg-card text-base"
+          className="mt-2 rounded-2xl border-white/10 bg-card px-4 py-3 text-base shadow-[var(--lift-1)] transition-shadow focus-visible:border-primary-ink/40 focus-visible:shadow-[var(--glow)]"
         />
         <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
           <button
@@ -198,7 +197,7 @@ export default function DescribeClient() {
         </div>
 
         <div className="mt-8">
-          <p className="lc-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">
+          <p className="text-sm text-foreground">
             Photographs, up to {MAX_IMAGES} (optional)
           </p>
           <p className="mt-2 text-sm text-muted-foreground">
@@ -233,7 +232,7 @@ export default function DescribeClient() {
                     e.target.value = "";
                   }}
                 />
-                <Button variant="outline" onClick={() => fileRef.current?.click()} className="h-20 w-20 flex-col gap-1 border-dashed border-border">
+                <Button variant="outline" onClick={() => fileRef.current?.click()} className="h-20 w-20 flex-col gap-1 rounded-xl border-dashed border-border">
                   <Upload className="h-4 w-4" aria-hidden="true" />
                   <span className="text-xs">Add</span>
                 </Button>
