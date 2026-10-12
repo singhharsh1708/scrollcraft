@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
 import { env, getEnvIssues } from "@/lib/env";
 import { redisCredentials } from "@/lib/redisCredentials";
+import { logger } from "@/lib/logger";
 
 /**
  * Liveness and configuration check.
@@ -23,7 +24,14 @@ async function storeCheck(): Promise<{ state: string; ms?: number }> {
     const redis = new Redis({ ...credentials, signal: AbortSignal.timeout(STORE_TIMEOUT_MS) });
     await redis.ping();
     return { state: "ok", ms: Date.now() - started };
-  } catch {
+  } catch (err) {
+    // What went wrong is a configuration detail and can carry the store's address, so it
+    // goes to the logs rather than into a public response.
+    logger.error("health: the store did not answer", {
+      name: err instanceof Error ? err.name : typeof err,
+      message: err instanceof Error ? err.message.slice(0, 200) : "",
+      cause: err instanceof Error && err.cause instanceof Error ? `${err.cause.name}: ${err.cause.message.slice(0, 120)}` : "",
+    });
     return { state: "unreachable", ms: Date.now() - started };
   }
 }
