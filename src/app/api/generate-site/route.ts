@@ -1,7 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
+import { Redis } from "@upstash/redis";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
+import { redisCredentials } from "@/lib/redisCredentials";
 import { logger } from "@/lib/logger";
 import { sectionsSchema, themeSchema, siteStyleSchema } from "@/lib/siteSchema";
 import { BRIEF_RULES, briefSchema, briefToSite, checkBriefInput } from "@/lib/siteBrief";
@@ -12,14 +14,58 @@ import { BRIEF_RULES, briefSchema, briefToSite, checkBriefInput } from "@/lib/si
  * Every cap here is about money as much as safety. The credits behind this are finite,
  * images are the expensive part of the input, and a loop on the client or a bored
  * stranger with curl can spend a month's budget in an afternoon. So: a short description,
- * at most three images, a bounded answer, a rate limit per address, and a ceiling on how
- * many sites the whole service will generate in a day.
+ * at most three images, a bounded answer, a rate limit per address, and a ceiling for the
+ * whole service, because twenty a day per address is no ceiling at all once there are
+ * twenty addresses.
  */
 
 const MODEL = "claude-opus-5-5";
 const MAX_OUTPUT_TOKENS = 8000;
 /** Enough to hold the rules, three photographs and the answer. */
 const MAX_BODY_BYTES = 7_000_000;
+/** Sites the whole deployment will write in a day, whoever asks. */
+const DAILY_CEILING = Number(process.env.GENERATE_DAILY_LIMIT || 150);
+
+let redis: Redis | null = null;
+
+/**
+ * The service-wide count for today, incremented before the call.
+ *
+ * Returns null when there is no store, which is also what a local run looks like: there
+ * the per-address limits are the only ones, and that is said plainly rather than being
+ * presented as a ceiling that is not there.
+ */
+async function todaysSpendCount(): Promise<number | null> {
+  const credentials = redisCredentials();
+  if (!credentials) return null;
+  if (!redis) redis = new Redis(credentials);
+  const key = `generate:count:${new Date().toISOString().slice(0, 10)}`;
+  try {
+    const total = await redis.incr(key);
+    if (total === 1) await redis.expire(key, 40 * 24 * 60 * 60);
+    return total;
+  } catch {
+    return null;
+  }
+}
+
+/** Read the body with a running cap: content-length is whatever the sender claims. */
+async function readCapped(req: NextRequest, limit: number): Promise<string | null> {
+  const body = req.body;
+  if (!body) return "";
+  const reader = body.getReader();
+  const decoder = new TextDecoder();
+  let out = "";
+  let seen = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    seen += value.byteLength;
+    if (seen > limit) return null;
+    out += decoder.decode(value, { stream: true });
+  }
+  return out + decoder.decode();
+}
 
 export const maxDuration = 120;
 
@@ -43,14 +89,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "That is as many sites as one person can generate in a day." }, { status: 429 });
   }
 
-  const declared = Number(req.headers.get("content-length") ?? "");
-  if (Number.isFinite(declared) && declared > MAX_BODY_BYTES) {
+  const raw = await readCapped(req, MAX_BODY_BYTES);
+  if (raw === null) {
     return NextResponse.json({ error: "Those photographs are too large." }, { status: 413 });
   }
 
   let body: unknown;
   try {
-    body = await req.json();
+    body = JSON.parse(raw);
   } catch {
     return NextResponse.json({ error: "Expected JSON." }, { status: 400 });
   }
@@ -58,13 +104,22 @@ export async function POST(req: NextRequest) {
   const input = checkBriefInput(body as { description?: unknown; images?: unknown });
   if (!input.ok) return NextResponse.json({ error: input.error }, { status: 400 });
 
+  // Counted before the call rather than after it, so a crash mid-request still costs the
+  // budget a slot, which is the honest direction to be wrong in.
+  const today = await todaysSpendCount();
+  if (today !== null && today > DAILY_CEILING) {
+    return NextResponse.json(
+      { error: "This has written as many sites as it can today. Try again tomorrow." },
+      { status: 503 }
+    );
+  }
+
   const client = new Anthropic();
   const content: Anthropic.ContentBlockParam[] = [
     ...input.images.map(
       (image): Anthropic.ContentBlockParam => ({
         type: "image",
-        // checkBriefInput has already restricted this to the four types the API accepts.
-        source: { type: "base64", media_type: image.media_type as Anthropic.Base64ImageSource["media_type"], data: image.data },
+        source: { type: "base64", media_type: image.media_type, data: image.data },
       })
     ),
     { type: "text", text: `Here is the business:\n\n${input.description}` },
@@ -111,6 +166,7 @@ export async function POST(req: NextRequest) {
       cachedTokens: usage.cache_read_input_tokens,
       outputTokens: usage.output_tokens,
       images: input.images.length,
+      todayAcrossEveryone: today,
     });
 
     return NextResponse.json({

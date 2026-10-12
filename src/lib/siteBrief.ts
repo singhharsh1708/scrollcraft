@@ -16,7 +16,13 @@ export { ALLOWED_IMAGE_TYPES, MAX_DESCRIPTION, MAX_IMAGES, MAX_IMAGE_BYTES };
  * reaches anybody.
  */
 
-/** Pairings that exist on Google Fonts and read well together. The model picks one. */
+/**
+ * Pairings that exist on Google Fonts and read well together.
+ *
+ * A closed set on purpose. The schema below lets the model pick a pairing by name rather
+ * than invent font names: an invented one with a hyphen or a full stop fails the editor's
+ * own font rule, and that failure lands after the request has been paid for.
+ */
 export const BRIEF_FONT_PAIRS = [
   { display: "Archivo", body: "Inter" },
   { display: "Fraunces", body: "Karla" },
@@ -27,6 +33,13 @@ export const BRIEF_FONT_PAIRS = [
   { display: "Oswald", body: "Roboto" },
   { display: "JetBrains Mono", body: "Public Sans" },
 ] as const;
+
+export const FONT_PAIR_NAMES = BRIEF_FONT_PAIRS.map((p) => `${p.display} with ${p.body}`) as unknown as [string, ...string[]];
+
+export function fontPairByName(name: string): (typeof BRIEF_FONT_PAIRS)[number] {
+  const index = FONT_PAIR_NAMES.indexOf(name);
+  return BRIEF_FONT_PAIRS[index === -1 ? 0 : index];
+}
 
 const hex = string().regex(/^#[0-9a-f]{6}$/i, "a six digit hex colour");
 
@@ -45,8 +58,7 @@ export const briefSchema = object({
   tagline: string().min(10).max(120),
   style: zEnum(BACKGROUND_STYLES),
   colors: tuple([hex, hex, hex]),
-  fontDisplay: string().min(2).max(40),
-  fontBody: string().min(2).max(40),
+  fontPair: zEnum(FONT_PAIR_NAMES),
   ink: hex,
   accent: hex,
   accentText: hex,
@@ -87,13 +99,15 @@ COLOUR AND TYPE
 
 Choose three colours that come from this business's own world, as hex. The third is the dark ground the page settles to, and must be near black: every palette is painted over it. "ink" is the text colour and must be light enough to read on that ground. "accent" is a button background with white text on it, so it must be dark enough for that to be legible, around 5:1 or better. "accentText" is a lighter tint of the accent used for the eyebrow text, and must be light enough to read on the dark ground.
 
-Pick the typeface pairing that suits the trade rather than the one that suits every trade.
+Pick the typeface pairing that suits the trade rather than the one that suits every trade. Choose "fontPair" from exactly these, by name: ${FONT_PAIR_NAMES.join("; ")}.
 
 Choose the background style that matches the subject: "wave" for anything to do with water, cloth, movement or hospitality; "particles" for night, music, technology; "geometric" for architecture, engineering, manufacturing; "gradient" for software, health, anything clean and quiet.`;
 
 /** Everything the request should contain, with the cheap checks done before any call. */
+export type AllowedImageType = (typeof ALLOWED_IMAGE_TYPES)[number];
+
 export function checkBriefInput(input: { description?: unknown; images?: unknown }):
-  | { ok: true; description: string; images: { media_type: string; data: string }[] }
+  | { ok: true; description: string; images: { media_type: AllowedImageType; data: string }[] }
   | { ok: false; error: string } {
   const description = typeof input.description === "string" ? input.description.trim() : "";
   if (description.length < 20) return { ok: false, error: "Tell us a little more: at least a sentence or two about the business." };
@@ -102,12 +116,12 @@ export function checkBriefInput(input: { description?: unknown; images?: unknown
   const raw = Array.isArray(input.images) ? input.images : [];
   if (raw.length > MAX_IMAGES) return { ok: false, error: `Up to ${MAX_IMAGES} photographs.` };
 
-  const images: { media_type: string; data: string }[] = [];
+  const images: { media_type: AllowedImageType; data: string }[] = [];
   for (const item of raw) {
     const image = item as { media_type?: unknown; data?: unknown };
     const type = String(image.media_type ?? "");
     const data = String(image.data ?? "");
-    if (!ALLOWED_IMAGE_TYPES.includes(type as (typeof ALLOWED_IMAGE_TYPES)[number])) {
+    if (!ALLOWED_IMAGE_TYPES.includes(type as AllowedImageType)) {
       return { ok: false, error: "Photographs must be JPEG, PNG, WebP or GIF." };
     }
     // base64 carries four characters per three bytes.
@@ -115,7 +129,7 @@ export function checkBriefInput(input: { description?: unknown; images?: unknown
       return { ok: false, error: `Each photograph must be under ${Math.round(MAX_IMAGE_BYTES / 1_000_000)} MB.` };
     }
     if (!/^[A-Za-z0-9+/=]+$/.test(data)) return { ok: false, error: "A photograph could not be read." };
-    images.push({ media_type: type, data });
+    images.push({ media_type: type as AllowedImageType, data });
   }
 
   return { ok: true, description, images };
@@ -123,6 +137,7 @@ export function checkBriefInput(input: { description?: unknown; images?: unknown
 
 /** The brief as the editor's own shapes: sections, a style recipe and a theme. */
 export function briefToSite(brief: Brief) {
+  const pair = fontPairByName(brief.fontPair);
   const sections = brief.sections.slice(0, MAX_SECTIONS).map((section, i) => ({
     id: `section-${i}-generated`,
     kind: section.kind,
@@ -133,7 +148,7 @@ export function briefToSite(brief: Brief) {
     body: section.body || undefined,
     ctaLabel: section.ctaLabel || undefined,
     ctaHref: section.ctaLabel ? "#contact" : undefined,
-    scrollHeight: section.kind === "statement" ? 1400 : 1400,
+    scrollHeight: section.kind === "statement" ? 1300 : 1450,
   }));
 
   return {
@@ -141,8 +156,8 @@ export function briefToSite(brief: Brief) {
     siteDescription: brief.tagline,
     style: { style: brief.style, colors: brief.colors },
     theme: {
-      fontDisplay: brief.fontDisplay,
-      fontBody: brief.fontBody,
+      fontDisplay: pair.display,
+      fontBody: pair.body,
       ink: brief.ink,
       muted: `${brief.ink}bb`,
       accent: brief.accent,

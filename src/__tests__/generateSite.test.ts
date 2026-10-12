@@ -3,12 +3,14 @@ import type { NextRequest } from "next/server";
 import {
   ALLOWED_IMAGE_TYPES,
   BRIEF_RULES,
+  FONT_PAIR_NAMES,
   MAX_DESCRIPTION,
   MAX_IMAGES,
   MAX_IMAGE_BYTES,
   briefSchema,
   briefToSite,
   checkBriefInput,
+  fontPairByName,
   type Brief,
 } from "@/lib/siteBrief";
 import { sectionsSchema, themeSchema, siteStyleSchema } from "@/lib/siteSchema";
@@ -68,8 +70,7 @@ const BRIEF: Brief = {
   tagline: "Cycle repairs on Hazratganj road since 1998",
   style: "geometric",
   colors: ["#1b4332", "#95d5b2", "#0a0a0a"],
-  fontDisplay: "Archivo",
-  fontBody: "Inter",
+  fontPair: "Archivo with Inter",
   ink: "#f2f2f2",
   accent: "#1b4332",
   accentText: "#95d5b2",
@@ -330,9 +331,18 @@ describe("the route hands back a site when the model answers", () => {
   });
 
   it("answers 502 rather than 200 when the result would not pass the editor's schema", async () => {
-    // A typeface name the editor's font schema rejects: it goes into a stylesheet URL.
-    sdk.parse.mockResolvedValue(okResponse({ parsed_output: { ...BRIEF, fontDisplay: "Not/A Font" } }));
+    // Whatever the output format lets through that the editor still refuses.
+    sdk.parse.mockResolvedValue(okResponse({ parsed_output: { ...BRIEF, colors: ["#1b4332", "#95d5b2", "#12"] } }));
     expect((await post({ description: DESCRIPTION })).status).toBe(502);
+  });
+
+  it("cannot be handed a typeface the editor would reject", () => {
+    expect(briefSchema.safeParse({ ...BRIEF, fontPair: "Not/A Font with Another" }).success).toBe(false);
+    for (const name of FONT_PAIR_NAMES) {
+      const pair = fontPairByName(name);
+      expect(pair.display).toMatch(/^[A-Za-z0-9][A-Za-z0-9 ]*$/);
+      expect(pair.body).toMatch(/^[A-Za-z0-9][A-Za-z0-9 ]*$/);
+    }
   });
 });
 
