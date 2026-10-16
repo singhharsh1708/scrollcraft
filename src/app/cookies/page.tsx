@@ -26,8 +26,8 @@ export default function CookiesPage() {
         <ul>
           <li>
             <strong>sc_fid</strong> &mdash; a random name for this browser, set the first
-            time you have a site written. It is what makes your free site yours rather
-            than one shared with everybody on the same network. It holds nothing about
+            time you have a site written. It is what makes your free sites yours rather
+            than shared with everybody on the same network. It holds nothing about
             you and is never read by anybody else.
           </li>
           <li>

@@ -33,7 +33,7 @@ export default function TermsPage() {
 
         <h2>What Costs Money</h2>
         <p>The editor, the templates, the catalogue and the exporter are free and always will be: no subscription, no account needed, no limit on how many sites you build or export by hand.</p>
-        <p>Writing a site from a description costs us money per request, because a model writes it. So the first one is free, and after that five sites cost $20, bought once. There is no subscription and nothing renews.</p>
+        <p>Writing a site from a description costs us money per request, because a model writes it. So the first four are free, and after that five sites cost $20, bought once. There is no subscription and nothing renews.</p>
 
         <h2>Credits</h2>
         <p>A pack is a prepaid licence to use the site writer five times. Credits are not money, cannot be exchanged for it, and are not transferable. They do not expire. A credit is taken when a site is written and given back if the request fails, so a failure costs you nothing.</p>

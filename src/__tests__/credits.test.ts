@@ -118,27 +118,35 @@ describe("the cookie is read strictly, because it names who gets to spend", () =
   });
 });
 
-describe("the free site is one site per address per month", () => {
-  it("is given once and then refused, under the month's own key", async () => {
-    const first = await credits.takeAllowance(IP, null, BROWSER);
-    expect(first).toMatchObject({ ok: true, kind: "free" });
-    expect(peek(free)).toBe("1");
+async function spendFree(identity: string | null = null) {
+  for (let i = 0; i < credits.FREE_SITES; i++) {
+    expect(await credits.takeAllowance(IP, identity, BROWSER), `free site ${i + 1}`).toMatchObject({ ok: true, kind: "free" });
+  }
+}
 
-    const second = await credits.takeAllowance(IP, null, BROWSER);
-    expect(second).toEqual({ ok: false, reason: "free-used" });
+describe("free sites are counted per browser, and per address per month", () => {
+  it("is given up to the allowance and then refused, under the month's own key", async () => {
+    await spendFree();
+    expect(peek(free)).toBe(String(credits.FREE_SITES));
+
+    const extra = await credits.takeAllowance(IP, null, BROWSER);
+    expect(extra).toEqual({ ok: false, reason: "free-used" });
     // The refusal must not leave the count inflated, or next month arrives early.
-    expect(peek(free)).toBe("1");
+    expect(peek(free)).toBe(String(credits.FREE_SITES));
   });
 
-  it("counts the browser, so a second person behind one address still gets their site", async () => {
+  it("counts the browser, so five people behind one address each get all their sites", async () => {
     // Most mobile traffic in India leaves a carrier through shared addresses. Counting
-    // per address hands one stranger's free site to everybody behind it.
-    await credits.takeAllowance(IP, null, BROWSER);
-    expect(await credits.takeAllowance(IP, null, "browser-two")).toMatchObject({ ok: true, kind: "free" });
-    expect(await credits.takeAllowance(IP, null, BROWSER)).toEqual({ ok: false, reason: "free-used" });
+    // per address hands one stranger's free sites to everybody behind it.
+    for (let b = 0; b < 5; b++) {
+      for (let i = 0; i < credits.FREE_SITES; i++) {
+        expect(await credits.takeAllowance(IP, null, `browser-${b}`), `browser ${b}, site ${i + 1}`).toMatchObject({ ok: true, kind: "free" });
+      }
+    }
+    expect(await credits.takeAllowance(IP, null, "browser-0")).toEqual({ ok: false, reason: "free-used" });
   });
 
-  it("stops at five free sites from one address, however many browsers ask", async () => {
+  it("stops at the address's monthly cap, however many browsers ask", async () => {
     for (let i = 0; i < credits.FREE_PER_IP; i++) {
       expect(await credits.takeAllowance(IP, null, `browser-${i}`), `browser ${i}`).toMatchObject({ ok: true });
     }
@@ -171,8 +179,8 @@ describe("the free site is one site per address per month", () => {
     expect(Number(peek(free))).toBe(0);
     expect(Number(peek(mine))).toBe(0);
 
-    // Released, so the site is available again, and still only once.
-    expect(await credits.takeAllowance(IP, null, BROWSER)).toMatchObject({ ok: true, kind: "free" });
+    // Released, so the site is available again, and the allowance still ends where it did.
+    await spendFree();
     expect(await credits.takeAllowance(IP, null, BROWSER)).toEqual({ ok: false, reason: "free-used" });
     expect(Number(peek(free))).toBeGreaterThanOrEqual(0);
   });
@@ -237,9 +245,9 @@ describe("paid credits are spent one at a time and nobody spends the same one tw
     expect((await credits.balanceOf(HASH))?.remaining).toBe(credits.PACK_SITES);
   });
 
-  it("falls back to the free site once the pack is spent, then says there are no credits", async () => {
+  it("falls back to the free sites once the pack is spent, then says there are no credits", async () => {
     putHash(entitlement, { total: credits.PACK_SITES, used: credits.PACK_SITES });
-    expect(await credits.takeAllowance(IP, HASH, BROWSER)).toMatchObject({ ok: true, kind: "free" });
+    await spendFree(HASH);
     expect(await credits.takeAllowance(IP, HASH, BROWSER)).toEqual({ ok: false, reason: "no-credits" });
   });
 });
@@ -295,8 +303,8 @@ describe("giving an allowance back cannot hand out more than it took", () => {
     await first.release();
     await first.release();
     expect(Number(peek(free) ?? 0)).toBe(0);
-    // And the month still only holds one free site, rather than one plus the slack.
-    expect((await credits.takeAllowance(IP, null, BROWSER)).ok).toBe(true);
+    // And the browser still holds only its allowance, rather than the allowance plus the slack.
+    await spendFree();
     expect((await credits.takeAllowance(IP, null, BROWSER)).ok).toBe(false);
   });
 });

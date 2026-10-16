@@ -7,7 +7,7 @@ import BuyPack from "@/components/BuyPack";
 import { signInAndReturn } from "@/app/signin/actions";
 
 /**
- * What somebody sees the moment the free site is gone.
+ * What somebody sees the moment the free sites are gone.
  *
  * This is the only point in the product where money is asked for, so it is the one
  * place that has to be plain: what ran out, what a pack costs, and the two ways to

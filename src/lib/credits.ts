@@ -7,7 +7,7 @@ import { logger } from "@/lib/logger";
 /**
  * Who may write a site, and how many they have left.
  *
- * The first site is free. After that a pack of five costs twenty dollars, bought through
+ * The first four sites are free. After that a pack of five costs twenty dollars, bought through
  * Lemon Squeezy, which hands the buyer a licence key.
  *
  * Credits hang off an identity, and there are two of them. A browser that has pasted a
@@ -20,16 +20,16 @@ import { logger } from "@/lib/logger";
  * because nobody should pay four dollars for a 502.
  */
 
-export const FREE_SITES = 1;
+export const FREE_SITES = 4;
 /**
  * Free sites one address may account for in a month, whoever is behind it.
  *
- * The free site follows the browser rather than the address, because an address is not a
+ * Free sites follow the browser rather than the address, because an address is not a
  * person: most mobile traffic in India leaves a carrier through shared addresses, so
  * counting per address hands one stranger's free site to a street full of people. This is
- * the aggregate guard behind that, for somebody who simply clears their cookies.
+ * the aggregate guard behind that, five browsers' worth, for somebody who simply clears their cookies.
  */
-export const FREE_PER_IP = 5;
+export const FREE_PER_IP = 5 * FREE_SITES;
 export const PACK_SITES = 5;
 export const PACK_PRICE_USD = 20;
 

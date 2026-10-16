@@ -70,7 +70,7 @@ const DEPLOY_TARGETS = ["Netlify", "Vercel", "GitHub Pages", "Cloudflare Pages",
  */
 export const OWNERSHIP_CHECKED = "19 September 2026";
 export const OWNERSHIP: { tool: string; answer: string; cost: string; source?: string }[] = [
-  { tool: "ScrollCraft", answer: "Yes, as a plain HTML ZIP", cost: "Free to edit and export; $4 a written site after the first" },
+  { tool: "ScrollCraft", answer: "Yes, as a plain HTML ZIP", cost: "Free to edit and export; $4 a written site after the first four" },
   { tool: "Webflow", answer: "HTML and CSS; CMS content stays behind", cost: "Core Workspace plan, $19/mo billed yearly", source: "https://webflow.com/pricing" },
   { tool: "Carrd", answer: "Yes", cost: "Pro Plus plan, $49/yr", source: "https://carrd.com/pro" },
   { tool: "Squarespace", answer: "Content only, as XML for WordPress", cost: "Not offered for the design", source: "https://support.squarespace.com/hc/en-us/articles/206566687-Exporting-your-site" },
@@ -109,7 +109,7 @@ const BARS = Array.from({ length: 48 }, (_, i) =>
 );
 
 const FAQ = [
-  { q: "What does it cost?", a: "The editor, the templates and the export are free, with no account and no limit. The one thing that costs money is having a site written from your description, because a model writes it: the first is free, then five more are $20, bought once. Nothing renews." },
+  { q: "What does it cost?", a: "The editor, the templates and the export are free, with no account and no limit. The one thing that costs money is having a site written from your description, because a model writes it: the first four are free, then five more are $20, bought once. Nothing renews." },
   { q: "Does it write the site for me?", a: "If you want it to. Describe the business in a few sentences, attach a photograph or two, and it writes the copy, picks the palette and the typefaces and lays out the sections. Everything it writes opens in the editor, and every word is yours to change." },
   { q: "Do I need to know how to code?", a: "No. Pick a template, change the copy and colours, and export. What you download is plain HTML, CSS and JavaScript that any host will serve." },
   { q: "How does the scroll animation work?", a: "ScrollCraft draws a sequence of frames on a canvas, and the page shows the frame that matches how far the reader has scrolled. There is no WebGL and no animation library." },
@@ -771,7 +771,7 @@ export default function HomeClient({
             </div>
             <p className="mt-10 max-w-md text-lg leading-relaxed text-foreground/90">
               Describe the business, or pick a template, then change the words and download a
-              ZIP. The first written site is free and the editor never costs anything.
+              ZIP. The first four written sites are free and the editor never costs anything.
             </p>
           </div>
         </div>
