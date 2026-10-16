@@ -450,7 +450,7 @@ export default function HomeClient({
       id: "deploy",
       label: "Deploy",
       title: "Deploy",
-      subtitle: "Drag the folder onto a host, and it is live.",
+      subtitle: "Upload the folder to a free host account, and it is live.",
       bullets: [
         ["Upload", " to Netlify, Vercel or Cloudflare Pages"],
         ["Push", " to GitHub Pages and it serves as it is"],
