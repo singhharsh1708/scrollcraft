@@ -1,7 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { accountIdentity } from "@/auth";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
-import { createCheckout, stripeConfigured } from "@/lib/stripe";
+import { paymentProcessor } from "@/lib/paymentProcessor";
+import { createCheckout as dodoCheckout } from "@/lib/dodo";
+import { createCheckout as stripeCheckout } from "@/lib/stripe";
 import { logger } from "@/lib/logger";
 
 /**
@@ -13,7 +15,8 @@ import { logger } from "@/lib/logger";
  * the answer to "who gets these credits" is settled before any money moves.
  */
 export async function POST(req: NextRequest) {
-  if (!stripeConfigured()) {
+  const processor = paymentProcessor();
+  if (!processor) {
     return NextResponse.json({ error: "The shop is not open on this deployment." }, { status: 503 });
   }
 
@@ -31,9 +34,10 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    return NextResponse.json({ url: await createCheckout(identity) });
+    const url = processor === "dodo" ? await dodoCheckout(identity) : await stripeCheckout(identity);
+    return NextResponse.json({ url });
   } catch (err) {
-    logger.error("could not open a checkout", { message: err instanceof Error ? err.message : String(err) });
+    logger.error("could not open a checkout", { processor, message: err instanceof Error ? err.message : String(err) });
     return NextResponse.json({ error: "Could not open the checkout just now. Try again in a minute." }, { status: 502 });
   }
 }

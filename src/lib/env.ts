@@ -38,6 +38,13 @@ const envSchema = z.object({
   STRIPE_WEBHOOK_SECRET: z.string().regex(/^whsec_/).optional(),
   STRIPE_PRICE_ID: z.string().regex(/^price_/).optional(),
 
+  // Dodo Payments, the merchant of record. Takes precedence over Stripe when both are set.
+  // Test and live mode each have their own key, product and webhook secret.
+  DODO_PAYMENTS_API_KEY: z.string().optional(),
+  DODO_PAYMENTS_WEBHOOK_KEY: z.string().optional(),
+  DODO_PAYMENTS_ENVIRONMENT: z.enum(["test_mode", "live_mode"]).optional(),
+  DODO_PRODUCT_ID: z.string().regex(/^pdt_/).optional(),
+
   // Reads back the daily funnel counts at /api/count. Unset, that route answers 404:
   // without a secret there is nothing to check a reader against.
   FUNNEL_TOKEN: z.string().min(16).optional(),

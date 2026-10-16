@@ -1,7 +1,7 @@
 # Deploying ScrollCraft
 
-ScrollCraft has no database, no accounts and no payment provider, so a deploy is a
-build. There is nothing to provision and no migration step.
+ScrollCraft needs no database, no accounts and no payment provider to run, so a deploy
+is a build. There is nothing to provision and no migration step.
 
 ## Vercel
 
@@ -32,6 +32,21 @@ npm start
 | `FUNNEL_TOKEN` | `GET /api/count` answers 404; the daily counts are still written, but only readable from the Upstash console |
 | `NEXT_PUBLIC_SENTRY_DSN` | Error reporting is disabled |
 | `SENTRY_ORG` / `SENTRY_PROJECT` / `SENTRY_AUTH_TOKEN` | Source maps are not uploaded; stack traces stay minified |
+| `DODO_PAYMENTS_*` / `DODO_PRODUCT_ID` | No packs are sold through Dodo; see below |
+
+## Selling packs through Dodo Payments
+
+Optional. Buying needs GitHub sign-in, so the three `AUTH_` variables must be set too.
+
+1. In the Dodo dashboard, create a one-time product priced at exactly 20 USD and set
+   `DODO_PRODUCT_ID` to its `pdt_` id. Checkout refuses any other price.
+2. Create an API key and set `DODO_PAYMENTS_API_KEY`. Set `DODO_PAYMENTS_ENVIRONMENT` to
+   `live_mode` for real money; anything else talks to test mode.
+3. Add a webhook endpoint at `<origin>/api/dodo/webhook` for `payment.succeeded` and
+   `refund.succeeded`, and set `DODO_PAYMENTS_WEBHOOK_KEY` to its signing secret.
+
+Test and live mode have separate keys, products and webhook secrets, so a test payment
+can never credit a live deployment.
 
 ## Measuring an export
 

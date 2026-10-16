@@ -11,7 +11,7 @@ export const metadata: Metadata = pageMeta({
 });
 
 export default function TermsPage() {
-  const stripe = paymentProcessor() === "stripe";
+  const processor = paymentProcessor();
   return (
     <main className="min-h-screen bg-background text-foreground">
       <Navbar />
@@ -37,16 +37,15 @@ export default function TermsPage() {
 
         <h2>Credits</h2>
         <p>A pack is a prepaid licence to use the site writer five times. Credits are not money, cannot be exchanged for it, and are not transferable. They do not expire. A credit is taken when a site is written and given back if the request fails, so a failure costs you nothing.</p>
-        {stripe ? (
-          <>
-            <p>Buying a pack needs you to sign in with GitHub, so that the pack belongs to an account rather than to a browser that can be cleared. Nothing else here needs you to sign in. Credits belong to the account that bought them and are there in any browser that account signs in on.</p>
-            <p>Packs are sold by us and paid for on Stripe&apos;s own page. Stripe handle the card and send the receipt; we never see the card. Prices are in US dollars and do not include any tax your own country may add.</p>
-          </>
+        {processor && (
+          <p>Buying a pack needs you to sign in with GitHub, so that the pack belongs to an account rather than to a browser that can be cleared. Nothing else here needs you to sign in. Credits belong to the account that bought them and are there in any browser that account signs in on.</p>
+        )}
+        {processor === "dodo" ? (
+          <p>Packs are sold through Dodo Payments, who are the merchant of record: they take the payment, send the invoice and handle any sales tax or VAT. We never see your card. Prices are in US dollars, and any tax your country charges is added at checkout.</p>
+        ) : processor === "stripe" ? (
+          <p>Packs are sold by us and paid for on Stripe&apos;s own page. Stripe handle the card and send the receipt; we never see the card. Prices are in US dollars and do not include any tax your own country may add.</p>
         ) : (
-          <>
-            <p>Signing in with GitHub is optional and only carries credits between browsers. Credits bought while signed in belong to that account; credits bought without signing in belong to whoever holds the licence key.</p>
-            <p>Packs are sold through Lemon Squeezy, who are the seller of record and handle the payment, the invoice and any sales tax. Your licence key is in their receipt email and in your orders page with them.</p>
-          </>
+          <p>No packs are on sale on this deployment at the moment.</p>
         )}
 
         <h2>Refunds</h2>
