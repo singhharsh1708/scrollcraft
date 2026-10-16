@@ -122,10 +122,13 @@ export default function SiteRenderer({
     };
     schedule();
     document.fonts?.ready.then(schedule);
+    // The theme's font stylesheet is added after mount, so fonts.ready can resolve before its fonts load.
+    document.fonts?.addEventListener("loadingdone", schedule);
     window.addEventListener("resize", schedule);
     return () => {
       live = false;
       cancelAnimationFrame(raf);
+      document.fonts?.removeEventListener("loadingdone", schedule);
       window.removeEventListener("resize", schedule);
     };
   }, [sections, theme]);
@@ -135,6 +138,17 @@ export default function SiteRenderer({
   const firstHeadingIndex = visible.findIndex((s) => s.heading);
   const totalScrollHeight =
     visible.reduce((acc, s) => acc + (s.scrollHeight ?? 1000), 0) + INTRO_BUFFER;
+
+  useEffect(() => {
+    const href = compiled.fontHref;
+    if (!href) return;
+    const links = document.head.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"]');
+    if (Array.from(links).some((l) => l.getAttribute("href") === href)) return;
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = href;
+    document.head.appendChild(link);
+  }, [compiled.fontHref]);
 
   useEffect(() => {
     if (frameUrls?.length || !styleSpec) return;
@@ -201,7 +215,6 @@ export default function SiteRenderer({
         <>
           <link rel="preconnect" href="https://fonts.googleapis.com" />
           <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-          <link rel="stylesheet" href={compiled.fontHref} />
         </>
       )}
       <style dangerouslySetInnerHTML={{ __html: REVEAL_CSS }} />
