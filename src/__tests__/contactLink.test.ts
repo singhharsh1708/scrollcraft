@@ -5,10 +5,7 @@ import { isAllowedHref as ruleOnItsOwn } from "@/lib/hrefRule";
 import { isAllowedHref, sectionsSchema } from "@/lib/siteSchema";
 import { FONT_PAIR_NAMES, briefToSite, type Brief } from "@/lib/siteBrief";
 
-/**
- * A written site points every button at #contact, and no section carries that id, so
- * the buttons did nothing. What the owner types on /describe now becomes the link.
- */
+/** What the owner types on /describe becomes the link behind a written site's buttons. */
 
 const VIAS: ContactVia[] = ["call", "whatsapp"];
 
@@ -36,6 +33,23 @@ describe("what the owner types becomes a link", () => {
   it("reads a number pasted with invisible direction marks and typographic dashes", () => {
     expect(contactLink("\u202a+91 98765\u201343210\u202c", "whatsapp")).toBe("https://wa.me/919876543210");
     expect(contactLink("\u202aorders@example.in\u202c", "call")).toBe("mailto:orders@example.in");
+  });
+
+  it("reads a country code written in brackets, and a typed tel: link", () => {
+    for (const typed of ["(+91) 98765 43210", "(0091) 98765 43210", "tel:+919876543210"]) {
+      expect(contactLink(typed, "call"), typed).toBe("tel:+919876543210");
+      expect(contactLink(typed, "whatsapp"), typed).toBe("https://wa.me/919876543210");
+    }
+    expect(contactLink("(+44) 7700 900123", "whatsapp")).toBe("https://wa.me/447700900123");
+  });
+
+  it("does not take an eleven-digit national number for an international one", () => {
+    const national = [["1800 266 1234", "18002661234"], ["(21) 98765-4321", "21987654321"], ["138 0013 8000", "13800138000"]];
+    for (const [typed, digits] of national) {
+      expect(readPhone(typed), typed).toEqual({ digits, international: false });
+      expect(contactLink(typed, "call"), typed).toBe(`tel:${digits}`);
+      expect(contactLink(typed, "whatsapp"), typed).toBeNull();
+    }
   });
 
   it("drops the (0) written after a country code", () => {
@@ -121,7 +135,6 @@ describe("the contact stays in the browser", () => {
   });
 
   it("keeps zod out of the describe page", () => {
-    // Importing the rule from siteSchema measured 69.5 kB minified, all of it zod.
     for (const file of ["src/app/describe/DescribeClient.tsx", "src/lib/contactLink.ts", "src/lib/hrefRule.ts"]) {
       const source = readFileSync(file, "utf8");
       expect(source, file).not.toMatch(/^import \{[^}]*\} from "@\/lib\/siteSchema"/m);

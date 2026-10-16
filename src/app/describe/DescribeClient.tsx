@@ -79,6 +79,7 @@ export default function DescribeClient() {
   const [images, setImages] = useState<Picked[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [buildFailed, setBuildFailed] = useState(false);
   const [needsCredits, setNeedsCredits] = useState(false);
   const [allowance, setAllowance] = useState<{
     hasKey: boolean;
@@ -132,6 +133,7 @@ export default function DescribeClient() {
   const addFiles = async (files: FileList | null) => {
     if (!files?.length) return;
     setError("");
+    setBuildFailed(false);
     const room = MAX_IMAGES - images.length;
     const picked: Picked[] = [];
     for (const file of Array.from(files).slice(0, room)) {
@@ -150,6 +152,7 @@ export default function DescribeClient() {
   const build = async () => {
     setBusy(true);
     setError("");
+    setBuildFailed(true);
     setNeedsCredits(false);
     try {
       const res = await fetch("/api/generate-site", {
@@ -239,6 +242,7 @@ export default function DescribeClient() {
           id="contact"
           value={contact}
           onChange={(e) => setContact(e.target.value)}
+          disabled={busy}
           maxLength={300}
           autoCapitalize="none"
           autoCorrect="off"
@@ -254,8 +258,9 @@ export default function DescribeClient() {
                 key={value}
                 type="button"
                 aria-pressed={via === value}
+                disabled={busy}
                 onClick={() => setVia(value)}
-                className={`lc-mono h-9 rounded-full border px-4 text-[0.8rem] transition-colors ${via === value ? "border-primary-ink/60 bg-primary-ink/15 text-foreground" : "border-border text-muted-foreground hover:border-foreground/30"}`}
+                className={`lc-mono h-9 rounded-full border px-4 text-[0.8rem] transition-colors disabled:opacity-50 ${via === value ? "border-primary-ink/60 bg-primary-ink/15 text-foreground" : "border-border text-muted-foreground hover:border-foreground/30"}`}
               >
                 {label}
               </button>
@@ -348,12 +353,14 @@ export default function DescribeClient() {
         {error && !needsCredits && (
           <div role="alert" className="mt-6 rounded-xl border border-destructive/40 bg-destructive/10 p-4 text-sm text-foreground">
             <p>{error}</p>
-            <p className="mt-2">
-              <Link href="/templates" className="underline underline-offset-4">
-                Every template is free to edit and export meanwhile
-              </Link>
-              .
-            </p>
+            {buildFailed && (
+              <p className="mt-2">
+                <Link href="/templates" className="underline underline-offset-4">
+                  Every template is free to edit and export meanwhile
+                </Link>
+                .
+              </p>
+            )}
           </div>
         )}
 

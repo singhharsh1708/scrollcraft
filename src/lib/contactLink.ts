@@ -12,12 +12,13 @@ const INVISIBLE = /[\u200b-\u200f\u202a-\u202e\u2060-\u2069\ufeff]/g;
 
 export function readPhone(raw: string): Phone | null {
   let value = raw.replace(INVISIBLE, "").replace(/[\u2010-\u2015\u2212]/g, "-").trim();
+  value = value.replace(/^tel:/i, "").replace(/^\(\s*(\+|00)\s*(\d{1,4})\s*\)/, "$1$2 ");
   if (!PHONE.test(value)) return null;
   let international = value.startsWith("+") || value.startsWith("00");
   if (international) value = value.replace(/^(?:\+|00)/, "").replace(/\(0\)/g, "");
   const digits = value.replace(/\D/g, "");
   if (digits.length < 7 || digits.length > 15) return null;
-  if (!international) international = digits.length >= 11 && !digits.startsWith("0");
+  if (!international) international = digits.length >= 12 && !digits.startsWith("0");
   return international && digits.startsWith("0") ? null : { digits, international };
 }
 
