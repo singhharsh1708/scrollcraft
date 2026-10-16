@@ -6,9 +6,11 @@ import { Loader2, Upload, X } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import SiteFooter from "@/components/SiteFooter";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { storeDocument } from "@/lib/frameStorage";
 import { MAX_DESCRIPTION, MAX_IMAGES } from "@/lib/briefLimits";
+import { contactLink, readPhone, withContactLink, type ContactVia } from "@/lib/contactLink";
 import { HANDOFF_KEY } from "@/components/PromptHero";
 import OutOfCredits from "@/components/OutOfCredits";
 import type { Section } from "@/lib/siteSchema";
@@ -35,6 +37,17 @@ const WHAT_HAPPENS = [
   ["You get the editor", "Five to nine sections, open in the editor, every word yours to change. Export it as plain HTML whenever you like."],
 ];
 
+const QUESTIONS = [
+  ["What is free?", "The editor, the templates and the export, with no account and no watermark. Writing a site from a description is the one paid part: the first four are free, then five more are $20."],
+  ["Where do my words and photographs go?", `To Anthropic, once, and only when you press Build my site. Photographs are reduced to ${LONG_EDGE} pixels on your device first. We do not store the description or the photographs.`],
+  ["Can I change what it writes?", "Every word, in the editor. Nothing is published until you export the files and put them on a host yourself."],
+];
+
+const VIA: [ContactVia, string][] = [
+  ["call", "Call"],
+  ["whatsapp", "WhatsApp"],
+];
+
 type Picked = { name: string; media_type: string; data: string; preview: string };
 
 async function downscale(file: File): Promise<Picked> {
@@ -49,9 +62,20 @@ async function downscale(file: File): Promise<Picked> {
   return { name: file.name, media_type: "image/jpeg", data: url.split(",")[1] ?? "", preview: url };
 }
 
+function parseReply(text: string) {
+  try {
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
+}
+
 export default function DescribeClient() {
   const router = useRouter();
   const [description, setDescription] = useState("");
+  const [compact, setCompact] = useState(false);
+  const [contact, setContact] = useState("");
+  const [via, setVia] = useState<ContactVia>("call");
   const [images, setImages] = useState<Picked[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -71,9 +95,13 @@ export default function DescribeClient() {
       const carried = sessionStorage.getItem(HANDOFF_KEY);
       if (carried) {
         sessionStorage.removeItem(HANDOFF_KEY);
+        const narrow = window.innerWidth < 768;
         // Not set straight from the effect body: this is a read from an external store,
         // and the compiler's lint wants that arriving through a callback.
-        queueMicrotask(() => setDescription(carried.slice(0, MAX_DESCRIPTION)));
+        queueMicrotask(() => {
+          setDescription(carried.slice(0, MAX_DESCRIPTION));
+          setCompact(narrow);
+        });
       }
     } catch {
       // Storage refused: the box simply starts empty.
@@ -116,6 +144,9 @@ export default function DescribeClient() {
     setImages((current) => [...current, ...picked]);
   };
 
+  const phone = readPhone(contact);
+  const link = contactLink(contact, via);
+
   const build = async () => {
     setBusy(true);
     setError("");
@@ -129,20 +160,25 @@ export default function DescribeClient() {
           images: images.map(({ media_type, data }) => ({ media_type, data })),
         }),
       });
-      const body = await res.json();
+      const body = parseReply(await res.text());
+      if (!body) {
+        setError("The server took too long to answer. Try again in a minute.");
+        return;
+      }
       if (!res.ok) {
         setError(body.error || "Could not build a site from that.");
         setNeedsCredits(Boolean(body.needsCredits));
         return;
       }
 
+      const sections = withContactLink(body.sections as Section[], link);
       // Straight into the editor's own storage, so the editor opens it the way it opens
       // anything else somebody was working on, and the background redraws from the recipe.
       await storeDocument({
         name: body.siteName,
         description: body.siteDescription,
-        sections: body.sections as Section[],
-        pages: [{ slug: "index", title: body.siteName, sections: body.sections as Section[] }],
+        sections,
+        pages: [{ slug: "index", title: body.siteName, sections }],
         themeJson: JSON.stringify(body.theme),
         styleJson: JSON.stringify(body.style),
         framesFromRecipe: true,
@@ -162,35 +198,26 @@ export default function DescribeClient() {
     <main className="min-h-screen bg-background text-foreground">
       <Navbar />
 
-      <section className="mx-auto max-w-2xl px-6 pb-24 pt-20">
-        <h1 className="lc-display text-4xl md:text-5xl">
+      <section className="mx-auto max-w-2xl px-6 pb-24 pt-8 sm:pt-14 md:pt-20">
+        <h1 className="lc-display text-3xl sm:text-4xl md:text-5xl">
           <span className="block">Describe the business.</span>
           <span className="block text-primary-ink">Get a site to edit.</span>
         </h1>
-        <p className="mt-5 text-muted-foreground">
-          Write it the way you would tell someone what you do. Street names, hours, materials and
-          prices make a better site than adjectives do. Everything it writes is yours to change.
+        <p className="mt-3 text-muted-foreground sm:mt-5">
+          Claude, Anthropic&apos;s AI model, writes the first draft from what you type. Street
+          names, hours and prices make a better site than adjectives do.
         </p>
 
-        <ol className="mt-10 grid gap-5 border-y border-border py-7 sm:grid-cols-3">
-          {WHAT_HAPPENS.map(([title, detail]) => (
-            <li key={title}>
-              <p className="text-sm text-foreground">{title}</p>
-              <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{detail}</p>
-            </li>
-          ))}
-        </ol>
-
-        <label htmlFor="description" className="mt-10 block text-sm text-muted-foreground">
+        <label htmlFor="description" className="mt-6 block text-sm text-muted-foreground sm:mt-8">
           What is the business?
         </label>
         <Textarea
           id="description"
           value={description}
           onChange={(e) => setDescription(e.target.value.slice(0, MAX_DESCRIPTION))}
-          rows={7}
+          rows={compact ? 4 : 7}
           placeholder={EXAMPLES[0]}
-          className="mt-2 rounded-2xl border-white/10 bg-card px-4 py-3 text-base shadow-[var(--lift-1)] transition-shadow focus-visible:border-primary-ink/40 focus-visible:shadow-[var(--glow)]"
+          className={`mt-2 rounded-2xl border-white/10 bg-card px-4 py-3 text-base shadow-[var(--lift-1)] transition-shadow focus-visible:border-primary-ink/40 focus-visible:shadow-[var(--glow)] ${compact ? "field-sizing-fixed" : ""}`}
         />
         <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
           <button
@@ -205,15 +232,91 @@ export default function DescribeClient() {
           </span>
         </div>
 
-        <div className="mt-8">
-          <p className="text-sm text-foreground">
-            Photographs, up to {MAX_IMAGES} (optional)
-          </p>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Your work, your room, your materials. They shape the words and the colours. They are
-            sent once to write the site and are not stored.
-          </p>
-          <div className="mt-3 flex flex-wrap items-center gap-3">
+        <label htmlFor="contact" className="mt-5 block text-sm text-muted-foreground">
+          How should customers reach you? (optional)
+        </label>
+        <Input
+          id="contact"
+          value={contact}
+          onChange={(e) => setContact(e.target.value)}
+          maxLength={300}
+          autoCapitalize="none"
+          autoCorrect="off"
+          spellCheck={false}
+          aria-describedby="contact-note"
+          placeholder="Phone or WhatsApp number with country code, email, or a link"
+          className="mt-2 h-11 rounded-2xl border-white/10 bg-card px-4 text-base shadow-[var(--lift-1)] transition-shadow focus-visible:border-primary-ink/40 focus-visible:shadow-[var(--glow)]"
+        />
+        {phone && (
+          <div role="group" aria-label="What the buttons do with this number" className="mt-2 flex gap-2">
+            {VIA.map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                aria-pressed={via === value}
+                onClick={() => setVia(value)}
+                className={`lc-mono h-9 rounded-full border px-4 text-[0.8rem] transition-colors ${via === value ? "border-primary-ink/60 bg-primary-ink/15 text-foreground" : "border-border text-muted-foreground hover:border-foreground/30"}`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        )}
+        <div id="contact-note" className="mt-2 space-y-0.5 text-xs text-muted-foreground">
+          {contact.trim() && (
+            <p>
+              {link ? (
+                <>
+                  Buttons will open <span className="lc-mono break-all text-foreground">{link}</span>
+                </>
+              ) : phone && via === "whatsapp" ? (
+                "WhatsApp needs the country code first, like +91 for India. Add it, or choose Call."
+              ) : (
+                "Buttons need a phone number, an email address or a link."
+              )}
+            </p>
+          )}
+          <p>Kept in this browser with the site; it is not sent to the model.</p>
+        </div>
+
+        <div className="mt-6 flex flex-wrap items-center gap-2">
+          <Button onClick={build} disabled={busy || short} size="lg" className="lc-btn-solid">
+            {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" /> : null}
+            {busy ? "Writing your site…" : "Build my site"}
+          </Button>
+          {images.length < MAX_IMAGES && (
+            <>
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                multiple
+                aria-hidden="true"
+                tabIndex={-1}
+                className="sr-only"
+                onChange={(e) => {
+                  void addFiles(e.target.files);
+                  e.target.value = "";
+                }}
+              />
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={() => fileRef.current?.click()}
+                className="gap-1.5 border-dashed px-3 text-xs"
+              >
+                <Upload className="h-4 w-4" aria-hidden="true" />
+                Add photos (optional)
+              </Button>
+            </>
+          )}
+        </div>
+        <p className="mt-2 text-sm text-muted-foreground" aria-live="polite">
+          {busy ? "About half a minute." : short ? "A sentence or two to start." : "You can change every word afterwards."}
+        </p>
+
+        {images.length > 0 && (
+          <div className="mt-4 flex flex-wrap items-center gap-3">
             {images.map((image, i) => (
               <span key={image.name + i} className="relative">
                 {/* eslint-disable-next-line @next/next/no-img-element -- a local preview of a file the visitor just picked */}
@@ -228,27 +331,11 @@ export default function DescribeClient() {
                 </button>
               </span>
             ))}
-            {images.length < MAX_IMAGES && (
-              <>
-                <input
-                  ref={fileRef}
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  multiple
-                  className="sr-only"
-                  onChange={(e) => {
-                    void addFiles(e.target.files);
-                    e.target.value = "";
-                  }}
-                />
-                <Button variant="outline" onClick={() => fileRef.current?.click()} className="h-20 w-20 flex-col gap-1 rounded-xl border-dashed border-border">
-                  <Upload className="h-4 w-4" aria-hidden="true" />
-                  <span className="text-xs">Add</span>
-                </Button>
-              </>
-            )}
+            <p className="text-xs text-muted-foreground">
+              {images.length} of {MAX_IMAGES} photographs. They shape the words and the colours.
+            </p>
           </div>
-        </div>
+        )}
 
         {error && needsCredits && (
           <OutOfCredits
@@ -259,22 +346,36 @@ export default function DescribeClient() {
           />
         )}
         {error && !needsCredits && (
-          <p role="alert" className="mt-6 rounded-xl border border-destructive/40 bg-destructive/10 p-4 text-sm text-foreground">
-            {error}
-          </p>
+          <div role="alert" className="mt-6 rounded-xl border border-destructive/40 bg-destructive/10 p-4 text-sm text-foreground">
+            <p>{error}</p>
+            <p className="mt-2">
+              <Link href="/templates" className="underline underline-offset-4">
+                Every template is free to edit and export meanwhile
+              </Link>
+              .
+            </p>
+          </div>
         )}
 
-        <div className="mt-10 flex flex-wrap items-center gap-4">
-          <Button onClick={build} disabled={busy || short} size="lg" className="lc-btn-solid">
-            {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" /> : null}
-            {busy ? "Writing your site…" : "Build my site"}
-          </Button>
-          <span className="text-sm text-muted-foreground" aria-live="polite">
-            {busy ? "About half a minute." : short ? "A sentence or two to start." : "You can change every word afterwards."}
-          </span>
-        </div>
+        <ol className="mt-12 grid gap-5 border-y border-border py-7 sm:grid-cols-3">
+          {WHAT_HAPPENS.map(([title, detail]) => (
+            <li key={title}>
+              <p className="text-sm text-foreground">{title}</p>
+              <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{detail}</p>
+            </li>
+          ))}
+        </ol>
 
-        <div className="mt-5 text-sm text-muted-foreground">
+        <dl className="mt-10 grid gap-6">
+          {QUESTIONS.map(([question, answer]) => (
+            <div key={question}>
+              <dt className="text-sm text-foreground">{question}</dt>
+              <dd className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{answer}</dd>
+            </div>
+          ))}
+        </dl>
+
+        <div className="mt-10 text-sm text-muted-foreground">
           {allowance?.hasKey ? (
             <>
               {allowance.remaining} {allowance.remaining === 1 ? "site" : "sites"} left{" "}

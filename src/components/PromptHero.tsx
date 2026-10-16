@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowUp, ImagePlus, Loader2 } from "lucide-react";
+import { ArrowUp, Loader2 } from "lucide-react";
 import StylePreview from "@/components/StylePreview";
 import { MAX_DESCRIPTION } from "@/lib/briefLimits";
 
@@ -26,7 +26,7 @@ export const HANDOFF_KEY = "scrollcraft_description";
 const EXAMPLES: [string, string][] = [
   ["Barbershop", "A two-chair barbershop on Mill Road in Cambridge, open since 2011. Walk-ins before noon, appointments after. Fades, beard trims and hot towel shaves, and we do not do colour."],
   ["Kite shop", "A rooftop kite shop in Ahmedabad, open only in the three weeks before Uttarayan. Paper kites and manja by the dozen, cash at the stairs."],
-  ["Camera repair", "I repair and restore vintage film cameras, mostly Nikon and Pentax, from a workshop in Leeds. Six to eight week turnaround, and I send photographs of the work as I go."],
+  ["Tiffin service", "Maharashtrian lunch tiffins from a home kitchen in Kothrud, Pune, since 2016. Two sabzis, dal, rice and chapatis at your office by 1 pm. Monthly plans only, and no onion or garlic on Thursdays."],
 ];
 
 export default function PromptHero({ reducedMotion }: { reducedMotion: boolean }) {
@@ -61,7 +61,10 @@ export default function PromptHero({ reducedMotion }: { reducedMotion: boolean }
     router.push("/describe");
   };
 
-  const short = value.trim().length < 20;
+  const typed = value.trim().length;
+  const short = typed < 20;
+  const left = 20 - typed;
+  const hint = typed === 0 ? "No sign-up needed" : short ? `${left} more character${left === 1 ? "" : "s"}` : `${typed} characters`;
 
   return (
     <section className="relative isolate flex min-h-[calc(100svh-4rem)] items-center overflow-hidden border-b border-border px-6 py-20">
@@ -91,7 +94,7 @@ export default function PromptHero({ reducedMotion }: { reducedMotion: boolean }
 
         <h1 className="lc-display mt-7 text-[2.6rem] leading-[1.05] sm:text-6xl lg:text-[4rem]">
           <span className="block">Describe your business.</span>
-          <span className="block text-primary-ink">Get a cinematic scroll site.</span>
+          <span className="block text-primary-ink">Get a website that moves as you scroll.</span>
         </h1>
 
         <p className="mx-auto mt-6 max-w-xl text-lg leading-relaxed text-muted-foreground">
@@ -113,10 +116,7 @@ export default function PromptHero({ reducedMotion }: { reducedMotion: boolean }
             className="w-full resize-none bg-transparent px-4 py-4 text-base leading-relaxed text-foreground outline-none placeholder:text-muted-foreground"
           />
           <div className="flex items-center justify-between gap-3 px-4 pb-2">
-            <span className="flex items-center gap-2 text-xs text-muted-foreground">
-              <ImagePlus className="h-4 w-4" aria-hidden="true" />
-              {short ? "Photographs optional" : `${value.trim().length} characters`}
-            </span>
+            <span className="text-xs text-muted-foreground">{hint}</span>
             {/* Not faded out when it is not ready: a button nobody can read is worse
                 than one that plainly says it is waiting for a sentence. */}
             <button

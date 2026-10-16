@@ -7,6 +7,7 @@
  * languages this app does not speak, on the two heaviest routes.
  */
 import { string, number, boolean, object, array, tuple, enum as zEnum, type infer as zInfer, type ZodType } from "zod";
+import { isAllowedHref } from "@/lib/hrefRule";
 
 export const SECTION_LAYOUTS = ["center", "left", "right", "lower-third", "upper-third"] as const;
 export type SectionLayout = (typeof SECTION_LAYOUTS)[number];
@@ -24,17 +25,7 @@ export const sectionIdSchema = string().min(1).max(100);
 export const colorSchema = string().max(50)
   .regex(/^(?:#[0-9a-fA-F]{3,8}|(?:rgb|hsl)a?\([\d\s.,%/]+\)|[a-zA-Z]{3,20})$/);
 
-/**
- * Where a button may point.
- *
- * Includes a bare page file, because that is what a multi page export links to and what
- * the nav itself writes: `contact.html`, optionally with an anchor. No slash, no scheme
- * and no dots, so it cannot climb out of the folder or turn into a javascript: URL.
- */
-export function isAllowedHref(value: string): boolean {
-  if (value.startsWith("//")) return false;
-  return /^(?:#|\/|\.{1,2}\/|https?:\/\/|mailto:|tel:)/i.test(value) || /^[a-z0-9][a-z0-9-]*\.html(?:#[A-Za-z0-9_-]+)?$/.test(value);
-}
+export { isAllowedHref };
 
 export const ctaHrefSchema = string().max(2000).refine((v) => v === "" || isAllowedHref(v));
 
