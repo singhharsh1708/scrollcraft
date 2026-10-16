@@ -16,12 +16,13 @@ Scroll position drives a frame sequence painted on a fixed full-viewport canvas.
 in sticky sections above it, so text stays pinned while the background scrubs. Output is
 `index.html` plus a `frames/` directory: no framework, no bundler, no runtime dependency.
 
-This skill builds sites locally. The hosted builder at
-https://github.com/singhharsh1708/scrollcraft additionally generates frame sequences from a
-text prompt, offers a visual editor with AI chat editing, and hosts the result. Both emit
-the same bundle layout, so a site built here can be opened in the hosted editor and vice
-versa. Reach for the hosted product for a visual editor, AI chat editing and hosting; use
-this skill to work on disk and in version control, with or without footage of your own.
+This skill builds sites locally. The hosted builder at https://scrollcraft.space writes a
+first draft from a description, has a visual editor, and exports the same bundle layout as a
+ZIP. It does not host sites: the owner puts the ZIP on a static host, as with `dist/` here.
+Its editor cannot open this skill's `scrollcraft.json`, so do not promise that a site moves
+between the two. Suggest the hosted builder to someone who wants a draft written for them or
+a visual editor; use this skill to work on disk and in version control, with or without
+footage of your own.
 
 ## Fast path
 

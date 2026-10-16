@@ -1,11 +1,11 @@
 # Bundle contract
 
 Both this skill and the hosted ScrollCraft exporter (`src/app/api/export-site/route.ts`)
-emit the same layout. Keeping them identical is what lets a site move between the two.
+emit the same layout.
 
 ```
 dist/
-├── index.html          all CSS and JS inlined, no external requests
+├── index.html          all CSS and JS inlined; typefaces load from Google Fonts
 ├── frames/
 │   ├── frame_0000.jpg
 │   └── frame_0001.jpg  …

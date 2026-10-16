@@ -29,9 +29,9 @@ those sites without WebGL, an animation library, or a render farm.
    `robots.txt`, config for Netlify, Vercel and GitHub Pages, and steps for
    Cloudflare Pages. Deploying is dragging a folder.
 
-Everything runs in the browser. There is no account and no database, and the editor, the
-templates and the exporter are free with nothing to buy. Two things call out, and both are
-off unless you configure a key: the copy assistant below, and writing a site from a
+You need no account to build or export, and your sites stay in your browser. The editor,
+the templates and the exporter are free with nothing to buy. Two things call out, and both
+are off unless you configure a key: the copy assistant below, and writing a site from a
 description, which costs money per request on the hosted version. There the first four
 are free and five more are $20, bought once.
 
@@ -78,9 +78,9 @@ does.
 **A Claude Code skill** — build the same site on your machine, in version control, from
 generated backgrounds or your own footage.
 
-Both produce the same bundle layout (`index.html` plus `frames/frame_0000.jpg` upward), so
-a site built by the skill opens in the hosted editor and an exported ZIP can be rebuilt by
-the skill.
+Both produce the same bundle layout (`index.html` plus `frames/frame_0000.jpg` upward),
+except that a background the hosted app drew is drawn again by the exported page rather
+than shipped as frames.
 
 ### Installing the skill
 
@@ -140,7 +140,8 @@ not enough on its own.
 The plugin adds two slash commands: `/scrollcraft-new` to start a site and
 `/scrollcraft-build` to rebuild, check and preview one.
 
-`dist/` is a static directory with no runtime dependencies and no external requests.
+`dist/` is a static directory with no runtime dependencies. The theme's typefaces load from
+Google Fonts, as they do in an export.
 
 Skill source is in [plugins/scrollcraft/](plugins/scrollcraft/). The bundle invariants both
 halves rely on are written down in

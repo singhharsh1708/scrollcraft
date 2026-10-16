@@ -100,6 +100,9 @@ export default function PrivacyPage() {
           Uploaded video is <strong>never</strong> sent anywhere. Frames are extracted from
           it inside your browser.
         </p>
+        <p>
+          The Claude Code plugin runs on your own computer and sends nothing to ScrollCraft.
+        </p>
 
         <h2>Third-party services</h2>
         <ul>
