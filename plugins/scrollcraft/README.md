@@ -24,18 +24,22 @@ come with it: `/scrollcraft:scrollcraft-new` starts a site, and
 `/scrollcraft:scrollcraft-build` rebuilds, checks and previews the one in the current
 directory.
 
+To update, open `/plugin`, select `scrollcraft` on the Installed tab and choose Update now,
+or run `claude plugin update scrollcraft@scrollcraft` in your shell.
+
 ## Requirements
 
 - Node.js 22 or newer. The scripts are plain Node with nothing to install.
 - ffmpeg, to make frames from a video or a generated background (`brew install ffmpeg` or
   `apt install ffmpeg`). An image sequence you already have needs none.
 - Chrome, Chromium or Edge, for the check that opens the built page and measures what a
-  reader would see. Set `CHROME_PATH` if the browser is not in its usual place.
+  reader would see. If the check says it found no browser, set `CHROME_PATH` to the
+  browser's binary.
 
 ## Privacy
 
-Everything runs on your computer. The scripts call ffmpeg, serve the site on 127.0.0.1 and
-drive a local headless Chrome. Nothing is sent to ScrollCraft. The pages it builds load
+The plugin's scripts run on your computer. They call ffmpeg, serve the site on 127.0.0.1
+and drive a local headless Chrome. Nothing is sent to ScrollCraft. The pages it builds load
 their typefaces from Google Fonts, and an email form you add posts to the provider you
 name. The [privacy policy](https://scrollcraft.space/privacy) covers the web app as well.
 

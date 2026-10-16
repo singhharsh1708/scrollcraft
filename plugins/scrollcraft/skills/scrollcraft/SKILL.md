@@ -2,7 +2,7 @@
 name: scrollcraft
 description: >
   Build a cinematic scroll-driven website where scrolling scrubs a canvas frame sequence,
-  Apple-product-page style, and emit a self-contained static bundle that deploys to any
+  Apple-product-page style, and emit a static bundle that deploys to any
   host with zero runtime dependencies. Works from a video, an existing image sequence, or
   no assets at all via generated cinematic backgrounds. Pins copy over the frames in sticky
   sections and verifies the result before shipping.
@@ -17,12 +17,14 @@ in sticky sections above it, so text stays pinned while the background scrubs. O
 `index.html` plus a `frames/` directory: no framework, no bundler, no runtime dependency.
 
 This skill builds sites locally. The hosted builder at https://scrollcraft.space writes a
-first draft from a description, has a visual editor, and exports the same bundle layout as a
-ZIP. It does not host sites: the owner puts the ZIP on a static host, as with `dist/` here.
-Its editor cannot open this skill's `scrollcraft.json`, so do not promise that a site moves
-between the two. Suggest the hosted builder to someone who wants a draft written for them or
-a visual editor; use this skill to work on disk and in version control, with or without
-footage of your own.
+first draft from a description, has a visual editor, and exports a ZIP. That ZIP has an
+`index.html` like `dist/` here, but it carries `frames/` only when the background is an
+uploaded video; a background the hosted app drew is drawn again by the exported page. The
+hosted builder does not host sites: the owner extracts the ZIP and puts its files on a
+static host, as with `dist/` here. Its editor cannot open this skill's `scrollcraft.json`,
+so do not promise that a site moves between the two. Suggest the hosted builder to someone
+who wants a draft written for them or a visual editor; use this skill to work on disk and in
+version control, with or without footage of your own.
 
 ## Fast path
 
@@ -196,4 +198,4 @@ These are what separate a convincing scroll site from an obviously generated one
 - Audio starts muted and only plays after a real user gesture. Autoplay with sound is blocked by every current browser, so do not present it as a feature that works unprompted.
 - `customCss` in the spec is filtered for `<script`, `<style`, `javascript:`/`data:` URLs and `expression(`. Treat it as a styling hook, not an extension point.
 - Section images must be `png`, `jpg`, `jpeg`, `webp`, `avif`, `gif` or `svg`. `imageWidth` is capped at 1600px. A missing image fails the build rather than shipping a broken tag.
-- `ffmpeg` is required for both frame paths and nothing else is. The build, doctor and preview server are plain Node with no dependencies.
+- `ffmpeg` is needed only for the two frame paths. `verify` needs Chrome, Chromium or Edge, and Node 22 or newer for its built-in `WebSocket`. The build, doctor and preview server are plain Node with no dependencies.

@@ -30,10 +30,10 @@ those sites without WebGL, an animation library, or a render farm.
    Cloudflare Pages. Deploying is dragging a folder.
 
 You need no account to build or export, and your sites stay in your browser. The editor,
-the templates and the exporter are free with nothing to buy. Two things call out, and both
-are off unless you configure a key: the copy assistant below, and writing a site from a
-description, which costs money per request on the hosted version. There the first four
-are free and five more are $20, bought once.
+the templates and the exporter are free with nothing to buy. Four things call out, and each
+is off until you configure it: the copy assistant below, writing a site from a description,
+GitHub sign-in, and buying more sites. Writing a site costs money per request on the hosted
+version, so there the first four are free and five more are $20, bought once.
 
 ## Features
 
@@ -92,16 +92,18 @@ This repository is also a Claude Code plugin marketplace. From inside Claude Cod
 ```
 
 Then describe what you want, such as "build me a scroll site from hero.mp4". Run `/plugin`
-and look for `scrollcraft` to confirm it registered. To update later:
+and look for `scrollcraft` to confirm it registered. To update later, open `/plugin`, select
+`scrollcraft` on the Installed tab and choose Update now, or run this in your shell:
 
 ```
-/plugin marketplace update scrollcraft
+claude plugin update scrollcraft@scrollcraft
 ```
 
 ### Using the skill
 
-`ffmpeg` is the only external requirement (`brew install ffmpeg` or `apt install ffmpeg`).
-The scripts are plain Node with no dependencies.
+The skill needs Node.js 22 or newer, `ffmpeg` to make frames from a video or a generated
+background (`brew install ffmpeg` or `apt install ffmpeg`), and Chrome, Chromium or Edge for
+the check that opens the built page. The scripts are plain Node with no dependencies.
 
 Ask Claude for a scroll site, or drive it yourself. The quickest path needs no footage and
 scaffolds the spec, background and a working site in one command:
@@ -137,8 +139,8 @@ that every line of copy clears 4.5:1 contrast against the pixels behind it. A mi
 set renders a black canvas without throwing or logging anything, so checking the files is
 not enough on its own.
 
-The plugin adds two slash commands: `/scrollcraft-new` to start a site and
-`/scrollcraft-build` to rebuild, check and preview one.
+The plugin adds two slash commands: `/scrollcraft:scrollcraft-new` to start a site and
+`/scrollcraft:scrollcraft-build` to rebuild, check and preview one.
 
 `dist/` is a static directory with no runtime dependencies. The theme's typefaces load from
 Google Fonts, as they do in an export.
@@ -190,10 +192,11 @@ Every variable is optional. See [`.env.example`](.env.example).
 
 In your own browser, and then in the ZIP you download.
 
-Sites are held in IndexedDB on your device while you edit. Nothing is uploaded and no
-account exists to attach it to. **Clear your browser data and unexported work is gone**, so
-export early. The editor autosaves as you type and warns you before you close a tab with
-unsaved changes.
+Sites are held in IndexedDB on your device while you edit, and are never stored on a
+server. Signing in with GitHub stores only your account number and how many paid sites you
+have left, so it does not back your sites up. **Clear your browser data and unexported work
+is gone**, so export early. The editor autosaves as you type and warns you before you close
+a tab with unsaved changes.
 
 ## Scripts
 

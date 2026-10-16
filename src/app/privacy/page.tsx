@@ -102,6 +102,7 @@ export default function PrivacyPage() {
         </p>
         <p>
           The Claude Code plugin runs on your own computer and sends nothing to ScrollCraft.
+          The pages it builds load their typefaces from Google Fonts, as exports do.
         </p>
 
         <h2>Third-party services</h2>
