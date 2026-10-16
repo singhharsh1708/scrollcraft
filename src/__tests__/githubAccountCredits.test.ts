@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import type { NextRequest } from "next/server";
 import type { Brief } from "@/lib/siteBrief";
 import { peek, peekHash, putHash, resetFakeRedis } from "./stubs/fakeRedis";
+import { FREE_SITES } from "../lib/credits";
 
 /**
  * Credits that belong to a GitHub account rather than to a browser.
@@ -246,7 +247,7 @@ describe("a signed-in visitor spends their account's credits, not the browser's"
     putHash(onKey, { total: 5, used: 5 });
     signedIn(GITHUB_ID);
     expect(await (await balance(`sc_key=${HASH}`)).json()).toEqual({
-      free: 1,
+      free: 4,
       pack: 5,
       hasKey: true,
       remaining: 7,
@@ -261,10 +262,10 @@ describe("a signed-in visitor spends their account's credits, not the browser's"
     // A signed-in visitor has an identity but not necessarily a pack. Reading the
     // refusal straight off the identity told them credits they never had were gone.
     signedIn(GITHUB_ID);
-    expect((await generateSite({ browser: "browser-one" })).status).toBe(200);
+    for (let i = 0; i < FREE_SITES; i++) expect((await generateSite({ browser: "browser-one" })).status).toBe(200);
     const res = await generateSite({ browser: "browser-one" });
     expect(res.status).toBe(402);
-    expect((await res.json()).error).toMatch(/free site has been used/);
+    expect((await res.json()).error).toMatch(/free sites have been used/);
   });
 });
 
@@ -276,16 +277,16 @@ describe("the free site stays with the browser, and signing in does not mint ano
     expect(peek(onAccount), "the free site was recorded against the account").toBeUndefined();
   });
 
-  it("refuses a second free site to the same browser, signed in or not", async () => {
+  it("refuses the same browser once its free sites are used, signed in or not", async () => {
     signedIn(GITHUB_ID);
-    expect((await generateSite({ browser: "browser-one" })).status).toBe(200);
+    for (let i = 0; i < FREE_SITES; i++) expect((await generateSite({ browser: "browser-one" })).status).toBe(200);
     expect((await generateSite({ browser: "browser-one" })).status).toBe(402);
   });
 
   it("does not give a browser its free site back because somebody signed in on it", async () => {
     // The tempting mistake: hanging the free tier off the account, which would hand out
-    // one free site per account per browser instead of one per browser.
-    expect((await generateSite({ browser: "browser-one" })).status).toBe(200);
+    // free sites per account per browser instead of per browser.
+    for (let i = 0; i < FREE_SITES; i++) expect((await generateSite({ browser: "browser-one" })).status).toBe(200);
     signedIn(GITHUB_ID);
     expect((await generateSite({ browser: "browser-one" })).status).toBe(402);
     signedIn("1");

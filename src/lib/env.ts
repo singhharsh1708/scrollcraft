@@ -21,7 +21,7 @@ const envSchema = z.object({
   ANTHROPIC_API_KEY: z.string().optional(),
 
   // Payments. Absent, the webhook answers 503 and the pricing page says the shop is
-  // not open yet; the first free site still works, because it never touches any of this.
+  // not open yet; the free sites still work, because they never touch any of this.
   LEMONSQUEEZY_WEBHOOK_SECRET: z.string().min(6).max(40).optional(),
   LEMONSQUEEZY_ACCEPT_TEST_MODE: z.enum(["0", "1"]).optional(),
   NEXT_PUBLIC_LEMON_CHECKOUT_URL: z.string().url().optional(),

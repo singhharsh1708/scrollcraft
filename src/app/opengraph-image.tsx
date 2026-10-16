@@ -67,7 +67,7 @@ export default function OGImage() {
             color: "#93a9c0",
           }}
         >
-          <div style={{ display: "flex" }}>First site free · Editor · One-ZIP export · Open source</div>
+          <div style={{ display: "flex" }}>First four sites free · Editor · One-ZIP export · Open source</div>
           <div style={{ display: "flex", color: "#7fc8ff" }}>{siteUrl.replace(/^https?:\/\//, "")}</div>
         </div>
       </div>

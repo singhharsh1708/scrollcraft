@@ -75,7 +75,7 @@ export default function PrivacyPage() {
             is configured with a key.
           </li>
           <li>
-            <strong>A purchase, only if you buy more sites.</strong> The first site is free.{" "}
+            <strong>A purchase, only if you buy more sites.</strong> The first four sites are free.{" "}
             {processor ? (
               <>
                 A pack of five is paid for on {processor === "dodo" ? "Dodo Payments'" : "Stripe's"} own
@@ -121,7 +121,7 @@ export default function PrivacyPage() {
         <h2>Cookies</h2>
         <p>
           Two, both around the site writer and neither readable by scripts: a random name
-          for this browser, so your free site is yours rather than one shared with everybody
+          for this browser, so your free sites are yours rather than shared with everybody
           on the same network, and, if you buy a pack, the hash of your licence key so this
           browser can spend what you paid for. A third is set only while you are signed in
           with GitHub, and holds the signed session. No advertising or analytics cookies

@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import type { NextRequest } from "next/server";
 import type { Brief } from "@/lib/siteBrief";
 import { breakFakeRedis, peek, peekHash, putHash, resetFakeRedis } from "./stubs/fakeRedis";
+import { FREE_PER_IP, FREE_SITES } from "../lib/credits";
 
 /**
  * The route that spends money, seen from the credit side.
@@ -165,7 +166,7 @@ describe("the allowance is taken before the model is called", () => {
   });
 
   it("keeps the name a browser already has rather than handing out another free site", async () => {
-    await post({ description: DESCRIPTION });
+    for (let i = 0; i < FREE_SITES; i++) await post({ description: DESCRIPTION });
     const res = await post({ description: DESCRIPTION });
     expect(res.status).toBe(402);
     expect(res.headers.get("set-cookie")).toContain("browser-under-test");
@@ -173,7 +174,7 @@ describe("the allowance is taken before the model is called", () => {
 
   it("bounds somebody who keeps no cookies by the address instead", async () => {
     // Each of these looks like a new browser. The address is what stops it.
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < FREE_PER_IP; i++) {
       expect((await postWithoutCookies({ description: DESCRIPTION })).status, `call ${i}`).toBe(200);
     }
     const res = await postWithoutCookies({ description: DESCRIPTION });
@@ -181,20 +182,20 @@ describe("the allowance is taken before the model is called", () => {
     expect((await res.json()).error).toMatch(/as many free sites as this connection/);
   });
 
-  it("answers 402 and calls nobody when the free site is gone and there is no key", async () => {
-    await post({ description: DESCRIPTION });
+  it("answers 402 and calls nobody when the free sites are gone and there is no key", async () => {
+    for (let i = 0; i < FREE_SITES; i++) await post({ description: DESCRIPTION });
     const res = await post({ description: DESCRIPTION });
     expect(res.status).toBe(402);
     const body = await res.json();
     expect(body.needsCredits).toBe(true);
-    expect(body.error).toMatch(/free site has been used/);
-    expect(sdk.parse).toHaveBeenCalledTimes(1);
+    expect(body.error).toMatch(/free sites have been used/);
+    expect(sdk.parse).toHaveBeenCalledTimes(FREE_SITES);
   });
 
   it("tells a buyer whose pack is spent what another pack costs", async () => {
     putHash(entitlement, { total: 5, used: 5 });
-    // The free site is still theirs; it is the one after that which is refused.
-    expect((await asBuyer({ description: DESCRIPTION })).status).toBe(200);
+    // The free sites are still theirs; it is the one after them which is refused.
+    for (let i = 0; i < FREE_SITES; i++) expect((await asBuyer({ description: DESCRIPTION })).status).toBe(200);
     const res = await asBuyer({ description: DESCRIPTION });
     expect(res.status).toBe(402);
     expect((await res.json()).error).toBe("Those credits are spent. Another 5 sites cost $20.");
@@ -282,10 +283,10 @@ describe("a generation that worked is charged for", () => {
       expect((await asBuyer({ description: DESCRIPTION })).status, `site ${i}`).toBe(200);
     }
     expect(peekHash(entitlement)).toMatchObject({ total: 5, used: 5 });
-    // Six. The free site answers it, and the seventh is refused.
-    expect((await asBuyer({ description: DESCRIPTION })).status).toBe(200);
+    // The free sites answer the next ones, and the one after them is refused.
+    for (let i = 0; i < FREE_SITES; i++) expect((await asBuyer({ description: DESCRIPTION })).status).toBe(200);
     expect((await asBuyer({ description: DESCRIPTION })).status).toBe(402);
-    expect(sdk.parse).toHaveBeenCalledTimes(6);
+    expect(sdk.parse).toHaveBeenCalledTimes(5 + FREE_SITES);
   });
 
   it("does not spend the free site while there are credits to spend", async () => {

@@ -22,13 +22,13 @@ export const metadata: Metadata = {
     default: "ScrollCraft — Describe your business, get a scroll site",
     template: "%s | ScrollCraft",
   },
-  description: "Write a few sentences about what you do, add a photograph or two, and get a finished scroll site to edit and export as plain HTML. First site free, five more for $20.",
+  description: "Write a few sentences about what you do, add a photograph or two, and get a finished scroll site to edit and export as plain HTML. First four sites free, five more for $20.",
   keywords: ["ai website builder", "scroll website builder", "animated canvas", "scrollytelling", "no-code", "scroll animation"],
   authors: [{ name: "ScrollCraft" }],
   openGraph: {
     ...SHARE_BASE,
     title: "ScrollCraft — Describe your business, get a scroll site",
-    description: "Describe your business and get a finished scroll site to edit and export as plain HTML. First site free.",
+    description: "Describe your business and get a finished scroll site to edit and export as plain HTML. First four sites free.",
     // No images key: src/app/opengraph-image.tsx generates the real 1200x630 card and
     // Next wires it up automatically. The hardcoded /og-image.png overrode that with a
     // file that does not exist, so every share rendered with no preview.
@@ -36,7 +36,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "ScrollCraft — Describe your business, get a scroll site",
-    description: "Describe your business and get a finished scroll site to edit and export as plain HTML. First site free.",
+    description: "Describe your business and get a finished scroll site to edit and export as plain HTML. First four sites free.",
   },
   robots: { index: true, follow: true },
 };

@@ -121,8 +121,8 @@ export async function POST(req: NextRequest) {
   // A signed-in visitor spends their account's credits, which is what makes them reach
   // the same person in a second browser. Everybody else spends the key cookie's.
   const identity = (await accountIdentity()) ?? keyHashFrom(req);
-  // The free site stays with the browser either way: one person signed in on three
-  // machines is still one free site each, not one per account per browser.
+  // Free sites stay with the browser either way: one person signed in on three
+  // machines gets each machine's free sites, not one allowance per account.
   const browser = browserTokenFrom(req) ?? crypto.randomUUID();
   const remember = (response: NextResponse) => {
     response.cookies.set(BROWSER_COOKIE, browser, cookieOptions());
@@ -147,7 +147,7 @@ export async function POST(req: NextRequest) {
         error:
           bought > 0
             ? `Those credits are spent. Another ${PACK_SITES} sites cost $${PACK_PRICE_USD}.`
-            : `The free site has been used from this connection. ${PACK_SITES} more cost $${PACK_PRICE_USD}.`,
+            : `The free sites have been used from this connection. ${PACK_SITES} more cost $${PACK_PRICE_USD}.`,
         needsCredits: true,
       },
       { status: 402 }

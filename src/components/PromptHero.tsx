@@ -85,7 +85,7 @@ export default function PromptHero({ reducedMotion }: { reducedMotion: boolean }
 
       <div className="mx-auto w-full max-w-3xl text-center">
         <p className="lc-mono inline-flex flex-wrap items-center justify-center gap-x-2 rounded-full border border-white/10 bg-card/80 px-4 py-1.5 text-xs text-primary-ink shadow-[var(--lift-1)] backdrop-blur-sm">
-          First site free
+          First four sites free
           <span className="text-muted-foreground">then 5 for $20</span>
         </p>
 

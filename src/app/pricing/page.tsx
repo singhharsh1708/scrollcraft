@@ -9,7 +9,7 @@ import KeyBox from "./KeyBox";
 export const metadata: Metadata = pageMeta({
   title: "Pricing",
   description:
-    "The editor, the templates and the exporter are free. Writing a site from a description costs money per request, so the first one is free and five more are $20.",
+    "The editor, the templates and the exporter are free. Writing a site from a description costs money per request, so the first four are free and five more are $20.",
   path: "/pricing",
 });
 
@@ -18,7 +18,7 @@ const FREE = [
   "The whole editor, with no watermark",
   "Export as plain HTML, CSS and JavaScript",
   "Host the export anywhere, or nowhere",
-  "One site written from your description",
+  "Four sites written from your description",
 ];
 
 const PACK = [
@@ -61,7 +61,7 @@ export default function PricingPage() {
               ))}
             </ul>
             <Link href="/describe" className="lc-btn lc-btn-ghost lc-btn-sm mt-8">
-              Write your free site
+              Write a free site
             </Link>
           </div>
 
@@ -70,7 +70,7 @@ export default function PricingPage() {
               aria-hidden="true"
               className="pointer-events-none absolute inset-x-10 -top-px h-px bg-gradient-to-r from-transparent via-primary-ink to-transparent"
             />
-            <p className="text-sm text-primary-ink">When the free one runs out</p>
+            <p className="text-sm text-primary-ink">When the free ones run out</p>
             <p className="mt-4 lc-display text-4xl">
               $20<span className="ml-2 align-middle text-base text-muted-foreground">one payment</span>
             </p>

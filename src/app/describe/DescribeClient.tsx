@@ -283,7 +283,7 @@ export default function DescribeClient() {
             </>
           ) : (
             <>
-              The first site is free. Five more are $20.{" "}
+              The first four sites are free. Five more are $20.{" "}
               <Link href="/pricing" className="underline underline-offset-4">Pricing</Link>
               {allowance && !allowance.signedIn && (
                 <>

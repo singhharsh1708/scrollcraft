@@ -32,8 +32,8 @@ those sites without WebGL, an animation library, or a render farm.
 Everything runs in the browser. There is no account and no database, and the editor, the
 templates and the exporter are free with nothing to buy. Two things call out, and both are
 off unless you configure a key: the copy assistant below, and writing a site from a
-description, which costs money per request on the hosted version. There the first one is
-free and five more are $20, bought once.
+description, which costs money per request on the hosted version. There the first four
+are free and five more are $20, bought once.
 
 ## Features
 
