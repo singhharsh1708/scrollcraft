@@ -31,12 +31,15 @@ export default function KeyBox({ checkout }: { checkout: string }) {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [credits, setCredits] = useState<Credits | null>(null);
-  const [confirming, setConfirming] = useState<"no" | "waiting" | "landed" | "slow">("no");
+  const [confirming, setConfirming] = useState<"no" | "waiting" | "landed" | "slow" | "failed">("no");
 
   useEffect(() => {
     let live = true;
-    const justBought = new URLSearchParams(window.location.search).get("bought") === "1";
-    // What the balance was before the buyer left for Stripe, written by the Buy button.
+    const params = new URLSearchParams(window.location.search);
+    // Dodo sends the buyer back here whether or not the payment went through.
+    const failed = params.get("status") === "failed" || params.get("status") === "cancelled";
+    const justBought = params.get("bought") === "1";
+    // What the balance was before the buyer left for the checkout, written by the Buy button.
     // Without it there is no telling a pack that has just landed from one already there.
     let before: number | null = null;
     try {
@@ -53,8 +56,12 @@ export default function KeyBox({ checkout }: { checkout: string }) {
         if (!live) return;
         setCredits(body);
         if (!justBought) return;
+        if (failed) {
+          setConfirming("failed");
+          return;
+        }
 
-        // The buyer gets back before the webhook does. Stripe has the money and the
+        // The buyer gets back before the webhook does. The checkout has the money and the
         // credits arrive a moment later, so the page waits for them rather than showing
         // a balance that looks as though the purchase did nothing.
         const total = body.total ?? 0;
@@ -131,6 +138,11 @@ export default function KeyBox({ checkout }: { checkout: string }) {
           <a href="/describe" className="underline underline-offset-4">
             Write one now
           </a>
+        </p>
+      )}
+      {confirming === "failed" && (
+        <p role="status" className="mb-5 rounded-xl border border-border bg-background p-4 text-sm text-foreground">
+          The payment did not go through, so nothing was charged. You can try again below.
         </p>
       )}
       {confirming === "slow" && (

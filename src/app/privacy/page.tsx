@@ -13,7 +13,7 @@ export const metadata: Metadata = pageMeta({
 });
 
 export default function PrivacyPage() {
-  const stripe = paymentProcessor() === "stripe";
+  const processor = paymentProcessor();
   return (
     <main className="min-h-screen bg-background text-foreground">
       <Navbar />
@@ -27,9 +27,7 @@ export default function PrivacyPage() {
           exporter, and no profile or saved history. The sites you build stay in your own
           browser until you export them. If you buy a pack of generations we do keep a
           short record of it, because otherwise we could not give you what you paid for:{" "}
-          {stripe
-            ? "your GitHub account number and how many sites are left on it. No email, no name and no card."
-            : "your email, a one-way hash of your licence key, how many sites are left, and, if you sign in, your GitHub account number."}{" "}
+          your GitHub account number and how many sites are left on it. No email, no name and no card.{" "}
           That record
           lives in a key-value store, it is the only thing we hold about anybody, and it is
           deleted on request.
@@ -77,23 +75,17 @@ export default function PrivacyPage() {
             is configured with a key.
           </li>
           <li>
-            {stripe ? (
+            <strong>A purchase, only if you buy more sites.</strong> The first site is free.{" "}
+            {processor ? (
               <>
-                <strong>A purchase, only if you buy more sites.</strong> The first site is
-                free. A pack of five is paid for on Stripe&apos;s own page, so the card
-                details, the name and the billing address go to them and never to us. Stripe
-                tell us that a payment was made and which account it was for. We keep how
-                many sites are left on that account, and nothing else about the purchase.
+                A pack of five is paid for on {processor === "dodo" ? "Dodo Payments'" : "Stripe's"} own
+                page, so the card details, the name, the email and the billing address go to
+                them and never to us. They tell us that a payment was made and which account it
+                was for. We keep how many sites are left on that account, and nothing else about
+                the purchase.
               </>
             ) : (
-              <>
-                <strong>A licence key, only if you buy more sites.</strong> The first site is
-                free. A pack of five is bought from Lemon Squeezy, who take the payment and
-                hold the card details, the name and the billing address; we never see them. They
-                send us the key they issued you and the email you bought with. We store a
-                one-way hash of that key, the email, and how many sites of the pack are left.
-                Pasting the key into ScrollCraft sends it once to Lemon Squeezy to be checked.
-              </>
+              <>No packs are on sale on this deployment, so nothing is collected for one.</>
             )}
           </li>
           <li>
@@ -116,10 +108,11 @@ export default function PrivacyPage() {
           <li><strong>Upstash</strong> — rate limiting and the daily counts above, when enabled. It stores a counter keyed by IP for limits, and counters keyed by date for the four steps.</li>
           <li><strong>Anthropic</strong> — writes a site from your description, when enabled. It receives that description and any photographs you attach, and only when you press Build my site.</li>
           <li><strong>GitHub</strong> &mdash; sign-in, if you use it and this deployment offers it. GitHub tells us your account number, your username and your avatar; we keep only the number, and we keep it so your credits can find you in another browser. We never ask them for your repositories or anything else.</li>
-          {stripe ? (
+          {processor === "dodo" && (
+            <li><strong>Dodo Payments</strong> &mdash; the merchant of record for a pack of sites, when the shop is enabled. You pay on their page, so they receive your card, email and billing details directly and we do not. They tell us only that a payment succeeded and which account to credit.</li>
+          )}
+          {processor === "stripe" && (
             <li><strong>Stripe</strong> &mdash; payments, when the shop is enabled. You pay on their page, so they receive your card and billing details directly and we do not. They tell us only that a payment succeeded and which account to credit.</li>
-          ) : (
-  <li><strong>Lemon Squeezy</strong> &mdash; the shop, when enabled. It is the seller of record for a pack of sites: it receives your payment details directly and tells us only which licence key was issued, for which order, to which email.</li>
           )}
           <li><strong>Sarvam AI</strong> — the rewrite assistant, when enabled. It receives the instruction you type and the copy of the site you are editing, and only when you press Rewrite.</li>
           <li><strong>Google Fonts</strong> — templates load webfonts, which discloses your IP to Google. Exported sites do the same unless you self-host the fonts.</li>

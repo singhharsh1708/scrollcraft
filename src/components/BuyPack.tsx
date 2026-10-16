@@ -8,7 +8,7 @@ import { signInAndReturn } from "@/app/signin/actions";
  * The one button that takes money.
  *
  * It does one of two things, and says which before it is pressed. Signed in, it opens
- * Stripe's checkout for a pack that will land on this account. Not signed in, it signs
+ * the checkout for a pack that will land on this account. Not signed in, it signs
  * in first and comes back here, because a pack has to belong to somebody before it is
  * paid for, or it ends up tied to a browser that can be cleared.
  */
@@ -47,7 +47,7 @@ export default function BuyPack({
       } catch {
         // Without it the return page falls back to "any credits at all".
       }
-      // Left busy on purpose: the page is about to be replaced by Stripe's.
+      // Left busy on purpose: the page is about to be replaced by the checkout.
       window.location.assign(body.url);
     } catch {
       setError("Could not reach the server. Check your connection.");
