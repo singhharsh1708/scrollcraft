@@ -76,6 +76,7 @@ function configured(): boolean {
 }
 
 export async function POST(req: NextRequest) {
+  const startedAt = Date.now();
   if (!configured()) {
     return NextResponse.json({ error: "Site generation is not configured on this deployment." }, { status: 503 });
   }
@@ -105,16 +106,6 @@ export async function POST(req: NextRequest) {
 
   const input = checkBriefInput(body as { description?: unknown; images?: unknown });
   if (!input.ok) return NextResponse.json({ error: input.error }, { status: 400 });
-
-  // Counted before the call rather than after it, so a crash mid-request still costs the
-  // budget a slot, which is the honest direction to be wrong in.
-  const today = await todaysSpendCount();
-  if (today !== null && today > DAILY_CEILING) {
-    return NextResponse.json(
-      { error: "This has written as many sites as it can today. Try again tomorrow." },
-      { status: 503 }
-    );
-  }
 
   // One site's worth of allowance, taken before the call and given back if the call
   // does not produce a site. Nobody should pay for a 502.
@@ -147,14 +138,25 @@ export async function POST(req: NextRequest) {
         error:
           bought > 0
             ? `Those credits are spent. Another ${PACK_SITES} sites cost $${PACK_PRICE_USD}.`
-            : `The free sites have been used from this connection. ${PACK_SITES} more cost $${PACK_PRICE_USD}.`,
+            : `The free sites have been used on this browser. ${PACK_SITES} more cost $${PACK_PRICE_USD}.`,
         needsCredits: true,
       },
       { status: 402 }
     ));
   }
 
-  const client = new Anthropic();
+  // Counted before the call rather than after it, so a crash mid-request still costs the
+  // budget a slot, which is the honest direction to be wrong in.
+  const today = await todaysSpendCount();
+  if (today !== null && today > DAILY_CEILING) {
+    await allowance.release();
+    return NextResponse.json(
+      { error: "This has written as many sites as it can today. It starts again at midnight UTC (05:30 in India). The templates and the editor are free in the meantime." },
+      { status: 503 }
+    );
+  }
+
+  const client = new Anthropic({ maxRetries: 1 });
   const content: Anthropic.ContentBlockParam[] = [
     ...input.images.map(
       (image): Anthropic.ContentBlockParam => ({
@@ -166,15 +168,19 @@ export async function POST(req: NextRequest) {
   ];
 
   try {
-    const response = await client.messages.parse({
-      model: MODEL,
-      max_tokens: MAX_OUTPUT_TOKENS,
-      // The rules never change, so they are cached and cost a tenth on every call after
-      // the first. Nothing variable may appear before this point.
-      system: [{ type: "text", text: BRIEF_RULES, cache_control: { type: "ephemeral" } }],
-      output_config: { format: zodOutputFormat(briefSchema), effort: "medium" },
-      messages: [{ role: "user", content }],
-    });
+    const response = await client.messages.parse(
+      {
+        model: MODEL,
+        max_tokens: MAX_OUTPUT_TOKENS,
+        // The rules never change, so they are cached and cost a tenth on every call after
+        // the first. Nothing variable may appear before this point.
+        system: [{ type: "text", text: BRIEF_RULES, cache_control: { type: "ephemeral" } }],
+        output_config: { format: zodOutputFormat(briefSchema), effort: "medium" },
+        messages: [{ role: "user", content }],
+      },
+      // Counted from the start of the request so the catch still runs inside maxDuration.
+      { signal: AbortSignal.timeout(Math.max(1_000, startedAt + 110_000 - Date.now())) }
+    );
 
     if (response.stop_reason === "refusal") {
       logger.warn("generate-site declined", { category: response.stop_details?.category });
@@ -211,6 +217,7 @@ export async function POST(req: NextRequest) {
       images: input.images.length,
       todayAcrossEveryone: today,
       paid: allowance.kind === "paid",
+      durationMs: Date.now() - startedAt,
     });
 
     const left = identity ? (await balanceOf(identity))?.remaining ?? 0 : 0;
@@ -229,14 +236,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Busy right now. Try again in a minute." }, { status: 429 });
     }
     if (err instanceof Anthropic.AuthenticationError || err instanceof Anthropic.PermissionDeniedError) {
-      logger.error("generate-site credentials rejected", { err });
+      logger.error("generate-site credentials rejected", { err, durationMs: Date.now() - startedAt });
       return NextResponse.json({ error: "Site generation is not configured on this deployment." }, { status: 503 });
     }
     if (err instanceof Anthropic.APIError) {
-      logger.error("generate-site upstream error", { status: err.status, message: err.message });
+      logger.error("generate-site upstream error", { status: err.status, message: err.message, durationMs: Date.now() - startedAt });
       return NextResponse.json({ error: "Could not generate a site just now." }, { status: 502 });
     }
-    logger.error("generate-site failed", { err });
+    logger.error("generate-site failed", { err, durationMs: Date.now() - startedAt });
     return NextResponse.json({ error: "Could not generate a site just now." }, { status: 500 });
   }
 }
