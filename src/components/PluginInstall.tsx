@@ -39,7 +39,8 @@ export default function PluginInstall() {
           <h3 className="lc-display text-3xl sm:text-4xl">ScrollCraft as a Claude Code plugin</h3>
           <p className="mt-4 max-w-xl leading-relaxed text-muted-foreground">
             Scaffold a spec, render a background and build the site from the command line.
-            The only thing it needs installed is <code className="lc-mono text-foreground">ffmpeg</code>.
+            It needs Node.js 22 or newer, <code className="lc-mono text-foreground">ffmpeg</code>, and
+            Chrome, Chromium or Edge installed.
           </p>
           <a
             href={`${GITHUB_REPO_URL}#installing-the-skill`}

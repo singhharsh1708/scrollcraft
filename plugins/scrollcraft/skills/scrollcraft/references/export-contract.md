@@ -1,16 +1,18 @@
 # Bundle contract
 
-Both this skill and the hosted ScrollCraft exporter (`src/app/api/export-site/route.ts`)
-emit the same layout. Keeping them identical is what lets a site move between the two.
+This is the layout `build-site.mjs` writes. The hosted ScrollCraft exporter
+(`src/app/api/export-site/route.ts`) builds the same page structure, but its ZIP carries
+`frames/` only when the background is an uploaded video. A background the hosted app drew
+is drawn again by the exported page instead.
 
 ```
 dist/
-├── index.html          all CSS and JS inlined, no external requests
+├── index.html          all CSS and JS inlined; typefaces load from Google Fonts
 ├── frames/
 │   ├── frame_0000.jpg
 │   └── frame_0001.jpg  …
 ├── frames-mobile/      optional, served to (max-width: 767px)
-└── audio.mp3           optional, extension varies
+└── audio.mp3           optional, extension varies; the hosted ZIP uses audio/track.<ext>
 ```
 
 ## Invariants
