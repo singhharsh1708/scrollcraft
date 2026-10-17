@@ -76,10 +76,10 @@ export default function TemplatesClient({
       <Navbar />
 
       <section className="px-6 pb-12 pt-20 text-center">
-        <p className="lc-mono mb-6 text-sm text-primary-ink">{templates.length} templates, all free</p>
+        <p className="lc-mono mb-6 text-sm text-primary-ink">Start from a finished site</p>
         <h1 className="lc-display text-5xl md:text-6xl lg:text-7xl">
-          <span className="block">Start from a</span>
-          <span className="block text-primary-ink">finished site</span>
+          <span className="block">{templates.length} free scroll</span>{" "}
+          <span className="block text-primary-ink">website templates</span>
         </h1>
         <p className="mx-auto mt-6 max-w-xl text-lg text-muted-foreground">
           Every template ships with its own palette, typography, pacing and copy structure.
@@ -207,7 +207,11 @@ export default function TemplatesClient({
 
                 <div className="p-4 flex flex-col gap-3 flex-1">
                   <div className="space-y-1">
-                    <h2 className="text-lg font-medium tracking-[-0.02em]">{t.name}</h2>
+                    <h2 className="text-lg font-medium tracking-[-0.02em]">
+                      <Link href={`/templates/${t.slug}`} className="underline-offset-4 hover:underline">
+                        {t.name}
+                      </Link>
+                    </h2>
                     <p className="text-xs text-muted-foreground leading-relaxed">{t.tagline}</p>
                   </div>
 
@@ -225,7 +229,7 @@ export default function TemplatesClient({
                   </p>
 
                   <div className="flex gap-2">
-                    <Link href={`/templates/${t.slug}`} className="flex-1">
+                    <Link href={`/templates/${t.slug}`} aria-label={`Preview ${t.name}`} className="flex-1">
                       <Button variant="outline" size="sm" className="lc-mono w-full border-border text-xs h-9 gap-1.5">
                         <Eye className="w-3.5 h-3.5" /> Preview
                       </Button>
@@ -256,6 +260,11 @@ export default function TemplatesClient({
             Ask for a custom build
           </Link>
         </div>
+        <p className="mt-8 text-sm text-muted-foreground">
+          <Link href="/describe" className="underline underline-offset-4 hover:text-foreground">
+            Or describe your business and have one written
+          </Link>
+        </p>
       </section>
       <SiteFooter />
     </main>

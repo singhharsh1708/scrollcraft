@@ -3,6 +3,8 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { TEMPLATES, templateCategories } from "@/lib/templates";
 import { heroScenes } from "@/lib/heroScenes";
+import { siteUrl } from "@/lib/env";
+import { AUTHOR_NAME, AUTHOR_SITE_URL, GITHUB_REPO_URL } from "@/lib/links";
 import HomeClient, { type EditorSample, type ExampleCard, type TemplateSlice } from "./HomeClient";
 import type { HeroTemplate } from "@/components/HeroSequence";
 
@@ -25,6 +27,35 @@ const EDITOR_SLUG = "orbitcrm";
  * where the gradient templates read as one flat field. The hero sets its display face.
  */
 const HERO_SLUG = "aurabeauty";
+
+const STRUCTURED_DATA = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      name: "ScrollCraft",
+      alternateName: new URL(siteUrl).host,
+      url: siteUrl,
+    },
+    {
+      "@type": "Organization",
+      name: "ScrollCraft",
+      url: siteUrl,
+      logo: `${siteUrl}/icon-512.png`,
+      sameAs: [GITHUB_REPO_URL],
+      founder: { "@type": "Person", name: AUTHOR_NAME, url: AUTHOR_SITE_URL },
+    },
+    {
+      "@type": "WebApplication",
+      name: "ScrollCraft",
+      url: siteUrl,
+      applicationCategory: "DesignApplication",
+      operatingSystem: "Any",
+      isAccessibleForFree: true,
+      offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+    },
+  ],
+};
 
 function examples(): ExampleCard[] {
   try {
@@ -69,12 +100,18 @@ export default function Home() {
   };
 
   return (
-    <HomeClient
-      heroTemplate={heroTemplate}
-      templates={templates}
-      editorSample={editorSample}
-      examples={examples()}
-      stats={{ templates: TEMPLATES.length, categories: templateCategories().length }}
-    />
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(STRUCTURED_DATA).replace(/</g, "\\u003c") }}
+      />
+      <HomeClient
+        heroTemplate={heroTemplate}
+        templates={templates}
+        editorSample={editorSample}
+        examples={examples()}
+        stats={{ templates: TEMPLATES.length, categories: templateCategories().length }}
+      />
+    </>
   );
 }

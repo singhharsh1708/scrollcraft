@@ -22,7 +22,7 @@ import SiteFooter from "@/components/SiteFooter";
  */
 
 export const metadata: Metadata = pageMeta({
-  title: "Examples — three finished ScrollCraft sites",
+  title: "Examples: three finished scroll sites",
   description:
     "Three complete scroll sites, each served as the exported bundle it produces: an architecture practice, a distillery and a deep-ocean survey programme.",
   path: "/examples",

@@ -5,7 +5,7 @@ import TemplatesClient, { type TemplateCard } from "./TemplatesClient";
 import { filtersFromQuery } from "@/lib/templateFilters";
 
 export const metadata: Metadata = pageMeta({
-  title: "Templates",
+  title: "Free scroll animation website templates (HTML)",
   description: `${TEMPLATES.length} finished scroll sites across ${templateCategories().length} categories. Open one in the editor, change the words and export it as plain HTML.`,
   path: "/templates",
 });

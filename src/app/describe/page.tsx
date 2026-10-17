@@ -3,9 +3,9 @@ import { pageMeta } from "@/lib/pageMeta";
 import DescribeClient from "./DescribeClient";
 
 export const metadata: Metadata = pageMeta({
-  title: "Describe your business",
+  title: "AI scroll website generator: four free, no sign-up",
   description:
-    "Write a few sentences about what you do, add a photograph or two, and get a finished scroll site to edit and export as plain HTML.",
+    "Describe your business and Claude writes a finished scroll site you can edit and export as plain HTML. Four sites free per browser, no account needed.",
   path: "/describe",
 });
 
