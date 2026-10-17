@@ -90,18 +90,19 @@ export function exportReadme(
   return `# ${siteName}
 
 Your site, exported from [ScrollCraft](${madeWithUrl}).
-Plain HTML, CSS and JavaScript — no build step, no framework, no account needed. It is
-yours outright.
+Plain HTML, CSS and JavaScript: no build step, no framework, no ScrollCraft account
+needed. It is yours outright.
 
 ## Put it online
 
 Pick whichever is easiest. All of them are free for a site this size.
 
-**Netlify (drag and drop, no account needed to try)**
-1. Go to https://app.netlify.com/drop
-2. Drag this whole folder onto the page.
-That is the entire process. \`netlify.toml\` is already here and sets long cache headers
-on the frames.
+**Netlify (free account)**
+1. Create a free account at https://app.netlify.com/signup
+2. While signed in, open https://app.netlify.com/drop
+3. Drag the unzipped folder onto the page.
+Without an account, Netlify keeps the site private and deletes it unless you claim it.
+\`netlify.toml\` is already here and sets long cache headers on the frames.
 
 **Vercel**
 \`\`\`sh

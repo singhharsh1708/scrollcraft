@@ -763,14 +763,18 @@ function EditorInner() {
       const blob = await zip.generateAsync({ type: "blob", compression: "STORE" }, (m) => {
         setExportStage(`Compressing ${Math.round(m.percent)}%…`);
       });
+      const fileName = `${siteName.replace(/\s+/g, "-").toLowerCase()}.zip`;
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${siteName.replace(/\s+/g, "-").toLowerCase()}.zip`;
+      a.download = fileName;
       a.click();
-      URL.revokeObjectURL(url);
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
       countExportFinished();
-      toast.success("Site exported! Extract and serve with `npx serve .`");
+      toast.success(
+        `Downloaded ${fileName}. To put it online, unzip it and upload the folder to a free host account. README.md inside has the steps.`,
+        { duration: 10000 }
+      );
 
       // A call to action pointing at an in-page id that no section carries is a button
       // that does nothing. Templates ship one on purpose - only the owner knows where it
@@ -899,7 +903,7 @@ function EditorInner() {
     a.href = url;
     a.download = projectFileName(siteName);
     a.click();
-    URL.revokeObjectURL(url);
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
     if (backgroundTravels(doc)) {
       toast.success("Saved a copy you can keep, move to another computer, or send to someone");
     } else {
