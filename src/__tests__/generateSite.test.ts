@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi, type MockInstance } from "vitest";
 import type { NextRequest } from "next/server";
 import {
   ALLOWED_IMAGE_TYPES,
@@ -384,6 +384,40 @@ describe("the request put to the model is the one that was designed", () => {
   it("sends only the description and the photographs, never anything else from the body", async () => {
     const sent = await sentRequest({ description: DESCRIPTION, images: [], email: "someone@example.com" });
     expect(JSON.stringify(sent)).not.toContain("someone@example.com");
+  });
+});
+
+describe("the call to the model ends while the route can still answer", () => {
+  const NOW = Date.UTC(2026, 9, 16, 12);
+  let timeout: MockInstance<typeof AbortSignal.timeout>;
+
+  beforeEach(() => {
+    vi.useFakeTimers({ now: NOW, toFake: ["Date"] });
+    timeout = vi.spyOn(AbortSignal, "timeout");
+  });
+
+  afterEach(() => {
+    timeout.mockRestore();
+    vi.useRealTimers();
+  });
+
+  it("gives the call 110 seconds from the start of the request", async () => {
+    await post({ description: DESCRIPTION });
+    expect(timeout).toHaveBeenCalledExactlyOnceWith(110_000);
+    expect(sdk.parse.mock.calls[0][1]?.signal).toBe(timeout.mock.results[0].value);
+  });
+
+  it("takes the time the request has already used off the deadline, leaving at least a second", async () => {
+    const cases: [number, number][] = [[60_000, 50_000], [109_500, 1_000], [130_000, 1_000]];
+    for (const [elapsed, left] of cases) {
+      vi.setSystemTime(NOW);
+      rateLimitMock.mockImplementation(async () => {
+        vi.setSystemTime(NOW + elapsed);
+        return { allowed: true };
+      });
+      await post({ description: DESCRIPTION });
+      expect(timeout, `after ${elapsed} ms`).toHaveBeenLastCalledWith(left);
+    }
   });
 });
 

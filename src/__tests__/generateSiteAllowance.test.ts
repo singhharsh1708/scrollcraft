@@ -315,3 +315,29 @@ describe("a store that cannot be reached stops the call rather than paying for i
     expect((await asBuyer({ description: DESCRIPTION })).status).toBe(200);
   });
 });
+
+describe("the day's ceiling is spent only by requests that were allowed a site", () => {
+  const today = () => `generate:count:${new Date().toISOString().slice(0, 10)}`;
+
+  it("is not spent by a browser whose free sites are gone, and is spent by the next site written", async () => {
+    for (let i = 0; i < FREE_SITES; i++) await post({ description: DESCRIPTION });
+    expect(peek(today())).toBe(String(FREE_SITES));
+    for (let i = 0; i < 3; i++) expect((await post({ description: DESCRIPTION })).status, `refusal ${i}`).toBe(402);
+    expect(peek(today())).toBe(String(FREE_SITES));
+    putHash(entitlement, { total: 5, used: 0 });
+    expect((await asBuyer({ description: DESCRIPTION })).status).toBe(200);
+    expect(peek(today())).toBe(String(FREE_SITES + 1));
+  });
+
+  it("gives the free site back when it refuses", async () => {
+    vi.stubEnv("GENERATE_DAILY_LIMIT", "1");
+    await load();
+    expect((await post({ description: DESCRIPTION })).status).toBe(200);
+    const res = await post({ description: DESCRIPTION });
+    expect(res.status).toBe(503);
+    expect((await res.json()).error).toMatch(/midnight UTC/);
+    expect(peek(freeKey)).toBe("1");
+    expect(peek("sc_freeb:browser-under-test")).toBe("1");
+    expect(sdk.parse).toHaveBeenCalledTimes(1);
+  });
+});
