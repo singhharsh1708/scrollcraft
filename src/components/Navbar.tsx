@@ -114,7 +114,7 @@ export default function Navbar({
 
   return (
     <>
-      {pathname !== "/examples" && (
+      {pathname !== "/examples" && pathname !== "/describe" && (
         <div className="border-b border-white/[0.06] bg-card/40 text-foreground/80 backdrop-blur-sm">
           <Link
             href="/examples"
