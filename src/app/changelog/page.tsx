@@ -5,7 +5,7 @@ import Navbar from "@/components/Navbar";
 import SiteFooter from "@/components/SiteFooter";
 
 export const metadata: Metadata = pageMeta({
-  title: "Changelog",
+  title: "Changelog: what is new, release by release",
   description: "Every release of ScrollCraft, what changed in it, and why.",
   path: "/changelog",
 });

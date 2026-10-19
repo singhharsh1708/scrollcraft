@@ -4,7 +4,7 @@ import { KIT, KIT_BASE, KIT_TOKENS, KIT_TOKENS_LIGHT, kitPage } from "@/lib/comp
 import UiClient from "./UiClient";
 
 export const metadata: Metadata = pageMeta({
-  title: "Components",
+  title: "Free HTML and CSS website sections to copy and paste",
   description: `${KIT.length} sections in plain HTML and CSS. Copy one, paste it into any page: no React, no Tailwind, no build step.`,
   path: "/ui",
 });

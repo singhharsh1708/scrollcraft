@@ -7,9 +7,9 @@ import { pageMeta } from "@/lib/pageMeta";
 import KeyBox from "./KeyBox";
 
 export const metadata: Metadata = pageMeta({
-  title: "Pricing",
+  title: "Pricing: free website builder, AI sites from $4",
   description:
-    "The editor, the templates and the exporter are free. Writing a site from a description costs money per request, so the first two are free and five more are $20.",
+    "Templates, the editor and HTML export are free with no account. AI-written sites: the first two free, then five for $20, paid once. Nothing renews.",
   path: "/pricing",
 });
 
