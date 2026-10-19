@@ -39,12 +39,12 @@ export default function PricingPage() {
       <section className="mx-auto max-w-5xl px-6 pb-24 pt-20">
         <h1 className="lc-display text-4xl md:text-5xl">
           <span className="block">Free to build.</span>
-          <span className="block text-primary-ink">Paid only when a model writes for you.</span>
+          <span className="block text-primary-ink">Pay only for sites written for you.</span>
         </h1>
         <p className="mt-5 max-w-2xl text-muted-foreground">
-          Editing and exporting cost us nothing, so they cost you nothing. Writing a site from
-          a description costs real money per request, so that part is priced at what it costs
-          plus enough to keep the lights on.
+          Templates, the editor and downloads are free, with no account. Having a site written
+          from your description costs us money each time, so after your first two it is $4 a
+          site, sold in packs of five.
         </p>
 
         <div className="mt-14 grid gap-6 md:grid-cols-2">
@@ -60,7 +60,7 @@ export default function PricingPage() {
                 </li>
               ))}
             </ul>
-            <Link href="/describe" className="lc-btn lc-btn-ghost lc-btn-sm mt-8">
+            <Link href="/#write" className="lc-btn lc-btn-ghost lc-btn-sm mt-8">
               Write a free site
             </Link>
           </div>
