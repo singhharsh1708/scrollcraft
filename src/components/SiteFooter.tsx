@@ -4,6 +4,7 @@ import BrandMark from "@/components/BrandMark";
 import GitHubMark from "@/components/GitHubMark";
 import LinkedInMark from "@/components/LinkedInMark";
 import { CONTACT_EMAIL, GITHUB_REPO_URL, GITHUB_SPONSORS_URL, LINKEDIN_URL } from "@/lib/links";
+import { GUIDES } from "@/lib/guides";
 
 // One footer for every page. Seven pages each carried their own copy, which is why the
 // GitHub and sponsor links had nowhere consistent to live.
@@ -23,6 +24,10 @@ const COLUMNS: Array<{ heading: string; links: FooterLink[] }> = [
       { label: "Builder", href: "/create" },
       { label: "Changelog", href: "/changelog" },
     ],
+  },
+  {
+    heading: "Guides",
+    links: GUIDES.map((g) => ({ label: g.label, href: g.path })),
   },
   {
     heading: "Resources",
@@ -87,7 +92,7 @@ export default function SiteFooter({ compact = false }: { compact?: boolean }) {
   return (
     <footer className="bg-background text-foreground">
       <div className="mx-auto max-w-[1360px] px-6">
-        <div className="grid gap-x-12 gap-y-10 pt-16 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-x-10 gap-y-10 pt-16 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           {COLUMNS.map(({ heading, links }) => (
             <div key={heading} className="border-t border-border pt-8">
               <h2 className="lc-display mb-6 text-2xl text-primary-ink">{heading}</h2>
