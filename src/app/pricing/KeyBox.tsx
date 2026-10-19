@@ -1,16 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import BuyPack, { TOTAL_BEFORE_KEY } from "@/components/BuyPack";
 
 /**
- * Buy a pack, see what is left, or tell this browser which pack is yours.
- *
- * Buying goes through an account, so the pack is there wherever its owner signs in. A
- * licence key from an earlier purchase still works: paste it and it is carried onto the
- * account, or kept on this browser for somebody who never signs in.
+ * Buy a pack and see what is left. Buying goes through an account, so the pack is there
+ * wherever its owner signs in.
  */
 
 type Credits = {
@@ -27,9 +22,6 @@ const CONFIRM_TRIES = 10;
 const CONFIRM_EVERY_MS = 1500;
 
 export default function KeyBox({ checkout }: { checkout: string }) {
-  const [key, setKey] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState("");
   const [credits, setCredits] = useState<Credits | null>(null);
   const [confirming, setConfirming] = useState<"no" | "waiting" | "landed" | "slow" | "failed">("no");
 
@@ -93,34 +85,6 @@ export default function KeyBox({ checkout }: { checkout: string }) {
     };
   }, []);
 
-  const redeem = async () => {
-    setBusy(true);
-    setMessage("");
-    try {
-      const res = await fetch("/api/credits", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ key }),
-      });
-      const body = await res.json();
-      if (!res.ok) {
-        setMessage(body.error || "That key was not recognised.");
-        return;
-      }
-      setCredits((current) => ({ ...current, hasKey: true, remaining: body.remaining ?? 0, total: body.total ?? 0 }));
-      setKey("");
-      setMessage(
-        credits?.signedIn
-          ? `${body.remaining} ${body.remaining === 1 ? "site" : "sites"} on your account, in any browser you sign in on.`
-          : `${body.remaining} ${body.remaining === 1 ? "site" : "sites"} on this browser.`
-      );
-    } catch {
-      setMessage("Could not reach the server. Check your connection.");
-    } finally {
-      setBusy(false);
-    }
-  };
-
   const signedIn = Boolean(credits?.signedIn);
   const remaining = credits?.hasKey ? credits.remaining ?? 0 : null;
 
@@ -162,34 +126,12 @@ export default function KeyBox({ checkout }: { checkout: string }) {
         credits && <p className="text-sm text-muted-foreground">The shop is not open on this deployment yet.</p>
       )}
 
-      {remaining !== null && confirming === "no" && !message && (
+      {remaining !== null && confirming === "no" && (
         <p className="mt-4 text-sm text-muted-foreground">
           {remaining} {remaining === 1 ? "site" : "sites"} left {signedIn ? "on your account" : "on this browser"}.
         </p>
       )}
 
-      <div className="mt-6 border-t border-border pt-6">
-        <label htmlFor="licence" className="text-sm text-muted-foreground">
-          Have a licence key from an earlier purchase?
-        </label>
-        <div className="mt-2 flex flex-wrap gap-2">
-          <Input
-            id="licence"
-            value={key}
-            onChange={(e) => setKey(e.target.value)}
-            placeholder="Paste the key from your receipt"
-            className="h-11 min-w-0 flex-1 rounded-full bg-background px-4 font-mono text-sm"
-          />
-          <Button onClick={redeem} disabled={busy || key.trim().length < 8} variant="outline" className="h-11 rounded-full px-5">
-            {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : "Use it here"}
-          </Button>
-        </div>
-        {message && (
-          <p role="status" className="mt-3 text-sm text-foreground">
-            {message}
-          </p>
-        )}
-      </div>
     </div>
   );
 }
