@@ -8,12 +8,11 @@ import SiteFooter from "@/components/SiteFooter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { storeDocument } from "@/lib/frameStorage";
+import { writeSite } from "@/lib/writeSite";
 import { MAX_DESCRIPTION, MAX_IMAGES } from "@/lib/briefLimits";
-import { contactLink, readPhone, withContactLink, type ContactVia } from "@/lib/contactLink";
+import { contactLink, readPhone, type ContactVia } from "@/lib/contactLink";
 import { HANDOFF_KEY } from "@/components/PromptHero";
 import OutOfCredits from "@/components/OutOfCredits";
-import type { Section } from "@/lib/siteSchema";
 
 /**
  * Describe a business, get a site.
@@ -60,14 +59,6 @@ async function downscale(file: File): Promise<Picked> {
   bitmap.close();
   const url = canvas.toDataURL("image/jpeg", 0.82);
   return { name: file.name, media_type: "image/jpeg", data: url.split(",")[1] ?? "", preview: url };
-}
-
-function parseReply(text: string) {
-  try {
-    return JSON.parse(text);
-  } catch {
-    return null;
-  }
 }
 
 export default function DescribeClient() {
@@ -155,41 +146,17 @@ export default function DescribeClient() {
     setBuildFailed(true);
     setNeedsCredits(false);
     try {
-      const res = await fetch("/api/generate-site", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          description,
-          images: images.map(({ media_type, data }) => ({ media_type, data })),
-        }),
+      const result = await writeSite({
+        description,
+        images: images.map(({ media_type, data }) => ({ media_type, data })),
+        contactHref: link,
       });
-      const body = parseReply(await res.text());
-      if (!body) {
-        setError("The server took too long to answer. Try again in a minute.");
+      if (!result.ok) {
+        setError(result.error);
+        setNeedsCredits(result.needsCredits);
         return;
       }
-      if (!res.ok) {
-        setError(body.error || "Could not build a site from that.");
-        setNeedsCredits(Boolean(body.needsCredits));
-        return;
-      }
-
-      const sections = withContactLink(body.sections as Section[], link);
-      // Straight into the editor's own storage, so the editor opens it the way it opens
-      // anything else somebody was working on, and the background redraws from the recipe.
-      await storeDocument({
-        name: body.siteName,
-        description: body.siteDescription,
-        sections,
-        pages: [{ slug: "index", title: body.siteName, sections }],
-        themeJson: JSON.stringify(body.theme),
-        styleJson: JSON.stringify(body.style),
-        framesFromRecipe: true,
-        savedAt: new Date().toISOString(),
-      });
       router.push("/editor");
-    } catch {
-      setError("Could not reach the server. Check your connection and try again.");
     } finally {
       setBusy(false);
     }

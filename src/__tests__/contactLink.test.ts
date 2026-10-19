@@ -125,9 +125,9 @@ describe("a written site's buttons take the link", () => {
 });
 
 describe("the contact stays in the browser", () => {
-  it("is not part of what /describe sends to be written", () => {
+  it("is not part of what is sent to be written", () => {
     // The privacy page lists the description and photographs as all that goes.
-    const source = readFileSync("src/app/describe/DescribeClient.tsx", "utf8");
+    const source = readFileSync("src/lib/writeSite.ts", "utf8");
     const start = source.indexOf('fetch("/api/generate-site"');
     const request = source.slice(start, source.indexOf("});", start));
     expect(request).toContain("description");
@@ -135,7 +135,7 @@ describe("the contact stays in the browser", () => {
   });
 
   it("keeps zod out of the describe page", () => {
-    for (const file of ["src/app/describe/DescribeClient.tsx", "src/lib/contactLink.ts", "src/lib/hrefRule.ts"]) {
+    for (const file of ["src/app/describe/DescribeClient.tsx", "src/lib/writeSite.ts", "src/lib/contactLink.ts", "src/lib/hrefRule.ts"]) {
       const source = readFileSync(file, "utf8");
       expect(source, file).not.toMatch(/^import \{[^}]*\} from "@\/lib\/siteSchema"/m);
       expect(source, file).not.toContain('from "zod"');
