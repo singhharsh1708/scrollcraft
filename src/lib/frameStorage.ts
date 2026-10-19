@@ -106,6 +106,8 @@ export interface StoredDocument {
   framesKey?: string;
   /** Frames the background recipe drew itself, so an export may redraw instead of ship them. */
   framesFromRecipe?: boolean;
+  /** Start the page on the first section instead of a screen of background. Absent means off. */
+  openOnHeadline?: boolean;
   savedAt: string;
 }
 

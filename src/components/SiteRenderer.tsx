@@ -59,6 +59,8 @@ export interface SiteRendererProps {
   badge?: boolean;
   /** Fixed chrome rendered above the site (back links, CTAs). */
   children?: React.ReactNode;
+  /** Start on the first section instead of a screen of background. */
+  openOnHeadline?: boolean;
 }
 
 export default function SiteRenderer({
@@ -71,6 +73,7 @@ export default function SiteRenderer({
   customCss = "",
   badge = false,
   children,
+  openOnHeadline = false,
 }: SiteRendererProps) {
   const [frames, setFrames] = useState<string[]>(frameUrls ?? []);
   const [progress, setProgress] = useState(0);
@@ -137,7 +140,7 @@ export default function SiteRenderer({
   const visible = sections.filter((s) => s.visible !== false);
   const firstHeadingIndex = visible.findIndex((s) => s.heading);
   const totalScrollHeight =
-    visible.reduce((acc, s) => acc + (s.scrollHeight ?? 1000), 0) + INTRO_BUFFER;
+    visible.reduce((acc, s) => acc + (s.scrollHeight ?? 1000), 0) + (openOnHeadline ? 0 : INTRO_BUFFER);
 
   useEffect(() => {
     const href = compiled.fontHref;
@@ -266,7 +269,7 @@ export default function SiteRenderer({
       {children}
 
       <main id="sc-main" tabIndex={-1} ref={stageRef} className="relative z-10 pointer-events-none" style={{ height: totalScrollHeight }}>
-        <div style={{ height: "100vh" }} />
+        {!openOnHeadline && <div style={{ height: "100vh" }} />}
         {visible.map((s, i) => {
           // The first section with a heading is the page's heading. Every section
           // rendered an h2, so a published site had no h1 and its outline began at

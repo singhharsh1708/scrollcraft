@@ -135,6 +135,8 @@ export async function POST(req: NextRequest) {
       audioMime = "audio/mpeg",
       frameCount,
     } = body;
+    // Off unless asked for, so templates and older saves keep their opening screen.
+    const openOnHeadline = body.openOnHeadline === true;
     const {
       pages,
       sections: sectionsFromBody,
@@ -376,7 +378,7 @@ export async function POST(req: NextRequest) {
     </section>`;
     }).join("\n");
 
-    const totalScrollHeight = visibleSections.reduce((acc: number, s: Section) => acc + trackHeight(s), 0) + 1000;
+    const totalScrollHeight = visibleSections.reduce((acc: number, s: Section) => acc + trackHeight(s), 0) + (openOnHeadline ? 0 : 1000);
 
     const html = `<!DOCTYPE html>
 <html lang="en">
@@ -483,7 +485,10 @@ export async function POST(req: NextRequest) {
       color: rgba(255,255,255,0.4); font-size: 0.75rem; letter-spacing: 0.1em;
       text-transform: uppercase; z-index: 20; transition: opacity 0.5s;
     }
-    #scroll-hint .arrow { width: 1px; height: 40px; background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.4)); }
+    #scroll-hint .arrow { width: 1px; height: 40px; background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.4)); }${openOnHeadline ? `
+    /* The first section is on screen, so the hint keeps to the bottom edge, clear of its copy. */
+    #scroll-hint { bottom: 0.5rem; }
+    #scroll-hint .arrow { display: none; }` : ""}
     #audio-mute {
       position: fixed; top: 1rem; right: 1rem; z-index: 30;
       background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.15);
@@ -508,8 +513,8 @@ export async function POST(req: NextRequest) {
   ${navHtml}
   <canvas id="scroll-canvas" role="img" aria-label="${esc(siteName ? `${siteName} animated scroll background` : "Animated scroll background")}"></canvas>
   <main id="main" tabindex="-1">
-    <div id="scroll-container">
-      <div style="height:100vh;"></div>
+    <div id="scroll-container">${openOnHeadline ? "" : `
+      <div style="height:100vh;"></div>`}
       ${sectionsHtml}
     </div>
   </main>

@@ -20,6 +20,7 @@ const documentSchema = object({
   customCss: string().max(100_000).optional(),
   fps: number().int().min(1).max(60).optional(),
   framesFromRecipe: boolean().optional(),
+  openOnHeadline: boolean().optional(),
 }).strip();
 
 const projectFileSchema = object({
