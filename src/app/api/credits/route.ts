@@ -9,6 +9,8 @@ import {
   PACK_SITES,
   attachToAccount,
   balanceOf,
+  browserTokenFrom,
+  freeLeft,
   cookieOptions,
   grantPack,
   hashKey,
@@ -54,6 +56,7 @@ export async function GET(req: NextRequest) {
     canBuy: paymentProcessor() !== null && authConfigured(),
     remaining: balance?.remaining ?? 0,
     total: balance?.total ?? 0,
+    freeLeft: await freeLeft(browserTokenFrom(req)),
   });
 }
 

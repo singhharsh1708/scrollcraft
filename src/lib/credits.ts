@@ -116,6 +116,19 @@ if total - used < 1 then return -1 end
 return redis.call('HINCRBY', KEYS[1], 'used', 1)
 `;
 
+/** Free sites this browser has not used yet, or null when the store cannot say. */
+export async function freeLeft(browser: string | null): Promise<number | null> {
+  if (!browser) return FREE_SITES;
+  const r = store();
+  if (!r) return null;
+  try {
+    const used = Number((await r.get<number | string>(browserKey(browser))) ?? 0);
+    return Math.max(0, FREE_SITES - used);
+  } catch {
+    return null;
+  }
+}
+
 export type Balance = { total: number; used: number; remaining: number };
 
 export async function balanceOf(identity: string): Promise<Balance | null> {
