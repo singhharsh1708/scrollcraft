@@ -2,6 +2,9 @@ import { storeDocument } from "@/lib/frameStorage";
 import { withContactLink } from "@/lib/contactLink";
 import type { Section } from "@/lib/siteSchema";
 
+/** Tells the editor it is opening a site that was just written. */
+export const FRESH_SITE_KEY = "scrollcraft_fresh";
+
 export type WriteResult = { ok: true } | { ok: false; error: string; needsCredits: boolean };
 
 /** Ask the server for a site and store it where the editor opens it. */
@@ -42,7 +45,13 @@ export async function writeSite(input: {
     themeJson: JSON.stringify(body.theme),
     styleJson: JSON.stringify(body.style),
     framesFromRecipe: true,
+    openOnHeadline: true,
     savedAt: new Date().toISOString(),
   });
+  try {
+    sessionStorage.setItem(FRESH_SITE_KEY, "1");
+  } catch {
+    // Storage can be blocked; the editor then shows its usual message.
+  }
   return { ok: true };
 }

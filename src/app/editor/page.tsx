@@ -1,5 +1,6 @@
 "use client";
-import { useState, useEffect, useRef, useCallback, useSyncExternalStore, Suspense } from "react";
+import { useState, useEffect, useRef, useCallback, useSyncExternalStore, Suspense, Fragment } from "react";
+import { Menu } from "@base-ui/react/menu";
 import { shouldExportProcedurally } from "@/lib/exportMode";
 import { loadFrames, storeFrames, deleteFrames, storeDocument, loadDocument } from "@/lib/frameStorage";
 import { useSearchParams } from "next/navigation";
@@ -13,7 +14,7 @@ import {
   ArrowLeft, Download, Plus, Trash2, Eye, EyeOff, ChevronUp, ChevronDown,
   Layers, Loader2, AlignLeft, AlignCenter, AlignRight,
   Monitor, Tablet, Smartphone, Music, Volume2, VolumeX, Save,
-  Undo2, Redo2, Copy, Sparkles, FileDown, FileUp, X, Pencil
+  Undo2, Redo2, Copy, Sparkles, FileDown, FileUp, X, Pencil, MoreHorizontal
 } from "lucide-react";
 import { useScrollAudio } from "@/lib/useScrollAudio";
 import { AssistantBar, useAssistantAvailable } from "@/components/AssistantBar";
@@ -31,6 +32,8 @@ import { buildProjectFile, parseProjectFile, projectFileName, backgroundTravels,
 import { countEditorOpened, countFirstEdit, countExportStarted, countExportFinished } from "@/lib/funnel";
 import { HOME_SLUG } from "@/lib/sitePages";
 import { addPage, removePage, renamePage, canAddPage, withLiveSections, type PageList } from "@/lib/editorPages";
+import { contactLink } from "@/lib/contactLink";
+import { FRESH_SITE_KEY } from "@/lib/writeSite";
 
 const ScrollEngine = dynamic(() => import("@/components/ScrollEngine"), { ssr: false });
 const ScrollSection = dynamic(() => import("@/components/ScrollSection"), { ssr: false });
@@ -103,6 +106,75 @@ function SignupHint({ url }: { url: string | undefined }) {
       if (!status.provider) return <>Emails will be posted to this URL as a field called &ldquo;email&rdquo;.</>;
       return <>{status.provider} form: {status.note ?? "emails go straight to your list"}.</>;
   }
+}
+
+const LINK_PICKS = [
+  { id: "call", label: "Call", field: "Phone number", placeholder: "+44 20 7946 0000", inputMode: "tel", error: "Type a phone number." },
+  { id: "whatsapp", label: "WhatsApp", field: "WhatsApp number", placeholder: "+91 98765 43210", inputMode: "tel", error: "Type the number with its country code, like +91." },
+  { id: "email", label: "Email", field: "Email address", placeholder: "you@example.com", inputMode: "email", error: "Type an email address." },
+  { id: "web", label: "Web link", field: "Web address", placeholder: "example.com", inputMode: "url", error: "Type a web address, like example.com." },
+] as const;
+type LinkPick = (typeof LINK_PICKS)[number]["id"];
+
+function pickedLink(pick: LinkPick, raw: string): string | null {
+  const href = contactLink(raw, pick === "whatsapp" ? "whatsapp" : "call");
+  if (!href) return null;
+  const wanted =
+    pick === "call" ? href.startsWith("tel:")
+    : pick === "whatsapp" ? href.startsWith("https://wa.me/")
+    : pick === "email" ? href.startsWith("mailto:")
+    : /^https?:\/\//.test(href) && !href.startsWith("https://wa.me/");
+  return wanted ? href : null;
+}
+
+/** Turns a phone number, email or web address into the link a button needs. */
+function ButtonLinkPicks({ onPick }: { onPick: (href: string) => void }) {
+  const [pick, setPick] = useState<LinkPick | null>(null);
+  const [draft, setDraft] = useState("");
+  const [error, setError] = useState(false);
+  const active = LINK_PICKS.find((p) => p.id === pick);
+  return (
+    <div className="space-y-1.5">
+      <div role="group" aria-label="Quick picks for where the button goes" className="flex flex-wrap gap-1">
+        {LINK_PICKS.map((p) => (
+          <button
+            key={p.id}
+            type="button"
+            aria-pressed={pick === p.id}
+            onClick={() => { setPick(pick === p.id ? null : p.id); setError(false); }}
+            className={`h-11 md:h-6 rounded-md border px-3 md:px-2 text-sm md:text-xs transition-colors ${pick === p.id ? "border-primary bg-primary/15 text-primary-ink" : "border-white/10 text-muted-foreground hover:text-foreground hover:border-white/20"}`}
+          >
+            {p.label}
+          </button>
+        ))}
+      </div>
+      {active && (
+        <form
+          className="flex gap-1.5"
+          onSubmit={(e) => {
+            e.preventDefault();
+            const href = pickedLink(active.id, draft);
+            if (!href) { setError(true); return; }
+            onPick(href);
+            setPick(null);
+            setDraft("");
+            setError(false);
+          }}
+        >
+          <Input
+            aria-label={active.field}
+            value={draft}
+            inputMode={active.inputMode}
+            onChange={(e) => { setDraft(e.target.value); setError(false); }}
+            placeholder={active.placeholder}
+            className="h-11 md:h-7 bg-white/5 border-white/10"
+          />
+          <Button type="submit" size="sm" className="h-11 md:h-7 px-3">Use</Button>
+        </form>
+      )}
+      {active && error && <p role="alert" className="text-xs text-amber-400">{active.error}</p>}
+    </div>
+  );
 }
 
 
@@ -193,6 +265,9 @@ function EditorInner() {
   const [siteDescription, setSiteDescription] = useState("");
   const [customHead, setCustomHead] = useState("");
   const [customCss, setCustomCss] = useState("");
+  // On for new sites; a template keeps the opening screen it was designed with.
+  const [openOnHeadline, setOpenOnHeadline] = useState(() => !pickedTemplate);
+  const [rowMenuId, setRowMenuId] = useState<string | null>(null);
   const [mobileFrames, setMobileFrames] = useState<string[]>([]);
   // Load mobile frames from IndexedDB (too large for sessionStorage's 5 MB quota)
   useEffect(() => {
@@ -391,6 +466,7 @@ function EditorInner() {
         if (typeof doc.fps === "number") setFps(doc.fps);
         if (doc.customHead) setCustomHead(doc.customHead);
         if (doc.customCss) setCustomCss(doc.customCss);
+        setOpenOnHeadline(doc.openOnHeadline === true);
         let recipe: SiteStyle | null = null;
         if (doc.styleJson) {
           const parsedStyle = siteStyleSchema.safeParse(JSON.parse(doc.styleJson));
@@ -425,7 +501,14 @@ function EditorInner() {
           }
         }
         if (cancelled) return;
-        if (backgroundRestored) {
+        let fresh = false;
+        try {
+          fresh = sessionStorage.getItem(FRESH_SITE_KEY) === "1";
+          sessionStorage.removeItem(FRESH_SITE_KEY);
+        } catch {}
+        if (fresh && backgroundRestored) {
+          toast.success("Your site is ready. Tap a section to change its words, then tap Export.", { duration: 10000 });
+        } else if (backgroundRestored) {
           toast.info("Restored what you were working on");
         } else {
           // The text came back and the background did not: say which, rather than
@@ -472,7 +555,7 @@ function EditorInner() {
   // dirty flag if it is unchanged when the request resolves — otherwise edits the user
   // made while the save was in flight would be silently marked as saved.
   const editGenRef = useRef(0);
-  useEffect(() => { editGenRef.current += 1; }, [sections, siteName, siteDescription, customHead, customCss]);
+  useEffect(() => { editGenRef.current += 1; }, [sections, siteName, siteDescription, customHead, customCss, openOnHeadline]);
 
   const syncHistoryFlags = useCallback(() => {
     setCanUndo(undoStack.current.length > 0);
@@ -652,6 +735,7 @@ function EditorInner() {
           fps,
           customHead,
           customCss,
+          openOnHeadline,
           // With a background recipe the exported page draws its own frames, so the ZIP
           // ships none — tens of megabytes of JPEGs become a few hundred bytes of JSON.
           // Without this the route falls back to themeJson = "": no font link and none
@@ -788,7 +872,7 @@ function EditorInner() {
       if (unresolved.length) {
         toast.warning(
           `${unresolved.length === 1 ? "One button needs" : `${unresolved.length} buttons need`} a real link: ` +
-          `${unresolved.join(", ")}. Set it in the section's CTA link field, then export again.`,
+          `${unresolved.join(", ")}. Set it in the section's Button goes to field, then export again.`,
           { duration: 12000 }
         );
       }
@@ -841,6 +925,7 @@ function EditorInner() {
       customCss,
       fps,
       framesFromRecipe,
+      openOnHeadline,
       framesKey: framesCached ? SAVED_FRAMES_KEY : undefined,
       savedAt: new Date().toISOString(),
     });
@@ -894,6 +979,7 @@ function EditorInner() {
     customCss,
     fps,
     framesFromRecipe,
+    openOnHeadline,
   });
 
   const handleDownloadProject = () => {
@@ -979,6 +1065,7 @@ function EditorInner() {
     if (typeof doc.fps === "number") setFps(doc.fps);
     setCustomHead(doc.customHead ?? "");
     setCustomCss(doc.customCss ?? "");
+    setOpenOnHeadline(doc.openOnHeadline === true);
 
     const theme = doc.themeJson ? themeSchema.safeParse(JSON.parse(doc.themeJson)) : null;
     if (theme?.success) setSiteTheme(theme.data);
@@ -1035,9 +1122,18 @@ function EditorInner() {
       );
     }, AUTOSAVE_DEBOUNCE_MS);
     return () => clearTimeout(timer);
-  }, [dirty, isDemo, hydrating, sections, siteName, siteDescription, customHead, customCss, fps, styleSpec, siteTheme, framesSignature]);
+  }, [dirty, isDemo, hydrating, sections, siteName, siteDescription, customHead, customCss, fps, styleSpec, siteTheme, framesSignature, openOnHeadline]);
 
-  const totalScrollHeight = sections.filter(s => s.visible).reduce((a, s) => a + s.scrollHeight, 0) + 1000;
+  const totalScrollHeight = sections.filter(s => s.visible).reduce((a, s) => a + s.scrollHeight, 0) + (openOnHeadline ? 0 : 1000);
+
+  // A phone shows the preview above everything else, so start it on the first section.
+  const jumpedToFirstSection = useRef(false);
+  useEffect(() => {
+    if (jumpedToFirstSection.current || hydrating || !previewViewportH) return;
+    jumpedToFirstSection.current = true;
+    const el = previewScrollRef.current;
+    if (!openOnHeadline && el && window.matchMedia("(max-width: 767px)").matches) el.scrollTop = previewViewportH;
+  }, [hydrating, openOnHeadline, previewViewportH]);
 
 
   // handleSave/handleExport are re-created every render and read sections, frames
@@ -1124,21 +1220,21 @@ function EditorInner() {
         </div>
       )}
       {/* Top bar */}
-      <div className="flex items-center justify-between gap-2 flex-wrap px-4 py-2 border-b border-white/5 bg-card/50 flex-shrink-0">
-        <div className="flex items-center gap-3">
+      <div className="flex items-center justify-between gap-2 flex-wrap px-3 md:px-4 py-2 border-b border-white/5 bg-card/50 flex-shrink-0">
+        <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-1 md:flex-none">
           <Link
             href="/create"
             onClick={(e) => { if (dirty && !window.confirm("Discard unsaved changes and leave?")) e.preventDefault(); }}
-            className="flex items-center gap-1 py-1 text-muted-foreground hover:text-foreground text-sm transition-colors"
+            className="flex items-center gap-1 py-1 max-md:h-11 max-md:px-1 flex-shrink-0 text-muted-foreground hover:text-foreground text-sm transition-colors"
           >
             <ArrowLeft className="w-3.5 h-3.5" /> Back
           </Link>
-          <div className="w-px h-4 bg-white/10" />
+          <div className="w-px h-4 bg-white/10 flex-shrink-0" />
           <Input
             aria-label="Site name"
             value={siteName}
             onChange={(e) => { setSiteName(e.target.value); setDirty(true); }}
-            className="h-7 bg-transparent border-transparent hover:border-white/10 focus:border-primary/50 text-sm font-medium w-48"
+            className="h-11 md:h-7 bg-transparent border-transparent hover:border-white/10 focus:border-primary/50 text-base md:text-sm font-medium w-full min-w-0 md:w-48"
           />
           <SaveIndicator dirty={dirty} state={saveState} />
           {isDemo && <Badge variant="outline" className="border-amber-500/40 text-amber-400 text-xs">Demo mode</Badge>}
@@ -1146,11 +1242,12 @@ function EditorInner() {
 
         <div className="flex items-center gap-2 flex-wrap justify-end">
           {/* Undo / redo */}
-          <div className="flex items-center bg-white/5 rounded-md p-0.5 gap-0.5">
+          <div className="hidden md:flex items-center bg-white/5 rounded-md p-0.5 gap-0.5">
             <button
               onClick={undo}
               disabled={!canUndo}
               title={`Undo (${modKey}+Z)`}
+              aria-label="Undo"
               className="p-1.5 rounded transition-colors text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed"
             >
               <Undo2 className="w-3.5 h-3.5" />
@@ -1159,6 +1256,7 @@ function EditorInner() {
               onClick={redo}
               disabled={!canRedo}
               title={`Redo (${modKey}+Shift+Z)`}
+              aria-label="Redo"
               className="p-1.5 rounded transition-colors text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed"
             >
               <Redo2 className="w-3.5 h-3.5" />
@@ -1169,33 +1267,37 @@ function EditorInner() {
             <button
               onClick={() => setAudioMuted(m => !m)}
               title={audioMuted ? "Unmute audio" : "Mute audio"}
-              className="p-1.5 rounded text-muted-foreground hover:text-foreground transition-colors"
+              aria-label={audioMuted ? "Unmute audio" : "Mute audio"}
+              className="hidden md:block p-1.5 rounded text-muted-foreground hover:text-foreground transition-colors"
             >
               {audioMuted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5 text-primary-ink" />}
             </button>
           )}
           {/* Viewport toggle */}
-          <div className="flex items-center bg-white/5 rounded-md p-0.5 gap-0.5">
+          <div className="hidden md:flex items-center bg-white/5 rounded-md p-0.5 gap-0.5">
             {([["desktop", Monitor], ["tablet", Tablet], ["mobile", Smartphone]] as const).map(([mode, Icon]) => (
               <button
                 key={mode}
                 onClick={() => setViewportMode(mode)}
-                title={mode.charAt(0).toUpperCase() + mode.slice(1)}
+                title={`Preview on ${mode}`}
+                aria-label={`Preview on ${mode}`}
+                aria-pressed={viewportMode === mode}
                 className={`p-1.5 rounded transition-colors ${viewportMode === mode ? "bg-primary/30 text-primary-ink" : "text-muted-foreground hover:text-foreground"}`}
               >
                 <Icon className="w-3.5 h-3.5" />
               </button>
             ))}
           </div>
-          <div className="text-xs text-muted-foreground bg-white/5 px-2 py-1 rounded">
+          <div className="hidden md:block text-xs text-muted-foreground bg-white/5 px-2 py-1 rounded">
             <span ref={frameLabelRef}>Frame 1/{frameCount}</span>
           </div>
           <Button
             variant="outline"
             size="sm"
             aria-label={showPreview ? "Hide preview" : "Show preview"}
+            title={showPreview ? "Hide preview" : "Show preview"}
             onClick={() => setShowPreview(p => !p)}
-            className="border-white/10 h-7 px-2 text-xs"
+            className="hidden md:inline-flex border-white/10 h-7 px-2 text-xs"
           >
             {showPreview ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
           </Button>
@@ -1206,7 +1308,7 @@ function EditorInner() {
               onClick={() => setAssistantOpen(o => !o)}
               aria-expanded={assistantOpen}
               title="Rewrite the copy from an instruction"
-              className={`h-7 px-3 text-xs gap-1 border-white/10 ${assistantOpen ? "bg-primary/20 text-primary-ink" : ""}`}
+              className={`hidden md:inline-flex h-7 px-3 text-xs gap-1 border-white/10 ${assistantOpen ? "bg-primary/20 text-primary-ink" : ""}`}
             >
               <Sparkles className="w-3.5 h-3.5" />
               Rewrite
@@ -1229,7 +1331,7 @@ function EditorInner() {
             onClick={() => openProjectInputRef.current?.click()}
             title="Open a copy from your computer"
             aria-label="Open a copy from your computer"
-            className="border-white/10 h-7 px-2 text-xs"
+            className="hidden md:inline-flex border-white/10 h-7 px-2 text-xs"
           >
             <FileUp className="w-3.5 h-3.5" />
           </Button>
@@ -1239,7 +1341,7 @@ function EditorInner() {
             onClick={handleDownloadProject}
             title="Download a copy you can move to another computer"
             aria-label="Download a copy you can move to another computer"
-            className="border-white/10 h-7 px-2 text-xs"
+            className="hidden md:inline-flex border-white/10 h-7 px-2 text-xs"
           >
             <FileDown className="w-3.5 h-3.5" />
           </Button>
@@ -1249,7 +1351,7 @@ function EditorInner() {
             onClick={() => handleSave()}
             disabled={isSaving}
             title={`Save (${modKey}+S)`}
-            className="border-white/10 h-7 px-3 text-xs gap-1"
+            className="hidden md:inline-flex border-white/10 h-7 px-3 text-xs gap-1"
           >
             {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
             Save
@@ -1259,11 +1361,61 @@ function EditorInner() {
             onClick={handleExport}
             disabled={isExporting}
             title={exportStage ?? `Export (${modKey}+E)`}
-            className="bg-primary hover:bg-primary/90 text-white h-7 px-3 text-xs font-semibold"
+            className="bg-primary hover:bg-primary/90 text-white h-11 md:h-7 px-4 md:px-3 text-sm md:text-xs font-semibold"
           >
             {isExporting ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : <Download className="w-3.5 h-3.5 mr-1" />}
             Export
           </Button>
+          <Menu.Root>
+            <Menu.Trigger
+              aria-label="More"
+              title="More"
+              className="md:hidden flex h-11 w-11 items-center justify-center rounded-lg border border-white/10 text-muted-foreground hover:text-foreground"
+            >
+              <MoreHorizontal className="w-5 h-5" />
+            </Menu.Trigger>
+            <Menu.Portal>
+              <Menu.Positioner align="end" sideOffset={6} className="z-50">
+                <Menu.Popup className="min-w-56 rounded-lg border border-white/10 bg-card p-1 text-sm shadow-xl outline-none">
+                  <Menu.Item onClick={undo} disabled={!canUndo} className="flex h-11 cursor-pointer items-center gap-3 rounded-md px-3 outline-none data-[highlighted]:bg-white/10 data-[disabled]:opacity-40">
+                    <Undo2 className="w-4 h-4 text-muted-foreground" /> Undo
+                  </Menu.Item>
+                  <Menu.Item onClick={redo} disabled={!canRedo} className="flex h-11 cursor-pointer items-center gap-3 rounded-md px-3 outline-none data-[highlighted]:bg-white/10 data-[disabled]:opacity-40">
+                    <Redo2 className="w-4 h-4 text-muted-foreground" /> Redo
+                  </Menu.Item>
+                  <Menu.Item onClick={() => { void handleSave(); }} disabled={isSaving} className="flex h-11 cursor-pointer items-center gap-3 rounded-md px-3 outline-none data-[highlighted]:bg-white/10 data-[disabled]:opacity-40">
+                    <Save className="w-4 h-4 text-muted-foreground" /> Save in this browser
+                  </Menu.Item>
+                  <Menu.Item onClick={() => setShowPreview(p => !p)} className="flex h-11 cursor-pointer items-center gap-3 rounded-md px-3 outline-none data-[highlighted]:bg-white/10 data-[disabled]:opacity-40">
+                    {showPreview ? <EyeOff className="w-4 h-4 text-muted-foreground" /> : <Eye className="w-4 h-4 text-muted-foreground" />}
+                    {showPreview ? "Hide preview" : "Show preview"}
+                  </Menu.Item>
+                  {assistantAvailable && (
+                    <Menu.Item onClick={() => setAssistantOpen(o => !o)} className="flex h-11 cursor-pointer items-center gap-3 rounded-md px-3 outline-none data-[highlighted]:bg-white/10 data-[disabled]:opacity-40">
+                      <Sparkles className="w-4 h-4 text-muted-foreground" /> Rewrite the copy
+                    </Menu.Item>
+                  )}
+                  {audioSrc && (
+                    <Menu.Item onClick={() => setAudioMuted(m => !m)} className="flex h-11 cursor-pointer items-center gap-3 rounded-md px-3 outline-none data-[highlighted]:bg-white/10 data-[disabled]:opacity-40">
+                      {audioMuted ? <VolumeX className="w-4 h-4 text-muted-foreground" /> : <Volume2 className="w-4 h-4 text-muted-foreground" />}
+                      {audioMuted ? "Unmute audio" : "Mute audio"}
+                    </Menu.Item>
+                  )}
+                  {pages.length < 2 && (
+                    <Menu.Item onClick={handleAddPage} className="flex h-11 cursor-pointer items-center gap-3 rounded-md px-3 outline-none data-[highlighted]:bg-white/10 data-[disabled]:opacity-40">
+                      <Plus className="w-4 h-4 text-muted-foreground" /> Add a page
+                    </Menu.Item>
+                  )}
+                  <Menu.Item onClick={() => openProjectInputRef.current?.click()} className="flex h-11 cursor-pointer items-center gap-3 rounded-md px-3 outline-none data-[highlighted]:bg-white/10 data-[disabled]:opacity-40">
+                    <FileUp className="w-4 h-4 text-muted-foreground" /> Open a copy from your computer
+                  </Menu.Item>
+                  <Menu.Item onClick={handleDownloadProject} className="flex h-11 cursor-pointer items-center gap-3 rounded-md px-3 outline-none data-[highlighted]:bg-white/10 data-[disabled]:opacity-40">
+                    <FileDown className="w-4 h-4 text-muted-foreground" /> Download a copy
+                  </Menu.Item>
+                </Menu.Popup>
+              </Menu.Positioner>
+            </Menu.Portal>
+          </Menu.Root>
           {isExporting && exportStage && (
             <span role="status" aria-live="polite" className="text-xs text-muted-foreground tabular-nums whitespace-nowrap">
               {exportStage}
@@ -1282,8 +1434,8 @@ function EditorInner() {
 
       <main className="flex flex-col md:flex-row flex-1 overflow-y-auto md:overflow-x-auto md:overflow-y-hidden">
         {/* Left panel: pages, then the open page's sections */}
-        <div className="w-full max-h-52 md:w-56 md:max-h-none border-b md:border-b-0 md:border-r border-white/5 flex flex-col bg-card/30 flex-shrink-0">
-          <nav aria-label="Pages" className="p-2 border-b border-white/5 flex flex-wrap items-center gap-1">
+        <div className="w-full max-h-52 md:w-56 md:max-h-none max-md:max-h-64 border-b md:border-b-0 md:border-r border-white/5 flex flex-col bg-card/30 flex-shrink-0">
+          <nav aria-label="Pages" className={`px-2 py-0.5 md:p-2 border-b border-white/5 flex flex-wrap items-center gap-1 ${pages.length < 2 ? "max-md:hidden" : ""}`}>
             {pages.map((page, i) => (
               <span key={page.slug} className="flex items-center">
                 {renamingPage === i ? (
@@ -1296,14 +1448,14 @@ function EditorInner() {
                       if (e.key === "Enter") handleRenamePage(i, (e.target as HTMLInputElement).value);
                       if (e.key === "Escape") setRenamingPage(null);
                     }}
-                    className="h-7 w-24 rounded-md border border-primary/50 bg-background px-2 text-xs"
+                    className="h-11 md:h-7 w-28 md:w-24 rounded-md border border-primary/50 bg-background px-2 text-base md:text-xs"
                   />
                 ) : (
                   <button
                     onClick={() => (i === openPage ? setRenamingPage(i) : switchToPage(i))}
                     aria-current={i === openPage ? "page" : undefined}
                     title={i === openPage ? `Rename ${page.title}` : `Open ${page.title}`}
-                    className={`h-7 rounded-md px-2 text-xs transition-colors ${i === openPage ? "bg-primary/20 text-primary-ink font-medium" : "text-muted-foreground hover:text-foreground hover:bg-white/5"}`}
+                    className={`h-11 md:h-7 rounded-md px-3 md:px-2 text-sm md:text-xs transition-colors ${i === openPage ? "bg-primary/20 text-primary-ink font-medium" : "text-muted-foreground hover:text-foreground hover:bg-white/5"}`}
                   >
                     {page.title}
                     {i === openPage && <Pencil className="ml-1 inline h-3 w-3 opacity-60" />}
@@ -1314,7 +1466,7 @@ function EditorInner() {
                     onClick={() => handleRemovePage(i)}
                     aria-label={`Delete the page ${page.title}`}
                     title={`Delete the page ${page.title}`}
-                    className="ml-0.5 rounded p-1 text-muted-foreground hover:text-foreground hover:bg-white/5"
+                    className="ml-0.5 rounded p-1 max-md:h-11 max-md:w-11 max-md:flex max-md:items-center max-md:justify-center text-muted-foreground hover:text-foreground hover:bg-white/5"
                   >
                     <X className="h-3 w-3" />
                   </button>
@@ -1325,12 +1477,12 @@ function EditorInner() {
               onClick={handleAddPage}
               aria-label="Add a page"
               title="Add a page"
-              className="h-7 rounded-md px-2 text-xs text-muted-foreground hover:text-foreground hover:bg-white/5"
+              className="h-11 w-11 md:h-7 md:w-auto flex items-center justify-center rounded-md px-2 text-xs text-muted-foreground hover:text-foreground hover:bg-white/5"
             >
               <Plus className="h-3.5 w-3.5" />
             </button>
           </nav>
-          <div className="p-3 border-b border-white/5 flex items-center justify-between">
+          <div className="px-3 py-0.5 md:p-3 border-b border-white/5 flex items-center justify-between">
             <div className="flex items-center gap-2 text-sm font-medium">
               <Layers className="w-3.5 h-3.5 text-primary-ink" /> Sections
             </div>
@@ -1340,25 +1492,25 @@ function EditorInner() {
               variant="ghost"
               aria-label="Add section"
               title="Add section"
-              className="h-6 w-6 p-0 hover:bg-primary/20"
+              className="h-11 w-11 md:h-6 md:w-6 p-0 hover:bg-primary/20"
             >
               <Plus className="w-3.5 h-3.5" />
             </Button>
           </div>
           <div className="flex-1 overflow-y-auto p-2 space-y-1">
             {sections.map((s, i) => (
+              <Fragment key={s.id}>
               <div
-                key={s.id}
                 role="button"
                 tabIndex={0}
                 aria-pressed={selectedSection === s.id}
                 onClick={() => setSelectedSection(s.id)}
                 onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setSelectedSection(s.id); } }}
-                className={`group relative flex items-start gap-2 p-2 pr-2 rounded-lg cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary ${
+                className={`group relative flex items-start gap-2 p-2 pr-2 max-md:min-h-11 max-md:items-center max-md:py-0 rounded-lg cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary ${
                   selectedSection === s.id ? "bg-primary/15 border border-primary/30" : "hover:bg-white/5"
                 }`}
               >
-                <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 self-start mt-1.5 ${
+                <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 self-start mt-1.5 max-md:self-center max-md:mt-0 ${
                   s.kind === "spacer" ? "bg-white/15" : s.visible ? "bg-primary" : "bg-white/20"
                 }`} />
                 {s.kind === "spacer" ? (
@@ -1368,14 +1520,14 @@ function EditorInner() {
                     {s.heading || `Section ${i + 1}`}
                   </span>
                 )}
-                <div className="absolute right-1 top-1 flex items-center gap-0.5 rounded-md bg-card/95 backdrop-blur-sm px-0.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
-                  <button onClick={(e) => { e.stopPropagation(); moveSection(s.id, "up"); }} className="p-1.5 hover:text-primary-ink" title="Move up">
+                <div className="absolute right-1 top-1 flex items-center gap-0.5 rounded-md bg-card/95 backdrop-blur-sm px-0.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 [@media(hover:none)]:opacity-100 max-md:hidden transition-opacity">
+                  <button onClick={(e) => { e.stopPropagation(); moveSection(s.id, "up"); }} className="p-1.5 hover:text-primary-ink" title="Move up" aria-label="Move up">
                     <ChevronUp className="w-3 h-3" />
                   </button>
-                  <button onClick={(e) => { e.stopPropagation(); moveSection(s.id, "down"); }} className="p-1.5 hover:text-primary-ink" title="Move down">
+                  <button onClick={(e) => { e.stopPropagation(); moveSection(s.id, "down"); }} className="p-1.5 hover:text-primary-ink" title="Move down" aria-label="Move down">
                     <ChevronDown className="w-3 h-3" />
                   </button>
-                  <button onClick={(e) => { e.stopPropagation(); duplicateSection(s.id); }} className="p-1.5 hover:text-primary-ink" title="Duplicate section">
+                  <button onClick={(e) => { e.stopPropagation(); duplicateSection(s.id); }} className="p-1.5 hover:text-primary-ink" title="Duplicate section" aria-label="Duplicate section">
                     <Copy className="w-3 h-3" />
                   </button>
                   <button
@@ -1383,18 +1535,42 @@ function EditorInner() {
                     onBlur={() => setPendingDeleteId(null)}
                     className={`p-1.5 rounded transition-colors ${pendingDeleteId === s.id ? "bg-destructive text-white ring-1 ring-destructive" : "hover:text-destructive"}`}
                     title={pendingDeleteId === s.id ? "Click again to confirm delete" : "Delete section"}
+                    aria-label={pendingDeleteId === s.id ? "Click again to confirm delete" : "Delete section"}
                   >
                     <Trash2 className="w-3 h-3" />
                   </button>
                 </div>
+                <button
+                  onClick={(e) => { e.stopPropagation(); setRowMenuId(id => id === s.id ? null : s.id); setPendingDeleteId(null); }}
+                  aria-label={`Actions for ${s.kind === "spacer" ? "this spacer" : s.heading || `section ${i + 1}`}`}
+                  aria-expanded={rowMenuId === s.id}
+                  title="Move, copy or delete"
+                  className="md:hidden flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-md text-muted-foreground hover:text-foreground"
+                >
+                  <MoreHorizontal className="w-4 h-4" />
+                </button>
               </div>
+              {rowMenuId === s.id && (
+                <div className="md:hidden grid grid-cols-4 gap-1 px-1 pb-1">
+                  <button onClick={() => moveSection(s.id, "up")} className="h-11 rounded-md border border-white/10 text-sm text-foreground">Move up</button>
+                  <button onClick={() => moveSection(s.id, "down")} className="h-11 rounded-md border border-white/10 text-sm text-foreground">Move down</button>
+                  <button onClick={() => duplicateSection(s.id)} className="h-11 rounded-md border border-white/10 text-sm text-foreground">Copy</button>
+                  <button
+                    onClick={() => removeSection(s.id)}
+                    className={`h-11 rounded-md border text-sm ${pendingDeleteId === s.id ? "border-destructive bg-destructive text-white" : "border-white/10 text-destructive"}`}
+                  >
+                    {pendingDeleteId === s.id ? "Sure?" : "Delete"}
+                  </button>
+                </div>
+              )}
+              </Fragment>
             ))}
           </div>
         </div>
 
         {/* Center: preview canvas */}
         {showPreview && (
-          <div className="h-[45vh] flex-shrink-0 md:h-auto md:flex-1 md:flex-shrink relative overflow-hidden bg-black/20 flex items-center justify-center">
+          <div className="h-[36vh] max-md:order-first flex-shrink-0 md:h-auto md:flex-1 md:flex-shrink relative overflow-hidden bg-black/20 flex items-center justify-center">
             {frames.length > 0 && (
               <div
                 ref={previewScrollRef}
@@ -1419,7 +1595,7 @@ function EditorInner() {
                 />
                 {/* Section overlays */}
                 <div className="relative z-10" style={{ height: totalScrollHeight }}>
-                  <div style={{ height: previewViewportH || "100vh" }} />
+                  {!openOnHeadline && <div style={{ height: previewViewportH || "100vh" }} />}
                   {sections.filter(s => s.visible).map((s) => (
                     <div
                       key={s.id}
@@ -1512,20 +1688,20 @@ function EditorInner() {
         {selectedSectionData && (
           <div className="w-full md:w-72 border-t md:border-t-0 md:border-l border-white/5 flex flex-col bg-card/30 flex-shrink-0 md:overflow-y-auto">
             <Tabs defaultValue="content">
-              <div className="p-3 border-b border-white/5">
+              <div className="p-2 md:p-3 border-b border-white/5">
                 {/* Five icon-and-label tabs did not fit the panel at any width: Content
                     was clipped on the left and Code ran off the right, unreachable. The
                     label is what names a tab, so the icons go. */}
-                <TabsList className="grid grid-cols-5 w-full h-8 bg-white/5">
-                  <TabsTrigger value="content" className="text-xs h-6 px-1">Content</TabsTrigger>
-                  <TabsTrigger value="style" className="text-xs h-6 px-1">Style</TabsTrigger>
-                  <TabsTrigger value="layout" className="text-xs h-6 px-1">Layout</TabsTrigger>
-                  <TabsTrigger value="audio" className="text-xs h-6 px-1">Audio</TabsTrigger>
-                  <TabsTrigger value="code" className="text-xs h-6 px-1">Code</TabsTrigger>
+                <TabsList className="grid grid-cols-5 w-full h-8 max-md:group-data-horizontal/tabs:h-12 bg-white/5">
+                  <TabsTrigger value="content" className="text-sm md:text-xs h-10 md:h-6 px-1">Content</TabsTrigger>
+                  <TabsTrigger value="style" className="text-sm md:text-xs h-10 md:h-6 px-1">Style</TabsTrigger>
+                  <TabsTrigger value="layout" className="text-sm md:text-xs h-10 md:h-6 px-1">Layout</TabsTrigger>
+                  <TabsTrigger value="audio" className="text-sm md:text-xs h-10 md:h-6 px-1">Audio</TabsTrigger>
+                  <TabsTrigger value="code" className="text-sm md:text-xs h-10 md:h-6 px-1">Code</TabsTrigger>
                 </TabsList>
               </div>
 
-              <TabsContent value="content" className="p-3 space-y-3 mt-0">
+              <TabsContent value="content" className="p-3 max-md:flex max-md:flex-col max-md:gap-3 md:space-y-3 mt-0">
                 {selectedSectionData.kind === "spacer" ? (
                   /* A spacer exists to give the section before it room to breathe. It
                      renders nothing, so offering an eyebrow, a heading, a body, a button
@@ -1542,56 +1718,62 @@ function EditorInner() {
                 ) : (
                 <>
                 <div className="space-y-1.5">
-                  <label className="text-xs text-muted-foreground">Eyebrow text</label>
+                  <label htmlFor="field-eyebrow" className="text-xs text-muted-foreground">Small label above the heading</label>
                   <Input
-                    aria-label="Eyebrow text"
+                    id="field-eyebrow"
                     value={selectedSectionData.eyebrow}
                     onChange={(e) => updateSection(selectedSectionData.id, { eyebrow: e.target.value })}
                     placeholder="NEW FEATURE"
-                    className="h-7 bg-white/5 border-white/10 text-xs"
+                    className="h-11 md:h-7 bg-white/5 border-white/10"
                   />
                 </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs text-muted-foreground">Heading</label>
+                <div className="space-y-1.5 max-md:order-first">
+                  <label htmlFor="field-heading" className="text-xs text-muted-foreground">Heading</label>
                   <Textarea
-                    aria-label="Heading"
+                    id="field-heading"
                     value={selectedSectionData.heading}
                     onChange={(e) => updateSection(selectedSectionData.id, { heading: e.target.value })}
                     placeholder="Your powerful headline"
-                    className="bg-white/5 border-white/10 text-sm resize-none min-h-[60px]"
+                    className="bg-white/5 border-white/10 resize-none min-h-[60px]"
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs text-muted-foreground">Body text</label>
+                  <label htmlFor="field-body" className="text-xs text-muted-foreground">Body text</label>
                   <Textarea
-                    aria-label="Body text"
+                    id="field-body"
                     value={selectedSectionData.body}
                     onChange={(e) => updateSection(selectedSectionData.id, { body: e.target.value })}
                     placeholder="Supporting description..."
-                    className="bg-white/5 border-white/10 text-xs resize-none min-h-[60px]"
+                    className="bg-white/5 border-white/10 resize-none min-h-[60px]"
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="space-y-1.5">
-                    <label className="text-xs text-muted-foreground">CTA label</label>
-                    <Input
-                      aria-label="CTA label"
-                      value={selectedSectionData.ctaLabel}
-                      onChange={(e) => updateSection(selectedSectionData.id, { ctaLabel: e.target.value })}
-                      placeholder="Get started"
-                      className="h-7 bg-white/5 border-white/10 text-xs"
-                    />
+                <div className="space-y-1.5">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1.5">
+                      <label htmlFor="field-cta-label" className="text-xs text-muted-foreground">Button text</label>
+                      <Input
+                        id="field-cta-label"
+                        value={selectedSectionData.ctaLabel}
+                        onChange={(e) => updateSection(selectedSectionData.id, { ctaLabel: e.target.value })}
+                        placeholder="Get started"
+                        className="h-11 md:h-7 bg-white/5 border-white/10"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label htmlFor="field-cta-href" className="text-xs text-muted-foreground">Button goes to</label>
+                      <Input
+                        id="field-cta-href"
+                        value={selectedSectionData.ctaHref}
+                        onChange={(e) => updateSection(selectedSectionData.id, { ctaHref: e.target.value })}
+                        placeholder="#"
+                        className="h-11 md:h-7 bg-white/5 border-white/10"
+                      />
+                    </div>
                   </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs text-muted-foreground">CTA link</label>
-                    <Input
-                      aria-label="CTA link"
-                      value={selectedSectionData.ctaHref}
-                      onChange={(e) => updateSection(selectedSectionData.id, { ctaHref: e.target.value })}
-                      placeholder="#"
-                      className="h-7 bg-white/5 border-white/10 text-xs"
-                    />
-                  </div>
+                  <ButtonLinkPicks
+                    key={selectedSectionData.id}
+                    onPick={(href) => updateSection(selectedSectionData.id, { ctaHref: href })}
+                  />
                 </div>
                 <div className="space-y-1.5 rounded-md border border-white/10 p-2">
                   <label htmlFor="signup-url" className="text-xs text-muted-foreground">Email signup form</label>
@@ -1600,14 +1782,14 @@ function EditorInner() {
                     value={selectedSectionData.signupUrl ?? ""}
                     onChange={(e) => updateSection(selectedSectionData.id, { signupUrl: e.target.value.trim() || undefined })}
                     placeholder="https:// form URL from your email provider"
-                    className="h-7 bg-white/5 border-white/10 text-xs"
+                    className="h-11 md:h-7 bg-white/5 border-white/10"
                   />
                   <Input
                     aria-label="Signup button text"
                     value={selectedSectionData.signupButton ?? ""}
                     onChange={(e) => updateSection(selectedSectionData.id, { signupButton: e.target.value || undefined })}
                     placeholder="Join the waitlist"
-                    className="h-7 bg-white/5 border-white/10 text-xs"
+                    className="h-11 md:h-7 bg-white/5 border-white/10"
                   />
                   <p className="text-xs leading-snug text-muted-foreground">
                     <SignupHint url={selectedSectionData.signupUrl} />
@@ -1620,10 +1802,10 @@ function EditorInner() {
                     value={selectedSectionData.image ?? ""}
                     onChange={(e) => updateSection(selectedSectionData.id, { image: e.target.value })}
                     placeholder="https://cdn.example.com/logo.png"
-                    className="h-7 bg-white/5 border-white/10 text-xs"
+                    className="h-11 md:h-7 bg-white/5 border-white/10"
                   />
                   <p className="text-[11px] text-muted-foreground/70">
-                    Must be a public https URL — an exported ZIP cannot carry a local file.
+                    Must be a public https URL. An exported ZIP cannot carry a local file.
                   </p>
                 </div>
                 {selectedSectionData.image ? (
@@ -1635,7 +1817,7 @@ function EditorInner() {
                         value={selectedSectionData.imageAlt ?? ""}
                         onChange={(e) => updateSection(selectedSectionData.id, { imageAlt: e.target.value })}
                         placeholder="Describe the image"
-                        className="h-7 bg-white/5 border-white/10 text-xs"
+                        className="h-11 md:h-7 bg-white/5 border-white/10"
                       />
                     </div>
                     <div className="space-y-1.5">
@@ -1652,7 +1834,7 @@ function EditorInner() {
                             imageWidth: Number.isFinite(n) ? Math.min(1600, Math.max(16, Math.trunc(n))) : 480,
                           });
                         }}
-                        className="h-7 bg-white/5 border-white/10 text-xs"
+                        className="h-11 md:h-7 bg-white/5 border-white/10"
                       />
                     </div>
                   </div>
@@ -1666,21 +1848,21 @@ function EditorInner() {
                   <label className="text-xs text-muted-foreground">Accent color</label>
                   <div className="flex items-center gap-2">
                     <input aria-label="Accent color" type="color" value={selectedSectionData.accentColor} onChange={(e) => updateSection(selectedSectionData.id, { accentColor: e.target.value })} className="w-8 h-8 rounded cursor-pointer border-0 bg-transparent" />
-                    <Input aria-label="Accent color hex value" value={selectedSectionData.accentColor} onChange={(e) => updateSection(selectedSectionData.id, { accentColor: e.target.value })} className="flex-1 h-7 bg-white/5 border-white/10 text-xs font-mono" />
+                    <Input aria-label="Accent color hex value" value={selectedSectionData.accentColor} onChange={(e) => updateSection(selectedSectionData.id, { accentColor: e.target.value })} className="flex-1 h-11 md:h-7 bg-white/5 border-white/10 font-mono" />
                   </div>
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-xs text-muted-foreground">Heading color</label>
                   <div className="flex items-center gap-2">
                     <input aria-label="Heading color" type="color" value={selectedSectionData.headingColor} onChange={(e) => updateSection(selectedSectionData.id, { headingColor: e.target.value })} className="w-8 h-8 rounded cursor-pointer border-0 bg-transparent" />
-                    <Input aria-label="Heading color hex value" value={selectedSectionData.headingColor} onChange={(e) => updateSection(selectedSectionData.id, { headingColor: e.target.value })} className="flex-1 h-7 bg-white/5 border-white/10 text-xs font-mono" />
+                    <Input aria-label="Heading color hex value" value={selectedSectionData.headingColor} onChange={(e) => updateSection(selectedSectionData.id, { headingColor: e.target.value })} className="flex-1 h-11 md:h-7 bg-white/5 border-white/10 font-mono" />
                   </div>
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-xs text-muted-foreground">Body color</label>
                   <div className="flex items-center gap-2">
                     <input aria-label="Body color" type="color" value={selectedSectionData.bodyColor.startsWith("rgba") ? "#b3b3b3" : selectedSectionData.bodyColor} onChange={(e) => updateSection(selectedSectionData.id, { bodyColor: e.target.value })} className="w-8 h-8 rounded cursor-pointer border-0 bg-transparent" />
-                    <Input aria-label="Body color hex value" value={selectedSectionData.bodyColor} onChange={(e) => updateSection(selectedSectionData.id, { bodyColor: e.target.value })} className="flex-1 h-7 bg-white/5 border-white/10 text-xs font-mono" />
+                    <Input aria-label="Body color hex value" value={selectedSectionData.bodyColor} onChange={(e) => updateSection(selectedSectionData.id, { bodyColor: e.target.value })} className="flex-1 h-11 md:h-7 bg-white/5 border-white/10 font-mono" />
                   </div>
                 </div>
                 <div className="space-y-1.5">
@@ -1688,7 +1870,8 @@ function EditorInner() {
                   <div className="flex gap-1">
                     {(["left", "center", "right"] as const).map(a => (
                       <button key={a} onClick={() => updateSection(selectedSectionData.id, { textAlign: a })}
-                        className={`flex-1 h-7 rounded border text-xs flex items-center justify-center transition-colors ${selectedSectionData.textAlign === a ? "border-primary bg-primary/15 text-primary-ink" : "border-white/10 hover:border-white/20"}`}
+                        aria-label={`Align text ${a}`} title={`Align text ${a}`}
+                        className={`flex-1 h-11 md:h-7 rounded border text-xs flex items-center justify-center transition-colors ${selectedSectionData.textAlign === a ? "border-primary bg-primary/15 text-primary-ink" : "border-white/10 hover:border-white/20"}`}
                       >
                         {a === "left" ? <AlignLeft className="w-3.5 h-3.5" /> : a === "center" ? <AlignCenter className="w-3.5 h-3.5" /> : <AlignRight className="w-3.5 h-3.5" />}
                       </button>
@@ -1727,7 +1910,7 @@ function EditorInner() {
                   <div className="flex gap-1">
                     {["flex-start", "center", "flex-end"].map((a) => (
                       <button key={a} onClick={() => updateSection(selectedSectionData.id, { align: a })}
-                        className={`flex-1 h-7 rounded border text-xs transition-colors ${selectedSectionData.align === a ? "border-primary bg-primary/15 text-primary-ink" : "border-white/10 hover:border-white/20"}`}
+                        className={`flex-1 h-11 md:h-7 rounded border text-xs transition-colors ${selectedSectionData.align === a ? "border-primary bg-primary/15 text-primary-ink" : "border-white/10 hover:border-white/20"}`}
                       >
                         {a === "flex-start" ? "Top" : a === "center" ? "Middle" : "Bottom"}
                       </button>
@@ -1739,7 +1922,7 @@ function EditorInner() {
                   <div className="flex gap-1">
                     {["flex-start", "center", "flex-end"].map((a) => (
                       <button key={a} onClick={() => updateSection(selectedSectionData.id, { justify: a })}
-                        className={`flex-1 h-7 rounded border text-xs transition-colors ${selectedSectionData.justify === a ? "border-primary bg-primary/15 text-primary-ink" : "border-white/10 hover:border-white/20"}`}
+                        className={`flex-1 h-11 md:h-7 rounded border text-xs transition-colors ${selectedSectionData.justify === a ? "border-primary bg-primary/15 text-primary-ink" : "border-white/10 hover:border-white/20"}`}
                       >
                         {a === "flex-start" ? "Left" : a === "center" ? "Center" : "Right"}
                       </button>
@@ -1803,6 +1986,25 @@ function EditorInner() {
               </TabsContent>
 
               <TabsContent value="code" className="p-3 space-y-4 mt-0">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="space-y-1">
+                    <label htmlFor="open-on-headline" className="text-xs text-muted-foreground font-medium">Open on the headline</label>
+                    <p className="text-xs text-muted-foreground/70">
+                      Visitors see your first section straight away, not a screen of background first.
+                    </p>
+                  </div>
+                  <button
+                    id="open-on-headline"
+                    role="switch"
+                    aria-checked={openOnHeadline}
+                    onClick={() => { setOpenOnHeadline(v => !v); setDirty(true); }}
+                    className="flex h-11 md:h-6 flex-shrink-0 items-center"
+                  >
+                    <span className={`flex h-4 w-8 items-center rounded-full transition-colors ${openOnHeadline ? "bg-primary" : "bg-white/20"}`}>
+                      <span className={`mx-0.5 h-3 w-3 rounded-full bg-white transition-transform ${openOnHeadline ? "translate-x-4" : "translate-x-0"}`} />
+                    </span>
+                  </button>
+                </div>
                 <div className="space-y-1.5">
                   <label className="text-xs text-muted-foreground font-medium">Site description</label>
                   <p className="text-xs text-muted-foreground/70">
@@ -1815,7 +2017,7 @@ function EditorInner() {
                     maxLength={300}
                     onChange={(e) => { setSiteDescription(e.target.value); setDirty(true); }}
                     placeholder="A one-sentence summary that shows up in search results and link previews."
-                    className="min-h-[60px] text-xs bg-black/30 border-white/10 resize-none"
+                    className="min-h-[60px] bg-black/30 border-white/10 resize-none"
                   />
                   <p className="text-[11px] text-muted-foreground/60 tabular-nums">
                     {siteDescription.length}/300
