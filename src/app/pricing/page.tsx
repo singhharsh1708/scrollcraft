@@ -9,7 +9,7 @@ import KeyBox from "./KeyBox";
 export const metadata: Metadata = pageMeta({
   title: "Pricing",
   description:
-    "The editor, the templates and the exporter are free. Writing a site from a description costs money per request, so the first four are free and five more are $20.",
+    "The editor, the templates and the exporter are free. Writing a site from a description costs money per request, so the first two are free and five more are $20.",
   path: "/pricing",
 });
 
@@ -18,7 +18,7 @@ const FREE = [
   "The whole editor, with no watermark",
   "Export as plain HTML, CSS and JavaScript",
   "Host the export anywhere, or nowhere",
-  "Four sites written from your description",
+  "Two sites written from your description",
 ];
 
 const PACK = [

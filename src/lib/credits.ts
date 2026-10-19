@@ -7,7 +7,7 @@ import { logger } from "@/lib/logger";
 /**
  * Who may write a site, and how many they have left.
  *
- * The first four sites are free. After that a pack of five costs twenty dollars, bought through
+ * The first two sites are free. After that a pack of five costs twenty dollars, bought through
  * Lemon Squeezy, which hands the buyer a licence key.
  *
  * Credits hang off an identity, and there are two of them. A browser that has pasted a
@@ -20,7 +20,7 @@ import { logger } from "@/lib/logger";
  * because nobody should pay four dollars for a 502.
  */
 
-export const FREE_SITES = 4;
+export const FREE_SITES = 2;
 /**
  * Free sites one address may account for in a month, whoever is behind it.
  *

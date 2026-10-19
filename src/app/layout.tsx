@@ -17,7 +17,7 @@ export const viewport: Viewport = {
 };
 
 const title = "ScrollCraft: scroll-animated websites, free to build and export";
-const description = `Describe your business or start from one of ${TEMPLATES.length} templates, edit it in the browser and export plain HTML. No sign-up. The first four written sites are free.`;
+const description = `Describe your business or start from one of ${TEMPLATES.length} templates, edit it in the browser and export plain HTML. No sign-up. The first two written sites are free.`;
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),

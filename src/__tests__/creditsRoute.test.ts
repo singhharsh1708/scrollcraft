@@ -82,13 +82,13 @@ beforeEach(async () => {
 describe("the balance says what this browser may write", () => {
   it("reports the free site and the pack price to a browser with no key", async () => {
     const body = await (await get()).json();
-    expect(body).toEqual({ free: 4, pack: 5, hasKey: false, remaining: 0, total: 0, signedIn: false, canSignIn: false, canBuy: false });
+    expect(body).toEqual({ free: 2, pack: 5, hasKey: false, remaining: 0, total: 0, signedIn: false, canSignIn: false, canBuy: false });
   });
 
   it("reads the balance of the key the cookie carries", async () => {
     putHash(entitlement, { total: 10, used: 3 });
     expect(await (await get(`${COOKIE}=${HASH}`)).json()).toEqual({
-      free: 4,
+      free: 2,
       pack: 5,
       hasKey: true,
       remaining: 7,

@@ -75,7 +75,7 @@ export default function PrivacyPage() {
             is configured with a key.
           </li>
           <li>
-            <strong>A purchase, only if you buy more sites.</strong> The first four sites are free.{" "}
+            <strong>A purchase, only if you buy more sites.</strong> The first two sites are free.{" "}
             {processor ? (
               <>
                 A pack of five is paid for on {processor === "dodo" ? "Dodo Payments'" : "Stripe's"} own
