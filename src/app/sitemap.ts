@@ -2,6 +2,7 @@ import { MetadataRoute } from "next";
 import { siteUrl } from "@/lib/env";
 import { TEMPLATES, templateCategories } from "@/lib/templates";
 import { categoryPath } from "@/lib/templateSeo";
+import { GUIDES } from "@/lib/guides";
 
 /**
  * Every page worth indexing, and no lastModified on any of them.
@@ -28,6 +29,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
       url: `${siteUrl}${categoryPath(c)}`,
       changeFrequency: "monthly" as const,
       priority: 0.8,
+    })),
+    ...GUIDES.map((g) => ({
+      url: `${siteUrl}${g.path}`,
+      changeFrequency: "monthly" as const,
+      priority: 0.7,
     })),
     { url: `${siteUrl}/examples`,   changeFrequency: "monthly", priority: 0.8 },
     { url: `${siteUrl}/pricing`,    changeFrequency: "monthly", priority: 0.8 },
