@@ -81,7 +81,7 @@ describe("a shared link describes the page it points at", () => {
     const { generateMetadata } = await import("../app/templates/[slug]/layout");
     const meta = await generateMetadata({ params: Promise.resolve({ slug: "kept" }) });
     const image = { url: "/template-previews/kept.jpg", width: 800, height: 500 };
-    expect(meta.openGraph).toMatchObject({ title: "Kept template | ScrollCraft", url: "/templates/kept", images: [expect.objectContaining(image)] });
+    expect(meta.openGraph).toMatchObject({ title: "Coming soon website template with scroll animation: Kept | ScrollCraft", url: "/templates/kept", images: [expect.objectContaining(image)] });
     expect(meta.twitter).toMatchObject({ images: [expect.objectContaining(image)] });
     const [w, h] = [image.width, image.height];
     const { width, height } = await sharp("public/template-previews/kept.jpg").metadata();

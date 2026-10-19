@@ -3,6 +3,7 @@ import { pageMeta } from "@/lib/pageMeta";
 import { TEMPLATES, templateCategories, templateScrollHeight, templateSectionCount } from "@/lib/templates";
 import TemplatesClient, { type TemplateCard } from "./TemplatesClient";
 import { filtersFromQuery } from "@/lib/templateFilters";
+import { categoryLabel, categoryPath } from "@/lib/templateSeo";
 
 export const metadata: Metadata = pageMeta({
   title: "Free scroll animation website templates (HTML)",
@@ -46,5 +47,7 @@ export default async function TemplatesPage({ searchParams }: { searchParams: Pr
   }
   const { filters, sort } = filtersFromQuery(query, { categories });
 
-  return <TemplatesClient templates={templates} categories={categories} initialFilters={filters} initialSort={sort} />;
+  const categoryLinks = categories.map((c) => ({ href: categoryPath(c), label: categoryLabel(c) }));
+
+  return <TemplatesClient templates={templates} categories={categories} initialFilters={filters} initialSort={sort} categoryLinks={categoryLinks} />;
 }

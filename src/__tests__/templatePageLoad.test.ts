@@ -14,8 +14,9 @@ describe("template previews are built ahead of time", () => {
     const { default: TemplatePage } = await import("../app/templates/[slug]/page");
     const { default: TemplatePreview } = await import("../app/templates/[slug]/TemplatePreview");
     const el = await TemplatePage({ params: Promise.resolve({ slug: "kept" }) });
-    expect(el.type).toBe(TemplatePreview);
-    expect(el.props).toEqual({ template: templateBySlug("kept") });
+    const preview = (el.props as { children: React.ReactElement[] }).children[0];
+    expect(preview.type).toBe(TemplatePreview);
+    expect(preview.props).toEqual({ template: templateBySlug("kept") });
   });
 
   it("renders the not found page for a slug that is not a template", async () => {
