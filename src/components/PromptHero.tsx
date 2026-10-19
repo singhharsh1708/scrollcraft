@@ -6,6 +6,7 @@ import { ArrowUp, Check, Loader2 } from "lucide-react";
 import StylePreview from "@/components/StylePreview";
 import { MAX_DESCRIPTION } from "@/lib/briefLimits";
 import { writeSite } from "@/lib/writeSite";
+import { DEFAULT_QUALITY, QUALITIES, type Quality } from "@/lib/quality";
 
 /**
  * The first screen, and the first input.
@@ -51,6 +52,20 @@ export default function PromptHero({ reducedMotion }: { reducedMotion: boolean }
   const [busy, setBusy] = useState(false);
   const boxRef = useRef<HTMLTextAreaElement>(null);
 
+  const [quality, setQuality] = useState<Quality>(DEFAULT_QUALITY);
+  const [left, setLeft] = useState<{ free: number | null; paid: number } | null>(null);
+  useEffect(() => {
+    let live = true;
+    fetch("/api/credits", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((body: { freeLeft?: number | null; remaining?: number }) => {
+        if (live) setLeft({ free: body.freeLeft ?? null, paid: body.remaining ?? 0 });
+      })
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, []);
   const [error, setError] = useState("");
   const [needsCredits, setNeedsCredits] = useState(false);
   const [elapsed, setElapsed] = useState(0);
@@ -66,7 +81,7 @@ export default function PromptHero({ reducedMotion }: { reducedMotion: boolean }
     setBusy(true);
     setError("");
     setNeedsCredits(false);
-    const result = await writeSite({ description: value.trim() });
+    const result = await writeSite({ description: value.trim(), quality });
     if (result.ok) {
       router.push("/editor");
       return;
@@ -86,8 +101,17 @@ export default function PromptHero({ reducedMotion }: { reducedMotion: boolean }
 
   const typed = value.trim().length;
   const short = typed < 20;
-  const left = 20 - typed;
-  const hint = typed === 0 ? "No sign-up needed" : short ? `${left} more character${left === 1 ? "" : "s"}` : `${typed} characters`;
+  const allowance =
+    left === null
+      ? "No sign-up needed"
+      : left.paid > 0
+        ? `${left.paid} ${left.paid === 1 ? "site" : "sites"} on your account`
+        : left.free === null
+          ? "No sign-up needed"
+          : left.free > 0
+            ? `${left.free} free ${left.free === 1 ? "site" : "sites"} left`
+            : "Free sites used · 5 more for $20";
+  const hint = typed === 0 ? allowance : short ? `${20 - typed} more character${20 - typed === 1 ? "" : "s"}` : allowance;
 
   return (
     <section className="relative isolate flex min-h-[calc(100svh-4rem)] items-center overflow-hidden border-b border-border px-6 py-20">
@@ -142,10 +166,26 @@ export default function PromptHero({ reducedMotion }: { reducedMotion: boolean }
             placeholder="What is the business? Where is it, how long has it been going, what do you actually do?"
             className="w-full resize-none bg-transparent px-4 py-4 text-base leading-relaxed text-foreground outline-none placeholder:text-muted-foreground"
           />
-          <div className="flex items-center justify-between gap-3 px-4 pb-2">
-            <span className="text-xs text-muted-foreground">{hint}</span>
+          <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 px-4 pb-2">
+            <span className="w-full text-xs text-muted-foreground sm:w-auto">{hint}</span>
             {/* Not faded out when it is not ready: a button nobody can read is worse
                 than one that plainly says it is waiting for a sentence. */}
+            <div className="ml-auto flex items-center gap-2">
+            <label className="sr-only" htmlFor="hero-quality">Quality</label>
+            <select
+              id="hero-quality"
+              value={quality}
+              disabled={busy}
+              onChange={(e) => setQuality(e.target.value as Quality)}
+              title="Fast is quickest, Best writes most carefully. Each uses one site."
+              className="lc-mono h-9 rounded-full border border-border bg-transparent px-3 text-xs text-muted-foreground outline-none hover:border-foreground/30 focus-visible:border-primary-ink/60"
+            >
+              {(Object.keys(QUALITIES) as Quality[]).map((q) => (
+                <option key={q} value={q} className="bg-card text-foreground">
+                  {QUALITIES[q].label}
+                </option>
+              ))}
+            </select>
             <button
               type="button"
               onClick={() => void go()}
@@ -155,10 +195,11 @@ export default function PromptHero({ reducedMotion }: { reducedMotion: boolean }
               {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <ArrowUp className="h-4 w-4" aria-hidden="true" />}
               {busy ? "Writing…" : "Write my site"}
             </button>
+            </div>
           </div>
         </div>
 
-        {busy && <Progress elapsed={elapsed} />}
+        {busy && <Progress elapsed={elapsed} wait={QUALITIES[quality].wait} />}
         {error && (
           <div role="alert" className="mt-4 rounded-2xl border border-primary-ink/30 bg-card/95 p-4 text-left text-sm text-foreground">
             <p>{error}</p>
@@ -213,7 +254,7 @@ export default function PromptHero({ reducedMotion }: { reducedMotion: boolean }
 
 const STEPS = ["Reading your description", "Writing the sections", "Choosing colours and type", "Opening the editor"];
 
-function Progress({ elapsed }: { elapsed: number }) {
+function Progress({ elapsed, wait }: { elapsed: number; wait: string }) {
   const current = Math.min(STEPS.length - 1, Math.floor(elapsed / 9));
   return (
     <div role="status" aria-live="polite" className="mt-4 rounded-2xl border border-white/10 bg-card/95 p-4 text-left shadow-[var(--lift-1)]">
@@ -231,7 +272,7 @@ function Progress({ elapsed }: { elapsed: number }) {
           </li>
         ))}
       </ol>
-      <p className="mt-3 text-xs text-muted-foreground">{elapsed}s · usually about 30 seconds. Keep this tab open.</p>
+      <p className="mt-3 text-xs text-muted-foreground">{elapsed}s · {wait} Keep this tab open.</p>
     </div>
   );
 }

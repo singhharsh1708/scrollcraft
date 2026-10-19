@@ -255,6 +255,7 @@ describe("a signed-in visitor spends their account's credits, not the browser's"
       signedIn: true,
       canSignIn: true,
       canBuy: false,
+      freeLeft: 2,
     });
   });
 

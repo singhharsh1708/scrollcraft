@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { createHash } from "node:crypto";
 import type { NextRequest } from "next/server";
-import { breakFakeRedis, peek, peekHash, putHash, resetFakeRedis } from "./stubs/fakeRedis";
+import { breakFakeRedis, peek, peekHash, putHash, putKey, resetFakeRedis } from "./stubs/fakeRedis";
 
 /**
  * Redeeming a licence key. The route decides, from a string somebody pasted, whether a
@@ -82,7 +82,7 @@ beforeEach(async () => {
 describe("the balance says what this browser may write", () => {
   it("reports the free site and the pack price to a browser with no key", async () => {
     const body = await (await get()).json();
-    expect(body).toEqual({ free: 2, pack: 5, hasKey: false, remaining: 0, total: 0, signedIn: false, canSignIn: false, canBuy: false });
+    expect(body).toEqual({ free: 2, pack: 5, hasKey: false, remaining: 0, total: 0, signedIn: false, canSignIn: false, canBuy: false, freeLeft: 2 });
   });
 
   it("reads the balance of the key the cookie carries", async () => {
@@ -96,7 +96,15 @@ describe("the balance says what this browser may write", () => {
       signedIn: false,
       canSignIn: false,
       canBuy: false,
+      freeLeft: 2,
     });
+  });
+
+  it("says how many free sites this browser has left", async () => {
+    putKey("sc_freeb:browser-a", "1");
+    expect((await (await get("sc_fid=browser-a")).json()).freeLeft).toBe(1);
+    putKey("sc_freeb:browser-a", "5");
+    expect((await (await get("sc_fid=browser-a")).json()).freeLeft).toBe(0);
   });
 
   it("treats a cookie that is not a key hash as no key, rather than looking it up", async () => {
