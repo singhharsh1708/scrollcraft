@@ -387,6 +387,22 @@ describe("the request put to the model is the one that was designed", () => {
   });
 });
 
+describe("the visitor's quality choice picks the model and effort", () => {
+  it.each([
+    [undefined, "claude-opus-5-5", "medium"],
+    ["balanced", "claude-opus-5-5", "medium"],
+    ["fast", "claude-sonnet-5-5", "medium"],
+    ["best", "claude-opus-5-5", "high"],
+    ["max", "claude-opus-5-5", "medium"],
+    [{ model: "claude-haiku-5-5" }, "claude-opus-5-5", "medium"],
+  ])("quality %j asks %s at %s effort", async (quality, model, effort) => {
+    await post({ description: DESCRIPTION, ...(quality === undefined ? {} : { quality }) });
+    const sent = sdk.parse.mock.calls[0][0];
+    expect(sent.model).toBe(model);
+    expect(sent.output_config.effort).toBe(effort);
+  });
+});
+
 describe("the call to the model ends while the route can still answer", () => {
   const NOW = Date.UTC(2026, 9, 16, 12);
   let timeout: MockInstance<typeof AbortSignal.timeout>;
@@ -401,14 +417,14 @@ describe("the call to the model ends while the route can still answer", () => {
     vi.useRealTimers();
   });
 
-  it("gives the call 110 seconds from the start of the request", async () => {
+  it("gives the call 290 seconds from the start of the request", async () => {
     await post({ description: DESCRIPTION });
-    expect(timeout).toHaveBeenCalledExactlyOnceWith(110_000);
+    expect(timeout).toHaveBeenCalledExactlyOnceWith(290_000);
     expect(sdk.parse.mock.calls[0][1]?.signal).toBe(timeout.mock.results[0].value);
   });
 
   it("takes the time the request has already used off the deadline, leaving at least a second", async () => {
-    const cases: [number, number][] = [[60_000, 50_000], [109_500, 1_000], [130_000, 1_000]];
+    const cases: [number, number][] = [[60_000, 230_000], [289_500, 1_000], [310_000, 1_000]];
     for (const [elapsed, left] of cases) {
       vi.setSystemTime(NOW);
       rateLimitMock.mockImplementation(async () => {

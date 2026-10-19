@@ -8,6 +8,7 @@ import { redisCredentials } from "@/lib/redisCredentials";
 import { logger } from "@/lib/logger";
 import { sectionsSchema, themeSchema, siteStyleSchema } from "@/lib/siteSchema";
 import { BRIEF_RULES, briefSchema, briefToSite, checkBriefInput } from "@/lib/siteBrief";
+import { QUALITIES, parseQuality } from "@/lib/quality";
 import { BROWSER_COOKIE, PACK_PRICE_USD, PACK_SITES, balanceOf, browserTokenFrom, cookieOptions, keyHashFrom, takeAllowance } from "@/lib/credits";
 
 /**
@@ -21,7 +22,8 @@ import { BROWSER_COOKIE, PACK_PRICE_USD, PACK_SITES, balanceOf, browserTokenFrom
  * twenty addresses.
  */
 
-const MODEL = "claude-opus-5-5";
+/** Leaves the catch time to give the credit back inside maxDuration. */
+const DEADLINE_MS = 290_000;
 const MAX_OUTPUT_TOKENS = 8000;
 /** Enough to hold the rules, three photographs and the answer. */
 const MAX_BODY_BYTES = 7_000_000;
@@ -69,7 +71,7 @@ async function readCapped(req: NextRequest, limit: number): Promise<string | nul
   return out + decoder.decode();
 }
 
-export const maxDuration = 120;
+export const maxDuration = 300;
 
 function configured(): boolean {
   return Boolean(process.env.ANTHROPIC_API_KEY);
@@ -105,6 +107,8 @@ export async function POST(req: NextRequest) {
   }
 
   const input = checkBriefInput(body as { description?: unknown; images?: unknown });
+  const quality = parseQuality((body as { quality?: unknown } | null)?.quality);
+  const { model, effort } = QUALITIES[quality];
   if (!input.ok) return NextResponse.json({ error: input.error }, { status: 400 });
 
   // One site's worth of allowance, taken before the call and given back if the call
@@ -170,16 +174,15 @@ export async function POST(req: NextRequest) {
   try {
     const response = await client.messages.parse(
       {
-        model: MODEL,
+        model,
         max_tokens: MAX_OUTPUT_TOKENS,
         // The rules never change, so they are cached and cost a tenth on every call after
         // the first. Nothing variable may appear before this point.
         system: [{ type: "text", text: BRIEF_RULES, cache_control: { type: "ephemeral" } }],
-        output_config: { format: zodOutputFormat(briefSchema), effort: "medium" },
+        output_config: { format: zodOutputFormat(briefSchema), effort },
         messages: [{ role: "user", content }],
       },
-      // Counted from the start of the request so the catch still runs inside maxDuration.
-      { signal: AbortSignal.timeout(Math.max(1_000, startedAt + 110_000 - Date.now())) }
+      { signal: AbortSignal.timeout(Math.max(1_000, startedAt + DEADLINE_MS - Date.now())) }
     );
 
     if (response.stop_reason === "refusal") {
@@ -217,6 +220,7 @@ export async function POST(req: NextRequest) {
       images: input.images.length,
       todayAcrossEveryone: today,
       paid: allowance.kind === "paid",
+      quality,
       durationMs: Date.now() - startedAt,
     });
 
