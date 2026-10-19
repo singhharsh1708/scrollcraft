@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { pageMeta } from "@/lib/pageMeta";
 
 export const metadata: Metadata = pageMeta({
-  title: "About",
+  title: "About: the open-source scroll website builder",
   description: "Who builds ScrollCraft, why it is free and open source, and why every site it makes is plain HTML you keep.",
   path: "/about",
 });
