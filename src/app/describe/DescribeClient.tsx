@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { writeSite } from "@/lib/writeSite";
 import { MAX_DESCRIPTION, MAX_IMAGES } from "@/lib/briefLimits";
 import { contactLink, readPhone, type ContactVia } from "@/lib/contactLink";
+import { DEFAULT_QUALITY, QUALITIES, type Quality } from "@/lib/quality";
 import { HANDOFF_KEY } from "@/components/PromptHero";
 import OutOfCredits from "@/components/OutOfCredits";
 
@@ -66,6 +67,7 @@ export default function DescribeClient() {
   const [description, setDescription] = useState("");
   const [compact, setCompact] = useState(false);
   const [contact, setContact] = useState("");
+  const [quality, setQuality] = useState<Quality>(DEFAULT_QUALITY);
   const [via, setVia] = useState<ContactVia>("call");
   const [images, setImages] = useState<Picked[]>([]);
   const [busy, setBusy] = useState(false);
@@ -150,6 +152,7 @@ export default function DescribeClient() {
         description,
         images: images.map(({ media_type, data }) => ({ media_type, data })),
         contactHref: link,
+        quality,
       });
       if (!result.ok) {
         setError(result.error);
@@ -251,7 +254,26 @@ export default function DescribeClient() {
           <p>Kept in this browser with the site; it is not sent to the model.</p>
         </div>
 
-        <div className="mt-6 flex flex-wrap items-center gap-2">
+        <div role="group" aria-label="Quality" className="mt-6 flex flex-wrap items-center gap-2">
+          <span className="text-sm text-muted-foreground">Quality</span>
+          {(Object.keys(QUALITIES) as Quality[]).map((value) => (
+            <button
+              key={value}
+              type="button"
+              aria-pressed={quality === value}
+              disabled={busy}
+              onClick={() => setQuality(value)}
+              className={`lc-mono h-9 rounded-full border px-4 text-[0.8rem] transition-colors disabled:opacity-50 ${quality === value ? "border-primary-ink/60 bg-primary-ink/15 text-foreground" : "border-border text-muted-foreground hover:border-foreground/30"}`}
+            >
+              {QUALITIES[value].label}
+            </button>
+          ))}
+        </div>
+        <p className="mt-2 text-xs text-muted-foreground">
+          Fast is quickest, Best takes longest and writes most carefully. Each uses one site.
+        </p>
+
+        <div className="mt-4 flex flex-wrap items-center gap-2">
           <Button onClick={build} disabled={busy || short} size="lg" className="lc-btn-solid">
             {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" /> : null}
             {busy ? "Writing your site…" : "Build my site"}
@@ -284,7 +306,7 @@ export default function DescribeClient() {
           )}
         </div>
         <p className="mt-2 text-sm text-muted-foreground" aria-live="polite">
-          {busy ? "About half a minute." : short ? "A sentence or two to start." : "You can change every word afterwards."}
+          {busy ? QUALITIES[quality].wait : short ? "A sentence or two to start." : "You can change every word afterwards."}
         </p>
 
         {images.length > 0 && (
