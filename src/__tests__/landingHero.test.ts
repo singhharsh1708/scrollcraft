@@ -61,14 +61,14 @@ describe("the landing page shows the product before it describes it", () => {
     // It was once a box 733px down a 900px viewport, then a backdrop behind the copy, then
     // a still of a template beside it. The hero is now a template that plays as the
     // visitor scrolls, which is the product doing the one thing it does.
-    const hero = HOME.slice(HOME.indexOf("{/* Hero */}"), HOME.indexOf("{/* Social proof strip */}"));
+    const hero = HOME.slice(HOME.indexOf("{/* Hero */}"), HOME.indexOf("{/* Examples */}"));
     expect(hero).toContain("<HeroSequence");
   });
 
   it("no longer veils the demo behind a fade to the page background", () => {
     // The old frame sat under a from-background gradient, which is why the sliver that
     // was above the fold read as an empty box.
-    const hero = HOME.slice(HOME.indexOf("{/* Hero */}"), HOME.indexOf("{/* Social proof strip */}"));
+    const hero = HOME.slice(HOME.indexOf("{/* Hero */}"), HOME.indexOf("{/* Examples */}"));
     expect(hero).not.toContain("bg-gradient-to-t from-background");
   });
 });

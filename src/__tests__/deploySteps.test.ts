@@ -36,7 +36,7 @@ describe("getting an export online is described as it really works", () => {
   });
 
   it("says on the home page that the host needs an account", () => {
-    const start = HOME.indexOf('id: "deploy"');
-    expect(HOME.slice(start, HOME.indexOf("bullets:", start))).toMatch(/subtitle: "[^"]*account[^"]*"/);
+    const start = HOME.indexOf('id: "export"');
+    expect(HOME.slice(start, HOME.indexOf("panel:", start))).toMatch(/body: "[^"]*account[^"]*"/);
   });
 });
