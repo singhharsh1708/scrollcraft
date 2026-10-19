@@ -38,7 +38,7 @@ const WHAT_HAPPENS = [
 ];
 
 const QUESTIONS = [
-  ["What is free?", "The editor, the templates and the export, with no account and no watermark. Writing a site from a description is the one paid part: the first four are free, then five more are $20."],
+  ["What is free?", "The editor, the templates and the export, with no account and no watermark. Writing a site from a description is the one paid part: the first two are free, then five more are $20."],
   ["Where do my words and photographs go?", `To Anthropic, once, and only when you press Build my site. Photographs are reduced to ${LONG_EDGE} pixels on your device first. We do not store the description or the photographs.`],
   ["Can I change what it writes?", "Every word, in the editor. Nothing is published until you export the files and put them on a host yourself."],
 ];
@@ -391,7 +391,7 @@ export default function DescribeClient() {
             </>
           ) : (
             <>
-              The first four sites are free. Five more are $20.{" "}
+              The first two sites are free. Five more are $20.{" "}
               <Link href="/pricing" className="underline underline-offset-4">Pricing</Link>
               {allowance && !allowance.signedIn && (
                 <>

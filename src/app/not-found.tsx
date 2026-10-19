@@ -16,7 +16,7 @@ export const metadata: Metadata = {
  * that, which is a worse first impression than the page they were looking for being gone.
  */
 const WAYS_ON = [
-  { href: "/describe", label: "Describe your business", note: "Write a paragraph and get a site back. The first four are free." },
+  { href: "/describe", label: "Describe your business", note: "Write a paragraph and get a site back. The first two are free." },
   { href: "/templates", label: "Browse the templates", note: "Twenty-three finished sites, free, ready to edit." },
   { href: "/examples", label: "See three finished sites", note: "Served as the exact bundles the exporter produces." },
 ];

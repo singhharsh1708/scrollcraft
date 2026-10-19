@@ -33,7 +33,7 @@ You need no account to build or export, and your sites stay in your browser. The
 the templates and the exporter are free with nothing to buy. Four things call out, and each
 is off until you configure it: the copy assistant below, writing a site from a description,
 GitHub sign-in, and buying more sites. Writing a site costs money per request on the hosted
-version, so there the first four are free and five more are $20, bought once.
+version, so there the first two are free and five more are $20, bought once.
 
 ## Features
 

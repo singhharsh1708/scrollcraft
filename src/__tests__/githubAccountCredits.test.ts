@@ -247,7 +247,7 @@ describe("a signed-in visitor spends their account's credits, not the browser's"
     putHash(onKey, { total: 5, used: 5 });
     signedIn(GITHUB_ID);
     expect(await (await balance(`sc_key=${HASH}`)).json()).toEqual({
-      free: 4,
+      free: 2,
       pack: 5,
       hasKey: true,
       remaining: 7,
