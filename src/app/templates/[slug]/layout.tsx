@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { pageMeta } from "@/lib/pageMeta";
 import { templateBySlug } from "@/lib/templates";
+import { templateDescription, templateMetaTitle } from "@/lib/templateSeo";
 
 /**
  * Without this every template preview shared the site's default title and claimed no
@@ -13,8 +14,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const canonical = `/templates/${slug}`;
   if (!template) return { alternates: { canonical } };
   return pageMeta({
-    title: `${template.name} template`,
-    description: template.tagline,
+    title: templateMetaTitle(template),
+    description: templateDescription(template),
     path: canonical,
     image: { url: `/template-previews/${template.slug}.jpg`, width: 800, height: 500, alt: `The opening screen of the ${template.name} template` },
   });

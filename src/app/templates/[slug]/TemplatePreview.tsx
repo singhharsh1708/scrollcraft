@@ -23,6 +23,7 @@ export default function TemplatePreview({ template }: { template: Template }) {
       styleSpec={styleSpec}
       cacheKey={`scrollcraft_template_${template.slug}`}
       openOnHeadline
+      hostHasH1
     >
       <div className="fixed top-4 left-4 right-4 z-40 flex items-center justify-between gap-3 pointer-events-none">
         <Link href="/templates" className="pointer-events-auto">

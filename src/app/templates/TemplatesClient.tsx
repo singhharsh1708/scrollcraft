@@ -45,11 +45,13 @@ export default function TemplatesClient({
   categories: allCategories,
   initialFilters,
   initialSort,
+  categoryLinks = [],
 }: {
   templates: TemplateCard[];
   categories: string[];
   initialFilters: TemplateFilters;
   initialSort: TemplateSort;
+  categoryLinks?: { href: string; label: string }[];
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -246,6 +248,21 @@ export default function TemplatesClient({
           </div>
         )}
       </section>
+
+      {categoryLinks.length > 0 && (
+        <nav aria-labelledby="browse-by-type" className="px-6 pb-20 max-w-7xl mx-auto">
+          <h2 id="browse-by-type" className="lc-mono mb-4 text-center text-sm text-muted-foreground">Browse by type</h2>
+          <ul className="flex flex-wrap justify-center gap-2">
+            {categoryLinks.map((c) => (
+              <li key={c.href}>
+                <Link href={c.href} className="lc-mono inline-flex h-9 items-center rounded-full border border-border px-4 text-[0.8rem] text-muted-foreground transition-colors hover:border-foreground/30 hover:text-foreground">
+                  {c.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      )}
 
       <section className="border-t border-border px-6 pb-28 pt-24 text-center">
         <h2 className="lc-display text-4xl sm:text-5xl">None of these fit?</h2>

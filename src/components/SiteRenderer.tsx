@@ -61,6 +61,8 @@ export interface SiteRendererProps {
   children?: React.ReactNode;
   /** Start on the first section instead of a screen of background. */
   openOnHeadline?: boolean;
+  /** The host page carries its own h1, so every section heading is an h2. */
+  hostHasH1?: boolean;
 }
 
 export default function SiteRenderer({
@@ -74,6 +76,7 @@ export default function SiteRenderer({
   badge = false,
   children,
   openOnHeadline = false,
+  hostHasH1 = false,
 }: SiteRendererProps) {
   const [frames, setFrames] = useState<string[]>(frameUrls ?? []);
   const [progress, setProgress] = useState(0);
@@ -275,6 +278,7 @@ export default function SiteRenderer({
           // rendered an h2, so a published site had no h1 and its outline began at
           // level two — the same defect the exporter had.
           const Heading = i === firstHeadingIndex ? "h1" : "h2";
+          const Tag = hostHasH1 ? "h2" : Heading;
           const L = layoutStyle(s.layout);
           const align = (s.textAlign ?? L.textAlign) as "left" | "center" | "right";
           const stack = align === "center" ? "0 auto 1.5rem" : "0 0 1.5rem";
@@ -327,7 +331,7 @@ export default function SiteRenderer({
                     }}>{s.eyebrow}</p>
                   )}
                   {s.heading && (
-                    <Heading style={{
+                    <Tag style={{
                       fontFamily: "var(--sc-font-display, var(--sc-font-body, inherit))",
                       fontSize: displayStyle(s.kind).fontSize,
                       fontWeight: displayStyle(s.kind).fontWeight as unknown as number,
@@ -336,7 +340,7 @@ export default function SiteRenderer({
                       textTransform: "var(--sc-display-case, none)" as "none" | "uppercase",
                       color: s.headingColor ?? "var(--sc-ink, #fff)",
                       marginBottom: "1rem",
-                    }}>{s.heading}</Heading>
+                    }}>{s.heading}</Tag>
                   )}
                   {s.body && (
                     <p style={{
