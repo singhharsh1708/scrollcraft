@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
-import { ArrowUpRight, Film, LayoutTemplate, PenLine, Terminal } from "lucide-react";
+import { useSyncExternalStore, type ReactNode } from "react";
+import { ArrowUpRight } from "lucide-react";
 import PromptHero from "@/components/PromptHero";
 import dynamic from "next/dynamic";
 import type { HeroTemplate } from "@/components/HeroSequence";
@@ -9,15 +9,9 @@ import Navbar from "@/components/Navbar";
 import StylePreview from "@/components/StylePreview";
 import type { Style2D } from "@/lib/generate2DFrames";
 import PluginInstall from "@/components/PluginInstall";
-import { CONTACT_EMAIL } from "@/lib/links";
 import SiteFooter from "@/components/SiteFooter";
-import type { LifecycleStep } from "@/components/Lifecycle";
-import { GITHUB_REPO_URL } from "@/lib/links";
 
-/** NeuralPath and Halo, for the canvases further down. Both from the catalogue. */
-const PARTICLE_COLORS: [string, string, string] = ["#2563eb", "#0891b2", "#02101c"];
-const WAVE_COLORS: [string, string, string] = ["#3b82f6", "#4338ca", "#040a1a"];
-/** FrostBrew: the brightest blue in the catalogue, for the closing particle field. */
+/** FrostBrew, from the catalogue. */
 const FROST_COLORS: [string, string, string] = ["#38bdf8", "#3b82f6", "#020818"];
 
 const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
@@ -50,27 +44,16 @@ export type EditorSample = {
 };
 export type HomeStats = { templates: number; categories: number };
 
-/**
- * Everything below the first screen loads as its own chunk.
- *
- * The scroll demo and the lifecycle carry the heaviest machinery on the page and
- * neither is visible until somebody scrolls. Measured with them in the first bundle:
- * 719ms of script evaluation and 260ms of blocking, against a hero whose job is to
- * accept a sentence immediately.
- */
+// Below the first screen, so it loads as its own chunk.
 const HeroSequence = dynamic(() => import("@/components/HeroSequence"));
-const Lifecycle = dynamic(() => import("@/components/Lifecycle"));
-
-const DEPLOY_TARGETS = ["Netlify", "Vercel", "GitHub Pages", "Cloudflare Pages", "Any static host"];
 
 /**
  * Whether a site made with each tool can be downloaded and hosted anywhere, and what that
- * costs. Every row was read off the company's own help or pricing page on the date below;
- * lock-in and subscription creep are the complaints that come up most about site builders.
+ * costs. Every row was read off the company's own help or pricing page on the date below.
  */
 export const OWNERSHIP_CHECKED = "19 September 2026";
 export const OWNERSHIP: { tool: string; answer: string; cost: string; source?: string }[] = [
-  { tool: "ScrollCraft", answer: "Yes, as a plain HTML ZIP", cost: "Free to edit and export; $4 a written site after the first two" },
+  { tool: "ScrollCraft", answer: "Yes, as a plain HTML ZIP", cost: "Free to edit and export; first two written sites free, then 5 for $20" },
   { tool: "Webflow", answer: "HTML and CSS; CMS content stays behind", cost: "Core Workspace plan, $19/mo billed yearly", source: "https://webflow.com/pricing" },
   { tool: "Carrd", answer: "Yes", cost: "Pro Plus plan, $49/yr", source: "https://carrd.com/pro" },
   { tool: "Squarespace", answer: "Content only, as XML for WordPress", cost: "Not offered for the design", source: "https://support.squarespace.com/hc/en-us/articles/206566687-Exporting-your-site" },
@@ -95,28 +78,12 @@ const EXPORT_FILES: Array<[string, string]> = [
   ["audio/", "your track, if added"],
 ];
 
-const GENERATE_STYLES: Style2D[] = ["gradient", "geometric", "particles", "wave"];
-
-const TERMINAL_LINES = [
-  "/plugin marketplace add singhharsh1708/scrollcraft",
-  "/plugin install scrollcraft@scrollcraft",
-  "build me a scroll site from hero.mp4",
-];
-
-// Deterministic, so the server and the browser draw the same bars.
-const BARS = Array.from({ length: 48 }, (_, i) =>
-  Math.round((0.25 + 0.75 * Math.abs(Math.sin(i * 1.7) * Math.cos(i * 0.43))) * 100)
-);
-
 const FAQ = [
-  { q: "What does it cost?", a: "The editor, the templates and the export are free, with no account and no limit. The one thing that costs money is having a site written from your description, because a model writes it: the first two are free, then five more are $20, bought once. Nothing renews." },
-  { q: "Does it write the site for me?", a: "If you want it to. Describe the business in a few sentences, attach a photograph or two, and it writes the copy, picks the palette and the typefaces and lays out the sections. Everything it writes opens in the editor, and every word is yours to change." },
-  { q: "Do I need to know how to code?", a: "No. Pick a template, change the copy and colours, and export. What you download is plain HTML, CSS and JavaScript that any host will serve." },
-  { q: "How does the scroll animation work?", a: "ScrollCraft draws a sequence of frames on a canvas, and the page shows the frame that matches how far the reader has scrolled. There is no WebGL and no animation library." },
+  { q: "What does it cost?", a: "The editor, the templates and the export are free, with no account. Having a site written from your description is what costs money: your first two sites are free, then 5 more are $20, paid once. Nothing renews." },
+  { q: "Do I need to know how to code?", a: "No. Describe the business or pick a template, change the words and colours, and download. What you get is plain HTML, CSS and JavaScript that any host will serve." },
+  { q: "How does the scroll animation work?", a: "The page draws a sequence of frames on a canvas and shows the one that matches how far the reader has scrolled. There is no WebGL and no animation library, and the frames are drawn in your browser." },
   { q: "Does it take over my visitors' scrolling?", a: "No. The page scrolls exactly the way the visitor's wheel, trackpad or finger normally scrolls it, and the background follows along. Nothing slows, smooths or snaps the scroll, and visitors who ask their system for less motion get a still page." },
-  { q: "Can I use my own video?", a: "Yes. On the create page you can upload an MP4, MOV or WebM. Its frames are extracted in your browser, and the file never leaves your device." },
   { q: "Where can I host the exported site?", a: "Anywhere that serves static files: Netlify, Vercel, Cloudflare Pages, GitHub Pages or your own server. Unzip it and upload the folder." },
-  { q: "How are the frames generated?", a: "They are drawn in your browser from the style and palette the template carries. Nothing is sent to a server to make them." },
 ];
 
 function PanelFrame({ label, meta, children }: { label: string; meta?: string; children: ReactNode }) {
@@ -162,64 +129,6 @@ function DescribePanel() {
   );
 }
 
-function PickPanel({ templates, total }: { templates: TemplateSlice[]; total: number }) {
-  return (
-    <PanelFrame label="/templates" meta={`${total} sites`}>
-      <div className="grid grid-cols-2 gap-3 p-4">
-        {templates.map((t) => (
-          <div key={t.slug} className="overflow-hidden rounded-md border border-border bg-card">
-            <div className="relative aspect-[16/10] overflow-hidden bg-black">
-              {/* eslint-disable-next-line @next/next/no-img-element -- the same committed
-                  still the gallery card uses. */}
-              <img
-                src={`/template-previews/${t.slug}.jpg`}
-                loading="lazy"
-                alt={`The ${t.name} template, at its opening heading`}
-                width={800}
-                height={500}
-                className="absolute inset-0 h-full w-full object-cover"
-              />
-            </div>
-            <div className="px-3 py-2.5">
-              <p className="text-sm text-foreground">{t.name}</p>
-              <p className="lc-mono text-[11px] text-muted-foreground">{t.category}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-    </PanelFrame>
-  );
-}
-
-function GeneratePanel({ reduced }: { reduced: boolean }) {
-  const [i, setI] = useState(0);
-  useEffect(() => {
-    if (reduced) return;
-    const t = window.setInterval(() => setI((v) => (v + 1) % GENERATE_STYLES.length), 3200);
-    return () => window.clearInterval(t);
-  }, [reduced]);
-  const style = GENERATE_STYLES[i];
-  return (
-    <PanelFrame label="/create" meta="drawn in your browser">
-      <div className="relative aspect-[16/10] bg-black">
-        <StylePreview style={style} colors={PARTICLE_COLORS} paused={reduced} maxProgress={0.6} className="absolute inset-0 h-full w-full" />
-        <div className="absolute bottom-4 left-4 flex flex-wrap gap-1.5">
-          {GENERATE_STYLES.map((s) => (
-            <span
-              key={s}
-              className={`lc-mono rounded border px-2.5 py-1 text-[11px] backdrop-blur ${
-                s === style ? "border-primary-ink/60 bg-black/60 text-white" : "border-white/15 bg-black/40 text-white/70"
-              }`}
-            >
-              {s}
-            </span>
-          ))}
-        </div>
-      </div>
-    </PanelFrame>
-  );
-}
-
 function EditPanel({ sample }: { sample: EditorSample }) {
   const rows = sample.sections.slice(0, 8);
   const lead = sample.sections.find((s) => s.kind !== "spacer");
@@ -254,32 +163,6 @@ function EditPanel({ sample }: { sample: EditorSample }) {
   );
 }
 
-function ScorePanel() {
-  return (
-    <PanelFrame label="audio/track.mp3" meta="follows the scroll">
-      <div className="px-6 pb-7 pt-8">
-        <div className="flex h-36 items-center gap-[3px]" aria-hidden="true">
-          {BARS.map((h, i) => {
-            const ramp = Math.min(1, i / (BARS.length * 0.55));
-            return (
-              <span
-                key={i}
-                className="flex-1 rounded-full bg-primary-ink"
-                style={{ height: `${h}%`, opacity: Math.round((0.12 + 0.88 * ramp) * 100) / 100 }}
-              />
-            );
-          })}
-        </div>
-        <div className="lc-mono mt-5 flex justify-between gap-4 text-[11px] text-muted-foreground">
-          <span>top of the page</span>
-          <span className="text-center">fades in as the reader scrolls</span>
-          <span>end</span>
-        </div>
-      </div>
-    </PanelFrame>
-  );
-}
-
 function ExportPanel() {
   return (
     <PanelFrame label="your-site.zip" meta={`${EXPORT_FILES.length} entries`}>
@@ -299,50 +182,17 @@ function ExportPanel() {
   );
 }
 
-function DeployPanel({ example }: { example: ExampleCard }) {
-  return (
-    <PanelFrame label={`examples/${example.slug}/index.html`} meta="served as exported">
-      {/* eslint-disable-next-line @next/next/no-img-element -- a still of an exported
-          page, sized once at build time. */}
-      <img
-        src={`/example-previews/${example.slug}.jpg`}
-        loading="lazy"
-        alt={`The ${example.name} example, as deployed`}
-        width={1000}
-        height={625}
-        className="block aspect-[16/10] w-full object-cover"
-      />
-    </PanelFrame>
-  );
-}
 
-function TerminalPanel() {
+function SectionHead({ title, link }: { title: string; link?: { label: string; href: string } }) {
   return (
-    <div className="lc-mono absolute inset-0 flex flex-col justify-center gap-3 px-5 text-[11.5px] leading-relaxed text-[#cce9ff]">
-      {TERMINAL_LINES.map((line) => (
-        <p key={line} className="truncate">
-          <span className="text-[#7fc8ff]">&gt; </span>
-          {line}
-        </p>
-      ))}
+    <div className="flex flex-wrap items-end justify-between gap-6">
+      <h2 className="lc-display text-3xl sm:text-4xl lg:text-5xl">{title}</h2>
+      {link && (
+        <Link href={link.href} className="lc-link">
+          {link.label} <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
+        </Link>
+      )}
     </div>
-  );
-}
-
-function InlineLink({ label, href, external, className = "" }: { label: string; href: string; external?: boolean; className?: string }) {
-  const inner = (
-    <>
-      {label} <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
-    </>
-  );
-  return external ? (
-    <a href={href} target="_blank" rel="noopener noreferrer" className={`lc-link ${className}`}>
-      {inner}
-    </a>
-  ) : (
-    <Link href={href} className={`lc-link ${className}`}>
-      {inner}
-    </Link>
   );
 }
 
@@ -360,142 +210,26 @@ export default function HomeClient({
   stats: HomeStats;
 }) {
   const reduced = useReducedMotion();
+  const template = templates[0];
 
-  const steps: LifecycleStep[] = [
+  const steps: { id: string; title: string; body: string; panel: ReactNode }[] = [
     {
       id: "describe",
-      label: "Describe",
       title: "Describe",
-      subtitle: "Write what the business is. The first draft comes back written.",
-      bullets: [
-        ["Say", " the street, the hours, the materials and the prices"],
-        ["Attach", " a photograph or two of the work or the room"],
-        ["Get", " five to nine sections, a palette and a typeface pairing"],
-      ],
-      links: [
-        { label: "Describe your business", href: "/describe" },
-        { label: "What it costs", href: "/pricing" },
-      ],
+      body: "Write a few sentences about your business and add a photo or two. You get a first draft with the sections, colours and fonts already chosen.",
       panel: <DescribePanel />,
     },
     {
-      id: "pick",
-      label: "Pick",
-      title: "Pick",
-      subtitle: "Start from a finished site. Keep the pacing, change the words.",
-      bullets: [
-        ["Browse", ` ${stats.templates} templates across ${stats.categories} categories`],
-        ["Preview", " any of them before you open it"],
-        ["Open", " one in the editor with a click"],
-      ],
-      links: [
-        { label: "Templates", href: "/templates" },
-        { label: "Presets", href: "/presets" },
-      ],
-      panel: <PickPanel templates={templates} total={stats.templates} />,
-    },
-    {
-      id: "generate",
-      label: "Generate",
-      title: "Generate",
-      subtitle: "Frames drawn in your browser, or taken from footage you already shot.",
-      bullets: [
-        ["Choose", " gradient, geometric, particles or wave, and a palette"],
-        ["Upload", " a video and its frames are extracted on your device"],
-        ["Add", " a portrait set, so a phone gets a background shaped for it"],
-      ],
-      links: [{ label: "Create a site", href: "/create" }],
-      panel: <GeneratePanel reduced={reduced} />,
-    },
-    {
       id: "edit",
-      label: "Edit",
       title: "Edit",
-      subtitle: "Every section in place, and every change one undo away.",
-      bullets: [
-        ["Change", " headings, body copy, buttons and colours"],
-        ["Reorder", " sections, and set how long each one holds"],
-        ["Preview", " at desktop, tablet and phone widths"],
-      ],
-      links: editorSample ? [{ label: "Open the editor", href: `/editor?template=${editorSample.slug}` }] : [],
+      body: "Change any word, colour or section and check it at phone and desktop sizes. Add your own video or a soundtrack if you want one.",
       panel: editorSample ? <EditPanel sample={editorSample} /> : null,
     },
     {
-      id: "score",
-      label: "Score",
-      title: "Score",
-      subtitle: "A soundtrack that follows the reader down the page.",
-      bullets: [
-        ["Attach", " one track to the whole site"],
-        ["Fade", " it in as the reader scrolls, and out when they stop"],
-        ["Ship", " it inside the export with everything else"],
-      ],
-      links: [{ label: "How audio works", href: `${GITHUB_REPO_URL}#features`, external: true }],
-      panel: <ScorePanel />,
-    },
-    {
       id: "export",
-      label: "Export",
-      title: "Export",
-      subtitle: "One ZIP holding everything a host needs, and nothing it does not.",
-      bullets: [
-        ["Ships", " a 404 page, favicon, social card and robots.txt"],
-        ["Includes", " config for Netlify, Vercel and GitHub Pages"],
-        ["Needs", " no build step and no install"],
-      ],
-      links: [{ label: "See an exported site", href: "/examples" }],
+      title: "Publish",
+      body: "Download one ZIP and upload it to a free Netlify, Vercel or GitHub Pages account. It is plain HTML with no build step.",
       panel: <ExportPanel />,
-    },
-    {
-      id: "deploy",
-      label: "Deploy",
-      title: "Deploy",
-      subtitle: "Upload the folder to a free host account, and it is live.",
-      bullets: [
-        ["Upload", " to Netlify, Vercel or Cloudflare Pages"],
-        ["Push", " to GitHub Pages and it serves as it is"],
-        ["Host", " it anywhere that serves static files"],
-      ],
-      links: [
-        { label: "Examples", href: "/examples" },
-        { label: "GitHub", href: GITHUB_REPO_URL, external: true },
-      ],
-      panel: examples[0] ? <DeployPanel example={examples[0]} /> : <ExportPanel />,
-    },
-  ];
-
-  const ways = [
-    {
-      icon: PenLine,
-      name: "describe",
-      title: "Write a paragraph, get a site",
-      sub: "For anybody who would rather describe the business than design it",
-      link: { label: "Describe your business", href: "/describe" },
-      panel: <StylePreview style="geometric" colors={WAVE_COLORS} paused={reduced} maxProgress={0.45} className="absolute inset-0 h-full w-full" />,
-    },
-    {
-      icon: LayoutTemplate,
-      name: "templates",
-      title: "Edit a finished site in the browser",
-      sub: `For launching fast from one of ${stats.templates} designed sites`,
-      link: { label: "Browse templates", href: "/templates" },
-      panel: <StylePreview style="wave" colors={WAVE_COLORS} paused={reduced} className="absolute inset-0 h-full w-full" />,
-    },
-    {
-      icon: Film,
-      name: "your-footage",
-      title: "Scroll through video you already shot",
-      sub: "For brands with film that deserves more than autoplay",
-      link: { label: "Upload a video", href: "/create" },
-      panel: <StylePreview style="particles" colors={FROST_COLORS} paused={reduced} maxProgress={0.3} className="absolute inset-0 h-full w-full" />,
-    },
-    {
-      icon: Terminal,
-      name: "claude-code",
-      title: "Build it from your terminal",
-      sub: "For developers who want the site in version control",
-      link: { label: "Read the plugin docs", href: `${GITHUB_REPO_URL}#installing-the-skill`, external: true },
-      panel: <TerminalPanel />,
     },
   ];
 
@@ -506,100 +240,23 @@ export default function HomeClient({
       {/* Hero */}
       <PromptHero reducedMotion={reduced} />
 
-      {/* The demo that used to be the hero: it earns its place by showing the thing
-          working, which no amount of copy does. */}
       <HeroSequence template={heroTemplate} templateCount={stats.templates} reducedMotion={reduced}>
         <h2 className="lc-display text-[2.2rem] sm:text-5xl lg:text-[3.2rem]">
           <span className="block text-foreground">This is what comes out.</span>
           <span className="block text-primary-ink">Scroll, and the screen plays it.</span>
         </h2>
         <p className="mt-7 max-w-xl text-lg leading-relaxed text-muted-foreground sm:text-xl">
-          A finished site from the catalogue, played by the same engine your own site is
-          built on. Nothing here is a video: the background is drawn frame by frame as the
-          page scrolls, and the export behaves the same way on your own host.
+          A real template, drawn frame by frame as you scroll. Your exported site works the
+          same way on your own host.
         </p>
-        <div className="mt-10 grid w-full max-w-sm grid-cols-2 gap-3 sm:flex sm:w-auto sm:max-w-none">
-          <Link href="/examples" className="lc-btn lc-btn-ghost">
-            See the examples
-          </Link>
-          <Link href="/templates" className="lc-btn lc-btn-ghost">
-            Browse templates
-          </Link>
-        </div>
       </HeroSequence>
 
-      {/* Social proof strip */}
-      <div className="relative border-t border-border bg-background">
-        <div className="mx-auto flex max-w-[1360px] flex-col items-center gap-5 px-6 py-8 lg:flex-row lg:justify-between">
-          <p className="lc-mono shrink-0 text-xs uppercase tracking-[0.16em] text-muted-foreground">Exports deploy to</p>
-          <ul className="flex flex-wrap items-center justify-center gap-x-10 gap-y-3 lg:justify-end">
-            {DEPLOY_TARGETS.map((t) => (
-              <li key={t} className="text-lg font-light tracking-[-0.01em] text-foreground/85 sm:text-xl">
-                {t}
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
-
-      {/* Lifecycle */}
-      <section className="px-6 pb-16 pt-28 sm:pt-36">
-        <div className="mx-auto max-w-[1360px]">
-          <h2 className="lc-display text-center text-4xl text-primary-ink sm:text-5xl lg:text-[3.6rem]">
-            <span className="block">The whole path, from a paragraph</span>
-            <span className="block">to a site anyone can visit</span>
-          </h2>
-          <Lifecycle steps={steps} />
-        </div>
-      </section>
-
-      {/* Three ways */}
-      <section className="band-light">
-        <div className="mx-auto max-w-[1360px] px-6 py-28 sm:py-32">
-          <div className="grid gap-8 lg:grid-cols-2 lg:items-end">
-            <h2 className="lc-display text-4xl sm:text-5xl lg:text-[3.6rem]">Four ways to build a scroll site</h2>
-            <p className="max-w-lg text-lg leading-relaxed text-muted-foreground lg:justify-self-end">
-              Describe the business and have the first draft written, edit a finished template,
-              scroll through footage you already shot, or build it from your terminal. All four
-              produce the same bundle.
-            </p>
-          </div>
-          <div className="mt-16 grid gap-12 md:grid-cols-2 md:gap-8 xl:grid-cols-4 xl:gap-6">
-            {ways.map((w) => (
-              <article key={w.name} className="flex flex-col">
-                <div className="relative aspect-[16/10] overflow-hidden rounded-lg bg-[#0a1122]">{w.panel}</div>
-                <div className="mt-6 flex items-center gap-3">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-md bg-foreground text-background">
-                    <w.icon className="h-5 w-5" aria-hidden="true" />
-                  </span>
-                  <span className="lc-mono text-lg">{w.name}</span>
-                </div>
-                <h3 className="lc-display mt-5 text-[1.9rem] leading-tight">{w.title}</h3>
-                <p className="mt-3 text-muted-foreground">{w.sub}</p>
-                <InlineLink {...w.link} className="mt-auto pt-6" />
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Finished sites. The stages above say how it works; this says what comes out of
-          it, and each card opens the exported bundle rather than a preview of it. */}
+      {/* Examples */}
       {examples.length > 0 && (
-        <section className="band-light border-t border-border">
-          <div className="relative mx-auto max-w-[1360px] px-6 py-28 sm:py-32">
-            <div aria-hidden="true" className="absolute bottom-0 left-6 top-0 hidden w-px bg-border lg:block" />
-            <div aria-hidden="true" className="absolute left-6 top-40 hidden h-2.5 w-2.5 -translate-x-1/2 rounded-full bg-primary lg:block" />
-            <div className="grid items-end gap-8 lg:grid-cols-[1fr_auto] lg:pl-[14%]">
-              <h2 className="lc-display text-4xl sm:text-5xl lg:text-[3.6rem]">
-                <span className="block">See what it produces,</span>
-                <span className="block">not a mock-up of it</span>
-              </h2>
-              <Link href="/examples" className="lc-btn lc-btn-solid w-fit">
-                All examples
-              </Link>
-            </div>
-            <div className="mt-14 grid gap-5 md:grid-cols-3 lg:pl-[14%]">
+        <section className="border-t border-border px-6 py-20 sm:py-24">
+          <div className="mx-auto max-w-[1360px]">
+            <SectionHead title="Sites made with it" link={{ label: "All examples", href: "/examples" }} />
+            <div className="mt-10 grid gap-5 md:grid-cols-3">
               {examples.map((e) => (
                 <a
                   key={e.slug}
@@ -616,12 +273,12 @@ export default function HomeClient({
                     height={625}
                     className="aspect-[16/10] w-full object-cover"
                   />
-                  <div className="flex flex-1 flex-col p-6">
-                    <p className="lc-mono text-sm text-muted-foreground">{e.name}</p>
-                    <h3 className="lc-display mt-3 text-2xl leading-snug">{e.tagline}</h3>
-                    <span className="lc-link mt-auto pt-8">
-                      Open the site <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
-                    </span>
+                  <div className="flex flex-1 items-end justify-between gap-4 p-5">
+                    <div>
+                      <h3 className="text-lg text-foreground">{e.name}</h3>
+                      <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{e.tagline}</p>
+                    </div>
+                    <ArrowUpRight className="h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover:text-foreground" aria-hidden="true" />
                   </div>
                 </a>
               ))}
@@ -630,78 +287,91 @@ export default function HomeClient({
         </section>
       )}
 
-      {/* Numbers */}
-      <section className="band-light border-t border-border">
-        <div className="mx-auto max-w-[1360px] px-6 py-28 sm:py-32">
-          <h2 className="lc-display text-4xl sm:text-5xl lg:pl-[14%] lg:text-[3.6rem]">
-            <span className="block">Open source,</span>
-            <span className="block">and yours to keep</span>
-          </h2>
-          <dl className="mt-16 grid gap-12 sm:grid-cols-3 lg:pl-[14%]">
-            {[
-              [String(stats.templates), "Finished templates"],
-              [String(stats.categories), "Categories covered"],
-              ["~20s", "From a paragraph to a site you can edit"],
-            ].map(([n, label]) => (
-              <div key={label} className="flex flex-col-reverse">
-                <dt className="lc-mono mt-3 text-sm text-muted-foreground">{label}</dt>
-                <dd className="lc-display text-7xl lg:text-[6rem]">{n}</dd>
-              </div>
+      {/* How it works */}
+      <section id="how" className="border-t border-border px-6 py-20 sm:py-24">
+        <div className="mx-auto max-w-[1360px]">
+          <SectionHead title="How it works" />
+          <ol className="mt-10 grid grid-cols-1 gap-12 lg:grid-cols-3 lg:gap-6">
+            {steps.map((s, i) => (
+              <li key={s.id} className="flex min-w-0 flex-col">
+                <p className="lc-mono text-sm text-primary-ink">{i + 1}</p>
+                <h3 className="lc-display mt-2 text-2xl sm:text-3xl">{s.title}</h3>
+                <p className="mt-3 max-w-md leading-relaxed text-muted-foreground">{s.body}</p>
+                <div className="mt-6">{s.panel}</div>
+              </li>
             ))}
-          </dl>
+          </ol>
+        </div>
+      </section>
 
-          <div className="mt-24 lg:pl-[14%]">
-            <h3 className="lc-display max-w-2xl text-3xl sm:text-4xl">Can you download your site and host it anywhere?</h3>
-            <div className="mt-10 overflow-x-auto">
-              <table className="w-full min-w-0 border-collapse text-left text-sm sm:text-base">
-                <thead>
-                  <tr className="lc-mono border-b border-border text-xs text-muted-foreground sm:text-sm">
-                    <th scope="col" className="py-3 pr-4 font-normal">Tool</th>
-                    <th scope="col" className="py-3 pr-4 font-normal">Download and host anywhere</th>
-                    <th scope="col" className="py-3 font-normal">What it takes</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {OWNERSHIP.map((row) => (
-                    <tr key={row.tool} className={`border-b border-border align-top ${row.source ? "" : "font-medium"}`}>
-                      <th scope="row" className="py-4 pr-4 font-medium">{row.tool}</th>
-                      <td className="py-4 pr-4">{row.answer}</td>
-                      <td className="py-4 text-muted-foreground">{row.cost}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <p className="mt-6 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-              Checked on {OWNERSHIP_CHECKED} against each company&apos;s own pages:{" "}
-              {OWNERSHIP.filter((r) => r.source).map((r, i, all) => (
-                <span key={r.tool}>
-                  <a href={r.source} target="_blank" rel="noopener noreferrer" className="underline underline-offset-4 hover:text-foreground">
-                    {r.tool}
-                  </a>
-                  {i < all.length - 1 ? ", " : "."}
+      {/* Other ways to start */}
+      <section className="border-t border-border px-6 py-20 sm:py-24">
+        <div className="mx-auto max-w-[1360px]">
+          <SectionHead title="Other ways to start" />
+          <div className="mt-10 grid gap-5 md:grid-cols-2">
+            {template && (
+              <Link
+                href="/templates"
+                className="group grid overflow-hidden rounded-xl border border-border bg-card transition-colors hover:border-foreground/30 sm:grid-cols-[42%_1fr]"
+              >
+                <div className="relative aspect-[16/10] bg-black sm:aspect-auto">
+                  {/* eslint-disable-next-line @next/next/no-img-element -- the same committed
+                      still the gallery card uses. */}
+                  <img
+                    src={`/template-previews/${template.slug}.jpg`}
+                    loading="lazy"
+                    alt={`The ${template.name} template, at its opening heading`}
+                    width={800}
+                    height={500}
+                    className="absolute inset-0 h-full w-full object-cover"
+                  />
+                </div>
+                <div className="p-6">
+                  <h3 className="text-xl text-foreground">Start from a template</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                    {stats.templates} finished sites across {stats.categories} categories. Pick one and change the words.
+                  </p>
+                  <span className="lc-link mt-5">
+                    Browse templates <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
+                  </span>
+                </div>
+              </Link>
+            )}
+            <Link
+              href="/create"
+              className="group grid overflow-hidden rounded-xl border border-border bg-card transition-colors hover:border-foreground/30 sm:grid-cols-[42%_1fr]"
+            >
+              <div className="relative aspect-[16/10] bg-black sm:aspect-auto">
+                <StylePreview style="wave" colors={FROST_COLORS} paused={reduced} maxProgress={0.35} className="absolute inset-0 h-full w-full" />
+              </div>
+              <div className="p-6">
+                <h3 className="text-xl text-foreground">Use your own video</h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                  Upload an MP4, MOV or WebM and it plays as the page scrolls. The file never leaves your device.
+                </p>
+                <span className="lc-link mt-5">
+                  Upload a video <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
                 </span>
-              ))}
-            </p>
+              </div>
+            </Link>
+          </div>
+          {/* Lets the plugin card's grid shrink on a phone instead of clipping its commands. */}
+          <div className="mt-5 [&_.grid>*]:min-w-0">
+            <PluginInstall />
           </div>
         </div>
       </section>
 
       {/* FAQ */}
-      <section className="px-6 py-28 sm:py-32">
-        <div className="mx-auto grid max-w-[1360px] gap-12 lg:grid-cols-[1fr_1.35fr]">
-          <h2 className="lc-display text-4xl text-primary-ink sm:text-5xl">
-            <span className="block">Questions people</span>
-            <span className="block">ask first</span>
-          </h2>
+      <section className="border-t border-border px-6 py-20 sm:py-24">
+        <div className="mx-auto grid max-w-[1360px] gap-10 lg:grid-cols-[1fr_1.6fr]">
+          <h2 className="lc-display text-3xl sm:text-4xl lg:text-5xl">Questions</h2>
           <div className="border-t border-border">
-            {/* Native disclosure rather than state: the answers used to render only
-                once clicked, so they were not in the HTML at all and a search engine
-                reading this page saw nine questions and no answers. */}
+            {/* Native disclosure, so the answers are in the HTML before anyone clicks. */}
             {FAQ.map((item) => (
               <details key={item.q} className="group border-b border-border">
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-6 py-6 text-left">
-                  <span className="text-lg font-light tracking-[-0.01em] sm:text-xl">{item.q}</span>
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-6 py-5 text-left">
+                  <span className="text-lg font-light tracking-[-0.01em]">{item.q}</span>
                   <span
                     aria-hidden="true"
                     className="flex-shrink-0 text-lg leading-none text-muted-foreground transition-transform group-open:rotate-45"
@@ -712,68 +382,76 @@ export default function HomeClient({
                 <div className="max-w-2xl pb-6 leading-relaxed text-muted-foreground">{item.a}</div>
               </details>
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Plugin */}
-      <section className="px-6 pb-28">
-        <div className="mx-auto max-w-[1360px]">
-          <PluginInstall />
-        </div>
-      </section>
-
-      {/* Custom work: the library covers the common shapes, not every brief. */}
-      <section className="border-t border-border px-6">
-        <div className="mx-auto flex max-w-[1360px] flex-col gap-10 py-20 sm:py-24 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-2xl">
-            <h2 className="lc-display text-4xl sm:text-5xl">
-              <span className="block">Need more than</span>
-              <span className="block text-primary-ink">a template?</span>
-            </h2>
-            <p className="mt-6 text-lg leading-relaxed text-muted-foreground">
-              The library covers the common shapes. If you want a site built around your own
-              footage, sections or brand, send the details and we will take a look.
-            </p>
-          </div>
-          <div className="flex shrink-0 flex-col gap-4 lg:items-end">
-            <Link href="/contact?topic=custom" className="lc-btn lc-btn-solid w-fit">
-              Describe your project
-            </Link>
-            <a href={`mailto:${CONTACT_EMAIL}`} className="lc-mono text-sm text-muted-foreground hover:text-foreground">
-              or email {CONTACT_EMAIL}
-            </a>
+            <details className="group border-b border-border">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-6 py-5 text-left">
+                <span className="text-lg font-light tracking-[-0.01em]">Can I download my site and host it anywhere?</span>
+                <span
+                  aria-hidden="true"
+                  className="flex-shrink-0 text-lg leading-none text-muted-foreground transition-transform group-open:rotate-45"
+                >
+                  +
+                </span>
+              </summary>
+              <div className="pb-6">
+                <p className="max-w-2xl leading-relaxed text-muted-foreground">Yes. Here is how that compares with other builders.</p>
+                <div className="mt-4 overflow-x-auto">
+                  <table className="w-full min-w-0 border-collapse text-left text-sm">
+                    <thead>
+                      <tr className="lc-mono border-b border-border text-xs text-muted-foreground">
+                        <th scope="col" className="py-2 pr-4 font-normal">Tool</th>
+                        <th scope="col" className="py-2 pr-4 font-normal">Download and host anywhere</th>
+                        <th scope="col" className="py-2 font-normal">What it takes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {OWNERSHIP.map((row) => (
+                        <tr key={row.tool} className="border-b border-border align-top">
+                          <th scope="row" className="py-3 pr-4 font-medium">{row.tool}</th>
+                          <td className="py-3 pr-4">{row.answer}</td>
+                          <td className="py-3 text-muted-foreground">{row.cost}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
+                  Checked on {OWNERSHIP_CHECKED} against each company&apos;s own pages:{" "}
+                  {OWNERSHIP.filter((r) => r.source).map((r, i, all) => (
+                    <span key={r.tool}>
+                      <a href={r.source} target="_blank" rel="noopener noreferrer" className="underline underline-offset-4 hover:text-foreground">
+                        {r.tool}
+                      </a>
+                      {i < all.length - 1 ? ", " : "."}
+                    </span>
+                  ))}
+                </p>
+              </div>
+            </details>
           </div>
         </div>
       </section>
 
       {/* Final CTA */}
       <section className="border-t border-border px-6">
-        <div className="mx-auto grid max-w-[1360px] items-center gap-12 py-24 sm:py-32 lg:grid-cols-2">
-          <div aria-hidden="true" className="relative aspect-[4/3] w-full overflow-hidden rounded-xl bg-black">
-            {/* Waves rather than particles: particles are a sparse field of small dots, and as
-                the last image on the page it read as an empty frame. Held to the bright start
-                of its range, since every style lerps toward the palette's dark third colour. */}
-            <StylePreview style="wave" colors={FROST_COLORS} paused={reduced} maxProgress={0.35} className="absolute inset-0 h-full w-full" />
+        <div className="mx-auto flex max-w-[1360px] flex-col items-center py-20 text-center sm:py-28">
+          <h2 className="lc-display text-4xl text-primary-ink sm:text-5xl lg:text-6xl">Start your scroll site</h2>
+          <p className="mt-5 max-w-md text-lg leading-relaxed text-muted-foreground">
+            Your first two sites are free, then 5 for $20. The editor and export are always free.
+          </p>
+          <div className="mt-8 flex flex-wrap justify-center gap-3">
+            <Link href="/#write" className="lc-btn lc-btn-solid">
+              Describe your business
+            </Link>
+            <Link href="/templates" className="lc-btn lc-btn-ghost">
+              Browse templates
+            </Link>
           </div>
-          <div>
-            <h2 className="lc-display text-5xl text-primary-ink sm:text-6xl lg:text-[4.2rem]">
-              <span className="block">Start your first</span>
-              <span className="block">scroll site</span>
-            </h2>
-            <div className="mt-10 flex flex-wrap gap-3">
-              <Link href="/describe" className="lc-btn lc-btn-solid">
-                Write my site
-              </Link>
-              <Link href="/templates" className="lc-btn lc-btn-ghost">
-                Browse templates
-              </Link>
-            </div>
-            <p className="mt-10 max-w-md text-lg leading-relaxed text-foreground/90">
-              Describe the business, or pick a template, then change the words and download a
-              ZIP. The first two written sites are free and the editor never costs anything.
-            </p>
-          </div>
+          <p className="mt-8 text-sm text-muted-foreground">
+            Need something built for you?{" "}
+            <Link href="/contact?topic=custom" className="underline underline-offset-4 hover:text-foreground">
+              Tell us about the project
+            </Link>
+          </p>
         </div>
       </section>
 
