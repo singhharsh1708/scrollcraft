@@ -50,7 +50,7 @@ export default function TemplateDetails({ template: t }: { template: Template })
         </p>
 
         <div className="mt-14 grid gap-12 md:grid-cols-2">
-          <section>
+          <section className="min-w-0 break-words">
             <h2 className="text-xl font-medium tracking-[-0.02em]">Who it is for</h2>
             <p className="mt-3 leading-relaxed text-muted-foreground">{templateUse(t).forWhom}</p>
 
@@ -60,7 +60,7 @@ export default function TemplateDetails({ template: t }: { template: Template })
             </ol>
           </section>
 
-          <section>
+          <section className="min-w-0 break-words">
             <h2 className="text-xl font-medium tracking-[-0.02em]">Look</h2>
             <ul className="mt-4 flex flex-wrap gap-3" aria-label="Palette">
               {swatches.map((c) => (
@@ -91,7 +91,7 @@ export default function TemplateDetails({ template: t }: { template: Template })
             </ol>
             <div className="mt-6 flex flex-wrap gap-3">
               <Link href={`/editor?template=${t.slug}`} className="lc-btn lc-btn-solid lc-btn-sm max-md:h-11">Use this template</Link>
-              <Link href={categoryPath(t.category)} className="lc-btn lc-btn-ghost lc-btn-sm max-md:h-11">{crumbs[2].name}</Link>
+              <Link href={categoryPath(t.category)} className="lc-btn lc-btn-ghost lc-btn-sm max-md:h-auto max-md:min-h-11 max-md:whitespace-normal max-md:py-2 max-md:text-left max-md:leading-snug">{crumbs[2].name}</Link>
             </div>
           </section>
         </div>

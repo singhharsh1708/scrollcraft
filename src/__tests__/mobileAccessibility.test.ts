@@ -243,3 +243,16 @@ describe("template and category pages on a phone", () => {
     expect(readFileSync("src/app/templates/category/[category]/page.tsx", "utf8")).not.toMatch(/text-\[(9|10|11)px\]/);
   });
 });
+
+describe("template details fit a 320px screen", () => {
+  const source = readFileSync("src/app/templates/[slug]/TemplateDetails.tsx", "utf8");
+
+  it("lets both grid columns shrink below their content", () => {
+    expect(source.match(/<section className="min-w-0 break-words">/g)?.length).toBe(2);
+  });
+
+  it("lets the long category button wrap on phones", () => {
+    const button = source.slice(source.indexOf("href={categoryPath(t.category)}"));
+    expect(button.slice(0, 250)).toContain("max-md:whitespace-normal");
+  });
+});

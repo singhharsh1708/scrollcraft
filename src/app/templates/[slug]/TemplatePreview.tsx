@@ -25,7 +25,7 @@ export default function TemplatePreview({ template }: { template: Template }) {
       openOnHeadline
       hostHasH1
     >
-      <nav aria-label="Template" className="fixed top-4 left-4 right-4 z-40 flex items-center justify-between gap-3 pointer-events-none">
+      <nav aria-label="Template" className="fixed top-3 left-3 right-3 sm:top-4 sm:left-4 sm:right-4 z-40 flex items-center justify-between gap-3 pointer-events-none">
         <Link
           href="/templates"
           className={buttonVariants({ size: "sm", variant: "outline", className: "pointer-events-auto border-white/15 bg-black/50 backdrop-blur h-11 md:h-8 text-xs gap-1.5" })}
@@ -34,7 +34,7 @@ export default function TemplatePreview({ template }: { template: Template }) {
         </Link>
         <Link
           href={`/editor?template=${template.slug}`}
-          className={buttonVariants({ size: "sm", className: "pointer-events-auto h-11 md:h-8 text-xs gap-1.5" })}
+          className={buttonVariants({ size: "sm", className: "pointer-events-auto h-11 md:h-8 text-xs gap-1.5 px-2.5 sm:px-3" })}
         >
           Use this template <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
         </Link>
