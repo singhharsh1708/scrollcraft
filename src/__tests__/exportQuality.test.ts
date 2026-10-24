@@ -286,7 +286,7 @@ describe("the in-app renderer matches the exporter", () => {
     const src = await import("node:fs").then((fs) =>
       fs.readFileSync("src/components/SiteRenderer.tsx", "utf8")
     );
-    expect(src).toContain("const firstHeadingIndex = visible.findIndex((s) => s.heading)");
+    expect(src).toContain('const firstHeadingIndex = visible.findIndex((s) => s.heading && s.kind !== "spacer")');
     expect(src).toContain('const Heading = i === firstHeadingIndex ? "h1" : "h2"');
   });
 
