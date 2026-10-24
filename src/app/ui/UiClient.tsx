@@ -179,7 +179,12 @@ export default function UiClient({
                     </button>
                   ))}
                 </div>
-                <pre className="max-h-80 overflow-auto bg-background p-4 text-xs leading-relaxed text-foreground">
+                <pre
+                  tabIndex={0}
+                  role="region"
+                  aria-label={`${c.name} ${active.toUpperCase()}`}
+                  className="max-h-80 overflow-auto bg-background p-4 text-xs leading-relaxed text-foreground focus-visible:outline-solid focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
+                >
                   <code>{code}</code>
                 </pre>
               </div>

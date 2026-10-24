@@ -187,6 +187,8 @@ function signupFormHtml(f, s, idx, centered) {
 }
 
 function renderSections(sections, images, specScrim) {
+  // The first heading is the page's h1, as in the web app's exporter.
+  const firstHeading = sections.findIndex((s) => s.heading && s.kind !== "spacer");
   return sections.map((s, idx) => {
     const height = Number(s.scrollHeight) || 1000;
     const L = LAYOUTS[s.layout] || LAYOUTS.center;
@@ -207,7 +209,8 @@ function renderSections(sections, images, specScrim) {
       const hStyle = statement
         ? `color:${safeCss(s.headingColor || "var(--sc-ink, #ffffff)")}; margin-bottom:1rem;`
         : `font-size:calc(var(--sc-heading-size, clamp(2rem,min(5vw,6vh),4rem)) * var(--sc-fit, 1)); font-weight:var(--sc-display-weight, 900); line-height:1; letter-spacing:var(--sc-display-tracking, -0.03em); text-transform:var(--sc-display-case, none); color:${safeCss(s.headingColor || "var(--sc-ink, #ffffff)")}; margin-bottom:1rem;`;
-      parts.push(`<h2 class="${hClass}" style="${hStyle}">${esc(s.heading)}</h2>`);
+      const tag = idx === firstHeading ? "h1" : "h2";
+      parts.push(`<${tag} class="${hClass}" style="${hStyle}">${esc(s.heading)}</${tag}>`);
     }
     const bodyMargin = L.textAlign === "center" ? "0 auto 1.5rem" : "0 0 1.5rem";
     if (s.body) {
@@ -361,11 +364,14 @@ ${themeStyles ? themeStyles + "\n" : ""}${css}
   </style>
 ${customCss ? `  <style>\n${customCss}\n  </style>\n` : ""}</head>
 <body>
-  <canvas id="scroll-canvas" role="img" aria-label="${esc(spec.canvasAlt || title)}"></canvas>
-  <div id="scroll-container" style="height:${totalScrollHeight}px;">
-    <div style="height:100vh;"></div>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <main id="main" tabindex="-1">
+    <div id="scroll-container" style="height:${totalScrollHeight}px;">
+      <div style="height:100vh;"></div>
 ${renderSections(sections, images, specScrim)}
-  </div>
+    </div>
+    <canvas id="scroll-canvas" role="img" aria-label="${esc(spec.canvasAlt || title)}"></canvas>
+  </main>
   <div id="scroll-hint" aria-hidden="true">
     <span>Scroll</span>
     <div class="arrow"></div>

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import GuideArticle, { type Faq } from "@/components/GuideArticle";
+import GuideArticle, { CodeBlock, type Faq } from "@/components/GuideArticle";
 import { guideMeta } from "@/lib/guides";
 
 const PATH = "/video-scroll-animation";
@@ -52,9 +52,7 @@ export default function VideoScrollGuide() {
     >
       <h2>Why you cannot just scrub a video element</h2>
       <p>The first thing most people try is setting the video&apos;s time from the scroll position:</p>
-      <pre>
-        <code>{NAIVE}</code>
-      </pre>
+      <CodeBlock label="Code example: the naive version">{NAIVE}</CodeBlock>
       <p>
         It works on a short, specially encoded clip on a fast laptop, and stutters almost everywhere
         else. Web video is compressed so most frames are stored as differences from an earlier full

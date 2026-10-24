@@ -48,7 +48,7 @@ spec file, not the working directory.
 | `kind` | string | `text` | `text`, `statement` (oversized heading) or `spacer` (empty scroll track, no content). |
 | `reveal` | string | `rise` | `rise`, `fade`, `mask`, `stagger`, `scale` or `none`. |
 | `layout` | string | `center` | One of `center`, `left`, `right`, `lower-third`, `upper-third`. Sets alignment, measure and padding together. An unknown value fails the build. |
-| `heading` | string | none | Renders as `<h2>`, `clamp(2rem, 5vw, 4rem)`. |
+| `heading` | string | none | The first heading on the page renders as `<h1>`, the rest as `<h2>`, `clamp(2rem, 5vw, 4rem)`. |
 | `body` | string | none | One paragraph, capped at 600px measure. |
 | `eyebrow` | string | none | Small uppercase label above the heading. |
 | `ctaLabel` | string | none | Renders a button-styled link. Needs `ctaHref` to go anywhere. |

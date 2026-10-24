@@ -12,6 +12,18 @@ export type Faq = { q: string; a: ReactNode };
 export const PROSE =
   "prose prose-invert max-w-none prose-headings:font-light prose-headings:tracking-[-0.02em] prose-h2:mt-16 prose-h2:text-3xl prose-h3:text-xl prose-a:text-primary-ink prose-a:underline-offset-4 prose-p:leading-relaxed prose-li:leading-relaxed prose-pre:border prose-pre:border-border prose-pre:bg-card prose-code:before:content-none prose-code:after:content-none";
 
+export const CODE_FOCUS =
+  "focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring";
+
+// Wide code scrolls sideways, so it has to take keyboard focus to be read without a mouse.
+export function CodeBlock({ children, label = "Code example" }: { children: string; label?: string }) {
+  return (
+    <pre tabIndex={0} role="region" aria-label={label} className={CODE_FOCUS}>
+      <code>{children}</code>
+    </pre>
+  );
+}
+
 export default function GuideArticle({
   path,
   lede,

@@ -346,7 +346,7 @@ export async function POST(req: NextRequest) {
     // The first heading on the page is the page's heading. Every section emitted an h2,
     // so an exported site had no h1 at all — a document outline starting at level two,
     // which assistive technology and search engines both read as a missing title.
-    const firstHeadingIndex = visibleSections.findIndex((s: Section) => s.heading);
+    const firstHeadingIndex = visibleSections.findIndex((s: Section) => s.heading && s.kind !== "spacer");
 
     const sectionsHtml = visibleSections.map((s: Section, sectionIndex: number) => {
       const L = layoutFor(s);
@@ -413,13 +413,13 @@ export async function POST(req: NextRequest) {
     ${sitePages.length < 2 ? "" : `
     /* Sits above the canvas, out of the way of the first heading, and wraps to its own
        rows rather than scrolling sideways. Omitted entirely on a one page site. */
-    #site-nav { position: fixed; top: 0; left: 0; right: 0; z-index: 50; display: flex; flex-wrap: wrap; justify-content: center; gap: 0.25rem 1.25rem; padding: 0.85rem 1.25rem; background: color-mix(in srgb, var(--sc-ground, #05070c) 72%, transparent); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
-    #site-nav a { color: var(--sc-ink, #fff); opacity: 0.74; text-decoration: none; font-size: 0.9375rem; font-weight: 500; padding: 0.25rem 0; }
+    #site-nav { position: fixed; top: 0; left: 0; right: 0; z-index: 50; display: flex; flex-wrap: wrap; justify-content: center; gap: 0 1rem; padding: 0.25rem 1.25rem; background: color-mix(in srgb, var(--sc-ground, #05070c) 72%, transparent); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+    #site-nav a { display: inline-flex; align-items: center; min-height: 44px; color: var(--sc-ink, #fff); opacity: 0.74; text-decoration: none; font-size: 0.9375rem; font-weight: 500; padding: 0 0.25rem; }
     #site-nav a:hover { opacity: 1; }
     #site-nav a[aria-current="page"] { opacity: 1; box-shadow: inset 0 -2px 0 var(--sc-accent-text, currentColor); }
     @media (prefers-reduced-motion: reduce) { #site-nav { backdrop-filter: none; -webkit-backdrop-filter: none; background: var(--sc-ground, #05070c); } }`}
     /* The page sets its own colours, so the browser default ring can vanish against them. */
-    a:focus-visible, button:focus-visible, [tabindex]:focus-visible { outline: 3px solid var(--sc-accent-text, #ede9fe); outline-offset: 3px; border-radius: 2px; }
+    a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:not([tabindex="-1"]):focus-visible { outline: 3px solid var(--sc-accent-text, #ede9fe); outline-offset: 3px; border-radius: 2px; }
     #scroll-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
     #scroll-container { position: relative; height: ${totalScrollHeight}px; z-index: 1; pointer-events: none; }
     .scroll-section { pointer-events: none; }
@@ -489,10 +489,11 @@ export async function POST(req: NextRequest) {
     /* The first section is on screen, so the hint keeps to the bottom edge, clear of its copy. */
     #scroll-hint { bottom: 0.5rem; }
     #scroll-hint .arrow { display: none; }` : ""}
+    @media (prefers-reduced-motion: reduce) { #scroll-hint { transition: none; } }
     #audio-mute {
       position: fixed; top: 1rem; right: 1rem; z-index: 30;
       background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.15);
-      color: white; border-radius: 50%; width: 2rem; height: 2rem;
+      color: white; border-radius: 50%; width: 2.75rem; height: 2.75rem;
       cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center;
       transition: background 0.2s;
     }
@@ -511,14 +512,14 @@ export async function POST(req: NextRequest) {
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
   ${navHtml}
-  <canvas id="scroll-canvas" role="img" aria-label="${esc(siteName ? `${siteName} animated scroll background` : "Animated scroll background")}"></canvas>
   <main id="main" tabindex="-1">
     <div id="scroll-container">${openOnHeadline ? "" : `
       <div style="height:100vh;"></div>`}
       ${sectionsHtml}
     </div>
+    <canvas id="scroll-canvas" role="img" aria-label="${esc(siteName ? `${siteName} animated scroll background` : "Animated scroll background")}"></canvas>
   </main>
-  <div id="scroll-hint">
+  <div id="scroll-hint" aria-hidden="true">
     <span>Scroll</span>
     <div class="arrow"></div>
   </div>
@@ -527,7 +528,7 @@ export async function POST(req: NextRequest) {
     ${siteDescription ? `<p class="footer-tagline">${esc(siteDescription)}</p>` : ""}
     <p class="footer-legal">&copy; <span id="footer-year">${new Date().getUTCFullYear()}</span> ${esc(siteName)}. All rights reserved.</p>
   </footer>
-  ${hasAudio ? `<button id="audio-mute" title="Toggle audio">🔊</button>` : ""}
+  ${hasAudio ? `<button id="audio-mute" type="button" title="Toggle audio" aria-label="Toggle audio">🔊</button>` : ""}
 
   <script>
     (function() {

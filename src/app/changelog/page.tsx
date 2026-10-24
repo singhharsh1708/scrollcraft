@@ -188,7 +188,7 @@ export default function ChangelogPage() {
                   <div className="space-y-2">
                     {entry.changes.map((c, j) => (
                       <div key={j} className="flex items-start gap-2.5">
-                        <span className={`lc-mono text-[11px] px-1.5 py-0.5 rounded flex-shrink-0 mt-0.5 ${TYPE_STYLES[c.type] || TYPE_STYLES.new}`}>
+                        <span className={`lc-mono text-xs px-1.5 py-0.5 rounded flex-shrink-0 mt-0.5 ${TYPE_STYLES[c.type] || TYPE_STYLES.new}`}>
                           {c.type}
                         </span>
                         <p className="text-sm text-muted-foreground leading-relaxed">{c.text}</p>

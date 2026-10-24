@@ -211,7 +211,6 @@ export default function ScrollEngine({ frames, mobileFrames, totalScrollHeight =
           role="img"
           aria-label={altText}
         />
-        <span className="sr-only">{altText}</span>
       </div>
     );
   }
@@ -225,7 +224,6 @@ export default function ScrollEngine({ frames, mobileFrames, totalScrollHeight =
         role="img"
         aria-label={altText}
       />
-      <span className="sr-only">{altText}</span>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import GuideArticle, { type Faq } from "@/components/GuideArticle";
+import GuideArticle, { CodeBlock, type Faq } from "@/components/GuideArticle";
 import { guideMeta } from "@/lib/guides";
 import { TEMPLATES } from "@/lib/templates";
 import ScrollDemo from "./ScrollDemo";
@@ -184,13 +184,9 @@ export default function ScrollAnimationGuide() {
         If you would rather write it yourself, this is the whole idea in about forty lines. Put your
         frames in a <code>frames</code> folder beside the page.
       </p>
-      <pre>
-        <code>{SKETCH}</code>
-      </pre>
+      <CodeBlock label="Code example: the scroll script">{SKETCH}</CodeBlock>
       <p>And one line of CSS to pin the canvas behind everything else:</p>
-      <pre>
-        <code>{CSS}</code>
-      </pre>
+      <CodeBlock label="Code example: pinning the canvas">{CSS}</CodeBlock>
       <p>
         That is enough to see the effect. A production version needs more: it should size the canvas
         for the device pixel ratio (capped at 2, or a phone ends up drawing millions of pixels each

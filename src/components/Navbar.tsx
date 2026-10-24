@@ -131,7 +131,7 @@ export default function Navbar({
           } ${onLight ? "nav-on-light border-black/10 bg-band/95" : "border-white/[0.08] bg-background/70"}`}
         >
           <div className={`mx-auto flex h-[var(--nav-h)] max-w-[1360px] items-center justify-between gap-4 pl-6 pr-3 ${variant === "floating" ? "sm:pl-7 sm:pr-3" : "sm:px-6"}`}>
-            <Link href="/" aria-label="ScrollCraft home" className="flex shrink-0 items-center gap-2 text-foreground">
+            <Link href="/" aria-label="ScrollCraft home" className="flex min-h-11 shrink-0 items-center gap-2 text-foreground">
               <BrandMark className="h-5 w-5 text-primary-ink" />
               <span className="text-[1.1rem] font-medium tracking-[-0.02em]">ScrollCraft</span>
             </Link>
@@ -220,7 +220,7 @@ export default function Navbar({
                   href={href}
                   onClick={() => setOpen(false)}
                   aria-current={isActive(href) ? "page" : undefined}
-                  className={`lc-mono py-2.5 text-[0.95rem] ${isActive(href) ? "text-foreground" : "text-foreground/75"}`}
+                  className={`lc-mono flex min-h-11 items-center py-2.5 text-[0.95rem] ${isActive(href) ? "text-foreground" : "text-foreground/75"}`}
                 >
                   {label}
                 </Link>
@@ -230,7 +230,7 @@ export default function Navbar({
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => setOpen(false)}
-                className="lc-mono py-2.5 text-[0.95rem] text-foreground/75"
+                className="lc-mono flex min-h-11 items-center py-2.5 text-[0.95rem] text-foreground/75"
               >
                 Docs
               </a>
@@ -239,12 +239,12 @@ export default function Navbar({
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => setOpen(false)}
-                className="lc-mono flex items-center gap-2 py-2.5 text-[0.95rem] text-foreground/75"
+                className="lc-mono flex min-h-11 items-center gap-2 py-2.5 text-[0.95rem] text-foreground/75"
               >
                 <Heart className="h-4 w-4" aria-hidden="true" /> Sponsor
               </a>
               <div className="mt-3 grid grid-cols-2 gap-2">
-                <Link href="/#write" onClick={() => setOpen(false)} className="lc-btn lc-btn-solid lc-btn-sm">
+                <Link href="/#write" onClick={() => setOpen(false)} className="lc-btn lc-btn-solid lc-btn-sm h-11">
                   Write my site
                 </Link>
                 <a
@@ -252,13 +252,13 @@ export default function Navbar({
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={() => setOpen(false)}
-                  className="lc-btn lc-btn-ghost lc-btn-sm"
+                  className="lc-btn lc-btn-ghost lc-btn-sm h-11"
                 >
                   <GitHubMark className="h-4 w-4" /> GitHub
                 </a>
                 {viewer === "signed-out" && (
                   <form action={startGitHubSignIn} className="col-span-2">
-                    <button type="submit" className="lc-btn lc-btn-ghost lc-btn-sm w-full">
+                    <button type="submit" className="lc-btn lc-btn-ghost lc-btn-sm h-11 w-full">
                       <GitHubMark className="h-4 w-4" /> Sign in
                     </button>
                   </form>
@@ -275,7 +275,7 @@ export default function Navbar({
                         className="h-7 w-7 rounded-full"
                       />
                     )}
-                    <button type="submit" className="lc-btn lc-btn-ghost lc-btn-sm flex-1">
+                    <button type="submit" className="lc-btn lc-btn-ghost lc-btn-sm h-11 flex-1">
                       Sign out
                     </button>
                   </form>

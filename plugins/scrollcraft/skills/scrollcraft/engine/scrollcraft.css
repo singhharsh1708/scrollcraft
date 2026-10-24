@@ -6,6 +6,10 @@ body {
   font-family: var(--sc-font-body, system-ui, sans-serif);
   overflow-x: hidden;
 }
+.skip-link { position: absolute; left: -9999px; top: 0; z-index: 100; padding: 0.75rem 1.25rem; background: var(--sc-ink, #fff); color: var(--sc-ground, #000); border-radius: 0 0 0.5rem 0; font-weight: 600; text-decoration: none; }
+.skip-link:focus { left: 0; }
+main:focus { outline: none; }
+a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:not([tabindex="-1"]):focus-visible { outline: 3px solid var(--sc-accent-text, #ede9fe); outline-offset: 3px; border-radius: 2px; }
 #scroll-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
 #scroll-container { position: relative; z-index: 1; pointer-events: none; }
 .scroll-section { pointer-events: none; }
@@ -23,7 +27,7 @@ body {
 #audio-mute {
   position: fixed; top: 1rem; right: 1rem; z-index: 30;
   background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.15);
-  color: #fff; border-radius: 50%; width: 2rem; height: 2rem;
+  color: #fff; border-radius: 50%; width: 2.75rem; height: 2.75rem;
   cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center;
   transition: background 0.2s;
 }
