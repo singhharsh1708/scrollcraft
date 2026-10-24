@@ -164,7 +164,7 @@ export default function PromptHero({ reducedMotion }: { reducedMotion: boolean }
             disabled={busy}
             aria-label="Describe your business"
             placeholder="What is the business? Where is it, how long has it been going, what do you actually do?"
-            className="w-full resize-none bg-transparent px-4 py-4 text-base leading-relaxed text-foreground outline-none placeholder:text-muted-foreground"
+            className="w-full resize-none rounded-xl bg-transparent px-4 py-4 text-base leading-relaxed text-foreground outline-none focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring placeholder:text-muted-foreground"
           />
           <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 px-4 pb-2">
             <span className="w-full text-xs text-muted-foreground sm:w-auto">{hint}</span>
@@ -178,7 +178,7 @@ export default function PromptHero({ reducedMotion }: { reducedMotion: boolean }
               disabled={busy}
               onChange={(e) => setQuality(e.target.value as Quality)}
               title="Fast is quickest, Best writes most carefully. Each uses one site."
-              className="lc-mono h-9 rounded-full border border-border bg-transparent px-3 text-xs text-muted-foreground outline-none hover:border-foreground/30 focus-visible:border-primary-ink/60"
+              className="lc-mono h-11 sm:h-9 rounded-full border border-border bg-transparent px-3 text-base sm:text-xs text-muted-foreground outline-none hover:border-foreground/30 focus-visible:border-primary-ink/60 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
             >
               {(Object.keys(QUALITIES) as Quality[]).map((q) => (
                 <option key={q} value={q} className="bg-card text-foreground">
@@ -190,7 +190,7 @@ export default function PromptHero({ reducedMotion }: { reducedMotion: boolean }
               type="button"
               onClick={() => void go()}
               disabled={short || busy}
-              className={`lc-btn lc-btn-sm ${short || busy ? "lc-btn-ghost text-muted-foreground" : "lc-btn-solid"}`}
+              className={`lc-btn lc-btn-sm max-sm:h-11 ${short || busy ? "lc-btn-ghost text-muted-foreground" : "lc-btn-solid"}`}
             >
               {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <ArrowUp className="h-4 w-4" aria-hidden="true" />}
               {busy ? "Writing…" : "Write my site"}
@@ -220,7 +220,7 @@ export default function PromptHero({ reducedMotion }: { reducedMotion: boolean }
         )}
 
         <div className="mt-5 flex flex-wrap justify-center gap-2">
-          <span className="lc-mono py-1.5 text-xs text-muted-foreground">Try one:</span>
+          <span className="lc-mono inline-flex items-center py-1.5 text-xs text-muted-foreground">Try one:</span>
           {EXAMPLES.map(([label, text]) => (
             <button
               key={label}
@@ -229,7 +229,7 @@ export default function PromptHero({ reducedMotion }: { reducedMotion: boolean }
                 setValue(text);
                 boxRef.current?.focus();
               }}
-              className="lc-mono rounded-full border border-border px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:border-primary-ink/40 hover:text-foreground"
+              className="lc-mono inline-flex items-center min-h-11 sm:min-h-0 rounded-full border border-border px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:border-primary-ink/40 hover:text-foreground"
             >
               {label}
             </button>

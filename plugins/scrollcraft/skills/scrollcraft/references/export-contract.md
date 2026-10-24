@@ -24,7 +24,8 @@ Anything consuming or producing this bundle must hold to these:
    silent hole.
 2. **Canvas id.** `#scroll-canvas`, `position: fixed`, full viewport, `z-index: 0`.
 3. **Scroll container.** `#scroll-container` carries the full `totalScrollHeight` and holds a
-   leading `100vh` spacer, then one `.scroll-section` per visible section.
+   leading `100vh` spacer, then one `.scroll-section` per visible section. It sits inside
+   `<main id="main">` with the canvas after it, and a skip link to `#main` comes first.
 4. **Section structure.** `.scroll-section` > `.section-sticky` (`position: sticky; top: 0`) >
    `.section-content`. The `.visible` class on `.section-content` is what reveals it.
 5. **Track maths.** `totalScrollHeight = Σ scrollHeight + 1000`.

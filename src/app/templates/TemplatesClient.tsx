@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ArrowRight, Search, Eye } from "lucide-react";
 import Navbar from "@/components/Navbar";
@@ -111,7 +111,7 @@ export default function TemplatesClient({
               onClick={() => setFilters((f) => ({ ...f, category: c }))}
               aria-pressed={filters.category === c}
               disabled={(counts[c] ?? 0) === 0 && c !== filters.category}
-              className={`lc-mono h-9 px-4 rounded-full text-[0.8rem] border transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+              className={`lc-mono h-11 sm:h-9 px-4 rounded-full text-[0.8rem] border transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                 filters.category === c
                   ? "border-primary-ink/60 bg-primary-ink/15 text-foreground"
                   : "border-border text-muted-foreground hover:text-foreground hover:border-foreground/30"
@@ -131,7 +131,7 @@ export default function TemplatesClient({
               onClick={() => setFilters((f) => ({ ...f, background: b }))}
               aria-pressed={filters.background === b}
               disabled={(backgrounds[b] ?? 0) === 0 && b !== filters.background}
-              className={`lc-mono h-9 px-4 rounded-full text-[0.8rem] border transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+              className={`lc-mono h-11 sm:h-9 px-4 rounded-full text-[0.8rem] border transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                 filters.background === b
                   ? "border-primary-ink/60 bg-primary-ink/15 text-foreground"
                   : "border-border text-muted-foreground hover:text-foreground hover:border-foreground/30"
@@ -152,13 +152,13 @@ export default function TemplatesClient({
               id="template-sort"
               value={sort}
               onChange={(e) => setSort(e.target.value as TemplateSort)}
-              className="lc-mono h-9 rounded-md border border-border bg-card px-2 text-xs text-foreground"
+              className="lc-mono h-11 sm:h-9 rounded-md border border-border bg-card px-2 text-base sm:text-xs text-foreground"
             >
               {SORTS.map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
           </div>
           {hasActiveFilters(filters) && (
-            <Button variant="outline" size="sm" className="lc-mono h-9 border-border text-xs" onClick={() => setFilters(EMPTY_FILTERS)}>
+            <Button variant="outline" size="sm" className="lc-mono h-11 sm:h-9 border-border text-xs" onClick={() => setFilters(EMPTY_FILTERS)}>
               Clear filters
             </Button>
           )}
@@ -175,7 +175,7 @@ export default function TemplatesClient({
             <Button
               variant="outline"
               size="sm"
-              className="border-border"
+              className="border-border max-md:h-11"
               onClick={() => setFilters(EMPTY_FILTERS)}
             >
               Show all templates
@@ -203,14 +203,14 @@ export default function TemplatesClient({
                     className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                   />
                   <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/70 to-transparent">
-                    <span className="lc-mono text-[11px] text-white/80">{t.category}</span>
+                    <span className="lc-mono text-xs text-white/80">{t.category}</span>
                   </div>
                 </div>
 
                 <div className="p-4 flex flex-col gap-3 flex-1">
                   <div className="space-y-1">
                     <h2 className="text-lg font-medium tracking-[-0.02em]">
-                      <Link href={`/templates/${t.slug}`} className="underline-offset-4 hover:underline">
+                      <Link href={`/templates/${t.slug}`} className="inline-flex items-center max-md:min-h-11 underline-offset-4 hover:underline">
                         {t.name}
                       </Link>
                     </h2>
@@ -219,27 +219,31 @@ export default function TemplatesClient({
 
                   <div className="flex flex-wrap gap-1.5">
                     {t.tags.map((tag) => (
-                      <span key={tag} className="lc-mono text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+                      <span key={tag} className="lc-mono text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
                         {tag}
                       </span>
                     ))}
                   </div>
 
-                  <p className="lc-mono text-[11px] text-muted-foreground mt-auto">
+                  <p className="lc-mono text-xs text-muted-foreground mt-auto">
                     {t.sectionCount} sections ·{" "}
                     {t.scrollHeight.toLocaleString()}px of scroll
                   </p>
 
                   <div className="flex gap-2">
-                    <Link href={`/templates/${t.slug}`} aria-label={`Preview ${t.name}`} className="flex-1">
-                      <Button variant="outline" size="sm" className="lc-mono w-full border-border text-xs h-9 gap-1.5">
-                        <Eye className="w-3.5 h-3.5" /> Preview
-                      </Button>
+                    <Link
+                      href={`/templates/${t.slug}`}
+                      aria-label={`Preview ${t.name}`}
+                      className={buttonVariants({ variant: "outline", size: "sm", className: "lc-mono flex-1 border-border text-xs h-11 md:h-9 gap-1.5" })}
+                    >
+                      <Eye className="w-3.5 h-3.5" aria-hidden="true" /> Preview
                     </Link>
-                    <Link href={`/editor?template=${t.slug}`} className="flex-1">
-                      <Button size="sm" className="lc-mono w-full text-xs h-9 gap-1.5">
-                        Use <ArrowRight className="w-3.5 h-3.5" />
-                      </Button>
+                    <Link
+                      href={`/editor?template=${t.slug}`}
+                      aria-label={`Use ${t.name}`}
+                      className={buttonVariants({ size: "sm", className: "lc-mono flex-1 text-xs h-11 md:h-9 gap-1.5" })}
+                    >
+                      Use <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
                     </Link>
                   </div>
                 </div>
@@ -255,7 +259,7 @@ export default function TemplatesClient({
           <ul className="flex flex-wrap justify-center gap-2">
             {categoryLinks.map((c) => (
               <li key={c.href}>
-                <Link href={c.href} className="lc-mono inline-flex h-9 items-center rounded-full border border-border px-4 text-[0.8rem] text-muted-foreground transition-colors hover:border-foreground/30 hover:text-foreground">
+                <Link href={c.href} className="lc-mono inline-flex h-11 sm:h-9 items-center rounded-full border border-border px-4 text-[0.8rem] text-muted-foreground transition-colors hover:border-foreground/30 hover:text-foreground">
                   {c.label}
                 </Link>
               </li>
@@ -278,7 +282,7 @@ export default function TemplatesClient({
           </Link>
         </div>
         <p className="mt-8 text-sm text-muted-foreground">
-          <Link href="/describe" className="underline underline-offset-4 hover:text-foreground">
+          <Link href="/describe" className="inline-flex items-center max-md:min-h-11 underline underline-offset-4 hover:text-foreground">
             Or describe your business and have one written
           </Link>
         </p>

@@ -49,7 +49,7 @@ describe("an export that opens on the headline", () => {
 
   it("keeps the scroll hint on the bottom edge, clear of the copy", async () => {
     const html = await exportHtml({ openOnHeadline: true });
-    expect(html).toContain('<div id="scroll-hint">');
+    expect(html).toContain('<div id="scroll-hint" aria-hidden="true">');
     expect(html).toMatch(/#scroll-hint \{ bottom: 0\.5rem; \}\s*#scroll-hint \.arrow \{ display: none; \}/);
   });
 

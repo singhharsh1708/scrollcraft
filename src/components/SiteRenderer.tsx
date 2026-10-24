@@ -141,7 +141,7 @@ export default function SiteRenderer({
 
   const compiled = compileTheme(theme);
   const visible = sections.filter((s) => s.visible !== false);
-  const firstHeadingIndex = visible.findIndex((s) => s.heading);
+  const firstHeadingIndex = visible.findIndex((s) => s.heading && s.kind !== "spacer");
   const totalScrollHeight =
     visible.reduce((acc, s) => acc + (s.scrollHeight ?? 1000), 0) + (openOnHeadline ? 0 : INTRO_BUFFER);
 
@@ -229,6 +229,7 @@ export default function SiteRenderer({
 
       {!ready && (
         <div
+          role="status"
           className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-6"
           style={{ background: `linear-gradient(135deg, ${loaderGround}, #000)` }}
         >
@@ -240,7 +241,7 @@ export default function SiteRenderer({
           </div>
           <div className="w-56 h-1.5 rounded-full bg-white/10 overflow-hidden">
             <div
-              className="h-full rounded-full transition-all duration-200"
+              className="h-full rounded-full transition-all duration-200 motion-reduce:transition-none"
               style={{ width: `${progress}%`, background: compiled.vars["--sc-accent-text"] ?? "#fff" }}
             />
           </div>
@@ -257,21 +258,20 @@ export default function SiteRenderer({
             </div>
           ) : (
             <div className="flex items-center gap-2 text-sm text-white/40">
-              <Loader2 className="w-3.5 h-3.5 animate-spin" /> Rendering frames…
+              <Loader2 className="w-3.5 h-3.5 animate-spin motion-reduce:animate-none" /> Rendering frames…
             </div>
           )}
         </div>
       )}
 
-      <ScrollEngine
-        frames={frames}
-        totalScrollHeight={totalScrollHeight}
-        altText={`Animated background for ${name}`}
-      />
-
       {children}
 
       <main id="sc-main" tabIndex={-1} ref={stageRef} className="relative z-10 pointer-events-none" style={{ height: totalScrollHeight }}>
+        <ScrollEngine
+          frames={frames}
+          totalScrollHeight={totalScrollHeight}
+          altText={`Animated background for ${name}`}
+        />
         {!openOnHeadline && <div style={{ height: "100vh" }} />}
         {visible.map((s, i) => {
           // The first section with a heading is the page's heading. Every section

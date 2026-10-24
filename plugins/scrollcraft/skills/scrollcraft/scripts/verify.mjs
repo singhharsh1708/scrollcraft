@@ -201,7 +201,7 @@ const PROBE = `(() => {
     if (effectiveOpacity(el) < 0.01) continue;
     const behind = sampleRect(r.left, Math.max(0, r.top), r.width, Math.min(r.height, window.innerHeight));
     if (!behind) continue;
-    for (const t of el.querySelectorAll('h2, p, a')) {
+    for (const t of el.querySelectorAll('h1, h2, p, a')) {
       const tr = t.getBoundingClientRect();
       if (tr.width < 1 || tr.height < 1) continue;
       if (!t.textContent.trim()) continue;

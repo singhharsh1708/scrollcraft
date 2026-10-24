@@ -26,14 +26,14 @@ export default function TemplateDetails({ template: t }: { template: Template })
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdHtml(breadcrumbJsonLd(crumbs)) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdHtml(templateJsonLd(t)) }} />
 
-      <article id="about" className="mx-auto max-w-5xl border-t border-border px-4 pb-20 pt-16 sm:px-6">
+      <section id="about" aria-labelledby="about-template" className="mx-auto max-w-5xl border-t border-border px-4 pb-20 pt-16 sm:px-6">
         <nav aria-label="Breadcrumb" className="lc-mono mb-8 text-xs text-muted-foreground">
-          <ol className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <ol className="flex flex-wrap items-center gap-x-2 md:gap-y-1">
             {crumbs.slice(1).map((c, i, all) => (
               <li key={c.path} className="flex items-center gap-2">
                 {i < all.length - 1 ? (
                   <>
-                    <Link href={c.path} className="underline-offset-4 hover:text-foreground hover:underline">{c.name}</Link>
+                    <Link href={c.path} className="inline-flex items-center max-md:min-h-11 underline-offset-4 hover:text-foreground hover:underline">{c.name}</Link>
                     <span aria-hidden="true">/</span>
                   </>
                 ) : (
@@ -44,13 +44,13 @@ export default function TemplateDetails({ template: t }: { template: Template })
           </ol>
         </nav>
 
-        <h1 className="lc-display text-4xl sm:text-5xl">{templateHeading(t)}</h1>
+        <h1 id="about-template" className="lc-display text-4xl sm:text-5xl">{templateHeading(t)}</h1>
         <p className="mt-5 max-w-2xl text-lg text-muted-foreground">
           {t.tagline}. {templateSectionCount(t)} sections, free to edit in your browser and export as plain HTML.
         </p>
 
         <div className="mt-14 grid gap-12 md:grid-cols-2">
-          <section>
+          <section className="min-w-0 break-words">
             <h2 className="text-xl font-medium tracking-[-0.02em]">Who it is for</h2>
             <p className="mt-3 leading-relaxed text-muted-foreground">{templateUse(t).forWhom}</p>
 
@@ -60,7 +60,7 @@ export default function TemplateDetails({ template: t }: { template: Template })
             </ol>
           </section>
 
-          <section>
+          <section className="min-w-0 break-words">
             <h2 className="text-xl font-medium tracking-[-0.02em]">Look</h2>
             <ul className="mt-4 flex flex-wrap gap-3" aria-label="Palette">
               {swatches.map((c) => (
@@ -90,8 +90,8 @@ export default function TemplateDetails({ template: t }: { template: Template })
               <li>Export a ZIP of plain HTML, with its CSS and JavaScript, and host it anywhere: GitHub Pages, Netlify, Vercel or your own server.</li>
             </ol>
             <div className="mt-6 flex flex-wrap gap-3">
-              <Link href={`/editor?template=${t.slug}`} className="lc-btn lc-btn-solid lc-btn-sm">Use this template</Link>
-              <Link href={categoryPath(t.category)} className="lc-btn lc-btn-ghost lc-btn-sm">{crumbs[2].name}</Link>
+              <Link href={`/editor?template=${t.slug}`} className="lc-btn lc-btn-solid lc-btn-sm max-md:h-11">Use this template</Link>
+              <Link href={categoryPath(t.category)} className="lc-btn lc-btn-ghost lc-btn-sm max-md:h-auto max-md:min-h-11 max-md:whitespace-normal max-md:py-2 max-md:text-left max-md:leading-snug">{crumbs[2].name}</Link>
             </div>
           </section>
         </div>
@@ -104,7 +104,7 @@ export default function TemplateDetails({ template: t }: { template: Template })
                 {/* eslint-disable-next-line @next/next/no-img-element -- committed still, as on the gallery */}
                 <img src={`/template-previews/${r.slug}.jpg`} alt="" width={800} height={500} loading="lazy" className="aspect-[16/10] w-full object-cover" />
                 <div className="p-4">
-                  <Link href={`/templates/${r.slug}`} className="font-medium underline-offset-4 hover:underline">{r.name}</Link>
+                  <Link href={`/templates/${r.slug}`} className="inline-flex items-center max-md:min-h-11 font-medium underline-offset-4 hover:underline">{r.name}</Link>
                   <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{r.tagline}</p>
                 </div>
               </li>
@@ -118,7 +118,7 @@ export default function TemplateDetails({ template: t }: { template: Template })
             , first two free.
           </p>
         </section>
-      </article>
+      </section>
       <SiteFooter />
     </div>
   );

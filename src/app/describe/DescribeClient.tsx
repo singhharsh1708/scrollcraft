@@ -190,13 +190,13 @@ export default function DescribeClient() {
           onChange={(e) => setDescription(e.target.value.slice(0, MAX_DESCRIPTION))}
           rows={compact ? 4 : 7}
           placeholder={EXAMPLES[0]}
-          className={`mt-2 rounded-2xl border-white/10 bg-card px-4 py-3 text-base shadow-[var(--lift-1)] transition-shadow focus-visible:border-primary-ink/40 focus-visible:shadow-[var(--glow)] ${compact ? "field-sizing-fixed" : ""}`}
+          className={`mt-2 rounded-2xl border-white/10 bg-card px-4 py-3 text-base shadow-[var(--lift-1)] transition-shadow focus-visible:border-primary-ink focus-visible:shadow-[var(--glow)] ${compact ? "field-sizing-fixed" : ""}`}
         />
         <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
           <button
             type="button"
             onClick={() => setDescription(EXAMPLES[Math.floor(Math.random() * EXAMPLES.length)])}
-            className="lc-mono text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground"
+            className="lc-mono inline-flex items-center min-h-11 md:min-h-0 text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground"
           >
             Use an example
           </button>
@@ -219,7 +219,7 @@ export default function DescribeClient() {
           spellCheck={false}
           aria-describedby="contact-note"
           placeholder="Phone or WhatsApp number with country code, email, or a link"
-          className="mt-2 h-11 rounded-2xl border-white/10 bg-card px-4 text-base shadow-[var(--lift-1)] transition-shadow focus-visible:border-primary-ink/40 focus-visible:shadow-[var(--glow)]"
+          className="mt-2 h-11 rounded-2xl border-white/10 bg-card px-4 text-base shadow-[var(--lift-1)] transition-shadow focus-visible:border-primary-ink focus-visible:shadow-[var(--glow)]"
         />
         {phone && (
           <div role="group" aria-label="What the buttons do with this number" className="mt-2 flex gap-2">
@@ -230,7 +230,7 @@ export default function DescribeClient() {
                 aria-pressed={via === value}
                 disabled={busy}
                 onClick={() => setVia(value)}
-                className={`lc-mono h-9 rounded-full border px-4 text-[0.8rem] transition-colors disabled:opacity-50 ${via === value ? "border-primary-ink/60 bg-primary-ink/15 text-foreground" : "border-border text-muted-foreground hover:border-foreground/30"}`}
+                className={`lc-mono h-11 md:h-9 rounded-full border px-4 text-[0.8rem] transition-colors disabled:opacity-50 ${via === value ? "border-primary-ink/60 bg-primary-ink/15 text-foreground" : "border-border text-muted-foreground hover:border-foreground/30"}`}
               >
                 {label}
               </button>
@@ -263,7 +263,7 @@ export default function DescribeClient() {
               aria-pressed={quality === value}
               disabled={busy}
               onClick={() => setQuality(value)}
-              className={`lc-mono h-9 rounded-full border px-4 text-[0.8rem] transition-colors disabled:opacity-50 ${quality === value ? "border-primary-ink/60 bg-primary-ink/15 text-foreground" : "border-border text-muted-foreground hover:border-foreground/30"}`}
+              className={`lc-mono h-11 md:h-9 rounded-full border px-4 text-[0.8rem] transition-colors disabled:opacity-50 ${quality === value ? "border-primary-ink/60 bg-primary-ink/15 text-foreground" : "border-border text-muted-foreground hover:border-foreground/30"}`}
             >
               {QUALITIES[value].label}
             </button>
@@ -310,7 +310,7 @@ export default function DescribeClient() {
         </p>
 
         {images.length > 0 && (
-          <div className="mt-4 flex flex-wrap items-center gap-3">
+          <div className="mt-4 flex flex-wrap items-center gap-5 md:gap-3">
             {images.map((image, i) => (
               <span key={image.name + i} className="relative">
                 {/* eslint-disable-next-line @next/next/no-img-element -- a local preview of a file the visitor just picked */}
@@ -319,9 +319,9 @@ export default function DescribeClient() {
                   type="button"
                   onClick={() => setImages((c) => c.filter((_, j) => j !== i))}
                   aria-label={`Remove ${image.name}`}
-                  className="absolute -right-2 -top-2 rounded-full border border-border bg-background p-1 text-muted-foreground hover:text-foreground"
+                  className="absolute -right-4 -top-4 md:-right-2 md:-top-2 flex h-11 w-11 md:h-auto md:w-auto items-center justify-center rounded-full border border-border bg-background p-1 text-muted-foreground hover:text-foreground"
                 >
-                  <X className="h-3 w-3" />
+                  <X className="h-4 w-4 md:h-3 md:w-3" aria-hidden="true" />
                 </button>
               </span>
             ))}

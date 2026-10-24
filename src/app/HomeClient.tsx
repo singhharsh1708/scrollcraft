@@ -111,7 +111,7 @@ function DescribePanel() {
             not do colour.
           </p>
         </div>
-        <p className="lc-mono text-[11px] text-muted-foreground">six sections written from it</p>
+        <p className="lc-mono text-xs text-muted-foreground">six sections written from it</p>
         <ul className="space-y-1.5">
           {[
             ["Mill Road, Cambridge", "Two chairs on Mill Road since 2011."],
@@ -119,7 +119,7 @@ function DescribePanel() {
             ["What we don't do", "We do not do colour."],
           ].map(([eyebrow, heading]) => (
             <li key={eyebrow} className="rounded-md border border-border bg-card px-3 py-2">
-              <p className="lc-mono text-[10px] uppercase tracking-[0.14em] text-primary-ink">{eyebrow}</p>
+              <p className="lc-mono text-xs uppercase tracking-[0.14em] text-primary-ink">{eyebrow}</p>
               <p className="mt-1 text-sm text-foreground">{heading}</p>
             </li>
           ))}
@@ -152,7 +152,7 @@ function EditPanel({ sample }: { sample: EditorSample }) {
           {lead && (
             <div className="absolute inset-x-5 bottom-5">
               {lead.eyebrow && (
-                <p className="lc-mono mb-1.5 text-[10px] uppercase tracking-[0.14em] text-white/80">{lead.eyebrow}</p>
+                <p className="lc-mono mb-1.5 text-xs uppercase tracking-[0.14em] text-white/80">{lead.eyebrow}</p>
               )}
               <p className="text-xl font-light leading-tight tracking-[-0.02em] text-white">{lead.heading}</p>
             </div>
