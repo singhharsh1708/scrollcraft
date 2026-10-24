@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { pageMeta } from "@/lib/pageMeta";
 import { paymentProcessor } from "@/lib/paymentProcessor";
+import { providerNames } from "@/auth";
 import Navbar from "@/components/Navbar";
 import SiteFooter from "@/components/SiteFooter";
 
@@ -12,6 +13,7 @@ export const metadata: Metadata = pageMeta({
 
 export default function TermsPage() {
   const processor = paymentProcessor();
+  const providers = providerNames();
   return (
     <main className="min-h-screen bg-background text-foreground">
       <Navbar />
@@ -38,7 +40,7 @@ export default function TermsPage() {
         <h2>Credits</h2>
         <p>A pack is a prepaid licence to use the site writer five times. Credits are not money, cannot be exchanged for it, and are not transferable. They do not expire. A credit is taken when a site is written and given back if the request fails, so a failure costs you nothing.</p>
         {processor && (
-          <p>Buying a pack needs you to sign in with GitHub, so that the pack belongs to an account rather than to a browser that can be cleared. Nothing else here needs you to sign in. Credits belong to the account that bought them and are there in any browser that account signs in on.</p>
+          <p>Buying a pack needs you to sign in{providers ? ` with ${providers}` : ""}, so that the pack belongs to an account rather than to a browser that can be cleared. Nothing else here needs you to sign in. Credits belong to the account that bought them and are there in any browser that account signs in on.</p>
         )}
         {processor === "dodo" ? (
           <p>Packs are sold through Dodo Payments, who are the merchant of record: they take the payment, send the invoice and handle any sales tax or VAT. We never see your card. Prices are in US dollars, and any tax your country charges is added at checkout.</p>

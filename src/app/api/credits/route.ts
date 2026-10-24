@@ -48,7 +48,7 @@ export async function GET(req: NextRequest) {
     // Where the credits live, so the page can say "on your account" or "on this browser"
     // rather than guessing and being wrong for half the people reading it.
     signedIn: Boolean(await accountIdentity()),
-    // Whether this deployment can offer sign-in at all. A fork without a GitHub app
+    // Whether this deployment can offer sign-in at all. A fork without sign-in set up
     // should not be shown a button that answers 404.
     canSignIn: authConfigured(),
     // Whether a pack can be bought here at all. Buying needs an account to land on, so

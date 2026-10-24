@@ -95,6 +95,11 @@ export function githubIdentity(accountId: string): string | null {
   return /^[0-9]{1,20}$/.test(accountId) ? `gh:${accountId}` : null;
 }
 
+/** A Google account's identity: its `sub`, the numeric id Google never reissues, never the email. */
+export function googleIdentity(sub: string): string | null {
+  return /^[0-9]{1,32}$/.test(sub) ? `go:${sub}` : null;
+}
+
 const entitlementKey = (identity: string) => `sc_ent:${identity}`;
 const orderKey = (orderId: string) => `sc_ord:${orderId}`;
 const orderOwnerKey = (orderId: string) => `sc_ordkey:${orderId}`;

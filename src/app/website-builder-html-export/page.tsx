@@ -28,7 +28,7 @@ const FAQ: Faq[] = [
     q: "Do I need an account?",
     a: (
       <>
-        Not to build or export. Open a template or the builder and start. Signing in with GitHub is
+        Not to build or export. Open a template or the builder and start. Signing in is
         only used to keep a bought pack of AI-written sites with you across browsers.
       </>
     ),

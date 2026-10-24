@@ -32,7 +32,7 @@ those sites without WebGL, an animation library, or a render farm.
 You need no account to build or export, and your sites stay in your browser. The editor,
 the templates and the exporter are free with nothing to buy. Four things call out, and each
 is off until you configure it: the copy assistant below, writing a site from a description,
-GitHub sign-in, and buying more sites. Writing a site costs money per request on the hosted
+sign-in with Google or GitHub, and buying more sites. Writing a site costs money per request on the hosted
 version, so there the first two are free and five more are $20, bought once.
 
 ## Features
@@ -193,7 +193,7 @@ Every variable is optional. See [`.env.example`](.env.example).
 In your own browser, and then in the ZIP you download.
 
 Sites are held in IndexedDB on your device while you edit, and are never stored on a
-server. Signing in with GitHub stores only your account number and how many paid sites you
+server. Signing in with Google or GitHub stores only your account number and how many paid sites you
 have left, so it does not back your sites up. **Clear your browser data and unexported work
 is gone**, so export early. The editor autosaves as you type and warns you before you close
 a tab with unsaved changes.

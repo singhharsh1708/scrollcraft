@@ -1,10 +1,7 @@
 "use client";
 import Link from "next/link";
-import { useState } from "react";
-import { Loader2 } from "lucide-react";
-import GitHubMark from "@/components/GitHubMark";
 import BuyPack from "@/components/BuyPack";
-import { signInAndReturn } from "@/app/signin/actions";
+import { signInHref } from "@/app/signin/next";
 
 /**
  * What somebody sees the moment the free sites are gone.
@@ -26,8 +23,6 @@ export default function OutOfCredits({
   /** Whether a pack can be bought on this deployment at all. */
   canBuy: boolean;
 }) {
-  const [busy, setBusy] = useState(false);
-
   return (
     <div
       role="alert"
@@ -49,13 +44,9 @@ export default function OutOfCredits({
           </Link>
         )}
         {!canBuy && canSignIn && !signedIn && (
-          <form action={signInAndReturn} onSubmit={() => setBusy(true)}>
-            <input type="hidden" name="next" value="/describe" />
-            <button type="submit" className="lc-btn lc-btn-ghost lc-btn-sm" disabled={busy}>
-              {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <GitHubMark className="h-4 w-4" />}
-              Sign in with GitHub
-            </button>
-          </form>
+          <Link href={signInHref("/describe")} className="lc-btn lc-btn-ghost lc-btn-sm max-md:h-11">
+            Sign in
+          </Link>
         )}
       </div>
 

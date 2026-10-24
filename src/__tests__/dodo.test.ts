@@ -335,3 +335,39 @@ describe("a checkout through Dodo", () => {
     expect(text).not.toContain("dodo_test_key_abc");
   });
 });
+
+describe("a Google account is credited like a GitHub one", () => {
+  const GOOGLE = "go:107691503500061507150";
+  const PRODUCT = { product_id: "pdt_pack", price: { type: "one_time_price", price: 2000, currency: "USD" } };
+  const SESSION = { session_id: "cks_1", checkout_url: "https://test.checkout.dodopayments.com/session/cks_1" };
+
+  it("grants a pack to a go: identity", async () => {
+    const res = await deliver(paid({ metadata: { identity: GOOGLE } }));
+    expect(await res.json()).toEqual({ ok: true, result: "granted" });
+    expect(peekHash(`sc_ent:${GOOGLE}`)).toMatchObject({ total: 5 });
+  });
+
+  it.each([
+    ["an email in place of the subject", "go:buyer@gmail.com"],
+    ["an empty subject", "go:"],
+    ["a subject longer than Google issues", `go:${"1".repeat(33)}`],
+    ["a padded subject", "go:1076915035 "],
+    ["an uppercase prefix", "GO:107691503500061507150"],
+    ["an unknown provider", "fb:107691503500061507150"],
+    ["a GitHub id longer than GitHub issues", `gh:${"1".repeat(21)}`],
+  ])("still refuses %s", async (_name, identity) => {
+    const res = await deliver(paid({ metadata: { identity } }));
+    expect(res.status).toBe(422);
+    expect(peek(`sc_ent:${identity}`)).toBeUndefined();
+  });
+
+  it("opens a checkout that carries the go: identity unchanged", async () => {
+    accountIdentityMock.mockResolvedValue(GOOGLE);
+    const fetchMock = vi.fn();
+    for (const answer of [PRODUCT, SESSION]) fetchMock.mockResolvedValueOnce(new Response(JSON.stringify(answer), { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+    const res = await checkout(new Request("https://scrollcraft.space/api/checkout", { method: "POST" }) as unknown as NextRequest);
+    expect(res.status).toBe(200);
+    expect(JSON.parse(String(fetchMock.mock.calls[1][1].body)).metadata).toEqual({ identity: GOOGLE });
+  });
+});

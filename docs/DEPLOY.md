@@ -32,11 +32,30 @@ npm start
 | `FUNNEL_TOKEN` | `GET /api/count` answers 404; the daily counts are still written, but only readable from the Upstash console |
 | `NEXT_PUBLIC_SENTRY_DSN` | Error reporting is disabled |
 | `SENTRY_ORG` / `SENTRY_PROJECT` / `SENTRY_AUTH_TOKEN` | Source maps are not uploaded; stack traces stay minified |
+| `AUTH_SECRET` | No sign-in is offered, whatever providers are set |
+| `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET` | No "Continue with Google"; see below |
+| `AUTH_GITHUB_ID` / `AUTH_GITHUB_SECRET` | No "Continue with GitHub"; see below |
 | `DODO_PAYMENTS_*` / `DODO_PRODUCT_ID` | No packs are sold through Dodo; see below |
+
+## Sign-in
+
+Optional. Sign-in is offered when `AUTH_SECRET` and at least one provider are set; each
+provider needs both of its variables. Generate the secret with `npx auth secret` or
+`openssl rand -base64 32`.
+
+- **Google.** In Google Cloud Console, under APIs & Services, configure the OAuth consent
+  screen, then create an OAuth client ID of type Web application. Add
+  `<origin>/api/auth/callback/google` as an authorised redirect URI and set
+  `AUTH_GOOGLE_ID` and `AUTH_GOOGLE_SECRET`.
+- **GitHub.** Register an OAuth app at github.com/settings/developers with the callback
+  `<origin>/api/auth/callback/github` and set `AUTH_GITHUB_ID` and `AUTH_GITHUB_SECRET`.
+
+Credits are keyed on the provider's account number: `gh:<id>` for GitHub, `go:<sub>` for
+Google. The same person signing in with both gets two separate accounts.
 
 ## Selling packs through Dodo Payments
 
-Optional. Buying needs GitHub sign-in, so the three `AUTH_` variables must be set too.
+Optional. Buying needs sign-in, so `AUTH_SECRET` and at least one provider must be set too.
 
 1. In the Dodo dashboard, create a one-time product priced at exactly 20 USD and set
    `DODO_PRODUCT_ID` to its `pdt_` id. Checkout refuses any other price.

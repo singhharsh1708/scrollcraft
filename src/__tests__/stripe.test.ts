@@ -359,3 +359,38 @@ describe("a checkout can only be opened by somebody it can be credited to", () =
     expect(text).not.toContain("sk_test_abc");
   });
 });
+
+describe("a Google account is credited like a GitHub one", () => {
+  const GOOGLE = "go:107691503500061507150";
+
+  it("grants a pack to a go: identity", async () => {
+    const res = await deliver(paid({ metadata: { identity: GOOGLE } }));
+    expect(await res.json()).toEqual({ ok: true, result: "granted" });
+    expect(peekHash(`sc_ent:${GOOGLE}`)).toMatchObject({ total: 5 });
+  });
+
+  it.each([
+    ["an email in place of the subject", "go:buyer@gmail.com"],
+    ["an empty subject", "go:"],
+    ["a subject longer than Google issues", `go:${"1".repeat(33)}`],
+    ["an uppercase prefix", "GO:107691503500061507150"],
+    ["an unknown provider", "fb:107691503500061507150"],
+  ])("still refuses %s", async (_name, identity) => {
+    const res = await deliver(paid({ metadata: { identity } }));
+    expect(res.status).toBe(422);
+    expect(peek(`sc_ent:${identity}`)).toBeUndefined();
+  });
+
+  it("opens a checkout that carries the go: identity unchanged", async () => {
+    accountIdentityMock.mockResolvedValue(GOOGLE);
+    const fetchMock = vi.fn();
+    const answers = [{ data: [{ id: "price_123", unit_amount: 2000, currency: "usd" }] }, { url: "https://checkout.stripe.com/c/pay/cs_test_1" }];
+    for (const answer of answers) fetchMock.mockResolvedValueOnce(new Response(JSON.stringify(answer), { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+    const res = await checkout(new Request("https://scrollcraft.space/api/checkout", { method: "POST" }) as unknown as NextRequest);
+    expect(res.status).toBe(200);
+    const sent = new URLSearchParams(String(fetchMock.mock.calls[1][1].body));
+    expect(sent.get("metadata[identity]")).toBe(GOOGLE);
+    expect(sent.get("client_reference_id")).toMatch(/^[A-Za-z0-9_-]+$/);
+  });
+});

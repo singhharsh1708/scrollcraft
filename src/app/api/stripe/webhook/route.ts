@@ -16,8 +16,8 @@ import { logger } from "@/lib/logger";
  */
 
 const MAX_BODY_BYTES = 300_000;
-/** Only a signed-in GitHub account can open a checkout, so only one can be credited. */
-const ACCOUNT = /^gh:[0-9]{1,20}$/;
+/** Only a signed-in GitHub or Google account can open a checkout, so only one can be credited. */
+const ACCOUNT = /^(?:gh:[0-9]{1,20}|go:[0-9]{1,32})$/;
 
 type StripeEvent = {
   type?: string;

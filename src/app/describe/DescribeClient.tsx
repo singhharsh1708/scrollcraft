@@ -14,6 +14,7 @@ import { contactLink, readPhone, type ContactVia } from "@/lib/contactLink";
 import { DEFAULT_QUALITY, QUALITIES, type Quality } from "@/lib/quality";
 import { HANDOFF_KEY } from "@/components/PromptHero";
 import OutOfCredits from "@/components/OutOfCredits";
+import { signInHref } from "@/app/signin/next";
 
 /**
  * Describe a business, get a site.
@@ -382,9 +383,11 @@ export default function DescribeClient() {
             <>
               The first two sites are free. Five more are $20.{" "}
               <Link href="/pricing" className="underline underline-offset-4">Pricing</Link>
-              {allowance && !allowance.signedIn && (
+              {allowance && !allowance.signedIn && allowance.canSignIn && (
                 <>
-                  {" "}Bought a pack somewhere else? Sign in and it follows you.
+                  {" "}Bought a pack somewhere else?{" "}
+                  <Link href={signInHref("/describe")} className="underline underline-offset-4">Sign in</Link>{" "}
+                  and it follows you.
                 </>
               )}
             </>
