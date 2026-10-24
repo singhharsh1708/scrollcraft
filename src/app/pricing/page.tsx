@@ -101,7 +101,7 @@ export default function PricingPage() {
             <p className="mt-3 text-sm text-muted-foreground">
               Five generations, not five templates. The sites are yours, exportable as plain
               files, with nothing phoning home and no licence attached to what you publish.
-              Sign in with GitHub and the pack follows you to any browser.
+              Sign in and the pack follows you to any browser.
             </p>
           </div>
           <div>

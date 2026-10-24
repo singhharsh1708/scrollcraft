@@ -1,31 +1,17 @@
 "use server";
-import { authConfigured, authInstance } from "@/auth";
+import { authConfigured, authInstance, configuredProviders, type SignInProvider } from "@/auth";
+import { safeNext } from "./next";
 
 /**
- * The two things the nav can do.
- *
  * Server actions rather than fetches to the Auth.js endpoints: the post goes to the page
- * the visitor is already on, which the content security policy's `form-action 'self'`
- * allows, and Auth.js handles the CSRF token and the redirect to GitHub itself.
+ * the visitor is already on, and Auth.js handles the CSRF token and the redirect itself.
  */
 
-export async function startGitHubSignIn(): Promise<void> {
+/** Sign in with one of the configured providers and come back to `next`, a path on this site. */
+export async function signInWith(provider: string, next: string): Promise<void> {
   if (!authConfigured()) return;
-  await (await authInstance()).signIn("github", { redirectTo: "/" });
-}
-
-/**
- * Sign in and come back to the page that asked.
- *
- * Only a path on this site is accepted. Anything else, including a scheme-relative
- * address that would leave it, falls back to the home page, so a crafted form cannot use
- * the sign-in as a redirect to somewhere else.
- */
-export async function signInAndReturn(formData: FormData): Promise<void> {
-  if (!authConfigured()) return;
-  const next = String(formData.get("next") ?? "/");
-  const redirectTo = /^\/(?!\/)[A-Za-z0-9\-._~/?=&%]*$/.test(next) ? next : "/";
-  await (await authInstance()).signIn("github", { redirectTo });
+  if (!configuredProviders().includes(provider as SignInProvider)) return;
+  await (await authInstance()).signIn(provider, { redirectTo: safeNext(next) });
 }
 
 export async function endSession(): Promise<void> {

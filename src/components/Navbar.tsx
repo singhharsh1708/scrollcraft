@@ -7,7 +7,8 @@ import { Heart, Menu, X } from "lucide-react";
 import BrandMark from "@/components/BrandMark";
 import GitHubMark from "@/components/GitHubMark";
 import { GITHUB_REPO_URL, GITHUB_SPONSORS_URL } from "@/lib/links";
-import { endSession, startGitHubSignIn } from "@/app/signin/actions";
+import { endSession } from "@/app/signin/actions";
+import { signInHref } from "@/app/signin/next";
 
 /**
  * A one-line announcement, then a glass nav that sticks.
@@ -39,7 +40,7 @@ type Viewer = { name?: string | null; image?: string | null };
  * Who is signed in, or nothing at all.
  *
  * Asked for over HTTP rather than through a provider, because the nav is mounted by a
- * layout that knows nothing about this. A deployment with no GitHub app answers 404 to
+ * layout that knows nothing about this. A deployment with no sign-in answers 404 to
  * that endpoint, and the state stays null, which renders exactly the nav that was here
  * before sign-in existed.
  */
@@ -170,11 +171,9 @@ export default function Navbar({
                 <GitHubMark className="h-4 w-4" />
               </a>
               {viewer === "signed-out" && (
-                <form action={startGitHubSignIn}>
-                  <button type="submit" className="lc-btn lc-btn-ghost lc-btn-sm">
-                    Sign in
-                  </button>
-                </form>
+                <Link href={signInHref(pathname)} className="lc-btn lc-btn-ghost lc-btn-sm">
+                  Sign in
+                </Link>
               )}
               <Link href="/#write" className="lc-btn lc-btn-solid lc-btn-sm">
                 Write my site
@@ -182,7 +181,7 @@ export default function Navbar({
               {viewer && viewer !== "signed-out" && (
                 <form action={endSession} className="flex items-center gap-2">
                   {viewer.image && (
-                    // unoptimized: the avatar comes from GitHub's CDN, and optimising it
+                    // unoptimized: the avatar comes from the provider's CDN, and optimising it
                     // would mean naming that host in the image config.
                     <Image
                       unoptimized
@@ -257,11 +256,13 @@ export default function Navbar({
                   <GitHubMark className="h-4 w-4" /> GitHub
                 </a>
                 {viewer === "signed-out" && (
-                  <form action={startGitHubSignIn} className="col-span-2">
-                    <button type="submit" className="lc-btn lc-btn-ghost lc-btn-sm h-11 w-full">
-                      <GitHubMark className="h-4 w-4" /> Sign in
-                    </button>
-                  </form>
+                  <Link
+                    href={signInHref(pathname)}
+                    onClick={() => setOpen(false)}
+                    className="lc-btn lc-btn-ghost lc-btn-sm col-span-2 h-11 w-full"
+                  >
+                    Sign in
+                  </Link>
                 )}
                 {viewer && viewer !== "signed-out" && (
                   <form action={endSession} className="col-span-2 flex items-center gap-2">

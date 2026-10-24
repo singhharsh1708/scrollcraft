@@ -31,8 +31,8 @@ export default function CookiesPage() {
             you and is never read by anybody else.
           </li>
           <li>
-            <strong>A session cookie</strong> &mdash; set only when you sign in with
-            GitHub, and only to keep you signed in. Signing out removes it.
+            <strong>A session cookie</strong> &mdash; set only when you sign in, and
+            only to keep you signed in. Signing out removes it.
           </li>
           <li>
             <strong>sc_key</strong> &mdash; set only if you buy a pack and paste your

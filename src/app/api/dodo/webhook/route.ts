@@ -9,7 +9,7 @@ import { logger } from "@/lib/logger";
  */
 
 const MAX_BODY_BYTES = 300_000;
-const ACCOUNT = /^gh:[0-9]{1,20}$/;
+const ACCOUNT = /^(?:gh:[0-9]{1,20}|go:[0-9]{1,32})$/;
 
 type DodoEvent = {
   type?: string;

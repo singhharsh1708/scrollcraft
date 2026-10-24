@@ -4,7 +4,7 @@ import { authConfigured, authInstance } from "@/auth";
 /**
  * Auth.js, mounted only where it is configured.
  *
- * Without the GitHub variables this answers 404 rather than 500, which is what tells the
+ * Without sign-in configured this answers 404 rather than 500, which is what tells the
  * nav there is nothing to offer, and keeps a fresh clone's routes all working.
  */
 

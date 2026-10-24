@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { pageMeta } from "@/lib/pageMeta";
 import { paymentProcessor } from "@/lib/paymentProcessor";
+import { authConfigured, configuredProviders, providerNames } from "@/auth";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import SiteFooter from "@/components/SiteFooter";
@@ -14,6 +15,8 @@ export const metadata: Metadata = pageMeta({
 
 export default function PrivacyPage() {
   const processor = paymentProcessor();
+  const providers = authConfigured() ? configuredProviders() : [];
+  const accountNumber = providerNames() ? `the account number of the ${providerNames()} account you sign in with` : "your account number";
   return (
     <main className="min-h-screen bg-background text-foreground">
       <Navbar />
@@ -27,7 +30,7 @@ export default function PrivacyPage() {
           exporter, and no profile or saved history. The sites you build stay in your own
           browser until you export them. If you buy a pack of generations we do keep a
           short record of it, because otherwise we could not give you what you paid for:{" "}
-          your GitHub account number and how many sites are left on it. No email, no name and no card.{" "}
+          {accountNumber} and how many sites are left on it. No email, no name and no card.{" "}
           That record
           lives in a key-value store, it is the only thing we hold about anybody, and it is
           deleted on request.
@@ -111,7 +114,12 @@ export default function PrivacyPage() {
           <li><strong>Sentry</strong> — error reports, when enabled. These carry a stack trace, not your content.</li>
           <li><strong>Upstash</strong> — rate limiting and the daily counts above, when enabled. It stores a counter keyed by IP for limits, and counters keyed by date for the four steps.</li>
           <li><strong>Anthropic</strong> — writes a site from your description, when enabled. It receives that description and any photographs you attach, and only when you press Build my site.</li>
-          <li><strong>GitHub</strong> &mdash; sign-in, if you use it and this deployment offers it. GitHub tells us your account number, your username and your avatar; we keep only the number, and we keep it so your credits can find you in another browser. We never ask them for your repositories or anything else.</li>
+          {providers.includes("google") && (
+            <li><strong>Google</strong>: sign-in, if you choose it. Google tells us your account number, your name, your email address and your profile picture; we keep only the number, and we keep it so your credits can find you in another browser. We never ask for access to your Gmail, Drive, contacts or anything else.</li>
+          )}
+          {providers.includes("github") && (
+            <li><strong>GitHub</strong>: sign-in, if you choose it. GitHub tells us your account number, your username, your email address and your avatar; we keep only the number, and we keep it so your credits can find you in another browser. We never ask them for your repositories or anything else.</li>
+          )}
           {processor === "dodo" && (
             <li><strong>Dodo Payments</strong> &mdash; the merchant of record for a pack of sites, when the shop is enabled. You pay on their page, so they receive your card, email and billing details directly and we do not. They tell us only that a payment succeeded and which account to credit.</li>
           )}
@@ -127,15 +135,15 @@ export default function PrivacyPage() {
           Two, both around the site writer and neither readable by scripts: a random name
           for this browser, so your free sites are yours rather than shared with everybody
           on the same network, and, if you buy a pack, the hash of your licence key so this
-          browser can spend what you paid for. A third is set only while you are signed in
-          with GitHub, and holds the signed session. No advertising or analytics cookies
+          browser can spend what you paid for. A third is set only while you are signed in,
+          and holds the signed session. No advertising or analytics cookies
           are used. See our <Link href="/cookies" className="underline">Cookie Policy</Link>.
         </p>
 
         <h2>Your rights</h2>
         <p>
           If you never signed in, there is no account to delete and nothing of yours for us
-          to hold. If you did, what we hold is your GitHub account number and how many of
+          to hold. If you did, what we hold is {accountNumber} and how many of
           your paid sites are left; email <a href="mailto:hs1663531@gmail.com" className="underline">hs1663531@gmail.com</a> and
           it is deleted, along with any unused credits. To remove what
           ScrollCraft has stored on your device, clear this site&apos;s data in your browser

@@ -1,8 +1,8 @@
 "use client";
+import Link from "next/link";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
-import GitHubMark from "@/components/GitHubMark";
-import { signInAndReturn } from "@/app/signin/actions";
+import { signInHref } from "@/app/signin/next";
 
 /**
  * The one button that takes money.
@@ -58,13 +58,11 @@ export default function BuyPack({
   if (!signedIn) {
     if (!canSignIn) return null;
     return (
-      <form action={signInAndReturn} onSubmit={() => setBusy(true)} className={className}>
-        <input type="hidden" name="next" value={next} />
-        <button type="submit" disabled={busy} className="lc-btn lc-btn-solid lc-btn-sm">
-          {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <GitHubMark className="h-4 w-4" />}
+      <div className={className}>
+        <Link href={signInHref(next)} className="lc-btn lc-btn-solid lc-btn-sm max-md:h-11">
           Sign in to buy five sites
-        </button>
-      </form>
+        </Link>
+      </div>
     );
   }
 
