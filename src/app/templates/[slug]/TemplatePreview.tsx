@@ -1,7 +1,7 @@
 "use client";
 import { useMemo } from "react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import SiteRenderer from "@/components/SiteRenderer";
 import type { Template } from "@/lib/templates";
@@ -25,18 +25,20 @@ export default function TemplatePreview({ template }: { template: Template }) {
       openOnHeadline
       hostHasH1
     >
-      <div className="fixed top-4 left-4 right-4 z-40 flex items-center justify-between gap-3 pointer-events-none">
-        <Link href="/templates" className="pointer-events-auto">
-          <Button size="sm" variant="outline" className="border-white/15 bg-black/50 backdrop-blur h-8 text-xs gap-1.5">
-            <ArrowLeft className="w-3.5 h-3.5" /> Templates
-          </Button>
+      <nav aria-label="Template" className="fixed top-4 left-4 right-4 z-40 flex items-center justify-between gap-3 pointer-events-none">
+        <Link
+          href="/templates"
+          className={buttonVariants({ size: "sm", variant: "outline", className: "pointer-events-auto border-white/15 bg-black/50 backdrop-blur h-11 md:h-8 text-xs gap-1.5" })}
+        >
+          <ArrowLeft className="w-3.5 h-3.5" aria-hidden="true" /> Templates
         </Link>
-        <Link href={`/editor?template=${template.slug}`} className="pointer-events-auto">
-          <Button size="sm" className="h-8 text-xs gap-1.5">
-            Use this template <ArrowRight className="w-3.5 h-3.5" />
-          </Button>
+        <Link
+          href={`/editor?template=${template.slug}`}
+          className={buttonVariants({ size: "sm", className: "pointer-events-auto h-11 md:h-8 text-xs gap-1.5" })}
+        >
+          Use this template <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
         </Link>
-      </div>
+      </nav>
     </SiteRenderer>
   );
 }

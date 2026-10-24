@@ -195,7 +195,7 @@ describe("the editor's section list survives a nine-section template", () => {
     expect(editor).toContain('className="absolute right-1 top-1 flex items-center gap-0.5');
     expect(editor).not.toMatch(/flex items-center gap-0\.5 flex-shrink-0 opacity-0/);
     // Absolute positioning needs a containing block on the row.
-    expect(editor).toMatch(/className=\{`group relative flex items-start gap-2/);
+    expect(editor).toMatch(/className=\{`group relative flex items-start/);
   });
 
   it("offers a spacer only what a spacer has", () => {

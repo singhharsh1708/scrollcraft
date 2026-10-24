@@ -51,8 +51,8 @@ export default async function CategoryPage({ params }: { params: Promise<{ categ
 
       <div className="mx-auto max-w-5xl px-4 pt-20 sm:px-6">
         <nav aria-label="Breadcrumb" className="lc-mono mb-8 text-xs text-muted-foreground">
-          <ol className="flex flex-wrap items-center gap-2">
-            <li><Link href="/templates" className="underline-offset-4 hover:text-foreground hover:underline">Templates</Link></li>
+          <ol className="flex flex-wrap items-center gap-x-2 md:gap-y-2">
+            <li><Link href="/templates" className="inline-flex items-center max-md:min-h-11 underline-offset-4 hover:text-foreground hover:underline">Templates</Link></li>
             <li aria-hidden="true">/</li>
             <li aria-current="page" className="text-foreground">{crumbs[2].name}</li>
           </ol>
@@ -84,16 +84,16 @@ export default async function CategoryPage({ params }: { params: Promise<{ categ
               <div className="flex flex-1 flex-col gap-3 p-4">
                 <div className="space-y-1">
                   <h3 className="text-lg font-medium tracking-[-0.02em]">
-                    <Link href={`/templates/${t.slug}`} className="underline-offset-4 hover:underline">{t.name}</Link>
+                    <Link href={`/templates/${t.slug}`} className="inline-flex items-center max-md:min-h-11 underline-offset-4 hover:underline">{t.name}</Link>
                   </h3>
                   <p className="text-xs leading-relaxed text-muted-foreground">{templateUse(t).forWhom}</p>
                 </div>
-                <p className="lc-mono mt-auto text-[11px] text-muted-foreground">
+                <p className="lc-mono mt-auto text-xs text-muted-foreground">
                   {templateSectionCount(t)} sections · {templateScrollHeight(t).toLocaleString("en-US")}px of scroll
                 </p>
                 <div className="flex gap-2">
-                  <Link href={`/templates/${t.slug}`} aria-label={`Preview ${t.name}`} className="lc-btn lc-btn-ghost lc-btn-sm flex-1">Preview</Link>
-                  <Link href={`/editor?template=${t.slug}`} aria-label={`Use ${t.name}`} className="lc-btn lc-btn-solid lc-btn-sm flex-1">Use</Link>
+                  <Link href={`/templates/${t.slug}`} aria-label={`Preview ${t.name}`} className="lc-btn lc-btn-ghost lc-btn-sm max-md:h-11 flex-1">Preview</Link>
+                  <Link href={`/editor?template=${t.slug}`} aria-label={`Use ${t.name}`} className="lc-btn lc-btn-solid lc-btn-sm max-md:h-11 flex-1">Use</Link>
                 </div>
               </div>
             </li>

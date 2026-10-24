@@ -223,7 +223,7 @@ export default function HeroSequence({
               >
                 <p
                   className="mb-[0.7em] font-semibold uppercase tracking-[0.18em] opacity-85"
-                  style={{ color: template.ink, fontSize: "max(10px, 0.24em)" }}
+                  style={{ color: template.ink, fontSize: "max(12px, 0.24em)" }}
                 >
                   {s.eyebrow}
                 </p>
@@ -236,7 +236,7 @@ export default function HeroSequence({
                 {s.cta && (
                   <span
                     className="mt-[1em] rounded-full px-[1.4em] py-[0.7em] font-semibold text-white"
-                    style={{ background: template.accent, fontSize: "max(11px, 0.2em)" }}
+                    style={{ background: template.accent, fontSize: "max(12px, 0.2em)" }}
                   >
                     {s.cta}
                   </span>

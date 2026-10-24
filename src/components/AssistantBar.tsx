@@ -94,7 +94,7 @@ export function AssistantBar({
   const over = instruction.length > MAX_INSTRUCTION_CHARS;
 
   return (
-    <div className="border-b border-white/5 bg-card/40 px-4 py-3">
+    <section aria-label="Rewrite the copy" className="border-b border-white/5 bg-card/40 px-4 py-3">
       {/* Capped, because a one-line instruction stretched across a 1440px field reads as
           a mistake and the note under it becomes a 200-character line. */}
       <div className="max-w-3xl">
@@ -110,14 +110,14 @@ export function AssistantBar({
           rows={2}
           aria-label="Describe the change you want"
           placeholder="Describe the change, such as: rewrite the whole site for a yoga studio in Pune"
-          className="flex-1 min-h-0 resize-none bg-white/5 border-white/10 text-sm"
+          className="flex-1 min-h-0 resize-none bg-white/5 border-white/10 text-base md:text-sm"
         />
         <div className="flex flex-col gap-1">
           <Button
             onClick={run}
             disabled={busy || !instruction.trim() || over}
             size="sm"
-            className="bg-primary hover:bg-primary/90 text-white h-8 px-3 text-xs font-semibold"
+            className="bg-primary hover:bg-primary/90 text-white h-11 md:h-8 px-3 text-xs font-semibold"
           >
             {busy ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : <Sparkles className="w-3.5 h-3.5 mr-1" />}
             Rewrite copy
@@ -127,7 +127,7 @@ export function AssistantBar({
             variant="ghost"
             size="sm"
             aria-label="Close the assistant"
-            className="h-6 px-2 text-xs text-muted-foreground"
+            className="h-11 md:h-6 px-2 text-xs text-muted-foreground"
           >
             <X className="w-3 h-3 mr-1" /> Close
           </Button>
@@ -140,22 +140,22 @@ export function AssistantBar({
             type="button"
             disabled={busy}
             onClick={() => setInstruction(s)}
-            className="rounded-full border border-white/10 px-2 py-0.5 text-[11px] text-muted-foreground hover:text-foreground hover:border-white/25 transition-colors disabled:opacity-40"
+            className="rounded-full border border-white/10 px-3 md:px-2 py-0.5 max-md:min-h-11 text-xs text-muted-foreground hover:text-foreground hover:border-white/25 transition-colors disabled:opacity-40"
           >
             {s}
           </button>
         ))}
         {instruction.length > 0 && (
-          <span className={`ml-auto text-[11px] tabular-nums ${over ? "text-destructive" : "text-muted-foreground"}`}>
+          <span className={`ml-auto text-xs tabular-nums ${over ? "text-destructive" : "text-muted-foreground"}`}>
             {instruction.length}/{MAX_INSTRUCTION_CHARS}
           </span>
         )}
       </div>
-      <p className="mt-1.5 text-[11px] text-muted-foreground">
+      <p className="mt-1.5 text-xs text-muted-foreground">
         The words only. Layout, colours, images and button links stay as you set them.
         Your instruction and this site&apos;s copy are sent to the assistant to do it.
       </p>
       </div>
-    </div>
+    </section>
   );
 }

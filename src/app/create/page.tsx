@@ -199,8 +199,8 @@ function CreatePageInner() {
   return (
     <main className="min-h-screen bg-background text-foreground flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
-        <Link href="/" className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
+      <div className="flex items-center justify-between px-6 py-2 md:py-4 border-b border-white/5">
+        <Link href="/" className="flex items-center gap-2 max-md:min-h-11 text-muted-foreground hover:text-foreground transition-colors">
           <ArrowLeft className="w-4 h-4" /> Back
         </Link>
         <div className="flex items-center gap-2">
@@ -208,26 +208,26 @@ function CreatePageInner() {
           <span className="font-semibold">ScrollCraft</span>
         </div>
         <div className="flex items-center gap-4">
-          <Link href="/presets" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Presets</Link>
+          <Link href="/presets" className="inline-flex items-center max-md:min-h-11 text-sm text-muted-foreground hover:text-foreground transition-colors">Presets</Link>
         </div>
       </div>
 
       {/* Steps */}
-      <div className="flex items-center justify-center gap-2 py-6">
+      <ol aria-label="Steps" data-stepper className="flex items-center justify-center gap-1 sm:gap-2 px-4 py-6">
         {STEPS.map((s, i) => (
-          <div key={s} className="flex items-center gap-2">
+          <li key={s} aria-current={i === step ? "step" : undefined} className="flex items-center gap-1 sm:gap-2">
             <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
               i === step ? "bg-primary text-white" :
               i < step ? "bg-primary/20 text-primary-ink" :
               "bg-white/5 text-muted-foreground"
             }`}>
-              {i < step ? <CheckCircle2 className="w-3.5 h-3.5" /> : <span className="w-4 text-center">{i + 1}</span>}
-              {s}
+              {i < step ? <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" /> : <span className="w-4 text-center" aria-hidden="true">{i + 1}</span>}
+              <span className={i === step ? undefined : "max-sm:sr-only"}>{s}</span>
             </div>
-            {i < STEPS.length - 1 && <div className={`w-8 h-px ${i < step ? "bg-primary/40" : "bg-white/10"}`} />}
-          </div>
+            {i < STEPS.length - 1 && <div aria-hidden="true" className={`w-4 sm:w-8 h-px ${i < step ? "bg-primary/40" : "bg-white/10"}`} />}
+          </li>
         ))}
-      </div>
+      </ol>
 
       {planName && (
         <div className="flex justify-center pb-2">

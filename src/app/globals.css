@@ -254,6 +254,12 @@
   .lc-link:hover {
     color: var(--foreground);
   }
+  /* Standalone links: a full tap target on phones. */
+  @media not (min-width: 48rem) {
+    a.lc-link {
+      min-height: 2.75rem;
+    }
+  }
 
   /*
    * A pale band. Redefining the tokens here, rather than restyling each child, means

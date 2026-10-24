@@ -77,10 +77,10 @@ export default function SiteFooter({ compact = false }: { compact?: boolean }) {
             <span className="lc-mono">ScrollCraft · open source, MIT licensed</span>
           </div>
           <div className="lc-mono flex items-center gap-6 text-sm text-muted-foreground">
-            <a href={GITHUB_REPO_URL} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 transition-colors hover:text-foreground">
+            <a href={GITHUB_REPO_URL} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 max-md:min-h-11 transition-colors hover:text-foreground">
               <GitHubMark className="h-4 w-4" /> GitHub
             </a>
-            <a href={GITHUB_SPONSORS_URL} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 transition-colors hover:text-foreground">
+            <a href={GITHUB_SPONSORS_URL} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 max-md:min-h-11 transition-colors hover:text-foreground">
               <Heart className="h-3.5 w-3.5" aria-hidden="true" /> Sponsor
             </a>
           </div>
@@ -96,12 +96,12 @@ export default function SiteFooter({ compact = false }: { compact?: boolean }) {
           {COLUMNS.map(({ heading, links }) => (
             <div key={heading} className="border-t border-border pt-8">
               <h2 className="lc-display mb-6 text-2xl text-primary-ink">{heading}</h2>
-              <ul className="space-y-1.5">
+              <ul className="md:space-y-1.5">
                 {links.map((link) => (
                   <li key={link.label}>
                     <FooterAnchor
                       link={link}
-                      className="lc-mono text-sm text-muted-foreground transition-colors hover:text-foreground"
+                      className="lc-mono inline-flex items-center max-md:min-h-11 text-sm text-muted-foreground transition-colors hover:text-foreground"
                     />
                   </li>
                 ))}
@@ -116,21 +116,21 @@ export default function SiteFooter({ compact = false }: { compact?: boolean }) {
               before you trust any of it.
             </p>
             <div className="flex flex-wrap gap-2">
-              <a href={GITHUB_REPO_URL} target="_blank" rel="noopener noreferrer" className="lc-btn lc-btn-solid lc-btn-sm">
+              <a href={GITHUB_REPO_URL} target="_blank" rel="noopener noreferrer" className="lc-btn lc-btn-solid lc-btn-sm max-md:h-11">
                 <GitHubMark className="h-4 w-4" /> Star on GitHub
               </a>
-              <a href={GITHUB_SPONSORS_URL} target="_blank" rel="noopener noreferrer" className="lc-btn lc-btn-ghost lc-btn-sm">
+              <a href={GITHUB_SPONSORS_URL} target="_blank" rel="noopener noreferrer" className="lc-btn lc-btn-ghost lc-btn-sm max-md:h-11">
                 <Heart className="h-3.5 w-3.5" aria-hidden="true" /> Sponsor
               </a>
             </div>
-            <div className="mt-6 flex items-center gap-4 text-muted-foreground">
-              <a href={GITHUB_REPO_URL} target="_blank" rel="noopener noreferrer" aria-label="ScrollCraft on GitHub" className="transition-colors hover:text-foreground">
+            <div className="mt-6 flex items-center gap-1 md:gap-4 text-muted-foreground">
+              <a href={GITHUB_REPO_URL} target="_blank" rel="noopener noreferrer" aria-label="ScrollCraft on GitHub" className="inline-flex items-center justify-center max-md:h-11 max-md:w-11 transition-colors hover:text-foreground">
                 <GitHubMark className="h-4 w-4" />
               </a>
-              <a href={LINKEDIN_URL} target="_blank" rel="noopener noreferrer" aria-label="Harsh Singh on LinkedIn" className="transition-colors hover:text-foreground">
+              <a href={LINKEDIN_URL} target="_blank" rel="noopener noreferrer" aria-label="Harsh Singh on LinkedIn" className="inline-flex items-center justify-center max-md:h-11 max-md:w-11 transition-colors hover:text-foreground">
                 <LinkedInMark className="h-4 w-4" />
               </a>
-              <a href={`mailto:${CONTACT_EMAIL}`} className="lc-mono text-xs transition-colors hover:text-foreground">
+              <a href={`mailto:${CONTACT_EMAIL}`} className="lc-mono inline-flex items-center max-md:min-h-11 text-xs transition-colors hover:text-foreground">
                 {CONTACT_EMAIL}
               </a>
             </div>
@@ -164,10 +164,10 @@ export default function SiteFooter({ compact = false }: { compact?: boolean }) {
             <span className="h-1.5 w-1.5 rounded-full bg-primary-ink" aria-hidden="true" />
             Open source, MIT licensed
           </p>
-          <ul className="lc-mono flex flex-wrap items-center justify-center gap-x-8 gap-y-2 text-sm text-muted-foreground">
+          <ul className="lc-mono flex flex-wrap items-center justify-center gap-x-8 md:gap-y-2 text-sm text-muted-foreground">
             {LEGAL.map((link) => (
               <li key={link.label}>
-                <FooterAnchor link={link} className="transition-colors hover:text-foreground" />
+                <FooterAnchor link={link} className="inline-flex items-center max-md:min-h-11 transition-colors hover:text-foreground" />
               </li>
             ))}
           </ul>

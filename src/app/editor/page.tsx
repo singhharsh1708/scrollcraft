@@ -1219,8 +1219,8 @@ function EditorInner() {
           <Loader2 className="w-4 h-4 animate-spin" /> Loading your site…
         </div>
       )}
-      {/* Top bar */}
-      <div className="flex items-center justify-between gap-2 flex-wrap px-3 md:px-4 py-2 border-b border-white/5 bg-card/50 flex-shrink-0">
+      <header className="flex items-center justify-between gap-2 flex-wrap px-3 md:px-4 py-2 border-b border-white/5 bg-card/50 flex-shrink-0">
+        <h1 className="sr-only">Editing {siteName.trim() || "your site"}</h1>
         <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-1 md:flex-none">
           <Link
             href="/create"
@@ -1318,6 +1318,8 @@ function EditorInner() {
             ref={openProjectInputRef}
             type="file"
             accept="application/json,.json"
+            aria-hidden="true"
+            tabIndex={-1}
             className="sr-only"
             onChange={(e) => {
               const file = e.target.files?.[0];
@@ -1422,7 +1424,7 @@ function EditorInner() {
             </span>
           )}
         </div>
-      </div>
+      </header>
 
       {assistantAvailable && assistantOpen && (
         <AssistantBar
@@ -1501,25 +1503,29 @@ function EditorInner() {
             {sections.map((s, i) => (
               <Fragment key={s.id}>
               <div
-                role="button"
-                tabIndex={0}
-                aria-pressed={selectedSection === s.id}
-                onClick={() => setSelectedSection(s.id)}
-                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setSelectedSection(s.id); } }}
-                className={`group relative flex items-start gap-2 p-2 pr-2 max-md:min-h-11 max-md:items-center max-md:py-0 rounded-lg cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary ${
+                data-section-row
+                className={`group relative flex items-start max-md:items-center rounded-lg transition-colors ${
                   selectedSection === s.id ? "bg-primary/15 border border-primary/30" : "hover:bg-white/5"
                 }`}
               >
-                <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 self-start mt-1.5 max-md:self-center max-md:mt-0 ${
-                  s.kind === "spacer" ? "bg-white/15" : s.visible ? "bg-primary" : "bg-white/20"
-                }`} />
-                {s.kind === "spacer" ? (
-                  <span className="text-xs flex-1 text-muted-foreground italic">Spacer · {s.scrollHeight}px</span>
-                ) : (
-                  <span className="text-xs flex-1 line-clamp-2 leading-snug">
-                    {s.heading || `Section ${i + 1}`}
-                  </span>
-                )}
+                <button
+                  type="button"
+                  data-row-select
+                  aria-pressed={selectedSection === s.id}
+                  onClick={() => setSelectedSection(s.id)}
+                  className="flex flex-1 min-w-0 items-start gap-2 p-2 max-md:min-h-11 max-md:items-center max-md:py-0 rounded-lg text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 self-start mt-1.5 max-md:self-center max-md:mt-0 ${
+                    s.kind === "spacer" ? "bg-white/15" : s.visible ? "bg-primary" : "bg-white/20"
+                  }`} />
+                  {s.kind === "spacer" ? (
+                    <span className="text-xs flex-1 text-muted-foreground italic">Spacer · {s.scrollHeight}px</span>
+                  ) : (
+                    <span className="text-xs flex-1 line-clamp-2 leading-snug">
+                      {s.heading || `Section ${i + 1}`}
+                    </span>
+                  )}
+                </button>
                 <div className="absolute right-1 top-1 flex items-center gap-0.5 rounded-md bg-card/95 backdrop-blur-sm px-0.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 [@media(hover:none)]:opacity-100 max-md:hidden transition-opacity">
                   <button onClick={(e) => { e.stopPropagation(); moveSection(s.id, "up"); }} className="p-1.5 hover:text-primary-ink" title="Move up" aria-label="Move up">
                     <ChevronUp className="w-3 h-3" />
@@ -1605,11 +1611,11 @@ function EditorInner() {
                       aria-label={`Select section ${s.heading || ""}`.trim()}
                       onClick={() => setSelectedSection(s.id)}
                       onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setSelectedSection(s.id); } }}
+                      className={`${selectedSection === s.id ? "outline-solid outline-1 outline-[rgba(124,58,237,0.5)]" : "outline-none"} focus-visible:outline-solid focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring`}
                       style={{
                         position: "relative",
                         height: s.scrollHeight,
                         cursor: "pointer",
-                        outline: selectedSection === s.id ? "1px solid rgba(124,58,237,0.5)" : "none",
                       }}
                     >
                       {/* Sticky wrapper keeps content pinned in the viewport while the section's
@@ -1804,7 +1810,7 @@ function EditorInner() {
                     placeholder="https://cdn.example.com/logo.png"
                     className="h-11 md:h-7 bg-white/5 border-white/10"
                   />
-                  <p className="text-[11px] text-muted-foreground/70">
+                  <p className="text-xs text-muted-foreground/70">
                     Must be a public https URL. An exported ZIP cannot carry a local file.
                   </p>
                 </div>
@@ -1847,21 +1853,21 @@ function EditorInner() {
                 <div className="space-y-1.5">
                   <label className="text-xs text-muted-foreground">Accent color</label>
                   <div className="flex items-center gap-2">
-                    <input aria-label="Accent color" type="color" value={selectedSectionData.accentColor} onChange={(e) => updateSection(selectedSectionData.id, { accentColor: e.target.value })} className="w-8 h-8 rounded cursor-pointer border-0 bg-transparent" />
+                    <input aria-label="Accent color" type="color" value={selectedSectionData.accentColor} onChange={(e) => updateSection(selectedSectionData.id, { accentColor: e.target.value })} className="w-11 h-11 md:w-8 md:h-8 rounded cursor-pointer border-0 bg-transparent" />
                     <Input aria-label="Accent color hex value" value={selectedSectionData.accentColor} onChange={(e) => updateSection(selectedSectionData.id, { accentColor: e.target.value })} className="flex-1 h-11 md:h-7 bg-white/5 border-white/10 font-mono" />
                   </div>
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-xs text-muted-foreground">Heading color</label>
                   <div className="flex items-center gap-2">
-                    <input aria-label="Heading color" type="color" value={selectedSectionData.headingColor} onChange={(e) => updateSection(selectedSectionData.id, { headingColor: e.target.value })} className="w-8 h-8 rounded cursor-pointer border-0 bg-transparent" />
+                    <input aria-label="Heading color" type="color" value={selectedSectionData.headingColor} onChange={(e) => updateSection(selectedSectionData.id, { headingColor: e.target.value })} className="w-11 h-11 md:w-8 md:h-8 rounded cursor-pointer border-0 bg-transparent" />
                     <Input aria-label="Heading color hex value" value={selectedSectionData.headingColor} onChange={(e) => updateSection(selectedSectionData.id, { headingColor: e.target.value })} className="flex-1 h-11 md:h-7 bg-white/5 border-white/10 font-mono" />
                   </div>
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-xs text-muted-foreground">Body color</label>
                   <div className="flex items-center gap-2">
-                    <input aria-label="Body color" type="color" value={selectedSectionData.bodyColor.startsWith("rgba") ? "#b3b3b3" : selectedSectionData.bodyColor} onChange={(e) => updateSection(selectedSectionData.id, { bodyColor: e.target.value })} className="w-8 h-8 rounded cursor-pointer border-0 bg-transparent" />
+                    <input aria-label="Body color" type="color" value={selectedSectionData.bodyColor.startsWith("rgba") ? "#b3b3b3" : selectedSectionData.bodyColor} onChange={(e) => updateSection(selectedSectionData.id, { bodyColor: e.target.value })} className="w-11 h-11 md:w-8 md:h-8 rounded cursor-pointer border-0 bg-transparent" />
                     <Input aria-label="Body color hex value" value={selectedSectionData.bodyColor} onChange={(e) => updateSection(selectedSectionData.id, { bodyColor: e.target.value })} className="flex-1 h-11 md:h-7 bg-white/5 border-white/10 font-mono" />
                   </div>
                 </div>
@@ -1946,6 +1952,8 @@ function EditorInner() {
                     ref={audioFileRef}
                     type="file"
                     accept="audio/*"
+                    aria-hidden="true"
+                    tabIndex={-1}
                     className="hidden"
                     onChange={(e) => {
                       const file = e.target.files?.[0];
@@ -1965,14 +1973,14 @@ function EditorInner() {
                     // An uploaded track is a multi-megabyte data: URI, which is far past
                     // what the site record stores — it exports fine now but will not
                     // survive a reload, so say so instead of letting it vanish quietly.
-                    <p className="text-[10px] leading-snug text-amber-400/80 px-0.5">
+                    <p className="text-xs leading-snug text-amber-400/80 px-0.5">
                       Uploaded audio stays in this session — export before reloading, or re-upload after.
                     </p>
                   )}
                   {audioSrc && (
                     <button
                       onClick={() => { setAudioSrc(null); if (audioFileRef.current) audioFileRef.current.value = ""; }}
-                      className="w-full h-7 rounded border border-white/10 text-xs text-muted-foreground hover:text-destructive hover:border-destructive/40 transition-colors"
+                      className="w-full h-11 md:h-7 rounded border border-white/10 text-sm md:text-xs text-muted-foreground hover:text-destructive hover:border-destructive/40 transition-colors"
                     >
                       Remove audio
                     </button>
@@ -2019,7 +2027,7 @@ function EditorInner() {
                     placeholder="A one-sentence summary that shows up in search results and link previews."
                     className="min-h-[60px] bg-black/30 border-white/10 resize-none"
                   />
-                  <p className="text-[11px] text-muted-foreground/60 tabular-nums">
+                  <p className="text-xs text-muted-foreground/60 tabular-nums">
                     {siteDescription.length}/300
                   </p>
                 </div>
@@ -2030,7 +2038,7 @@ function EditorInner() {
                     value={customHead}
                     onChange={(e) => { setCustomHead(e.target.value); setDirty(true); }}
                     placeholder={'<!-- e.g. Google Analytics, custom meta -->\n<script async src="..."></script>'}
-                    className="min-h-[100px] font-mono text-xs bg-black/30 border-white/10 resize-none"
+                    className="min-h-[100px] font-mono text-base md:text-xs bg-black/30 border-white/10 resize-none"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -2040,7 +2048,7 @@ function EditorInner() {
                     value={customCss}
                     onChange={(e) => { setCustomCss(e.target.value); setDirty(true); }}
                     placeholder={".scroll-section { ... }\n.section-content { ... }"}
-                    className="min-h-[100px] font-mono text-xs bg-black/30 border-white/10 resize-none"
+                    className="min-h-[100px] font-mono text-base md:text-xs bg-black/30 border-white/10 resize-none"
                   />
                 </div>
               </TabsContent>
