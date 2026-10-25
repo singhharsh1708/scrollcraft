@@ -182,6 +182,7 @@ describe("the cheap checks happen before anything is spent", () => {
         { media_type: "image/jpeg", data: PIXEL },
         { media_type: "image/webp", data: PIXEL },
       ],
+      document: null,
     });
   });
 

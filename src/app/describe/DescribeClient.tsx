@@ -1,15 +1,17 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Loader2, Upload, X } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import SiteFooter from "@/components/SiteFooter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { writeSite } from "@/lib/writeSite";
-import { MAX_DESCRIPTION, MAX_IMAGES } from "@/lib/briefLimits";
+import { MAX_DESCRIPTION } from "@/lib/briefLimits";
+import { LONG_EDGE } from "@/lib/attachments";
+import AttachmentBar, { AttachmentChips, useAttachments } from "@/components/Attachments";
 import { contactLink, readPhone, type ContactVia } from "@/lib/contactLink";
 import { DEFAULT_QUALITY, QUALITIES, type Quality } from "@/lib/quality";
 import { HANDOFF_KEY } from "@/components/PromptHero";
@@ -24,7 +26,6 @@ import { signInHref } from "@/app/signin/next";
  * long edge of 1024 keeps the bill in proportion to what the model can actually use.
  */
 
-const LONG_EDGE = 1024;
 const EXAMPLES = [
   "A two-chair barbershop on Mill Road, open since 2011. Walk-ins before noon, appointments after. Fades, beard trims, and we do not do colour.",
   "I repair and restore vintage film cameras, mostly Nikon and Pentax, from a workshop in Leeds. Six to eight week turnaround, and I send photographs of the work as I go.",
@@ -40,7 +41,7 @@ const WHAT_HAPPENS = [
 
 const QUESTIONS = [
   ["What is free?", "The editor, the templates and the export, with no account and no watermark. Writing a site from a description is the one paid part: the first two are free, then five more are $20."],
-  ["Where do my words and photographs go?", `To Anthropic, once, and only when you press Build my site. Photographs are reduced to ${LONG_EDGE} pixels on your device first. We do not store the description or the photographs.`],
+  ["Where do my words and photographs go?", `To Anthropic, once, and only when you press Build my site. Photographs are reduced to ${LONG_EDGE} pixels on your device first. We do not store the description, the photographs or the document.`],
   ["Can I change what it writes?", "Every word, in the editor. Nothing is published until you export the files and put them on a host yourself."],
 ];
 
@@ -49,20 +50,6 @@ const VIA: [ContactVia, string][] = [
   ["whatsapp", "WhatsApp"],
 ];
 
-type Picked = { name: string; media_type: string; data: string; preview: string };
-
-async function downscale(file: File): Promise<Picked> {
-  const bitmap = await createImageBitmap(file);
-  const scale = Math.min(1, LONG_EDGE / Math.max(bitmap.width, bitmap.height));
-  const canvas = document.createElement("canvas");
-  canvas.width = Math.round(bitmap.width * scale);
-  canvas.height = Math.round(bitmap.height * scale);
-  canvas.getContext("2d")!.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-  bitmap.close();
-  const url = canvas.toDataURL("image/jpeg", 0.82);
-  return { name: file.name, media_type: "image/jpeg", data: url.split(",")[1] ?? "", preview: url };
-}
-
 export default function DescribeClient() {
   const router = useRouter();
   const [description, setDescription] = useState("");
@@ -70,7 +57,7 @@ export default function DescribeClient() {
   const [contact, setContact] = useState("");
   const [quality, setQuality] = useState<Quality>(DEFAULT_QUALITY);
   const [via, setVia] = useState<ContactVia>("call");
-  const [images, setImages] = useState<Picked[]>([]);
+  const attach = useAttachments({ allowVideo: false });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [buildFailed, setBuildFailed] = useState(false);
@@ -82,7 +69,6 @@ export default function DescribeClient() {
     canSignIn: boolean;
     canBuy: boolean;
   } | null>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
 
   // Whatever was typed into the box on the landing page, so nobody writes it twice.
   useEffect(() => {
@@ -124,22 +110,6 @@ export default function DescribeClient() {
     };
   }, []);
 
-  const addFiles = async (files: FileList | null) => {
-    if (!files?.length) return;
-    setError("");
-    setBuildFailed(false);
-    const room = MAX_IMAGES - images.length;
-    const picked: Picked[] = [];
-    for (const file of Array.from(files).slice(0, room)) {
-      try {
-        picked.push(await downscale(file));
-      } catch {
-        setError(`${file.name} could not be read as an image.`);
-      }
-    }
-    setImages((current) => [...current, ...picked]);
-  };
-
   const phone = readPhone(contact);
   const link = contactLink(contact, via);
 
@@ -151,7 +121,8 @@ export default function DescribeClient() {
     try {
       const result = await writeSite({
         description,
-        images: images.map(({ media_type, data }) => ({ media_type, data })),
+        images: attach.images.map(({ media_type, data }) => ({ media_type, data })),
+        documents: attach.doc ? [{ name: attach.doc.name, media_type: attach.doc.media_type, data: attach.doc.data }] : [],
         contactHref: link,
         quality,
       });
@@ -279,58 +250,16 @@ export default function DescribeClient() {
             {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" /> : null}
             {busy ? "Writing your site…" : "Build my site"}
           </Button>
-          {images.length < MAX_IMAGES && (
-            <>
-              <input
-                ref={fileRef}
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                multiple
-                aria-hidden="true"
-                tabIndex={-1}
-                className="sr-only"
-                onChange={(e) => {
-                  void addFiles(e.target.files);
-                  e.target.value = "";
-                }}
-              />
-              <Button
-                variant="outline"
-                size="lg"
-                onClick={() => fileRef.current?.click()}
-                className="gap-1.5 border-dashed px-3 text-xs"
-              >
-                <Upload className="h-4 w-4" aria-hidden="true" />
-                Add photos (optional)
-              </Button>
-            </>
-          )}
         </div>
         <p className="mt-2 text-sm text-muted-foreground" aria-live="polite">
           {busy ? QUALITIES[quality].wait : short ? "A sentence or two to start." : "You can change every word afterwards."}
         </p>
 
-        {images.length > 0 && (
-          <div className="mt-4 flex flex-wrap items-center gap-5 md:gap-3">
-            {images.map((image, i) => (
-              <span key={image.name + i} className="relative">
-                {/* eslint-disable-next-line @next/next/no-img-element -- a local preview of a file the visitor just picked */}
-                <img src={image.preview} alt="" className="h-20 w-20 rounded-md border border-border object-cover" />
-                <button
-                  type="button"
-                  onClick={() => setImages((c) => c.filter((_, j) => j !== i))}
-                  aria-label={`Remove ${image.name}`}
-                  className="absolute -right-4 -top-4 md:-right-2 md:-top-2 flex h-11 w-11 md:h-auto md:w-auto items-center justify-center rounded-full border border-border bg-background p-1 text-muted-foreground hover:text-foreground"
-                >
-                  <X className="h-4 w-4 md:h-3 md:w-3" aria-hidden="true" />
-                </button>
-              </span>
-            ))}
-            <p className="text-xs text-muted-foreground">
-              {images.length} of {MAX_IMAGES} photographs. They shape the words and the colours.
-            </p>
-          </div>
-        )}
+        <div className="mt-6 rounded-2xl border border-white/10 bg-card p-3 shadow-[var(--lift-1)]">
+          <p className="mb-3 px-1 text-sm text-muted-foreground">Add photos or a document such as a menu or resume (optional)</p>
+          <AttachmentChips state={attach} disabled={busy} />
+          <AttachmentBar state={attach} disabled={busy} />
+        </div>
 
         {error && needsCredits && (
           <OutOfCredits

@@ -11,3 +11,7 @@ export const MAX_IMAGES = 3;
 /** Per image, decoded. Three of these plus the rules stays well inside the request cap. */
 export const MAX_IMAGE_BYTES = 1_500_000;
 export const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"] as const;
+/** One owner's document per request: a PDF decoded under this, or text under MAX_DOCUMENT_CHARS. */
+export const MAX_DOCUMENT_PDF_BYTES = 2_500_000;
+export const MAX_DOCUMENT_CHARS = 50_000;
+export const ALLOWED_DOCUMENT_TYPES = ["application/pdf", "text/plain"] as const;
