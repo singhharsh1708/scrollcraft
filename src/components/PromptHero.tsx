@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowUp, Check, Loader2 } from "lucide-react";
+import { ArrowUp, Check, ChevronDown, Loader2 } from "lucide-react";
 import StylePreview from "@/components/StylePreview";
 import AttachmentBar, { AttachmentChips, useAttachments } from "@/components/Attachments";
 import { MAX_DESCRIPTION } from "@/lib/briefLimits";
@@ -208,13 +208,14 @@ export default function PromptHero({ reducedMotion }: { reducedMotion: boolean }
             <AttachmentBar state={attach} disabled={busy} />
             <div className="flex items-center justify-end gap-2">
               <label className="sr-only" htmlFor="hero-quality">Quality</label>
+              <div className="relative">
               <select
                 id="hero-quality"
                 value={quality}
                 disabled={busy}
                 onChange={(e) => setQuality(e.target.value as Quality)}
                 title="Fast is quickest, Best writes most carefully. Each uses one site."
-                className="lc-mono h-11 sm:h-9 rounded-full border border-border bg-transparent px-3 text-base sm:text-xs text-muted-foreground outline-none hover:border-foreground/30 focus-visible:border-primary-ink/60 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                className="lc-mono h-11 sm:h-9 cursor-pointer appearance-none rounded-full border border-border bg-transparent pl-4 pr-9 text-base sm:text-xs text-muted-foreground outline-none hover:border-foreground/30 focus-visible:border-primary-ink/60 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
               >
                 {(Object.keys(QUALITIES) as Quality[]).map((q) => (
                   <option key={q} value={q} className="bg-card text-foreground">
@@ -222,6 +223,8 @@ export default function PromptHero({ reducedMotion }: { reducedMotion: boolean }
                   </option>
                 ))}
               </select>
+              <ChevronDown aria-hidden="true" className="pointer-events-none absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+              </div>
               {/* Not faded out when it is not ready: it plainly says it is waiting for a sentence. */}
               <button
                 type="button"
