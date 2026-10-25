@@ -7,7 +7,7 @@ import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { redisCredentials } from "@/lib/redisCredentials";
 import { logger } from "@/lib/logger";
 import { sectionsSchema, themeSchema, siteStyleSchema } from "@/lib/siteSchema";
-import { BRIEF_RULES, briefSchema, briefToSite, checkBriefInput } from "@/lib/siteBrief";
+import { BRIEF_RULES, briefSchema, briefToSite, checkBriefInput, type BriefDocument } from "@/lib/siteBrief";
 import { QUALITIES, parseQuality } from "@/lib/quality";
 import { BROWSER_COOKIE, PACK_PRICE_USD, PACK_SITES, balanceOf, browserTokenFrom, cookieOptions, keyHashFrom, takeAllowance } from "@/lib/credits";
 
@@ -25,8 +25,8 @@ import { BROWSER_COOKIE, PACK_PRICE_USD, PACK_SITES, balanceOf, browserTokenFrom
 /** Leaves the catch time to give the credit back inside maxDuration. */
 const DEADLINE_MS = 290_000;
 const MAX_OUTPUT_TOKENS = 8000;
-/** Enough to hold the rules, three photographs and the answer. */
-const MAX_BODY_BYTES = 7_000_000;
+/** Three photographs (6 MB as base64) plus one PDF (3.4 MB as base64) and the description. */
+const MAX_BODY_BYTES = 10_000_000;
 /** Sites the whole deployment will write in a day, whoever asks. */
 const DAILY_CEILING = Number(process.env.GENERATE_DAILY_LIMIT || 150);
 
@@ -73,6 +73,15 @@ async function readCapped(req: NextRequest, limit: number): Promise<string | nul
 
 export const maxDuration = 300;
 
+function documentBlocks(doc: BriefDocument | null): Anthropic.ContentBlockParam[] {
+  if (!doc) return [];
+  const label = `The owner's document (${doc.name}). Use it as source material for the site.`;
+  if (doc.media_type === "application/pdf") {
+    return [{ type: "document", title: doc.name, context: label, source: { type: "base64", media_type: "application/pdf", data: doc.data } }];
+  }
+  return [{ type: "text", text: `${label}\n\n<owner_document>\n${doc.data}\n</owner_document>` }];
+}
+
 function configured(): boolean {
   return Boolean(process.env.ANTHROPIC_API_KEY);
 }
@@ -96,7 +105,7 @@ export async function POST(req: NextRequest) {
 
   const raw = await readCapped(req, MAX_BODY_BYTES);
   if (raw === null) {
-    return NextResponse.json({ error: "Those photographs are too large." }, { status: 413 });
+    return NextResponse.json({ error: "Those photographs or that document are too large." }, { status: 413 });
   }
 
   let body: unknown;
@@ -106,7 +115,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Expected JSON." }, { status: 400 });
   }
 
-  const input = checkBriefInput(body as { description?: unknown; images?: unknown });
+  const input = checkBriefInput(body as { description?: unknown; images?: unknown; documents?: unknown });
   const quality = parseQuality((body as { quality?: unknown } | null)?.quality);
   const { model, effort } = QUALITIES[quality];
   if (!input.ok) return NextResponse.json({ error: input.error }, { status: 400 });
@@ -168,6 +177,7 @@ export async function POST(req: NextRequest) {
         source: { type: "base64", media_type: image.media_type, data: image.data },
       })
     ),
+    ...documentBlocks(input.document),
     { type: "text", text: `Here is the business:\n\n${input.description}` },
   ];
 
@@ -218,6 +228,7 @@ export async function POST(req: NextRequest) {
       cachedTokens: usage.cache_read_input_tokens,
       outputTokens: usage.output_tokens,
       images: input.images.length,
+      document: input.document?.media_type ?? null,
       todayAcrossEveryone: today,
       paid: allowance.kind === "paid",
       quality,

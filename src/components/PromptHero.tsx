@@ -4,7 +4,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowUp, Check, Loader2 } from "lucide-react";
 import StylePreview from "@/components/StylePreview";
+import AttachmentBar, { AttachmentChips, useAttachments } from "@/components/Attachments";
 import { MAX_DESCRIPTION } from "@/lib/briefLimits";
+import { extractFramesInBrowser } from "@/lib/extractFramesInBrowser";
 import { writeSite } from "@/lib/writeSite";
 import { DEFAULT_QUALITY, QUALITIES, type Quality } from "@/lib/quality";
 
@@ -16,8 +18,8 @@ import { DEFAULT_QUALITY, QUALITIES, type Quality } from "@/lib/quality";
  * box that takes that description is the hero, and the rest of the page is what they read
  * if they are not ready yet.
  *
- * Pressing the button writes the site right here and opens it in the editor; /describe is
- * only for photographs and a contact link.
+ * Pressing the button writes the site right here and opens it in the editor; /describe adds
+ * a contact link.
  */
 
 const HERO_COLORS: [string, string, string] = ["#3b82f6", "#4338ca", "#040a1a"];
@@ -51,6 +53,8 @@ export default function PromptHero({ reducedMotion }: { reducedMotion: boolean }
   const [value, setValue] = useState("");
   const [busy, setBusy] = useState(false);
   const boxRef = useRef<HTMLTextAreaElement>(null);
+  const attach = useAttachments();
+  const [videoPct, setVideoPct] = useState<number | null>(null);
 
   const [quality, setQuality] = useState<Quality>(DEFAULT_QUALITY);
   const [left, setLeft] = useState<{ free: number | null; paid: number } | null>(null);
@@ -81,13 +85,35 @@ export default function PromptHero({ reducedMotion }: { reducedMotion: boolean }
     setBusy(true);
     setError("");
     setNeedsCredits(false);
-    const result = await writeSite({ description: value.trim(), quality });
+    let videoFrames: string[] | undefined;
+    if (attach.video) {
+      setVideoPct(0);
+      try {
+        const file = attach.video.type ? attach.video : new File([attach.video], attach.video.name, { type: "video/mp4" });
+        videoFrames = (await extractFramesInBrowser(file, { frameCount: 120, onProgress: (pct) => setVideoPct(Math.round(pct)) })).frames;
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "That video could not be read.");
+        setVideoPct(null);
+        setBusy(false);
+        return;
+      }
+      setVideoPct(100);
+      setElapsed(0);
+    }
+    const result = await writeSite({
+      description: value.trim(),
+      quality,
+      images: attach.images.map(({ media_type, data }) => ({ media_type, data })),
+      documents: attach.doc ? [{ name: attach.doc.name, media_type: attach.doc.media_type, data: attach.doc.data }] : [],
+      videoFrames,
+    });
     if (result.ok) {
       router.push("/editor");
       return;
     }
     setError(result.error);
     setNeedsCredits(result.needsCredits);
+    setVideoPct(null);
     setBusy(false);
   };
 
@@ -114,7 +140,7 @@ export default function PromptHero({ reducedMotion }: { reducedMotion: boolean }
   const hint = typed === 0 ? allowance : short ? `${20 - typed} more character${20 - typed === 1 ? "" : "s"}` : allowance;
 
   return (
-    <section className="relative isolate flex min-h-[calc(100svh-4rem)] items-center overflow-hidden border-b border-border px-6 py-20">
+    <section className="relative isolate flex min-h-[calc(100svh-4rem)] items-center overflow-hidden border-b border-border px-4 py-10 sm:px-6 sm:py-20">
       {painting && (
         <StylePreview
           style="wave"
@@ -139,17 +165,28 @@ export default function PromptHero({ reducedMotion }: { reducedMotion: boolean }
           <span className="text-muted-foreground">then 5 for $20</span>
         </p>
 
-        <h1 className="lc-display mt-7 text-[2.15rem] leading-[1.08] sm:text-6xl lg:text-[4rem]">
+        <h1 className="lc-display mt-5 text-[2.15rem] sm:mt-7 leading-[1.08] sm:text-6xl lg:text-[4rem]">
           <span className="block">Describe your business.</span>
           <span className="block text-primary-ink">Get a website that moves as you scroll.</span>
         </h1>
 
-        <p className="mx-auto mt-6 max-w-xl text-lg leading-relaxed text-muted-foreground">
-          Write a few lines about your business. In about half a minute you get a full site
-          with a scroll-animated background, ready to edit and download. No sign-up.
+        <p className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-muted-foreground sm:mt-6 sm:text-lg">
+          Type a few lines and add photos, a video or a document like a menu or resume. In about
+          half a minute you get a site that moves as you scroll, ready to edit.
         </p>
 
-        <div id="write" className="mt-9 scroll-mt-28 rounded-2xl border border-white/10 bg-card/95 p-2 text-left shadow-[var(--lift-2)] backdrop-blur-sm transition-shadow focus-within:border-primary-ink/40 focus-within:shadow-[var(--glow)]">
+        <div
+          id="write"
+          onDragOver={(e) => {
+            if (!busy && e.dataTransfer.types.includes("Files")) e.preventDefault();
+          }}
+          onDrop={(e) => {
+            if (busy || !e.dataTransfer.files.length) return;
+            e.preventDefault();
+            void attach.addAny(e.dataTransfer.files);
+          }}
+          className="mt-6 scroll-mt-28 rounded-3xl sm:mt-9 border border-white/15 bg-card/95 p-2 text-left shadow-[var(--lift-2)] ring-1 ring-primary-ink/10 backdrop-blur-sm transition-shadow focus-within:border-primary-ink/40 focus-within:shadow-[var(--glow)]"
+        >
           <textarea
             ref={boxRef}
             value={value}
@@ -160,46 +197,47 @@ export default function PromptHero({ reducedMotion }: { reducedMotion: boolean }
                 void go();
               }
             }}
-            rows={3}
+            rows={4}
             disabled={busy}
             aria-label="Describe your business"
             placeholder="What is the business? Where is it, how long has it been going, what do you actually do?"
-            className="w-full resize-none rounded-xl bg-transparent px-4 py-4 text-base leading-relaxed text-foreground outline-none focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring placeholder:text-muted-foreground"
+            className="w-full resize-none rounded-2xl bg-transparent px-4 py-4 text-base leading-relaxed text-foreground outline-none focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring placeholder:text-muted-foreground"
           />
-          <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 px-4 pb-2">
-            <span className="w-full text-xs text-muted-foreground sm:w-auto">{hint}</span>
-            {/* Not faded out when it is not ready: a button nobody can read is worse
-                than one that plainly says it is waiting for a sentence. */}
-            <div className="ml-auto flex items-center gap-2">
-            <label className="sr-only" htmlFor="hero-quality">Quality</label>
-            <select
-              id="hero-quality"
-              value={quality}
-              disabled={busy}
-              onChange={(e) => setQuality(e.target.value as Quality)}
-              title="Fast is quickest, Best writes most carefully. Each uses one site."
-              className="lc-mono h-11 sm:h-9 rounded-full border border-border bg-transparent px-3 text-base sm:text-xs text-muted-foreground outline-none hover:border-foreground/30 focus-visible:border-primary-ink/60 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-            >
-              {(Object.keys(QUALITIES) as Quality[]).map((q) => (
-                <option key={q} value={q} className="bg-card text-foreground">
-                  {QUALITIES[q].label}
-                </option>
-              ))}
-            </select>
-            <button
-              type="button"
-              onClick={() => void go()}
-              disabled={short || busy}
-              className={`lc-btn lc-btn-sm max-sm:h-11 ${short || busy ? "lc-btn-ghost text-muted-foreground" : "lc-btn-solid"}`}
-            >
-              {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <ArrowUp className="h-4 w-4" aria-hidden="true" />}
-              {busy ? "Writing…" : "Write my site"}
-            </button>
+          <AttachmentChips state={attach} disabled={busy} />
+          <div className="flex flex-col gap-3 border-t border-white/10 px-2 pb-1 pt-3 sm:flex-row sm:items-center sm:justify-between">
+            <AttachmentBar state={attach} disabled={busy} />
+            <div className="flex items-center justify-end gap-2">
+              <label className="sr-only" htmlFor="hero-quality">Quality</label>
+              <select
+                id="hero-quality"
+                value={quality}
+                disabled={busy}
+                onChange={(e) => setQuality(e.target.value as Quality)}
+                title="Fast is quickest, Best writes most carefully. Each uses one site."
+                className="lc-mono h-11 sm:h-9 rounded-full border border-border bg-transparent px-3 text-base sm:text-xs text-muted-foreground outline-none hover:border-foreground/30 focus-visible:border-primary-ink/60 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+              >
+                {(Object.keys(QUALITIES) as Quality[]).map((q) => (
+                  <option key={q} value={q} className="bg-card text-foreground">
+                    {QUALITIES[q].label}
+                  </option>
+                ))}
+              </select>
+              {/* Not faded out when it is not ready: it plainly says it is waiting for a sentence. */}
+              <button
+                type="button"
+                onClick={() => void go()}
+                disabled={short || busy}
+                className={`lc-btn lc-btn-sm max-sm:h-11 max-sm:flex-1 ${short || busy ? "lc-btn-ghost text-muted-foreground" : "lc-btn-solid"}`}
+              >
+                {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <ArrowUp className="h-4 w-4" aria-hidden="true" />}
+                {busy ? "Writing…" : "Write my site"}
+              </button>
             </div>
           </div>
+          <p className="px-3 pb-2 pt-2 text-xs text-muted-foreground">{hint}</p>
         </div>
 
-        {busy && <Progress elapsed={elapsed} wait={QUALITIES[quality].wait} />}
+        {busy && <Progress elapsed={elapsed} wait={QUALITIES[quality].wait} videoPct={videoPct} />}
         {error && (
           <div role="alert" className="mt-4 rounded-2xl border border-primary-ink/30 bg-card/95 p-4 text-left text-sm text-foreground">
             <p>{error}</p>
@@ -237,7 +275,7 @@ export default function PromptHero({ reducedMotion }: { reducedMotion: boolean }
         </div>
 
         <p className="mt-7 text-sm text-muted-foreground">
-          Want to add photos or a contact number?{" "}
+          Want call or WhatsApp buttons?{" "}
           <Link href="/describe" onClick={handOff} className="underline underline-offset-4 hover:text-foreground">
             Use the full form
           </Link>
@@ -254,11 +292,18 @@ export default function PromptHero({ reducedMotion }: { reducedMotion: boolean }
 
 const STEPS = ["Reading your description", "Writing the sections", "Choosing colours and type", "Opening the editor"];
 
-function Progress({ elapsed, wait }: { elapsed: number; wait: string }) {
-  const current = Math.min(STEPS.length - 1, Math.floor(elapsed / 9));
+function Progress({ elapsed, wait, videoPct }: { elapsed: number; wait: string; videoPct: number | null }) {
+  const reading = videoPct !== null && videoPct < 100;
+  const current = reading ? -1 : Math.min(STEPS.length - 1, Math.floor(elapsed / 9));
   return (
     <div role="status" aria-live="polite" className="mt-4 rounded-2xl border border-white/10 bg-card/95 p-4 text-left shadow-[var(--lift-1)]">
       <ol className="space-y-2 text-sm">
+        {videoPct !== null && (
+          <li className="flex items-center gap-2 text-foreground">
+            {reading ? <Loader2 className="h-4 w-4 animate-spin text-primary-ink" aria-hidden="true" /> : <Check className="h-4 w-4 text-primary-ink" aria-hidden="true" />}
+            Reading your video on this device{reading ? ` (${videoPct}%)` : ""}
+          </li>
+        )}
         {STEPS.map((step, i) => (
           <li key={step} className={`flex items-center gap-2 ${i > current ? "text-muted-foreground/60" : "text-foreground"}`}>
             {i < current ? (

@@ -70,12 +70,14 @@ export default function PrivacyPage() {
           </li>
           <li>
             <strong>Writing a site from a description, only if you ask for one.</strong> On the
-            Describe page, the words you write and any photographs you attach are sent to
-            Anthropic, which writes the site and returns it. Photographs are reduced to 1024
-            pixels on your own device first. Neither the description nor the photographs are
-            stored by us: they are sent once, used to write that site, and not kept. Nothing is
-            sent unless you press Build my site, and this instance only offers the page when it
-            is configured with a key.
+            home page or the Describe page, the words you write and any photographs or document
+            (such as a PDF menu or resume) you attach are sent to Anthropic, which writes the
+            site and returns it. Photographs are reduced to 1024 pixels on your own device first.
+            None of these are stored by us: they are sent once, used to write that site, and not
+            kept. A video you attach never leaves your device: its frames are taken in your
+            browser and kept there as the background. Nothing is sent unless you press the
+            button to write the site, and this instance only offers it when it is configured
+            with a key.
           </li>
           <li>
             <strong>A purchase, only if you buy more sites.</strong> The first two sites are free.{" "}
@@ -113,7 +115,7 @@ export default function PrivacyPage() {
           <li><strong>Vercel</strong> — hosting, and Web Analytics for the four counts above. Request logs may be retained under their policy.</li>
           <li><strong>Sentry</strong> — error reports, when enabled. These carry a stack trace, not your content.</li>
           <li><strong>Upstash</strong> — rate limiting and the daily counts above, when enabled. It stores a counter keyed by IP for limits, and counters keyed by date for the four steps.</li>
-          <li><strong>Anthropic</strong> — writes a site from your description, when enabled. It receives that description and any photographs you attach, and only when you press Build my site.</li>
+          <li><strong>Anthropic</strong> — writes a site from your description, when enabled. It receives that description and any photographs or document you attach, and only when you ask for a site. It never receives videos.</li>
           {providers.includes("google") && (
             <li><strong>Google</strong>: sign-in, if you choose it. Google tells us your account number, your name, your email address and your profile picture; we keep only the number, and we keep it so your credits can find you in another browser. We never ask for access to your Gmail, Drive, contacts or anything else.</li>
           )}

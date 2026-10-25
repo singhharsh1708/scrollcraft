@@ -1,8 +1,16 @@
 import { string, object, array, tuple, enum as zEnum, type infer as zInfer } from "zod";
 import { BACKGROUND_STYLES, MAX_SECTIONS } from "@/lib/siteSchema";
-import { ALLOWED_IMAGE_TYPES, MAX_DESCRIPTION, MAX_IMAGES, MAX_IMAGE_BYTES } from "@/lib/briefLimits";
+import {
+  ALLOWED_DOCUMENT_TYPES,
+  ALLOWED_IMAGE_TYPES,
+  MAX_DESCRIPTION,
+  MAX_DOCUMENT_CHARS,
+  MAX_DOCUMENT_PDF_BYTES,
+  MAX_IMAGES,
+  MAX_IMAGE_BYTES,
+} from "@/lib/briefLimits";
 
-export { ALLOWED_IMAGE_TYPES, MAX_DESCRIPTION, MAX_IMAGES, MAX_IMAGE_BYTES };
+export { ALLOWED_DOCUMENT_TYPES, ALLOWED_IMAGE_TYPES, MAX_DESCRIPTION, MAX_DOCUMENT_CHARS, MAX_DOCUMENT_PDF_BYTES, MAX_IMAGES, MAX_IMAGE_BYTES };
 
 /**
  * Turning a description into a site.
@@ -75,7 +83,7 @@ export type Brief = zInfer<typeof briefSchema>;
  */
 export const BRIEF_RULES = `You write ScrollCraft sites: one scrolling page whose background is a generated canvas, with a few sections of copy pinned over it.
 
-You are given a description of a business or person, and sometimes photographs of their work or premises. You return one site.
+You are given a description of a business or person, and sometimes photographs of their work or premises or a document they wrote. You return one site.
 
 HOW THE COPY MUST READ
 
@@ -88,6 +96,8 @@ Say what the business will not do, or what it is not for, in one section. A page
 Where the description is thin, write less rather than inventing. Do not invent awards, client names, testimonials, review scores, certifications, years in business, or numbers of customers. If the description gives you no numbers, write without numbers. An invented detail is worse than a general one.
 
 If photographs are supplied, read what is actually in them (the room, the materials, the light, the work) and let that inform the copy and the palette. Do not describe the photographs; use them.
+
+If the owner attaches a document, such as a resume, a menu or a brochure, treat it as source material: take names, dishes, prices, services, dates and places from it. Never invent beyond it, and where the document and the description disagree, follow the description.
 
 STRUCTURE
 
@@ -106,8 +116,11 @@ Choose the background style that matches the subject: "wave" for anything to do 
 /** Everything the request should contain, with the cheap checks done before any call. */
 export type AllowedImageType = (typeof ALLOWED_IMAGE_TYPES)[number];
 
-export function checkBriefInput(input: { description?: unknown; images?: unknown }):
-  | { ok: true; description: string; images: { media_type: AllowedImageType; data: string }[] }
+export type AllowedDocumentType = (typeof ALLOWED_DOCUMENT_TYPES)[number];
+export type BriefDocument = { name: string; media_type: AllowedDocumentType; data: string };
+
+export function checkBriefInput(input: { description?: unknown; images?: unknown; documents?: unknown }):
+  | { ok: true; description: string; images: { media_type: AllowedImageType; data: string }[]; document: BriefDocument | null }
   | { ok: false; error: string } {
   const description = typeof input.description === "string" ? input.description.trim() : "";
   if (description.length < 20) return { ok: false, error: "Tell us a little more: at least a sentence or two about the business." };
@@ -132,7 +145,30 @@ export function checkBriefInput(input: { description?: unknown; images?: unknown
     images.push({ media_type: type as AllowedImageType, data });
   }
 
-  return { ok: true, description, images };
+  const docs = Array.isArray(input.documents) ? input.documents : [];
+  if (docs.length > 1) return { ok: false, error: "Attach one document at most." };
+  let document: BriefDocument | null = null;
+  if (docs.length === 1) {
+    const doc = docs[0] as { name?: unknown; media_type?: unknown; data?: unknown };
+    const type = String(doc?.media_type ?? "");
+    const data = typeof doc?.data === "string" ? doc.data : "";
+    const name = (typeof doc?.name === "string" ? doc.name : "document").replace(/[\r\n]+/g, " ").slice(0, 120);
+    if (type === "application/pdf") {
+      if (data.length * 0.75 > MAX_DOCUMENT_PDF_BYTES) {
+        return { ok: false, error: `The PDF must be under ${MAX_DOCUMENT_PDF_BYTES / 1_000_000} MB.` };
+      }
+      // Every PDF starts with %PDF, which is JVBER in base64.
+      if (!/^[A-Za-z0-9+/=]+$/.test(data) || !data.startsWith("JVBER")) return { ok: false, error: "The PDF could not be read." };
+    } else if (type === "text/plain") {
+      if (!data.trim()) return { ok: false, error: "The document is empty." };
+      if (data.length > MAX_DOCUMENT_CHARS) return { ok: false, error: `Keep the document under ${MAX_DOCUMENT_CHARS} characters.` };
+    } else {
+      return { ok: false, error: "Documents must be a PDF, .txt or .md file." };
+    }
+    document = { name, media_type: type, data };
+  }
+
+  return { ok: true, description, images, document };
 }
 
 /** The brief as the editor's own shapes: sections, a style recipe and a theme. */
