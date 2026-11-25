@@ -32,7 +32,7 @@ const EXAMPLES: [string, string][] = [
   ["Tiffin service", "Maharashtrian lunch tiffins from a home kitchen in Kothrud, Pune, since 2016. Two sabzis, dal, rice and chapatis at your office by 1 pm. Monthly plans only, and no onion or garlic on Thursdays."],
 ];
 
-export default function PromptHero({ reducedMotion }: { reducedMotion: boolean }) {
+export default function PromptHero({ reducedMotion, templateCount }: { reducedMotion: boolean; templateCount: number }) {
   const router = useRouter();
   /**
    * The canvas starts once the page has finished hydrating.
@@ -285,7 +285,7 @@ export default function PromptHero({ reducedMotion }: { reducedMotion: boolean }
           <span className="mx-2" aria-hidden="true">·</span>
           Rather start from a finished design?{" "}
           <Link href="/templates" className="underline underline-offset-4 hover:text-foreground">
-            Browse 23 templates
+            Browse {templateCount} templates
           </Link>
         </p>
       </div>

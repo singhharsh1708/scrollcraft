@@ -11,18 +11,23 @@
  * Needs a running build and Chrome listening for DevTools on port 9222:
  *   npm run build && npx next start -p 3000 &
  *   "<chrome>" --headless=new --remote-debugging-port=9222 &
- *   node scripts/capture-template-previews.mjs http://127.0.0.1:3000
+ *   node scripts/capture-template-previews.mjs http://127.0.0.1:3000 [slug...]
  */
 import { mkdirSync, readFileSync } from "node:fs";
 import sharp from "sharp";
 
-const BASE = process.argv[2] ?? "http://127.0.0.1:3000";
+const BASE = process.argv[2]?.startsWith("http") ? process.argv[2] : "http://127.0.0.1:3000";
 const OUT = "public/template-previews";
 const DEVTOOLS = "http://127.0.0.1:9222";
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-const slugs = [...readFileSync("src/lib/templates.ts", "utf8").matchAll(/^ {4}slug: "([^"]+)"/gm)].map((m) => m[1]);
-if (slugs.length === 0) throw new Error("no template slugs found");
+const all = [...readFileSync("src/lib/templates.ts", "utf8").matchAll(/^ {4}slug: "([^"]+)"/gm)].map((m) => m[1]);
+if (all.length === 0) throw new Error("no template slugs found");
+// Named slugs only, so adding one template does not rewrite every other still.
+const only = process.argv.slice(2).filter((a) => !a.startsWith("http"));
+const unknown = only.filter((s) => !all.includes(s));
+if (unknown.length) throw new Error(`no such template: ${unknown.join(", ")}`);
+const slugs = only.length ? only : all;
 
 async function pageSocket() {
   for (let i = 0; i < 80; i++) {
@@ -68,8 +73,9 @@ for (const slug of slugs) {
     const loading = await evaluate(`/Rendering frames/.test(document.body.innerText)`);
     if (i > 3 && !loading) break;
   }
+  // The preview's top bar by its label, not its position, which has moved once already.
   await evaluate(`(() => { const s = document.createElement("style");
-    s.textContent = ".fixed.top-4, .fixed.bottom-4 { display: none !important; }";
+    s.textContent = 'nav[aria-label="Template"], .fixed.bottom-4 { display: none !important; }';
     document.head.appendChild(s); })()`);
   // Frame the first real section at the top of its track: its sticky block is pinned
   // there in the layout the template chose, and its reveal has fired. Framing by the
