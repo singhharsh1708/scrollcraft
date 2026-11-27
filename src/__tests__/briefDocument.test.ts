@@ -3,6 +3,7 @@ import type { NextRequest } from "next/server";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { checkBriefInput, MAX_DOCUMENT_CHARS, MAX_DOCUMENT_PDF_BYTES, BRIEF_RULES } from "@/lib/siteBrief";
+import { TEMPLATES } from "@/lib/templates";
 
 const rateLimitMock = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/rateLimit", () => ({ rateLimit: rateLimitMock, getClientIp: () => "1.2.3.4" }));
@@ -100,7 +101,7 @@ describe("the route forwards the document", () => {
 describe("the home composer", () => {
   it("has labelled Photos, Video and Document buttons and one h1", async () => {
     const { default: PromptHero } = await import("@/components/PromptHero");
-    const html = renderToStaticMarkup(createElement(PromptHero, { reducedMotion: true }));
+    const html = renderToStaticMarkup(createElement(PromptHero, { reducedMotion: true, templateCount: TEMPLATES.length }));
     for (const label of ["Photos", "Video", "Document"]) {
       expect(html).toMatch(new RegExp(`<button[^>]*>(?:<svg[\\s\\S]*?</svg>)?${label}</button>`));
     }

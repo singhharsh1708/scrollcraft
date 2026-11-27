@@ -238,7 +238,7 @@ export default function HomeClient({
       <Navbar variant="floating" />
 
       {/* Hero */}
-      <PromptHero reducedMotion={reduced} />
+      <PromptHero reducedMotion={reduced} templateCount={stats.templates} />
 
       <HeroSequence template={heroTemplate} templateCount={stats.templates} reducedMotion={reduced}>
         <h2 className="lc-display text-[2.2rem] sm:text-5xl lg:text-[3.2rem]">

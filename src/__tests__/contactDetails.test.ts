@@ -166,6 +166,10 @@ describe("what the site claims about itself is true", () => {
     expect(README).not.toMatch(/\b(?:twenty|thirty)[- ]\w+ finished/i);
     const gallery = readFileSync("src/app/templates/page.tsx", "utf8");
     expect(gallery).toContain("${TEMPLATES.length} finished scroll sites across ${templateCategories().length} categories");
+    // The hero's own link said 23 while the page beside it said 24, from the same render.
+    const hero = readFileSync("src/components/PromptHero.tsx", "utf8");
+    expect(hero).not.toMatch(/Browse \d+ templates/);
+    expect(hero).toContain("Browse {templateCount} templates");
   });
 
   it("quotes one price for one thing in every place it quotes a price", () => {

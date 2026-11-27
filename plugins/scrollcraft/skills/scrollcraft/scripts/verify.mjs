@@ -177,18 +177,19 @@ const PROBE = `(() => {
     const h = Math.max(1, Math.min(canvas.height - y, Math.round(cssH * dpr)));
     if (w < 1 || h < 1) return null;
     const d = ctx.getImageData(x, y, w, h).data;
-    let lum = 0, n = 0, min = 255, max = 0, sig = 0;
+    let lum = 0, n = 0, min = 255, max = 0, sig = 0, sr = 0, sg = 0, sb = 0;
     const step = Math.max(4, Math.floor(d.length / 4 / 4000) * 4);
     for (let i = 0; i < d.length; i += step) {
       const r = d[i], g = d[i + 1], b = d[i + 2];
       lum += relLum(r, g, b);
+      sr += r; sg += g; sb += b;
       const y8 = (r * 299 + g * 587 + b * 114) / 1000;
       if (y8 < min) min = y8;
       if (y8 > max) max = y8;
       sig = (sig * 31 + r + g * 3 + b * 7) % 1000000007;
       n++;
     }
-    return { lum: lum / n, spread: max - min, sig, samples: n };
+    return { lum: lum / n, spread: max - min, sig, samples: n, r: sr / n, g: sg / n, b: sb / n };
   };
 
   const full = sampleRect(0, 0, window.innerWidth, window.innerHeight);
@@ -210,19 +211,27 @@ const PROBE = `(() => {
       if (!fg) continue;
 
       const own = parseRgb(cs.backgroundColor);
-      let bgLum, over;
+      let bgLum, bgRgb, over;
       if (own && own.a >= 0.95) {
         bgLum = relLum(own.r, own.g, own.b);
+        bgRgb = own;
         over = 'own background';
       } else {
         const local = sampleRect(tr.left, Math.max(0, tr.top), tr.width, Math.min(tr.height, window.innerHeight)) || behind;
         bgLum = local.lum;
+        bgRgb = local;
         over = 'frame';
       }
 
+      // Composite in sRGB channels, the way a screen does, not in luminance space.
       const alpha = Math.max(0, Math.min(1, fg.a * effectiveOpacity(t)));
-      const lfRaw = relLum(fg.r, fg.g, fg.b);
-      const lf = alpha >= 0.999 ? lfRaw : lfRaw * alpha + bgLum * (1 - alpha);
+      const lf = alpha >= 0.999
+        ? relLum(fg.r, fg.g, fg.b)
+        : relLum(
+            fg.r * alpha + bgRgb.r * (1 - alpha),
+            fg.g * alpha + bgRgb.g * (1 - alpha),
+            fg.b * alpha + bgRgb.b * (1 - alpha)
+          );
       const ratio = (Math.max(lf, bgLum) + 0.05) / (Math.min(lf, bgLum) + 0.05);
       contrasts.push({
         tag: t.tagName.toLowerCase(),

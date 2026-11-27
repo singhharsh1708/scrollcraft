@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { readFileSync } from "node:fs";
 import { createElement, type ComponentType, type ReactElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
+import { TEMPLATES } from "@/lib/templates";
 
 /**
  * Pins the phone and keyboard fixes measured with axe-core and a Tab walk at 390x844:
@@ -125,7 +126,7 @@ describe("the /create stepper fits a 360px screen", () => {
 describe("the home hero", () => {
   async function hero(): Promise<Tag[]> {
     const { default: PromptHero } = await import("@/components/PromptHero");
-    return tags(renderToStaticMarkup(createElement(PromptHero, { reducedMotion: true })));
+    return tags(renderToStaticMarkup(createElement(PromptHero, { reducedMotion: true, templateCount: TEMPLATES.length })));
   }
 
   it("keeps the quality select at 16px and 44px tall on phones, with a focus ring", async () => {

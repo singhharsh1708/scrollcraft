@@ -20,7 +20,7 @@ A scroll-scrubbed site plays through a sequence of frames as the reader scrolls,
 background moves with them instead of sitting still behind the text. ScrollCraft builds
 those sites without WebGL, an animation library, or a render farm.
 
-1. **Start from a template.** 23 finished sites, each with its own palette,
+1. **Start from a template.** 24 finished sites, each with its own palette,
    typography, pacing and copy. Or upload a video and use your own footage.
 2. **Get frames.** The engine draws the frame sequence on a canvas in your browser and
    maps it to scroll position.
@@ -41,10 +41,10 @@ version, so there the first two are free and five more are $20, bought once.
   palette. Frames are drawn on canvas locally, with no API key and nothing to install.
 - **Scroll engine.** Smooth canvas scrubbing with separate desktop and portrait frame sets,
   so a phone gets a background shaped for it rather than a letterboxed one.
-- **Template library** — 23 finished scroll sites across 13 categories, each with its own
+- **Template library** — 24 finished scroll sites across 13 categories, each with its own
   Google Fonts pairing and palette.
 - **Plain HTML export.** No dependencies and no lock-in. The exported page scores 100 on
-  Lighthouse for performance, accessibility, best practices and SEO.
+  Lighthouse for performance, accessibility and SEO.
 - **Your own video.** Frames are extracted in your browser. The file never leaves your
   device.
 - **Scroll-linked audio.** Attach a track that fades in as the reader scrolls and out when

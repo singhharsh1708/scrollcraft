@@ -175,6 +175,7 @@ export const TEMPLATE_USE: Record<string, TemplateUse> = {
   ember: { useCase: "Steakhouse", phrase: "steakhouse and grill restaurant", forWhom: "A steakhouse, barbecue or grill restaurant that takes reservations and wants the fire, the meat and the wine list up front." },
   kept: { useCase: "Coming soon", phrase: "coming soon and waitlist", forWhom: "A founder collecting emails before launch. Paste a Mailchimp, Kit, Buttondown or Formspree link and the form sends signups there." },
   weft: { useCase: "Documentary photographer", phrase: "documentary photography portfolio", forWhom: "A documentary or editorial photographer who shows one long project, sells signed prints and licenses images for editorial use." },
+  hotpath: { useCase: "Developer portfolio", phrase: "freelance developer portfolio", forWhom: "An independent developer or contractor who is hired for one measurable problem, such as slow queries or a slow request path, and wants the page to say what they turn down." },
 };
 
 export function categoryInfo(category: string): CategoryInfo {
